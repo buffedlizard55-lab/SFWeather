@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T05:23:47Z",
+  "generated_utc": "2026-09-17T05:27:26Z",
   "pipeline_version": "1.0",
   "target": {
     "zip": "94122",
@@ -33,9 +33,9 @@
     2020
   ],
   "counts": {
-    "manifest_entries": 102,
-    "successful_fetches": 97,
-    "failed_fetches": 5,
-    "irregularities": 5
+    "manifest_entries": 100,
+    "successful_fetches": 96,
+    "failed_fetches": 4,
+    "irregularities": 3
   }
 }

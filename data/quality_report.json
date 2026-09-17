@@ -1,8 +1,8 @@
 {
-  "generated_utc": "2026-09-17T05:23:47Z",
+  "generated_utc": "2026-09-17T05:27:26Z",
   "counts": {
-    "total": 5,
-    "errors": 2,
+    "total": 3,
+    "errors": 0,
     "warnings": 2,
     "info": 1
   },
@@ -33,27 +33,6 @@
       "evidence": {
         "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php",
         "size": 17341
-      }
-    },
-    {
-      "severity": "error",
-      "area": "ncei",
-      "message": "No GHCN-Daily station file could be retrieved.",
-      "evidence": {
-        "candidates": [
-          "USW00023272",
-          "USW00023234",
-          "USC00047899"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "area": "climatology",
-      "message": "Climatology could not be computed because an NCEI archive was unavailable.",
-      "evidence": {
-        "ghcn": false,
-        "gsod": true
       }
     }
   ]
