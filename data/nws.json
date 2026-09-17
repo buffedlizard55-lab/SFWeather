@@ -273,35 +273,9 @@
   },
   "forecast_hourly": {
     "updated": null,
-    "generated_at": "2026-09-17T14:15:20+00:00",
+    "generated_at": "2026-09-17T16:46:06+00:00",
     "elevation_m": 45.1104,
     "periods": [
-      {
-        "start_time": "2026-09-17T07:00:00-07:00",
-        "end_time": "2026-09-17T08:00:00-07:00",
-        "temperature_f": 59,
-        "dewpoint_f": 14.444444444444445,
-        "rh_pct": 94,
-        "wind_speed": "7 mph",
-        "wind_gust": null,
-        "wind_direction": "SW",
-        "pop_pct": 15,
-        "qpf_mm": null,
-        "short_forecast": "Slight Chance Drizzle"
-      },
-      {
-        "start_time": "2026-09-17T08:00:00-07:00",
-        "end_time": "2026-09-17T09:00:00-07:00",
-        "temperature_f": 60,
-        "dewpoint_f": 14.444444444444445,
-        "rh_pct": 94,
-        "wind_speed": "7 mph",
-        "wind_gust": null,
-        "wind_direction": "SW",
-        "pop_pct": 15,
-        "qpf_mm": null,
-        "short_forecast": "Slight Chance Drizzle"
-      },
       {
         "start_time": "2026-09-17T09:00:00-07:00",
         "end_time": "2026-09-17T10:00:00-07:00",
@@ -2297,6 +2271,32 @@
         "temperature_f": 64,
         "dewpoint_f": 14.444444444444445,
         "rh_pct": 81,
+        "wind_speed": "10 mph",
+        "wind_gust": null,
+        "wind_direction": "W",
+        "pop_pct": 0,
+        "qpf_mm": null,
+        "short_forecast": "Partly Cloudy"
+      },
+      {
+        "start_time": "2026-09-23T19:00:00-07:00",
+        "end_time": "2026-09-23T20:00:00-07:00",
+        "temperature_f": 63,
+        "dewpoint_f": 14.444444444444445,
+        "rh_pct": 82,
+        "wind_speed": "10 mph",
+        "wind_gust": null,
+        "wind_direction": "W",
+        "pop_pct": 0,
+        "qpf_mm": null,
+        "short_forecast": "Partly Cloudy"
+      },
+      {
+        "start_time": "2026-09-23T20:00:00-07:00",
+        "end_time": "2026-09-23T21:00:00-07:00",
+        "temperature_f": 62,
+        "dewpoint_f": 13.88888888888889,
+        "rh_pct": 84,
         "wind_speed": "10 mph",
         "wind_gust": null,
         "wind_direction": "W",
@@ -5167,10 +5167,10 @@
       "elevation_m": 45.72,
       "distance_m": 5900.9262123232,
       "observation": {
-        "timestamp": "2026-09-17T13:43:00+00:00",
-        "temperature_c": 16.54,
-        "dewpoint_c": 13.83,
-        "relative_humidity_pct": 84.021530129008,
+        "timestamp": "2026-09-17T15:43:00+00:00",
+        "temperature_c": 16.91,
+        "dewpoint_c": 13.62,
+        "relative_humidity_pct": 80.958816732454,
         "wind_speed_kmh": null,
         "wind_gust_kmh": null,
         "wind_direction_deg": null,
@@ -5187,14 +5187,14 @@
       "elevation_m": 62.419992,
       "distance_m": 17818.193337506,
       "observation": {
-        "timestamp": "2026-09-17T13:15:00+00:00",
+        "timestamp": "2026-09-17T16:15:00+00:00",
         "temperature_c": null,
         "dewpoint_c": null,
         "relative_humidity_pct": null,
         "wind_speed_kmh": null,
         "wind_gust_kmh": null,
         "wind_direction_deg": null,
-        "barometric_pressure_pa": 101570,
+        "barometric_pressure_pa": 101760,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
         "text_description": ""
@@ -5207,17 +5207,17 @@
       "elevation_m": 3.048,
       "distance_m": 19117.58413345,
       "observation": {
-        "timestamp": "2026-09-17T13:50:00+00:00",
-        "temperature_c": 17,
-        "dewpoint_c": 13,
-        "relative_humidity_pct": 77.309999878277,
+        "timestamp": "2026-09-17T16:30:00+00:00",
+        "temperature_c": 18,
+        "dewpoint_c": 12,
+        "relative_humidity_pct": 67.97370121525,
         "wind_speed_kmh": null,
         "wind_gust_kmh": null,
         "wind_direction_deg": null,
-        "barometric_pressure_pa": 101794.84,
+        "barometric_pressure_pa": 101930.3,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
-        "text_description": "Mostly Cloudy"
+        "text_description": "Cloudy"
       },
       "observation_url": "https://api.weather.gov/stations/KSFO/observations/latest"
     },
@@ -5227,13 +5227,13 @@
       "elevation_m": 712.9272,
       "distance_m": 20512.547709146,
       "observation": {
-        "timestamp": "2026-09-17T13:36:00+00:00",
+        "timestamp": "2026-09-17T15:36:00+00:00",
         "temperature_c": null,
         "dewpoint_c": null,
         "relative_humidity_pct": null,
-        "wind_speed_kmh": 12.888,
-        "wind_gust_kmh": 24.156,
-        "wind_direction_deg": 263,
+        "wind_speed_kmh": 8.028,
+        "wind_gust_kmh": 20.916,
+        "wind_direction_deg": 238,
         "barometric_pressure_pa": null,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
@@ -5255,14 +5255,14 @@
       "elevation_m": 29.410152,
       "distance_m": 22798.124785519,
       "observation": {
-        "timestamp": "2026-09-17T13:31:00+00:00",
-        "temperature_c": 16.67,
-        "dewpoint_c": 14.32,
-        "relative_humidity_pct": 86.018572500889,
+        "timestamp": "2026-09-17T16:10:00+00:00",
+        "temperature_c": 17.22,
+        "dewpoint_c": 14.14,
+        "relative_humidity_pct": 82.109869615189,
         "wind_speed_kmh": 0,
         "wind_gust_kmh": 0,
-        "wind_direction_deg": 192,
-        "barometric_pressure_pa": 101710,
+        "wind_direction_deg": 158,
+        "barometric_pressure_pa": 101860,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
         "text_description": ""
@@ -5272,21 +5272,33 @@
   ],
   "active_alerts": {
     "zone": "CAZ006",
-    "count": 0,
-    "updated": "2026-09-17T14:15:00+00:00",
-    "events": [],
+    "count": 1,
+    "updated": "2026-09-17T16:45:00+00:00",
+    "events": [
+      {
+        "event": "Tsunami Warning",
+        "severity": "Extreme",
+        "urgency": "Immediate",
+        "certainty": "Likely",
+        "effective": "2026-09-17T09:30:00-07:00",
+        "expires": "2026-09-17T10:30:00-07:00",
+        "headline": "TEST Tsunami Warning issued September 17 at 9:30AM PDT until September 17 at 10:30AM PDT by NWS National Tsunami Warning Center",
+        "description": "PZZ530-531-CAZ043-354-362-366-367-552-087-549-550-349-350-\n340>342-346-529-530-006-156-505-506-508>510-109-104-103-101-\nORZ021-022-103-101-102-WAZ001-201-310-311-324>326-330>333-\nBCZ098-099-096-097-AKZ328>332-323-324-326-327-318>322-325-\n317-731-735-721>723-725-728-729-771>773-781-785-787-795-791-\n171730-\n/T.NEW.PAAQ.TS.W.9016.260917T1630Z-260917T1730Z/\nAlaska, British Columbia, Washington, Oregon and California\ncoastal areas\n\n...THIS_MESSAGE_IS_FOR_TEST_PURPOSES_ONLY...\n\n...THIS IS A TEST TO DETERMINE TRANSMISSION TIMES INVOLVED IN THE\nDISSEMINATION OF TSUNAMI INFORMATION...\n\n\nRESPONSES ARE REQUIRED FROM\n---------------------------\n* All Coastal Weather Forecast Offices in Alaska, Washington,\nOregon and California\n\n* USAF 11th Rescue Coordination Center at Elmendorf AFB\n\n* California, Oregon, Washington and Alaska State Warning Points\n\n* Emergency Management British Columbia\n\n* The Pacific Storm Prediction Centre in British Columbia\n\n* Joint Typhoon Warning Center in Hawaii\n\n* U.S. Coast Guard 11th, 13th, 17th District Offices\n\n* U.S. Coast Guard Kodiak COMMSTA and CAMSPAC Point Reyes, CA\n\n* Canadian Coast Guard MCTS COMOX and/or Victoria\n\n* FAA Regional Operations Center in Seatt",
+        "id": "urn:oid:2.49.0.1.840.0.2baa5412824a9c1329f893022c33612980e402c4.001.1"
+      }
+    ],
     "source_url": "https://api.weather.gov/alerts/active?zone=CAZ006",
     "human_url": "https://www.weather.gov/mtr"
   },
   "products": {
     "AFD": {
       "label": "Area Forecast Discussion",
-      "id": "08068201-67a6-44b8-8087-cf3d89c84545",
-      "issuance_time": "2026-09-17T11:22:00+00:00",
+      "id": "4e4f25df-a3bd-44e3-92e2-4129fd15f209",
+      "issuance_time": "2026-09-17T16:13:00+00:00",
       "product_name": "Area Forecast Discussion",
       "wmo_collective_id": "FXUS66",
-      "text": "\n000\nFXUS66 KMTR 171122\nAFDMTR\n\nArea Forecast Discussion\nNational Weather Service San Francisco CA\n422 AM PDT Thu Sep 17 2026\n\n...New AVIATION, MARINE, FIRE WEATHER...\n\n.KEY MESSAGES...\nUpdated at 1211 AM PDT Thu Sep 17 2026\n\n - Cooler temperatures through Thursday\n\n - Warming trend Friday into the weekend\n\n&&\n\n.SHORT TERM...\nIssued at 1211 AM PDT Thu Sep 17 2026\n(Today and tonight)\n\nSatellite imagery once again shows stratus hugging portions of \nthe coast and beginning to move inland. As noted in the evening \nupdate, this isn't a classic marine layer. It has a more strato-cu\nvibe due to the proximity of cold upper level low near Pt Arena. \nDo expect stratus to eventually fill in along a majority of the \ncoast by sunrise. The lower heights aloft have also allowed the \ncloud deck to deepen 2500-3000 ft per profilers and ACARs \nsounding. Given the nearby low,onshore flow, and deep layer \ndrizzle remains in the forecast as well. \n\nOutside of drizzle chances - similar to yesterday the main \nweather highlights for today will be below normal temperatures and\ngusty onshore flow. Generally speaking - max temps today will be a\nfew warmer than yesterday, but still below seasonal averages.\nHighs will top out in the 60s to near 70 along the coast and 70s\nto mid 80s interior. Onshore gradients aren't overly impressive\novernight, but still seeing some gusts 30-45 mph for the Delta and\nE Bay Hills. These gusty conditions will lingering through the\nearly morning hours before easing through the afternoon/evening\nhours. \n\nThursday night: the upper low begins to lose its grip on the Bay\nArea as it slowly moves to the northeast. Behind the departing \nlow shortwave ridging builds. A more classic marine layer will \ndevelop with solid stratus along the coast and inland valleys. \nCannot rule out some patchy drizzle. \n\n&&\n\n.LONG TERM...\nIssued at 107 AM PDT Thu Sep 17 2026 \n(Friday through Wednesday)\n\nFriday will be a transition day as the upper low fully exits to \nthe northeast and shortwave ridging builds overhead. Once the \nmorning marine layer rolls back to the coast a marked warming \ntrend will develop to kick off the weekend. 5-10 degrees of \nwarming are expected. The warming trend will continue through \nSaturday with temperatures reaching above normal by Saturday. A \nfew low 90s will return Saturday afternoon across the interior \nCentral Coast. Temperatures will also get a boost on Saturday \nwith a few bursts of offshore flow. Nothing overly strong, but a \nswitch nonetheless. Offshore winds will be most realized over the\nhigher terrain of the N and E Bay. The warm up will be short-lived\nas the ridge gets replaced by yet another upper low moving in from\nthe west on Sunday. Marine layer will likely deepen and \ntemperatures cool 5-10 degrees. \n\nMonday and beyond is still on the lower end of confidence.\nTonight's 00Z model suite is starting to show a roller coaster of\ntemps next week. A slight warming up and then a slight cool down.\nUncertainty on the shoulder seasons is actually pretty common.\nCluster analysis doesn't provide a lot of additional clarity\nexcept that models are split. Not expecting rain per se the\nuncertainty is around temperatures. \n\n&&\n\n.AVIATION...\n(12Z TAFS)\nIssued at 421 AM PDT Thu Sep 17 2026\n\nA patchwork of VFR to IFR conditions prevails over the region with \nstratocumulus persisting over the Bay Area and parts of the Central \nCoast through the pre-dawn hours. The cloud deck should retreat back \nto the coastal regions through the late morning and afternoon hours, \nwith a gentle to moderate onshore breeze developing in the \nafternoon. This evening and overnight, the marine layer will begin \nto compress, which should result in lower ceilings although \nconfidence in ceiling heights and timing is moderate at best.\n\nVicinity of SFO... Low-end VFR to high-end MVFR clouds continue \nthrough the late morning hours, with a moderate west breeze \ndeveloping in the afternoon. The clouds should return in the evening \nto overnight hours, with moderate confidence in timing and ceilings \nheight. \n\nSFO Bridge Approach... Similar to SFO.\n\nMonterey Bay Terminals... The southern Monterey Bay region has \ngenerally remained clearer than areas to the north but the latest \nsatellite imagery shows the cloud deck moving into the region with \nMVFR ceilings expected to develop imminently. Clouds will retreat \nback to the immediate coast through the late morning hours with a \ngentle west-northwest wind developing in the afternoon. Winds will \nbecome light overnight with indications that MVFR clouds will \nreturn, although confidence in timing is moderate. \n\n&&\n\n.MARINE...\n(Today through Tuesday)\nIssued at 421 AM PDT Thu Sep 17 2026\n\nGentle to moderate breezes continue across the waters through\nFriday, when hazardous conditions for small craft return and\npersist into the weekend due to fresh to strong northwesterly\nbreezes. Slight to moderate seas will prevail through Sunday.\n\n&&\n\n.FIRE WEATHER...\nIssued at 421 AM PDT Thu Sep 17 2026\n\nThe coolest conditions and deepest marine layer are expected through \nthe day today as the upper level low stalls over northern \nCalifornia. Current observations suggest a marine layer depth of \nover 3000 feet, allowing for moist conditions to reach very high \ninto the higher elevations. As the low moves away on Friday, the \nmarine layer will compress, temperatures will rise, and relative \nhumidities in the higher elevations will start to decrease. Some \noffshore flow is possible on Saturday morning, but it is not \nexpected to be very strong and the bulk of the offshore influence \nwill be felt on the higher terrain of the North and East Bay.\n\nDialH\n\n&&\n\n.MTR WATCHES/WARNINGS/ADVISORIES...\nCA...None.\nPZ...Small Craft Advisory from 3 PM Friday to 3 AM PDT Saturday for \n     Mry Bay-Pigeon Pt to Pt Pinos 0-10 nm.\n\n     Small Craft Advisory from 3 PM to 9 PM PDT Friday for Pt Pinos \n     to Pt Piedras Blancas 0-10 nm.\n\n&&\n\n$$\n\nSHORT TERM...MM\nLONG TERM....Palmer\nAVIATION...DialH\nMARINE...DialH\n\nVisit us at www.weather.gov/sanfrancisco\n\nFollow us on Facebook, X, and YouTube at:\nwww.facebook.com/nwsbayarea\nx.com/nwsbayarea\nwww.youtube.com/nwsbayarea\n",
-      "source_url": "https://api.weather.gov/products/08068201-67a6-44b8-8087-cf3d89c84545"
+      "text": "\n000\nFXUS66 KMTR 171613\nAFDMTR\n\nArea Forecast Discussion\nNational Weather Service San Francisco CA\nIssued by National Weather Service Eureka CA\n913 AM PDT Thu Sep 17 2026\n\n...New MARINE...\n\n.KEY MESSAGES...\nUpdated at 1211 AM PDT Thu Sep 17 2026\n\n - Cooler temperatures through Thursday\n\n - Warming trend Friday into the weekend\n\n&&\n\n.SHORT TERM...\nIssued at 1211 AM PDT Thu Sep 17 2026\n(Today and tonight)\n\nSatellite imagery once again shows stratus hugging portions of \nthe coast and beginning to move inland. As noted in the evening \nupdate, this isn't a classic marine layer. It has a more strato-cu\nvibe due to the proximity of cold upper level low near Pt Arena. \nDo expect stratus to eventually fill in along a majority of the \ncoast by sunrise. The lower heights aloft have also allowed the \ncloud deck to deepen 2500-3000 ft per profilers and ACARs \nsounding. Given the nearby low,onshore flow, and deep layer \ndrizzle remains in the forecast as well. \n\nOutside of drizzle chances - similar to yesterday the main \nweather highlights for today will be below normal temperatures and\ngusty onshore flow. Generally speaking - max temps today will be a\nfew warmer than yesterday, but still below seasonal averages.\nHighs will top out in the 60s to near 70 along the coast and 70s\nto mid 80s interior. Onshore gradients aren't overly impressive\novernight, but still seeing some gusts 30-45 mph for the Delta and\nE Bay Hills. These gusty conditions will lingering through the\nearly morning hours before easing through the afternoon/evening\nhours. \n\nThursday night: the upper low begins to lose its grip on the Bay\nArea as it slowly moves to the northeast. Behind the departing \nlow shortwave ridging builds. A more classic marine layer will \ndevelop with solid stratus along the coast and inland valleys. \nCannot rule out some patchy drizzle. \n\n&&\n\n.LONG TERM...\nIssued at 107 AM PDT Thu Sep 17 2026 \n(Friday through Wednesday)\n\nFriday will be a transition day as the upper low fully exits to \nthe northeast and shortwave ridging builds overhead. Once the \nmorning marine layer rolls back to the coast a marked warming \ntrend will develop to kick off the weekend. 5-10 degrees of \nwarming are expected. The warming trend will continue through \nSaturday with temperatures reaching above normal by Saturday. A \nfew low 90s will return Saturday afternoon across the interior \nCentral Coast. Temperatures will also get a boost on Saturday \nwith a few bursts of offshore flow. Nothing overly strong, but a \nswitch nonetheless. Offshore winds will be most realized over the\nhigher terrain of the N and E Bay. The warm up will be short-lived\nas the ridge gets replaced by yet another upper low moving in from\nthe west on Sunday. Marine layer will likely deepen and \ntemperatures cool 5-10 degrees. \n\nMonday and beyond is still on the lower end of confidence.\nTonight's 00Z model suite is starting to show a roller coaster of\ntemps next week. A slight warming up and then a slight cool down.\nUncertainty on the shoulder seasons is actually pretty common.\nCluster analysis doesn't provide a lot of additional clarity\nexcept that models are split. Not expecting rain per se the\nuncertainty is around temperatures. \n\n&&\n\n.AVIATION...\n(12Z TAFS)\nIssued at 421 AM PDT Thu Sep 17 2026\n\nA patchwork of VFR to IFR conditions prevails over the region with \nstratocumulus persisting over the Bay Area and parts of the Central \nCoast through the pre-dawn hours. The cloud deck should retreat back \nto the coastal regions through the late morning and afternoon hours, \nwith a gentle to moderate onshore breeze developing in the \nafternoon. This evening and overnight, the marine layer will begin \nto compress, which should result in lower ceilings although \nconfidence in ceiling heights and timing is moderate at best.\n\nVicinity of SFO... Low-end VFR to high-end MVFR clouds continue \nthrough the late morning hours, with a moderate west breeze \ndeveloping in the afternoon. The clouds should return in the evening \nto overnight hours, with moderate confidence in timing and ceilings \nheight. \n\nSFO Bridge Approach... Similar to SFO.\n\nMonterey Bay Terminals... The southern Monterey Bay region has \ngenerally remained clearer than areas to the north but the latest \nsatellite imagery shows the cloud deck moving into the region with \nMVFR ceilings expected to develop imminently. Clouds will retreat \nback to the immediate coast through the late morning hours with a \ngentle west-northwest wind developing in the afternoon. Winds will \nbecome light overnight with indications that MVFR clouds will \nreturn, although confidence in timing is moderate. \n\n&&\n\n.MARINE...\n(Today through Tuesday)\nIssued at 911 AM PDT Thu Sep 17 2026\n\nGentle to light breezes persist through Friday morning with mild\nseas across the coastal waters. A shift occurs Friday afternoon as\nnorthwesterly winds ramp up to fresh to strong breezes. Small\nCraft Advisories take effect Friday afternoon for Monterey Bay and\nthe southern coastal waters from Pigeon Point south down to Point\nPiedras Blancas. Winds remain enhanced through the weekend, \nmaintaining hazardous conditions for small craft while overall \nseas remain light to moderate through Sunday.\n\n&&\n\n.FIRE WEATHER...\nIssued at 421 AM PDT Thu Sep 17 2026\n\nThe coolest conditions and deepest marine layer are expected through \nthe day today as the upper level low stalls over northern \nCalifornia. Current observations suggest a marine layer depth of \nover 3000 feet, allowing for moist conditions to reach very high \ninto the higher elevations. As the low moves away on Friday, the \nmarine layer will compress, temperatures will rise, and relative \nhumidities in the higher elevations will start to decrease. Some \noffshore flow is possible on Saturday morning, but it is not \nexpected to be very strong and the bulk of the offshore influence \nwill be felt on the higher terrain of the North and East Bay.\n\nDialH\n\n&&\n\n.MTR WATCHES/WARNINGS/ADVISORIES...\nCA...None.\nPZ...Small Craft Advisory from 3 PM Friday to 3 AM PDT Saturday for \n     Mry Bay-Pigeon Pt to Pt Pinos 0-10 nm.\n\n     Small Craft Advisory from 3 PM to 9 PM PDT Friday for Pt Pinos \n     to Pt Piedras Blancas 0-10 nm.\n\n&&\n\n$$\n\nSHORT TERM...MM\nLONG TERM....Palmer\nAVIATION...DialH\nMARINE...Heinlein\n\nVisit us at www.weather.gov/sanfrancisco\n\nFollow us on Facebook, X, and YouTube at:\nwww.facebook.com/nwsbayarea\nx.com/nwsbayarea\nwww.youtube.com/nwsbayarea\n",
+      "source_url": "https://api.weather.gov/products/4e4f25df-a3bd-44e3-92e2-4129fd15f209"
     }
   }
 }
