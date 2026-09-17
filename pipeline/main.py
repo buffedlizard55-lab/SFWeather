@@ -796,15 +796,37 @@ def fetch_enso():
 # 5.  NCEI archives - climate normals, GHCN-Daily, GSOD, Storm Events
 # ==========================================================================
 
-def fetch_ghcn():
+def fetch_ghcn(outdir: Path):
+    """Download a GHCN-Daily station file and parse it.
+
+    A short head of the raw file is always written to
+    ``<outdir>/ghcn_probe.json`` so the exact format NCEI served can be
+    reviewed line by line instead of assumed.
+    """
+    probe = {"candidates": []}
     for sid, name in GHCN_CANDIDATES:
         url = f"https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/{sid}.csv"
         res = fetchlib.get(url, timeout=600)
         record(res, note=f"NCEI GHCN-Daily station file: {sid} ({name})")
-        if res.ok and res.body:
+        if not (res.ok and res.body):
+            probe["candidates"].append({"sid": sid, "ok": False, "status": res.status})
+            continue
+        text = res.text()
+        parsed = climo.parse_ghcn_daily(text)
+        lines = text.splitlines()
+        probe["candidates"].append({
+            "sid": sid, "ok": True, "status": res.status, "bytes": res.size,
+            "n_lines": len(lines), "n_parsed_days": len(parsed),
+            "first_lines_raw": [ln[:200] for ln in lines[:5]],
+            "first_lines_repr": [repr(ln[:200]) for ln in lines[:5]],
+            "sample_line_5000": repr(lines[5000]) if len(lines) > 5000 else None,
+        })
+        write_json(outdir / "ghcn_probe.json", probe)
+        if parsed:
             return {"station_id": sid, "name": name, "url": url,
                     "sha256": res.sha256, "bytes": res.size,
-                    "data": climo.parse_ghcn_daily(res.text())}
+                    "data": parsed}
+    write_json(outdir / "ghcn_probe.json", probe)
     note_irregularity("error", "ncei", "No GHCN-Daily station file could be retrieved.",
                       {"candidates": [c[0] for c in GHCN_CANDIDATES]})
     return None
@@ -980,7 +1002,7 @@ def main():
     enso = fetch_enso()
 
     log("[5/7] NCEI climatology archives")
-    ghcn = fetch_ghcn()
+    ghcn = fetch_ghcn(outdir)
     if ghcn:
         days = ghcn["data"]
         keys = sorted(days)
