@@ -2,29 +2,21 @@ SFWeather pipeline - 2026-09-17
 [1/7] ZIP centroid (U.S. Census Bureau)
       94122 centroid: 37.7605, -122.4839 (verified)
 [2/7] NWS (api.weather.gov)
+[3/7] CPC outlooks
+[4/7] ENSO / ONI
 FATAL: uncaught exception
 Traceback (most recent call last):
-  File "/home/runner/work/SFWeather/SFWeather/pipeline/main.py", line 1054, in <module>
+  File "/home/runner/work/SFWeather/SFWeather/pipeline/main.py", line 1065, in <module>
     sys.exit(main())
              ^^^^^^
-  File "/home/runner/work/SFWeather/SFWeather/pipeline/main.py", line 920, in main
-    nws = fetch_nws(lat, lon)
-          ^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/SFWeather/SFWeather/pipeline/main.py", line 418, in fetch_nws
-    p, pres = fetchlib.get_json(p_url)
-              ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/SFWeather/SFWeather/pipeline/lib_fetch.py", line 125, in get_json
-    res = get(url, accept="application/geo+json, application/ld+json, application/json",
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/SFWeather/SFWeather/pipeline/lib_fetch.py", line 98, in get
-    req = urllib.request.Request(url, headers=hdrs, method="GET")
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/urllib/request.py", line 322, in __init__
-    self.full_url = url
-    ^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/urllib/request.py", line 348, in full_url
-    self._parse()
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/urllib/request.py", line 377, in _parse
-    raise ValueError("unknown url type: %r" % self.full_url)
-ValueError: unknown url type: 'c8466ee2-1db3-44b4-ba2f-cd12113c2643'
+  File "/home/runner/work/SFWeather/SFWeather/pipeline/main.py", line 937, in main
+    enso = fetch_enso()
+           ^^^^^^^^^^^^
+  File "/home/runner/work/SFWeather/SFWeather/pipeline/main.py", line 714, in fetch_enso
+    out["oni_series"] = {f"{y:04d}-{m:02d}": round(v, 3) for (y, m) in sorted(oni)}
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/SFWeather/SFWeather/pipeline/main.py", line 714, in <dictcomp>
+    out["oni_series"] = {f"{y:04d}-{m:02d}": round(v, 3) for (y, m) in sorted(oni)}
+                                                   ^
+NameError: name 'v' is not defined
 
