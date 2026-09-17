@@ -25,7 +25,7 @@
   },
   "forecast_daily": {
     "updated": null,
-    "generated_at": "2026-09-17T05:17:30+00:00",
+    "generated_at": "2026-09-17T05:20:30+00:00",
     "valid_times": "2026-09-16T14:00:00+00:00/P7DT11H",
     "elevation_m": 45.1104,
     "periods": [
@@ -273,7 +273,7 @@
   },
   "forecast_hourly": {
     "updated": null,
-    "generated_at": "2026-09-17T05:17:30+00:00",
+    "generated_at": "2026-09-17T05:20:30+00:00",
     "elevation_m": 45.1104,
     "periods": [
       {
@@ -5027,7 +5027,7 @@
       "elevation_m": 62.419992,
       "distance_m": 17818.193337506,
       "observation": {
-        "timestamp": "2026-09-17T04:45:00+00:00",
+        "timestamp": "2026-09-17T05:00:00+00:00",
         "temperature_c": null,
         "dewpoint_c": null,
         "relative_humidity_pct": null,

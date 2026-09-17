@@ -1,9 +1,9 @@
 {
-  "generated_utc": "2026-09-17T05:19:31Z",
+  "generated_utc": "2026-09-17T05:23:47Z",
   "counts": {
     "total": 5,
-    "errors": 1,
-    "warnings": 3,
+    "errors": 2,
+    "warnings": 2,
     "info": 1
   },
   "irregularities": [
@@ -37,61 +37,23 @@
     },
     {
       "severity": "error",
-      "area": "climatology",
-      "message": "The GHCN-Daily station file parsed to zero usable rows; the rain climatology is unavailable.",
+      "area": "ncei",
+      "message": "No GHCN-Daily station file could be retrieved.",
       "evidence": {
-        "station": "USW00023272",
-        "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
-        "bytes": 7488380
+        "candidates": [
+          "USW00023272",
+          "USW00023234",
+          "USC00047899"
+        ]
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "area": "climatology",
-      "message": "123 calendar dates have fewer than 25 years of data in the 1991-2020 window; their percentages are less reliable.",
+      "message": "Climatology could not be computed because an NCEI archive was unavailable.",
       "evidence": {
-        "dates": [
-          "10-01",
-          "10-02",
-          "10-03",
-          "10-04",
-          "10-05",
-          "10-06",
-          "10-07",
-          "10-08",
-          "10-09",
-          "10-10",
-          "10-11",
-          "10-12",
-          "10-13",
-          "10-14",
-          "10-15",
-          "10-16",
-          "10-17",
-          "10-18",
-          "10-19",
-          "10-20",
-          "10-21",
-          "10-22",
-          "10-23",
-          "10-24",
-          "10-25",
-          "10-26",
-          "10-27",
-          "10-28",
-          "10-29",
-          "10-30",
-          "10-31",
-          "11-01",
-          "11-02",
-          "11-03",
-          "11-04",
-          "11-05",
-          "11-06",
-          "11-07",
-          "11-08",
-          "11-09"
-        ]
+        "ghcn": false,
+        "gsod": true
       }
     }
   ]
