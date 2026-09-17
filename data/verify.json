@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T19:42:47Z",
+  "generated_utc": "2026-09-17T20:59:30Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,8 +9,8 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 20,
-    "passed": 20,
+    "total": 21,
+    "passed": 21,
     "failed": 0,
     "warnings": 0,
     "failed_checks": [],
@@ -86,6 +86,13 @@
       "title": "The published daily high and max wind are the max of the NWS hourly grid",
       "status": "pass",
       "detail": "2026-09-17: high 65 vs hourly max 65; wind 8.0 vs hourly max 8.0",
+      "evidence": null
+    },
+    {
+      "id": "forecast-aggregation-contract",
+      "title": "The forecast dataset records the timezone and the exact aggregation method for each requested field",
+      "status": "pass",
+      "detail": "timezone=America/Los_Angeles; required methods present=['humidity', 'rain_amount', 'rain_chance', 'temperature', 'timezone', 'wind']",
       "evidence": null
     },
     {

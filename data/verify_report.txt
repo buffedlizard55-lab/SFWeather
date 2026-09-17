@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-17T19:42:47Z
+generated_utc: 2026-09-17T20:59:30Z
 
-checks: 20 passed, 0 failed, 0 warning(s)  (of 20)
+checks: 21 passed, 0 failed, 0 warning(s)  (of 21)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         104 recorded fetches
@@ -15,6 +15,8 @@ checks: 20 passed, 0 failed, 0 warning(s)  (of 20)
         latest official ONI: JJA 2026 1.8 C
 [PASS] nws-daily-aggregation: The published daily high and max wind are the max of the NWS hourly grid
         2026-09-17: high 65 vs hourly max 65; wind 8.0 vs hourly max 8.0
+[PASS] forecast-aggregation-contract: The forecast dataset records the timezone and the exact aggregation method for each requested field
+        timezone=America/Los_Angeles; required methods present=['humidity', 'rain_amount', 'rain_chance', 'temperature', 'timezone', 'wind']
 [PASS] tier-honesty: No day is labelled an NWS forecast outside the official horizon
         0 offending day(s)
 [PASS] calendar-completeness: The scoreboard covers every day from 2026-10-01 to 2027-01-31

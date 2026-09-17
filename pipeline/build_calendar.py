@@ -58,15 +58,37 @@ def parse_wind(s):
     return max(nums) if nums else None
 
 
-def daily_from_hourly(periods, tz_name="America/Los_Angeles"):
-    """Aggregate the NWS hourly gridded forecast into local calendar days."""
+def timezone_for(tz_name="America/Los_Angeles"):
+    """Return the named IANA timezone and whether it was resolved exactly.
+
+    Forecast periods are UTC timestamps.  A fixed Pacific offset is tempting,
+    but it mislabels winter periods after the daylight-saving transition.  The
+    NWS point response supplies the IANA name, and Python 3.11 ships the IANA
+    database on the GitHub runner.  The fixed offset is retained only as a
+    defensive fallback and is surfaced to the caller as ``tz_ok=False``.
+    """
     try:
         from zoneinfo import ZoneInfo
-        tz = ZoneInfo(tz_name)
-        tz_ok = True
+        return ZoneInfo(tz_name), True
     except Exception:  # noqa: BLE001
-        tz = dt.timezone(dt.timedelta(hours=-8))
-        tz_ok = False
+        return dt.timezone(dt.timedelta(hours=-8)), False
+
+
+def local_date_from_iso(value, tz_name="America/Los_Angeles"):
+    """Convert an ISO timestamp to a local date using the named NWS timezone."""
+    if not value:
+        return None
+    try:
+        timestamp = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    tz, _ = timezone_for(tz_name)
+    return timestamp.astimezone(tz).date()
+
+
+def daily_from_hourly(periods, tz_name="America/Los_Angeles"):
+    """Aggregate the NWS hourly gridded forecast into local calendar days."""
+    tz, tz_ok = timezone_for(tz_name)
     days = {}
     for p in periods:
         st = p.get("start_time")
@@ -294,14 +316,23 @@ def main():
     meta = climo.get("meta", {})
 
     hourly = (nws.get("forecast_hourly") or {}).get("periods") or []
-    nws_days, tz_ok = daily_from_hourly(hourly)
+    point_timezone = (nws.get("point") or {}).get("timezone") or "America/Los_Angeles"
+    nws_days, tz_ok = daily_from_hourly(hourly, point_timezone)
     if not tz_ok:
-        print("  WARNING: zoneinfo unavailable; used fixed -08:00 offset.")
+        print("  WARNING: named timezone unavailable; used fixed -08:00 fallback.")
     _hourly_meta = nws.get("forecast_hourly") or {}
     nws_updated = _hourly_meta.get("updated") or _hourly_meta.get("generated_at")
     hourly_url = (nws.get("forecast_hourly") or {}).get("source_url")
     daily_url = (nws.get("forecast_daily") or {}).get("source_url")
     human_url = (nws.get("forecast_daily") or {}).get("human_url")
+    aggregation = {
+        "timezone": point_timezone,
+        "temperature": "daily high/low are the maximum/minimum hourly NWS grid temperatures",
+        "humidity": "daily humidity is the mean of available hourly NWS relative humidity values; min/max are also published",
+        "rain_chance": "daily rain chance is the maximum available hourly NWS probability of precipitation (POP), not a new probability model",
+        "rain_amount": "daily rain amount is the sum of available hourly NWS quantitative precipitation forecast (QPF) values; missing QPF stays empty",
+        "wind": "daily wind and gust are the maximum available hourly NWS grid values",
+    }
 
     cpc_records = collect_cpc(cpc, SEASON_START.year)
     cpc_maps = {m["slug"]: m for m in cpc.get("maps", []) if m.get("ok")}
@@ -465,15 +496,10 @@ def main():
     daily_periods = (nws.get("forecast_daily") or {}).get("periods") or []
     narrative = {}
     for p_ in daily_periods:
-        st = p_.get("start_time")
-        if not st:
+        local_day = local_date_from_iso(p_.get("start_time"), point_timezone)
+        if local_day is None:
             continue
-        try:
-            t_ = dt.datetime.fromisoformat(st.replace("Z", "+00:00")).astimezone(
-                dt.timezone(dt.timedelta(hours=-7)))
-        except ValueError:
-            continue
-        narrative.setdefault(t_.date().isoformat(), []).append({
+        narrative.setdefault(local_day.isoformat(), []).append({
             "name": p_.get("name"),
             "is_daytime": p_.get("is_daytime"),
             "temperature_f": p_.get("temperature_f"),
@@ -510,6 +536,7 @@ def main():
         "last_day": current_days[-1]["date"] if current_days else None,
         "inside_season_window": bool([d_ for d_ in current_days
                                       if SEASON_START.isoformat() <= d_["date"] <= SEASON_END.isoformat()]),
+        "aggregation": aggregation,
         "sources": [
             {"label": "NWS hourly gridded forecast (api.weather.gov)", "url": hourly_url},
             {"label": "NWS 7-day forecast for this point (weather.gov)", "url": human_url},
@@ -520,7 +547,11 @@ def main():
     }
 
     out = {
-        "generated_utc": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        # Keep the source-run timestamp, rather than stamping a later local
+        # transform as if it fetched NOAA again.  In the normal workflow this
+        # is only minutes before the build; during offline rebuilds it prevents
+        # the freshness banner from overstating data recency.
+        "generated_utc": run.get("generated_utc") or dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "target": run.get("target", {}),
         "season": {"start": SEASON_START.isoformat(), "end": SEASON_END.isoformat()},
         "normals_period": run.get("normals_period", [1991, 2020]),
@@ -528,6 +559,7 @@ def main():
             "nws": "Day is inside the official NWS gridded forecast horizon. Values are the actual NWS forecast.",
             "climatology": "Beyond the official forecast horizon. Values are 1991-2020 observed statistics for this calendar date - NOT a forecast.",
         },
+        "forecast_aggregation": aggregation,
         "nws_window": {
             "first_day": min(nws_days) if nws_days else None,
             "last_day": max(nws_days) if nws_days else None,

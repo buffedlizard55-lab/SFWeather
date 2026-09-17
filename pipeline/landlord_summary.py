@@ -88,13 +88,17 @@ def main():
                       or "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml")
     diagnostic_status = enso_cal.get("diagnostic_status")
 
-    # 5. CPC outlooks for our window - filter to relevant valid seasons
-    relevant_cpc = []
-    for rec in calendar.get("cpc", {}).get("records", []):
-        vs = rec.get("valid_season", "")
-        # Keep outlooks that cover Oct 2026 - Jan 2027
-        if vs and any(x in vs for x in ["OND 2026", "NDJ", "DJF", "Oct 2026", "Nov 2026", "Dec 2026", "Jan 2027", "SON 2026"]):
-            relevant_cpc.append(rec)
+    # 5. CPC outlooks for our window - match exact valid periods only.
+    # A substring test such as `"NDJ" in vs` would pull an older NDJ issuance
+    # into a future-season summary if the archive contains multiple years.
+    relevant_periods = {
+        "SON 2026", "OND 2026", "NDJ 2026-2027", "DJF 2026-2027",
+        "JFM 2027", "Oct 2026", "Nov 2026", "Dec 2026", "Jan 2027",
+    }
+    relevant_cpc = [
+        rec for rec in calendar.get("cpc", {}).get("records", [])
+        if rec.get("valid_season") in relevant_periods
+    ]
 
     # Sort by issued date descending, keep most recent per period
     relevant_cpc_sorted = sorted(relevant_cpc, key=lambda r: (r.get("issued") or "", r.get("valid_season") or ""), reverse=True)
@@ -189,7 +193,7 @@ def main():
             "detail": f"NOAA's published ONI product shows {oni_when} at {latest_oni.get('oni_c')}°C = {phase}"
                       + (f", {str(latest_oni.get('strength')).replace('_', ' ')} by CPC's own strength bands" if latest_oni.get("strength") else "")
                       + (f". CPC Alert System Status: {diagnostic_status}." if diagnostic_status else ".")
-                      + f" In El Niño years, Oct-Jan mean was {enso_strat.get('el_nino', {}).get('mean')} in vs {enso_strat.get('la_nina', {}).get('mean')} in for La Niña (n={enso_strat.get('el_nino', {}).get('n')} El Niño seasons). El Niño tilts toward wetter, but spread is wide: wettest El Niño 22.82 in, driest El Niño 7.27 in.",
+                      + f" In El Niño years, Oct-Jan mean was {enso_strat.get('el_nino', {}).get('mean')} in vs {enso_strat.get('la_nina', {}).get('mean')} in for La Niña (n={enso_strat.get('el_nino', {}).get('n')} El Niño seasons). El Niño tilts toward wetter, but spread is wide: wettest El Niño {enso_strat.get('el_nino', {}).get('max')} in, driest El Niño {enso_strat.get('el_nino', {}).get('min')} in.",
             "source": "NOAA CPC official ONI product (oni.ascii.txt)",
             "source_url": oni_url
         })
@@ -197,11 +201,18 @@ def main():
     # CPC outlooks
     for rec in relevant_cpc:
         if rec.get("valid_season") in ["OND 2026", "NDJ 2026-2027", "DJF 2026-2027", "JFM 2027"]:
+            variable_note = (
+                "For precipitation, 'Above median' means CPC favors an above-median "
+                "total for the period."
+                if rec.get("variable") == "prcp" else
+                "For temperature, 'Above normal' means CPC favors above-normal "
+                "average temperature for the period."
+            )
             action_items.append({
                 "category": "Official CPC outlook",
                 "priority": "medium",
                 "title": f"CPC {rec.get('valid_season')}: {rec.get('category_label')} ({rec.get('prob')}%) - {rec.get('variable')}",
-                "detail": f"Issued {rec.get('issued')}, forecast date {rec.get('fcst_date')}. This is a probability for the whole 3-month period, not a daily forecast. Category: {rec.get('category_label')} with {rec.get('prob')}% probability. For precipitation, 'Above median' means CPC favors above-normal total for the period.",
+                "detail": f"Issued {rec.get('issued')}, forecast date {rec.get('fcst_date')}. This is a probability for the whole 3-month period, not a daily forecast. Category: {rec.get('category_label')} with {rec.get('prob')}% probability. {variable_note}",
                 "source": rec.get("url"),
                 "source_url": rec.get("url")
             })
@@ -230,7 +241,9 @@ def main():
 
     # Final landlord JSON
     landlord = {
-        "generated_utc": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        # This is a transform of the calendar/source snapshot, not a new
+        # network fetch.  Preserve the source-run timestamp for honest freshness.
+        "generated_utc": calendar.get("generated_utc") or run.get("generated_utc") or dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "target": run.get("target", {}),
         "season": calendar.get("season", {}),
         "normals_period": calendar.get("normals_period", [1991, 2020]),

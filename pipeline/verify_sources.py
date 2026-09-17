@@ -50,14 +50,28 @@ def main() -> int:
 
     hosts = {}
     bad = []
+    malformed = []
     for e in entries:
         url = e.get("url")
         if not url:
+            malformed.append(("missing URL", e))
             continue
-        h = urlparse(url).netloc.lower()
+        parsed = urlparse(url)
+        h = parsed.netloc.lower()
         hosts[h] = hosts.get(h, 0) + 1
+        if parsed.scheme != "https":
+            malformed.append(("URL is not HTTPS", e))
         if not host_allowed(h):
             bad.append((url, h, e.get("http_status")))
+        # A successful fetch must carry enough evidence to be rechecked.  A
+        # failed optional fetch is reported in the manifest and handled by the
+        # quality gate; it is not silently treated as a verified source.
+        if e.get("ok"):
+            status = e.get("http_status")
+            if not (isinstance(status, int) and 200 <= status < 300
+                    and isinstance(e.get("bytes"), int) and e.get("bytes") > 0
+                    and e.get("sha256")):
+                malformed.append(("successful fetch lacks HTTP/size/hash evidence", e))
 
     print(f"  verified {len(entries)} fetch records across {len(hosts)} hosts")
     for h, n in sorted(hosts.items(), key=lambda kv: -kv[1]):
@@ -69,9 +83,14 @@ def main() -> int:
         print("\n  NON-VETTED HOSTS DETECTED:")
         for url, h, st in bad:
             print(f"    - {h}  (status {st})  {url}")
+    if malformed:
+        print("\n  MALFORMED PROVENANCE RECORDS DETECTED:")
+        for reason, entry in malformed:
+            print(f"    - {reason}: {entry.get('url')}")
+    if bad or malformed:
         return 1
 
-    print("\n  All fetches resolved to vetted official hosts.")
+    print("\n  All fetches resolved to vetted official HTTPS hosts with evidence.")
     return 0
 
 

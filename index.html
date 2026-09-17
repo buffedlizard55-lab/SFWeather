@@ -44,6 +44,8 @@
 
   <div id="content" hidden>
 
+    <section id="data-status" class="data-status" aria-live="polite"></section>
+
     <!-- ============================ landlord executive summary ==================== -->
     <section id="landlord" class="section">
       <h2>Landlord dashboard — what you actually need to know</h2>
@@ -372,9 +374,10 @@
           <li><strong>CPC back-testing</strong> — score past CPC outlooks against what actually happened at 94122 to say “when CPC tips above-median for OND here, it verified X% of the time”.</li>
           <li><strong>Atmospheric river awareness</strong> — parse AR language from NWS Area Forecast Discussion (already fetched) to add signal for long-duration events.</li>
           <li><strong>NWS forecast verification</strong> — store each night’s forecast and score vs observations.</li>
-          <li><strong>Humidity for climatology days</strong> now comes from the official NCEI hourly
-            temperature and dew-point normals (Magnus derivation) where that file is available; a
-            per-date rather than per-month value would need the full hourly ISD archive.</li>
+          <li><strong>Humidity for climatology days</strong> is not an observed NOAA relative-humidity
+            normal. Where available, it is a labelled per-calendar-date derivation from official NCEI
+            hourly temperature and dew-point normals (Magnus formula); if that source is unavailable,
+            the field remains empty.</li>
           <li><strong>Wind record still comes from SFO</strong> (KSFO), ~10 miles away: the closest
             long daily wind record. Hourly ISD at a nearer site would tighten it.</li>
           <li>See full list in <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/LIMITATIONS.md" target="_blank" rel="noopener">LIMITATIONS.md</a></li>

@@ -35,6 +35,14 @@
     "nws": "Day is inside the official NWS gridded forecast horizon. Values are the actual NWS forecast.",
     "climatology": "Beyond the official forecast horizon. Values are 1991-2020 observed statistics for this calendar date - NOT a forecast."
   },
+  "forecast_aggregation": {
+    "timezone": "America/Los_Angeles",
+    "temperature": "daily high/low are the maximum/minimum hourly NWS grid temperatures",
+    "humidity": "daily humidity is the mean of available hourly NWS relative humidity values; min/max are also published",
+    "rain_chance": "daily rain chance is the maximum available hourly NWS probability of precipitation (POP), not a new probability model",
+    "rain_amount": "daily rain amount is the sum of available hourly NWS quantitative precipitation forecast (QPF) values; missing QPF stays empty",
+    "wind": "daily wind and gust are the maximum available hourly NWS grid values"
+  },
   "nws_window": {
     "first_day": "2026-09-17",
     "last_day": "2026-09-23",
@@ -4283,6 +4291,14 @@
     "first_day": "2026-09-17",
     "last_day": "2026-09-23",
     "inside_season_window": false,
+    "aggregation": {
+      "timezone": "America/Los_Angeles",
+      "temperature": "daily high/low are the maximum/minimum hourly NWS grid temperatures",
+      "humidity": "daily humidity is the mean of available hourly NWS relative humidity values; min/max are also published",
+      "rain_chance": "daily rain chance is the maximum available hourly NWS probability of precipitation (POP), not a new probability model",
+      "rain_amount": "daily rain amount is the sum of available hourly NWS quantitative precipitation forecast (QPF) values; missing QPF stays empty",
+      "wind": "daily wind and gust are the maximum available hourly NWS grid values"
+    },
     "sources": [
       {
         "label": "NWS hourly gridded forecast (api.weather.gov)",

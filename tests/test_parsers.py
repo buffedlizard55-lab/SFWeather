@@ -41,6 +41,7 @@ sys.path.insert(0, os.path.join(ROOT, "pipeline"))
 
 import climo  # noqa: E402
 import main as pipeline_main  # noqa: E402
+import build_calendar  # noqa: E402
 
 RESULTS = []
 
@@ -132,7 +133,29 @@ def independent_rh(temp_c, dew_c):
 
 
 # --------------------------------------------------------------------------- #
-# 1. official ONI parsing
+# 1. NWS local-time aggregation
+# --------------------------------------------------------------------------- #
+
+section("NWS hourly timestamps -> local calendar days")
+
+# A fixed -07:00 conversion incorrectly moves this winter timestamp into Jan 1.
+# The NWS point metadata supplies America/Los_Angeles, which is UTC-8 on Jan 1.
+winter_stamp = "2027-01-01T07:30:00+00:00"
+check("winter UTC timestamp stays on the prior Pacific calendar date",
+      build_calendar.local_date_from_iso(winter_stamp, "America/Los_Angeles").isoformat()
+      == "2026-12-31",
+      str(build_calendar.local_date_from_iso(winter_stamp, "America/Los_Angeles")))
+
+# In summer the same UTC hour has the opposite offset; this pins the code to an
+# IANA timezone rather than either Pacific offset.
+summer_stamp = "2026-07-01T07:30:00+00:00"
+check("summer UTC timestamp uses daylight-saving Pacific time",
+      build_calendar.local_date_from_iso(summer_stamp, "America/Los_Angeles").isoformat()
+      == "2026-07-01",
+      str(build_calendar.local_date_from_iso(summer_stamp, "America/Los_Angeles")))
+
+# --------------------------------------------------------------------------- #
+# 2. official ONI parsing
 # --------------------------------------------------------------------------- #
 
 section("official ONI (CPC oni.ascii.txt)")

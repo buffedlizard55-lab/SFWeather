@@ -28,6 +28,8 @@ import statistics
 import sys
 from pathlib import Path
 
+from build_calendar import local_date_from_iso
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 
@@ -208,8 +210,13 @@ def main() -> int:
             st = p.get("start_time")
             if not st:
                 continue
-            day = st[:10]
-            by_day.setdefault(day, []).append(p)
+            tz_name = ((cal.get("forecast_aggregation") or {}).get("timezone")
+                       or (nws.get("point") or {}).get("timezone")
+                       or "America/Los_Angeles")
+            local_day = local_date_from_iso(st, tz_name)
+            if local_day is None:
+                continue
+            by_day.setdefault(local_day.isoformat(), []).append(p)
         sample = cf_days[0]
         hours = by_day.get(sample["date"], [])
         hi = [p["temperature_f"] for p in hours if p.get("temperature_f") is not None]
@@ -238,6 +245,17 @@ def main() -> int:
         ledger.check("nws-daily-aggregation",
                      "The published daily high and max wind are the max of the NWS hourly grid",
                      False, "no current-forecast days in the dataset", severity="warn")
+
+    aggregation = cal.get("forecast_aggregation") or {}
+    required_aggregation = {"timezone", "temperature", "humidity", "rain_chance", "rain_amount", "wind"}
+    point_timezone = (nws.get("point") or {}).get("timezone") or "America/Los_Angeles"
+    ledger.check("forecast-aggregation-contract",
+                 "The forecast dataset records the timezone and the exact aggregation method for each requested field",
+                 required_aggregation.issubset(aggregation)
+                 and aggregation.get("timezone") == point_timezone
+                 and (cf.get("aggregation") or {}).get("timezone") == point_timezone,
+                 f"timezone={aggregation.get('timezone')}; required methods present="
+                 f"{sorted(required_aggregation.intersection(aggregation))}")
 
     # ------------------------------------------- 4. tier honesty & no invention
     days = cal.get("days") or []

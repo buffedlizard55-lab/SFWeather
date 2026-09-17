@@ -77,12 +77,12 @@ retrieval time of the exact file.
 | Workflow gate | `summary.failed > 0` → **the run publishes nothing**. It commits diagnostics only ("refresh NOT published") and the site keeps the last verified dataset. |
 | `data/provenance.json` | The full fetch log: every URL, status, size, SHA-256, timestamp. |
 | `data/verify.json` + `verify_report.txt` | The claim ledger as machine-readable JSON and as plain text. |
-| `tests/test_parsers.py` | 53 offline assertions (stdlib only, no network) on the parsing/derivation code — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, and an end-to-end aggregation over a synthetic file with hand-computable expected values. |
+| `tests/test_parsers.py` | 55 offline assertions (stdlib only, no network) on the parsing/derivation code — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, and an end-to-end aggregation over a synthetic file with hand-computable expected values. |
 | `tests/smoke.js` (`npm test`) | Renders the whole page in jsdom against the committed data and fails on an empty section, a broken day dialog or a broken CSV export. |
 
 **Every forecast day can be checked by hand:** open the day's dialog, follow the
 source link, and compare. The site's *Verification* section lists all 17 recorded
-claims (20 checks) with their evidence, and *Irregularities* lists anything the
+claims (21 checks) with their evidence, and *Irregularities* lists anything the
 pipeline flagged rather than smoothed over.
 
 ---

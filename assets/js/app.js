@@ -133,6 +133,44 @@ async function loadJSON(name) {
   return res.json();
 }
 
+/* --------------------------------------------------------------- freshness */
+
+function renderDataStatus(cal, quality, prov) {
+  const box = $('#data-status');
+  if (!box) return;
+  const generated = Date.parse((cal || {}).generated_utc || '');
+  const now = Date.now();
+  const ageHours = Number.isFinite(generated) ? (now - generated) / 3600000 : null;
+  const maxAgeHours = 36;
+  const fetches = (prov && prov.entries) || [];
+  const failed = fetches.filter(e => e && e.ok === false).length;
+  const irregularities = (quality && quality.irregularities) || [];
+  const timestamp = (cal || {}).generated_utc || DASH;
+  const classes = Number.isFinite(ageHours) && ageHours >= 0 && ageHours <= maxAgeHours
+    ? 'callout callout-ok' : 'callout callout-warn';
+  let headline;
+  let detail;
+  if (!Number.isFinite(ageHours)) {
+    headline = 'Freshness could not be verified';
+    detail = 'The dataset has no valid UTC generation timestamp. Use the official NWS links below for the current forecast.';
+  } else if (ageHours < 0) {
+    headline = 'Freshness could not be verified';
+    detail = `The dataset timestamp (${timestamp}) is in the future relative to this browser clock. Use weather.gov directly until the timestamps agree.`;
+  } else if (ageHours > maxAgeHours) {
+    headline = `Data snapshot is ${ageHours.toFixed(1)} hours old`;
+    detail = `This page cannot call NOAA from your browser. The last committed dataset was generated ${timestamp}; the forecast may be stale. Use weather.gov directly for current warnings and forecasts.`;
+  } else {
+    headline = `Official data snapshot is ${ageHours.toFixed(1)} hours old`;
+    detail = `Fetched/build timestamp: ${timestamp} UTC. The nightly job is expected to refresh this page; for life-safety decisions use weather.gov directly.`;
+  }
+  const summary = `${fetches.length} recorded source fetches · ${failed} failed fetch${failed === 1 ? '' : 'es'} · ${irregularities.length} flagged irregularit${irregularities.length === 1 ? 'y' : 'ies'}`;
+  box.append(el('div', { class: classes }, [
+    el('strong', { text: headline }),
+    el('span', { class: 'data-status-detail', text: detail }),
+    el('span', { class: 'data-status-meta', text: summary })
+  ]));
+}
+
 /* --------------------------------------------------------------- landlord */
 
 function renderLandlord(ll, cal) {
@@ -419,7 +457,7 @@ function renderSeason(cal) {
 
   /* CPC seasonal outlooks -------------------------------------------- */
   const seasonal = (cal.cpc.records || []).filter(r => r.kind === 'season' || r.kind === 'month');
-  const wanted = ['SON 2026', 'OND 2026', 'NDJ 2026', 'DJF 2026'];
+  const wanted = ['SON 2026', 'OND 2026', 'NDJ 2026-2027', 'DJF 2026-2027', 'JFM 2027'];
   const rows = [];
   const periodCell = (label, ...recs) => {
     const issued = recs.filter(Boolean).map(r => r.issued).filter(Boolean).sort().pop();
@@ -549,7 +587,7 @@ function renderNow(nws, cal) {
         'part of this site that is a forecast rather than a climatology.' }));
       cfBox.append(table(
         [{ label: 'Day' }, { label: 'High / low', num: true }, { label: 'Humidity (mean)', num: true },
-         { label: 'Rain chance', num: true }, { label: 'Rain amount', num: true },
+         { label: 'Rain chance (max hourly POP)', num: true }, { label: 'Rain amount (hourly QPF)', num: true },
          { label: 'Wind max', num: true }, { label: 'Gust max', num: true }],
         cfDays.map(d => [
           el('div', {}, [el('strong', { text: d.date }), el('br'),
@@ -572,8 +610,8 @@ function renderNow(nws, cal) {
         'Issued ', document.createTextNode(cf.forecast_updated || DASH), ' \u00b7 ',
         link((cf.sources || [])[1] && (cf.sources || [])[1].url, 'Open on weather.gov'),
         ' \u00b7 ', link((cf.sources || [])[0] && (cf.sources || [])[0].url, 'NWS API endpoint'),
-        document.createTextNode(' \u00b7 daily values are simple maxima/sums of the hourly grid, ' +
-          'nothing else')
+        document.createTextNode(' \u00b7 rain chance is the maximum hourly NWS POP; rain amount is the sum of hourly NWS QPF; ' +
+          'wind/gust are hourly maxima')
       ]));
     } else {
       cfBox.append(el('p', { class: 'empty', text: 'No current NWS forecast was captured this run.' }));
@@ -748,8 +786,8 @@ function openDay(d) {
       ? el('span', { class: 'fine', text: 'not available from official normals' })
       : el('span', {}, [document.createTextNode(pct(d.humidity_pct, 0)),
           d.humidity_basis ? el('span', { class: 'fine', text: ' \u00b7 ' + d.humidity_basis }) : null].filter(Boolean))],
-    ['Chance of rain', pct(d.rain_chance_pct, 0)],
-    ['Rain amount', d.rain_amount_in === null ? null : Number(d.rain_amount_in).toFixed(2) + ' in'],
+    [isForecast ? 'Chance of rain (max hourly POP)' : 'Chance of rain (1991–2020)', pct(d.rain_chance_pct, 0)],
+    [isForecast ? 'Rain amount (hourly QPF sum)' : 'Rain amount (1991–2020 mean)', d.rain_amount_in === null ? null : Number(d.rain_amount_in).toFixed(2) + ' in'],
     ['Max wind', d.wind_max_mph === null ? null : n(d.wind_max_mph, 0) + ' mph'],
     ['Max gust', d.gust_max_mph === null ? null : n(d.gust_max_mph, 0) + ' mph']
   ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), kvCell(v)]))));
@@ -1142,6 +1180,7 @@ async function boot() {
     const idx = MONTHS.findIndex(m => (calendar.days || []).some(d => d.date.startsWith(m.key) && d.tier === 'nws'));
     state.month = idx >= 0 ? MONTHS[idx].key : MONTHS[0].key;
 
+    renderDataStatus(calendar, quality, prov);
     if (landlord) renderLandlord(landlord, calendar);
     renderReality(calendar);
     renderLocation(run);
