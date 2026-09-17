@@ -40,8 +40,10 @@
     "temperature": "daily high/low are the maximum/minimum hourly NWS grid temperatures",
     "humidity": "daily humidity is the mean of available hourly NWS relative humidity values; min/max are also published",
     "rain_chance": "daily rain chance is the maximum available hourly NWS probability of precipitation (POP), not a new probability model",
-    "rain_amount": "daily rain amount is the sum of available hourly NWS quantitative precipitation forecast (QPF) values; missing QPF stays empty",
-    "wind": "daily wind and gust are the maximum available hourly NWS grid values"
+    "rain_amount": "daily rain amount is the sum of available hourly NWS quantitative precipitation forecast (QPF) values. The /forecast/hourly product returned no QPF for this grid cell, so it falls back to the NWS gridpoint quantitativePrecipitation series: each value is an accumulation over a 3-6 hour interval, and where an interval crosses local midnight the total is split between the two days in proportion to the hours each gets. If neither product has a value the cell stays empty - it is never assumed to be zero.",
+    "wind": "daily wind is the maximum available hourly NWS grid value. The /forecast/hourly product returned no wind gusts for this grid cell, so gusts fall back to the NWS gridpoint windGust series: the daily figure is the maximum gust over the hours falling in that local day, converted from km/h to mph.",
+    "gust_source": "https://api.weather.gov/gridpoints/MTR/82,105",
+    "qpf_source": "https://api.weather.gov/gridpoints/MTR/82,105"
   },
   "nws_window": {
     "first_day": "2026-09-17",
@@ -4296,13 +4298,19 @@
       "temperature": "daily high/low are the maximum/minimum hourly NWS grid temperatures",
       "humidity": "daily humidity is the mean of available hourly NWS relative humidity values; min/max are also published",
       "rain_chance": "daily rain chance is the maximum available hourly NWS probability of precipitation (POP), not a new probability model",
-      "rain_amount": "daily rain amount is the sum of available hourly NWS quantitative precipitation forecast (QPF) values; missing QPF stays empty",
-      "wind": "daily wind and gust are the maximum available hourly NWS grid values"
+      "rain_amount": "daily rain amount is the sum of available hourly NWS quantitative precipitation forecast (QPF) values. The /forecast/hourly product returned no QPF for this grid cell, so it falls back to the NWS gridpoint quantitativePrecipitation series: each value is an accumulation over a 3-6 hour interval, and where an interval crosses local midnight the total is split between the two days in proportion to the hours each gets. If neither product has a value the cell stays empty - it is never assumed to be zero.",
+      "wind": "daily wind is the maximum available hourly NWS grid value. The /forecast/hourly product returned no wind gusts for this grid cell, so gusts fall back to the NWS gridpoint windGust series: the daily figure is the maximum gust over the hours falling in that local day, converted from km/h to mph.",
+      "gust_source": "https://api.weather.gov/gridpoints/MTR/82,105",
+      "qpf_source": "https://api.weather.gov/gridpoints/MTR/82,105"
     },
     "sources": [
       {
         "label": "NWS hourly gridded forecast (api.weather.gov)",
         "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly"
+      },
+      {
+        "label": "NWS gridpoint data - windGust and QPF series (api.weather.gov)",
+        "url": "https://api.weather.gov/gridpoints/MTR/82,105"
       },
       {
         "label": "NWS 7-day forecast for this point (weather.gov)",
@@ -4439,9 +4447,11 @@
         "humidity_min_pct": 86,
         "humidity_max_pct": 97,
         "rain_chance_pct": 0,
-        "rain_amount_in": null,
+        "rain_amount_in": 0.0,
+        "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
         "wind_max_mph": 8.0,
-        "gust_max_mph": null,
+        "gust_max_mph": 11.5,
+        "gust_basis": "NWS gridpoint windGust series (max over the local day)",
         "hours_covered": 10,
         "periods": [
           {
@@ -4475,9 +4485,11 @@
         "humidity_min_pct": 87,
         "humidity_max_pct": 97,
         "rain_chance_pct": 1,
-        "rain_amount_in": null,
+        "rain_amount_in": 0.0,
+        "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
         "wind_max_mph": 14.0,
-        "gust_max_mph": null,
+        "gust_max_mph": 18.4,
+        "gust_basis": "NWS gridpoint windGust series (max over the local day)",
         "hours_covered": 24,
         "periods": [
           {
@@ -4511,9 +4523,11 @@
         "humidity_min_pct": 83,
         "humidity_max_pct": 96,
         "rain_chance_pct": 0,
-        "rain_amount_in": null,
+        "rain_amount_in": 0.0,
+        "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
         "wind_max_mph": 15.0,
-        "gust_max_mph": null,
+        "gust_max_mph": 19.6,
+        "gust_basis": "NWS gridpoint windGust series (max over the local day)",
         "hours_covered": 24,
         "periods": [
           {
@@ -4547,9 +4561,11 @@
         "humidity_min_pct": 88,
         "humidity_max_pct": 96,
         "rain_chance_pct": 1,
-        "rain_amount_in": null,
+        "rain_amount_in": 0.0,
+        "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
         "wind_max_mph": 13.0,
-        "gust_max_mph": null,
+        "gust_max_mph": 17.3,
+        "gust_basis": "NWS gridpoint windGust series (max over the local day)",
         "hours_covered": 24,
         "periods": [
           {
@@ -4583,9 +4599,11 @@
         "humidity_min_pct": 90,
         "humidity_max_pct": 96,
         "rain_chance_pct": 1,
-        "rain_amount_in": null,
+        "rain_amount_in": 0.0,
+        "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
         "wind_max_mph": 13.0,
-        "gust_max_mph": null,
+        "gust_max_mph": 17.3,
+        "gust_basis": "NWS gridpoint windGust series (max over the local day)",
         "hours_covered": 24,
         "periods": [
           {
@@ -4619,9 +4637,11 @@
         "humidity_min_pct": 78,
         "humidity_max_pct": 96,
         "rain_chance_pct": 0,
-        "rain_amount_in": null,
+        "rain_amount_in": 0.0,
+        "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
         "wind_max_mph": 12.0,
-        "gust_max_mph": null,
+        "gust_max_mph": 16.1,
+        "gust_basis": "NWS gridpoint windGust series (max over the local day)",
         "hours_covered": 24,
         "periods": [
           {
@@ -4655,9 +4675,11 @@
         "humidity_min_pct": 70,
         "humidity_max_pct": 91,
         "rain_chance_pct": 0,
-        "rain_amount_in": null,
+        "rain_amount_in": 0.0,
+        "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
         "wind_max_mph": 10.0,
-        "gust_max_mph": null,
+        "gust_max_mph": 15.0,
+        "gust_basis": "NWS gridpoint windGust series (max over the local day)",
         "hours_covered": 24,
         "periods": [
           {
@@ -4691,9 +4713,11 @@
         "humidity_min_pct": 87,
         "humidity_max_pct": 87,
         "rain_chance_pct": 0,
-        "rain_amount_in": null,
+        "rain_amount_in": 0.0,
+        "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
         "wind_max_mph": 7.0,
-        "gust_max_mph": null,
+        "gust_max_mph": 16.1,
+        "gust_basis": "NWS gridpoint windGust series (max over the local day)",
         "hours_covered": 2,
         "periods": []
       }

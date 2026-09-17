@@ -128,6 +128,108 @@ def r2(x):
     return None if x is None else round(x, 2)
 
 
+KM_PER_MILE = 1.609344
+
+# Matches an ISO 8601 interval as NWS publishes it in gridpoint data, e.g.
+#   2026-09-17T14:00:00+00:00/PT3H
+#   2026-09-18T00:00:00+00:00/P1DT6H
+_INTERVAL_RE = re.compile(
+    r"^(?P<start>[^/]+)/(?:P(?:(?P<days>\d+)D)?T?(?:(?P<hours>\d+)H)?"
+    r"(?:(?P<minutes>\d+)M)?)?$")
+
+
+def parse_valid_time(value):
+    """Split an NWS ``validTime`` into (start, duration_hours).
+
+    NWS gridpoint series carry ISO 8601 intervals, not single timestamps:
+    ``2026-09-17T14:00:00+00:00/PT3H`` means the value holds for the three
+    hours starting at 14:00Z.  Returns (None, None) for anything unparseable
+    so the caller can skip it rather than guess.
+    """
+    if not value or "/" not in value:
+        return None, None
+    m = _INTERVAL_RE.match(value.strip())
+    if not m:
+        return None, None
+    try:
+        start = dt.datetime.fromisoformat(m.group("start").replace("Z", "+00:00"))
+    except ValueError:
+        return None, None
+    hours = (int(m.group("days") or 0) * 24
+             + int(m.group("hours") or 0)
+             + int(m.group("minutes") or 0) / 60.0)
+    if hours <= 0:
+        hours = 1.0
+    return start, hours
+
+
+def gridpoint_series(raw_values):
+    """Flatten one NWS gridpoint series into (start, hours, value) triples."""
+    out = []
+    for item in (raw_values or {}).get("values") or []:
+        start, hours = parse_valid_time(item.get("validTime"))
+        if start is None or item.get("value") is None:
+            continue
+        out.append((start, hours, float(item["value"])))
+    return out
+
+
+def daily_from_gridpoint(gridpoint_raw, tz_name="America/Los_Angeles"):
+    """Aggregate NWS gridpoint gust and QPF series into local calendar days.
+
+    Why this exists: the ``/forecast/hourly`` product returns no ``windGust``
+    and no QPF for this grid cell (0 of 156 periods on 17 Sep 2026), so the
+    two figures a landlord cares about most - how hard the wind gusts and how
+    much rain falls - came back as em dashes even though NWS publishes both at
+    the same grid point in ``gridpoint_raw``.
+
+    Two honest derivations are made, and both are labelled on the site:
+
+    * ``windGust`` is an instantaneous km/h value, so the daily figure is the
+      maximum over the hours that fall in that local day, converted to mph.
+    * ``quantitativePrecipitation`` is an *accumulation over the interval*, not
+      a rate.  Where an interval crosses local midnight the accumulation is
+      split between the two days in proportion to the hours each gets.  This is
+      an allocation of an official total, not a new model.
+    """
+    tz, tz_ok = timezone_for(tz_name)
+    values = (gridpoint_raw or {}).get("values") or {}
+
+    gust_by_day: dict[str, list[float]] = {}
+    qpf_by_day: dict[str, float] = {}
+    qpf_days_known: set[str] = set()
+
+    for start, hours, kmh in gridpoint_series(values.get("windGust")):
+        end = start + dt.timedelta(hours=hours)
+        step = dt.timedelta(hours=1)
+        cursor = start
+        while cursor < end:
+            day = cursor.astimezone(tz).date().isoformat()
+            gust_by_day.setdefault(day, []).append(kmh / KM_PER_MILE)
+            cursor += step
+
+    for start, hours, mm in gridpoint_series(values.get("quantitativePrecipitation")):
+        # Allocate the accumulation across local days by the share of hours.
+        end = start + dt.timedelta(hours=hours)
+        step = dt.timedelta(hours=1)
+        cursor = start
+        per_hour = mm / hours if hours else 0.0
+        while cursor < end:
+            day = cursor.astimezone(tz).date().isoformat()
+            qpf_by_day[day] = qpf_by_day.get(day, 0.0) + per_hour
+            qpf_days_known.add(day)
+            cursor += step
+
+    days = {}
+    for day in set(gust_by_day) | set(qpf_by_day):
+        days[day] = {
+            "gust_mph": gust_by_day.get(day) or [],
+            "qpf_mm": qpf_by_day.get(day, 0.0),
+            "qpf_known": day in qpf_days_known,
+        }
+    return days, tz_ok
+
+
 # --------------------------------------------------------------------------
 # CPC outlook parsing
 # --------------------------------------------------------------------------
@@ -320,18 +422,46 @@ def main():
     nws_days, tz_ok = daily_from_hourly(hourly, point_timezone)
     if not tz_ok:
         print("  WARNING: named timezone unavailable; used fixed -08:00 fallback.")
+
+    # Gust and QPF come from the raw gridpoint series, because the hourly
+    # forecast product does not carry them for this cell.  They are merged only
+    # into days that already exist in the NWS forecast horizon - never into a
+    # climatology day.
+    gp_days, gp_tz_ok = daily_from_gridpoint(nws.get("gridpoint_raw"), point_timezone)
+    if not gp_tz_ok:
+        print("  WARNING: gridpoint aggregation used the fixed -08:00 fallback.")
+    gp_gust_filled = gp_qpf_filled = 0
+    for iso, n in nws_days.items():
+        g = gp_days.get(iso)
+        if not g:
+            continue
+        if not n["gust"] and g["gust_mph"]:
+            n["gust"].extend(g["gust_mph"])
+            n["gust_from_gridpoint"] = True
+            gp_gust_filled += 1
+        if not n["qpf_known"] and g["qpf_known"]:
+            n["qpf_mm"] = g["qpf_mm"]
+            n["qpf_known"] = True
+            n["qpf_from_gridpoint"] = True
+            gp_qpf_filled += 1
+    print("  gridpoint fill: %d day(s) gained a gust, %d gained a rain amount"
+          % (gp_gust_filled, gp_qpf_filled))
+
     _hourly_meta = nws.get("forecast_hourly") or {}
     nws_updated = _hourly_meta.get("updated") or _hourly_meta.get("generated_at")
     hourly_url = (nws.get("forecast_hourly") or {}).get("source_url")
     daily_url = (nws.get("forecast_daily") or {}).get("source_url")
     human_url = (nws.get("forecast_daily") or {}).get("human_url")
+    gridpoint_url = (nws.get("gridpoint_raw") or {}).get("source_url")
     aggregation = {
         "timezone": point_timezone,
         "temperature": "daily high/low are the maximum/minimum hourly NWS grid temperatures",
         "humidity": "daily humidity is the mean of available hourly NWS relative humidity values; min/max are also published",
         "rain_chance": "daily rain chance is the maximum available hourly NWS probability of precipitation (POP), not a new probability model",
-        "rain_amount": "daily rain amount is the sum of available hourly NWS quantitative precipitation forecast (QPF) values; missing QPF stays empty",
-        "wind": "daily wind and gust are the maximum available hourly NWS grid values",
+        "rain_amount": "daily rain amount is the sum of available hourly NWS quantitative precipitation forecast (QPF) values. The /forecast/hourly product returned no QPF for this grid cell, so it falls back to the NWS gridpoint quantitativePrecipitation series: each value is an accumulation over a 3-6 hour interval, and where an interval crosses local midnight the total is split between the two days in proportion to the hours each gets. If neither product has a value the cell stays empty - it is never assumed to be zero.",
+        "wind": "daily wind is the maximum available hourly NWS grid value. The /forecast/hourly product returned no wind gusts for this grid cell, so gusts fall back to the NWS gridpoint windGust series: the daily figure is the maximum gust over the hours falling in that local day, converted from km/h to mph.",
+        "gust_source": gridpoint_url,
+        "qpf_source": gridpoint_url,
     }
 
     cpc_records = collect_cpc(cpc, SEASON_START.year)
@@ -391,9 +521,19 @@ def main():
             entry["gust_max_mph"] = r1(max(n["gust"])) if n["gust"] else None
             entry["rain_chance_pct"] = r1(max(n["pop"])) if n["pop"] else None
             entry["rain_amount_in"] = r2(n["qpf_mm"] / MM_PER_INCH) if n["qpf_known"] else None
+            entry["gust_basis"] = (
+                "NWS gridpoint windGust series (max over the local day)"
+                if n.get("gust_from_gridpoint") else
+                "NWS hourly forecast wind gust (max over the local day)") if n["gust"] else None
+            entry["rain_amount_basis"] = (
+                "NWS gridpoint quantitativePrecipitation (interval accumulations "
+                "allocated to local days by hour)"
+                if n.get("qpf_from_gridpoint") else
+                "sum of NWS hourly QPF values") if n["qpf_known"] else None
             entry["hours_covered"] = n["hours"]
             entry["sources"] = [
                 {"label": "NWS hourly gridded forecast (api.weather.gov)", "url": hourly_url},
+                {"label": "NWS gridpoint data - windGust and QPF series (api.weather.gov)", "url": gridpoint_url},
                 {"label": "NWS 7-day forecast for this point (weather.gov)", "url": human_url},
             ]
         else:
@@ -522,8 +662,17 @@ def main():
             "humidity_max_pct": r1(max(n_["rh"])) if n_["rh"] else None,
             "rain_chance_pct": r1(max(n_["pop"])) if n_["pop"] else None,
             "rain_amount_in": r2(n_["qpf_mm"] / MM_PER_INCH) if n_["qpf_known"] else None,
+            "rain_amount_basis": (
+                "NWS gridpoint quantitativePrecipitation (interval accumulations "
+                "allocated to local days by hour)"
+                if n_.get("qpf_from_gridpoint") else
+                "sum of NWS hourly QPF values") if n_["qpf_known"] else None,
             "wind_max_mph": r1(max(n_["wind"])) if n_["wind"] else None,
             "gust_max_mph": r1(max(n_["gust"])) if n_["gust"] else None,
+            "gust_basis": (
+                "NWS gridpoint windGust series (max over the local day)"
+                if n_.get("gust_from_gridpoint") else
+                "NWS hourly forecast wind gust (max over the local day)") if n_["gust"] else None,
             "hours_covered": n_["hours"],
             "periods": narrative.get(iso, []),
         })
@@ -539,6 +688,7 @@ def main():
         "aggregation": aggregation,
         "sources": [
             {"label": "NWS hourly gridded forecast (api.weather.gov)", "url": hourly_url},
+            {"label": "NWS gridpoint data - windGust and QPF series (api.weather.gov)", "url": gridpoint_url},
             {"label": "NWS 7-day forecast for this point (weather.gov)", "url": human_url},
         ],
         "alerts": nws.get("active_alerts", {}),

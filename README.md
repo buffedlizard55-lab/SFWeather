@@ -17,10 +17,13 @@ source file and re-checked before it is allowed onto the page.
 ## What does the honest answer look like?
 
 **Nobody can tell you today whether it will rain on 14 January 2027.** No official
-product forecasts a specific day that far out. The NWS publishes a daily forecast that
-reaches about **7 days** — as of this run, 17–23 September 2026. Beyond that, the
-official products are *probabilities for a period* (6–10 days, 8–14 days, weeks 3–4,
-a month, a 3-month season), never a number for one named day.
+product forecasts a specific day that far out. The NWS publishes a daily forecast
+whose official `validTimes` is **7 days 11 hours** (`P7DT11H`) — as of this run,
+17 Sep 2026 14:00 UTC through 25 Sep 2026 01:00 UTC, which touches **8 local
+calendar days, 17–24 September 2026**, the last of them with only 2 forecast
+hours. Beyond that, the official products are *probabilities for a period*
+(6–10 days, 8–14 days, weeks 3–4, a month, a 3-month season), never a number for
+one named day.
 
 So the site does not invent one. Each of the 123 days from 1 Oct 2026 to 31 Jan 2027
 carries one of two honest badges:
@@ -58,9 +61,11 @@ period*, and are never converted into daily numbers.
 | CPC historic-event probability | "During the October-December 2026 season, there is a 75% chance of a historic event…" (verbatim, same page) |
 | Independent cross-check | The project's own 3-month mean from the raw Niño-3.4 table gives 0.98 °C for AMJ 2026 against NOAA's published 0.95 °C — a 0.03 °C difference, published on the site |
 
-**Today's actual forecast** (the only real day-by-day forecast that exists): a 7-day
-window from the NWS hourly grid, showing day/night values aggregated to local days —
-e.g. 17 Sep 2026: 65 °F / 60 °F, humidity 91% (86–96%), rain chance 0%, max wind 8 mph.
+**Today's actual forecast** (the only real day-by-day forecast that exists): the
+8 local calendar days the NWS hourly grid reaches, with day/night values aggregated
+to local days — e.g. 17 Sep 2026: **65 °F / 59 °F**, humidity 91.6% (86–97%), rain
+chance 0%, max wind 8 mph, from 10 hourly grid values. These are the values on the
+site; they are re-derived from the same NWS grid file on every run.
 
 **Where the numbers come from** — every one: [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md),
 and on the site under *Verification*, with the URL, HTTP status, byte count, SHA-256 and
@@ -77,8 +82,8 @@ retrieval time of the exact file.
 | Workflow gate | `summary.failed > 0` → **the run publishes nothing**. It commits diagnostics only ("refresh NOT published") and the site keeps the last verified dataset. |
 | `data/provenance.json` | The full fetch log: every URL, status, size, SHA-256, timestamp. |
 | `data/verify.json` + `verify_report.txt` | The claim ledger as machine-readable JSON and as plain text. |
-| `tests/test_parsers.py` | 55 offline assertions (stdlib only, no network) on the parsing/derivation code — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, and an end-to-end aggregation over a synthetic file with hand-computable expected values. |
-| `tests/smoke.js` (`npm test`) | Renders the whole page in jsdom against the committed data and fails on an empty section, a broken day dialog or a broken CSV export. |
+| `tests/test_parsers.py` | 85 offline assertions (stdlib only, no network) on the parsing/derivation code — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, an end-to-end aggregation over a synthetic file with hand-computable expected values, the rule that a CPC explanation must describe the category actually displayed, and the NWS gridpoint gust/QPF aggregation including the local-midnight accumulation split. |
+| `tests/smoke.js` (`npm test`) | Renders the whole page in jsdom against the committed data and fails on an empty section, a broken day dialog or CSV export, a truncated source label, a mislabelled source link, a CPC note that does not explain its own category, an unlabelled rain/temperature outlook, an unrounded humidity, or a forecast day missing its gust or rain amount. |
 
 **Every forecast day can be checked by hand:** open the day's dialog, follow the
 source link, and compare. The site's *Verification* section lists all 17 recorded
@@ -93,6 +98,7 @@ pipeline flagged rather than smoothed over.
 | --- | --- |
 | ZIP boundary / centroid | [U.S. Census Gazetteer 2024](https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip) → ZCTA 94122 internal point 37.760459, −122.483894 (cross-checked with the [Census geocoder](https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json)) |
 | Daily/hourly forecast | NWS [gridpoints MTR 82,105](https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly) and [human-readable version](https://forecast.weather.gov/MapClick.php?lat=37.760459&lon=-122.483894&unit=0&lg=english&FcstType=text&TextType=1) |
+| Wind gusts and rain amounts in the forecast | NWS [raw gridpoint data](https://api.weather.gov/gridpoints/MTR/82,105) — the `windGust` and `quantitativePrecipitation` series. The hourly forecast product carries **neither** for this grid cell (0 of 156 periods on 17 Sep 2026), so these two fields come from here, and each day publishes the basis it actually used. |
 | Alerts, observations, forecaster discussion | NWS [alerts for CAZ006](https://api.weather.gov/alerts/active?zone=CAZ006), [station observations](https://api.weather.gov/stations/SFOC1/observations/latest), [Area Forecast Discussion](https://api.weather.gov/products/types/AFD/locations/MTR) |
 | 6–10 day, 8–14 day, weeks 3–4, monthly, seasonal outlooks | CPC [GIS shapefiles](https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/) (the containing polygon is sampled at the 94122 point and its index, bounding box and raw DBF row are published) |
 | ENSO number | CPC **official ONI product** — [oni.ascii.txt](https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt), read directly |

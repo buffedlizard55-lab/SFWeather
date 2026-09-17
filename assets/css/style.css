@@ -218,6 +218,20 @@ table.kv td { font-weight: 600; }
 .filter-bar label { font-size: 13px; color: var(--ink-soft); display: flex; gap: 6px; align-items: center; }
 .src-url { font-family: var(--mono); font-size: 11px; word-break: break-all; }
 .src-note { color: var(--ink-soft); font-size: 12px; display: block; }
+
+/* CPC outlook lines inside the monthly rainfall table.  Each line carries a
+   variable chip so a temperature outlook can never be read as a rain figure. */
+.cpc-cell { display: flex; flex-direction: column; gap: 3px; }
+.cpc-line { font-size: 12.5px; line-height: 1.45; white-space: nowrap; }
+.cpc-line.first { margin-top: 0; }
+.cpc-var {
+  display: inline-block; min-width: 38px; text-align: center;
+  font-size: 10px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase;
+  padding: 1px 6px; border-radius: 999px; border: 1px solid transparent;
+}
+.cpc-var-prcp { background: var(--accent-soft); color: var(--accent); border-color: #bcd9f6; }
+.cpc-var-temp { background: var(--warn-bg); color: #8a6100; border-color: #efd79a; }
+.cpc-var-other { background: var(--line-soft); color: var(--ink-soft); border-color: var(--line); }
 .hash { font-family: var(--mono); font-size: 10px; color: var(--ink-soft); }
 
 /* ---------------- misc ---------------- */

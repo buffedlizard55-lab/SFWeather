@@ -145,6 +145,30 @@ were caught by **reading the published page against its source** - 21 and 22 wer
 visible only in the *rendered site*, not in the data, which is why `npm test` now
 renders the page headlessly on every push.
 
+### Second review pass, 17 Sep 2026 (bugs 23-30)
+
+A line-by-line re-read of the rendered page against `data/` and against the live
+official endpoints found eight more. None of them were invented numbers - every
+fetched value re-checked correctly - but each one either stated something untrue,
+hid an official value, or made a source impossible to follow. Every fix has a test
+that was verified to fail on the old code before being committed.
+
+| # | Symptom | Root cause | Fix |
+| --- | --- | --- | --- |
+| 23 | The checklist explained a CPC category it was not showing: *"CPC OND 2026: Equal chances (33%) ... For precipitation, 'Above median' means CPC favors an above-median total"* | The explanation was keyed on the **variable** (prcp/temp) only, so every precipitation outlook got the "Above median" wording | `cpc_category_note()` is keyed on `(variable, category_label)`; an unrecognised label is declared undocumented rather than explained with another category's wording. Asserted in `test_parsers.py` and in `npm test` |
+| 24 | The reality-check paragraph - the one section that exists to state the limits of the data - read *"...as they come into range. carry a real NWS forecast."* | Two branches shared a sentence tail that only made sense for one of them | The branches are now fully independent sentences, and the test fails if a zero-coverage run claims any day carries a real forecast |
+| 25 | Action-checklist sources rendered as `...access/USW000` | The link **label** was sliced to 80 characters, cutting a real station ID (`USW00023272.csv`) into a string that looks like one but is not | Labels show the whole URL (the stylesheet already wraps it). The test compares each label against its own `href` |
+| 26 | In "Expected rain amounts by month", the CPC column listed `Oct 2026: Above normal 40%` with nothing to say it was the **temperature** outlook, next to rainfall columns; an empty cell printed bare `EC` | Variable was dropped when the cell was built, and the empty fallback was the string `'EC'` - which is a real CPC category (Equal chances) and so asserted an outlook that was never fetched | `cpcOutlookCell()` labels every line `Rain`/`Temp` with a coloured chip, rain first, and returns an em dash when nothing was sampled |
+| 27 | Observations showed relative humidity as `64.980032379224%` | The NWS observation RH is a computed value and was rendered verbatim | Rounded for display only; the full value stays in `data/nws.json` |
+| 28 | **Every forecast day showed an em dash for rain amount and for gusts** - the two figures the brief asks about first | The aggregation read only `/forecast/hourly`, which returns **no `windGust` and no QPF for this grid cell** (0 of 156 periods on 17 Sep 2026). The same run had already fetched `gridpoint_raw`, which carries both | `daily_from_gridpoint()` reads the gridpoint `windGust` and `quantitativePrecipitation` series. Gust = daily max, km/h -> mph. QPF is an **accumulation over a 3-6 h interval**, so where an interval crosses local midnight it is split between the two days by hours. Each day publishes a `gust_basis` / `rain_amount_basis` naming what was actually used, and the endpoint is listed as a source. Cross-validated: NWS's own text forecast says "gusts as high as 18 mph" (Fri 18 Sep) and "20 mph" (Sat 19 Sep) against 18.4 and 19.6 mph derived here |
+| 29 | After adding that source, "Open on weather.gov" resolved to `api.weather.gov/.../forecast/hourly` | The caption picked sources **by array position**, and inserting an entry shifted the indices. The follow-on fix (`/gridpoints\/MTR/`) then matched the hourly URL first, so "gridpoint data" pointed at the wrong endpoint too | Sources are matched by URL (`srcByMatch`), anchored to `gridpoints/<office>/<x>,<y>$` for the raw gridpoint. A test asserts each labelled link resolves to the endpoint its label names |
+| 30 | The README contradicted the data: "7 days, 17-23 September" and "65 °F / 60 °F, humidity 91% (86-96%)" | Prose was written from the NWS product's nominal `P7D` label rather than from `data/calendar.json` | Corrected to what the data says: `validTimes` is `P7DT11H`, touching **8** local calendar days 17-24 Sep (the last with 2 forecast hours), day one 65 °F / 59 °F, RH 91.6% (86-97%) |
+
+Bug 28 is the substantive one: it was not a wrong number but a **missing** one, and it
+sat in the two fields this project exists to answer. It survived the first audit
+because every check asked "is this value right?" and nothing asked "is a value that
+exists being dropped?" The new tests ask the second question.
+
 ## Release held back: the deleted-function incident
 
 Two consecutive runs published nothing, which is the gate behaving correctly:
@@ -188,7 +212,7 @@ reached on only some code paths would have been silent.
 
 ## How the ledger and the tests stand now
 
-* `pipeline/verify_claims.py`: **20 automated checks, 17 recorded claims**, each claim
+* `pipeline/verify_claims.py`: **21 automated checks, 17 recorded claims**, each claim
   carrying value, unit, method, official URL, HTTP status, bytes, SHA-256, retrieval
   time and - where one exists - an independent cross-check. Order: provenance-present,
   hosts-official, centroid-verified, oni-official-read-directly, oni-official-present,
@@ -196,9 +220,15 @@ reached on only some code paths would have been silent.
   humidity-honesty, oni-cross-check, season-mean-arithmetic, distribution-ordering,
   month-mean-*, streak-arithmetic, normals-cross-check, cpc-dedup,
   cpc-seasonal-present, alert-test-filter, source-traceability, quotes-plain-text.
-* `tests/test_parsers.py`: 55 offline assertions.
+* `tests/test_parsers.py`: **85 offline assertions**, stdlib only. Added 17 Sep 2026:
+  the CPC category-explanation rule (bugs 23) and the gridpoint gust/QPF aggregation,
+  including the local-midnight accumulation split and the cross-check of derived gusts
+  against the gusts NWS states in its own text forecast.
 * `npm test` (jsdom): renders the page against the committed data and fails on an
-  empty section, a broken day dialog or a broken CSV export.
+  empty section, a broken day dialog, a broken CSV export, a truncated source label,
+  the broken reality-check sentence, a CPC note that does not explain its own category,
+  an unlabelled rain/temperature outlook, an unrounded humidity, a mislabelled source
+  link, or a forecast day missing its gust or rain amount.
 * Nightly gate: `summary.failed > 0` -> "refresh NOT published", diagnostics committed
   only. The site then keeps the last verified dataset.
 

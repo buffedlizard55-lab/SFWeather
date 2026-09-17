@@ -68,6 +68,27 @@ cannot be verified line by line against a public endpoint. `verify_sources.py`
 fails the build on any non-official host, so this cannot drift by accident. If you
 want a commercial second opinion you must read it at the source.
 
+### 10. Forecast gusts and rain amounts carry one allocation step
+The `/forecast/hourly` product returns **no `windGust` and no QPF** for grid
+`MTR 82,105` (0 of 156 periods on 17 Sep 2026), so those two fields come from the
+raw gridpoint series at the same point.
+
+* **Gusts** are an instantaneous value, so the daily figure is simply the maximum
+  over the hours falling in that local day, converted km/h → mph. No modelling.
+* **QPF is an accumulation over a 3–6 hour interval**, not a rate. Where an
+  interval crosses local midnight, the published total is split between the two
+  days **in proportion to the hours each receives**. That split is the only
+  derivation in this path; it conserves the official total exactly (asserted in
+  `tests/test_parsers.py`), and every day publishes a `rain_amount_basis` naming
+  what was used.
+* A day with **no** QPF value shows an em dash, never `0.00`. A day showing
+  `0.00 in` is one where NWS published a zero accumulation — those are different
+  statements and the site keeps them different.
+
+Cross-check available by hand: NWS's own text forecast for this run says "gusts as
+high as 18 mph" for Friday 18 Sep and "20 mph" for Saturday 19 Sep; the derived
+daily maxima are 18.4 and 19.6 mph.
+
 ---
 
 ## Recommended next work, in priority order

@@ -51,6 +51,35 @@ keeps the last verified dataset. That is the designed behaviour, not an outage.
    the pipeline, HTML-entity corruption of every quote, and a banner reading
    "reaches 0 day(s)". Nothing was hidden.
 
+### Second pass, later the same day (17 Sep 2026)
+
+A line-by-line re-read of the **rendered page** against `data/` and against the live
+official endpoints. Every fetched value re-checked correctly — grid `MTR 82,105` and
+zone `CAZ006` against `api.weather.gov/points`, `JJA 2026 = +1.80` and `AMJ 2026 = 0.95`
+against the live `oni.ascii.txt`, and all four quoted CPC sentences verbatim against
+the ENSO Diagnostic Discussion issued 10 Sep 2026 — but the pass found eight defects
+(**bugs 23–30**, full table in [`docs/VERIFICATION.md`](VERIFICATION.md)).
+
+The one that matters: **gusts and rain amounts were em dashes on every forecast day.**
+The aggregation read only `/forecast/hourly`, which carries neither for this grid cell
+(0 of 156 periods). The pipeline had *already fetched* `gridpoint_raw`, which has both.
+Both fields — the brief's first two priorities — were therefore blank while NWS
+published them. They are now filled from the gridpoint series, with the basis named on
+every day, and cross-validated against NWS's own text ("gusts as high as 18 mph" /
+"20 mph" against 18.4 and 19.6 mph derived here).
+
+Also fixed: a CPC explanation describing a category it was not showing; a grammatically
+broken sentence in the reality-check panel; source labels truncated to
+`...access/USW000`; temperature outlooks sitting unlabeled in a rainfall table; humidity
+rendered as `64.980032379224%`; source links resolved by array position (so adding one
+made "Open on weather.gov" point at an API URL); and README prose that disagreed with
+the data it described.
+
+**Tests: 55 → 85 offline assertions**, and 7 new render checks. Each new check was
+verified to **fail on the old code** before being committed, so none of them is
+vacuous. Full suite is green: `85/85`, `npm test` passes, `verify_sources` 105 fetches
+across 5 official hosts, `verify_claims` 21/21.
+
 ---
 
 ## 2. Open work, in priority order

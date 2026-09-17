@@ -154,6 +154,108 @@ setTimeout(() => {
     problems.push('verification ledger did not render a verdict');
   }
 
+  // ---- defects found by review on 2026-09-17, each now guarded -------------
+
+  // 6. Every source link in the action checklist must show its whole URL.
+  //    Slicing the label to 80 chars rendered "...access/USW000", which reads
+  //    like a station ID but is not one - on a page whose premise is that a
+  //    reader can click through and check the source by hand.
+  doc.querySelectorAll('.action-source a').forEach((a, i) => {
+    const shown = a.textContent.trim();
+    const href = a.getAttribute('href') || '';
+    if (!shown) { problems.push('action source link ' + i + ' has no visible text'); return; }
+    if (!href.endsWith(shown) && href !== shown) {
+      problems.push('action source link ' + i + ' is truncated: shows "' + shown + '" for ' + href);
+    }
+  });
+
+  // 7. The reality-check sentence must not claim days carry an NWS forecast
+  //    when the horizon covers none of them.
+  const calWin = (cal.nws_window || {});
+  const rcText = text('#rc-count');
+  if (/range\.\s+carry a real/i.test(rcText)) {
+    problems.push('#rc-count contains the broken fragment "...range. carry a real..."');
+  }
+  if (!calWin.days_covered && /carry a real NWS forecast/.test(rcText)) {
+    problems.push('#rc-count says days carry a real NWS forecast but days_covered is 0');
+  }
+
+  // 8. A CPC explanation must describe the category it is attached to.
+  //    The note used to be keyed on the variable only, so "Equal chances" got
+  //    the wording for "Above median".
+  const landlord = JSON.parse(fs.readFileSync(path.join(repo, 'data/landlord.json'), 'utf8'));
+  (landlord.action_items || [])
+    .filter(a => a.category === 'Official CPC outlook')
+    .forEach(a => {
+      const m = /^CPC [^:]+: (.+?) \(/.exec(a.title || '');
+      const cat = m && m[1];
+      if (cat && !String(a.detail || '').includes("'" + cat + "'")) {
+        problems.push('CPC note does not explain its own category "' + cat + '": ' + a.title);
+      }
+    });
+
+  // 9. The monthly rainfall table must say whether each CPC line is rain or
+  //    temperature - a bare "Above normal 40%" next to rainfall columns was
+  //    the temperature outlook with nothing to say so.
+  const monthlyCell = doc.querySelectorAll('#landlord-monthly tbody tr');
+  if (!monthlyCell.length) problems.push('#landlord-monthly rendered no rows');
+  monthlyCell.forEach((tr, i) => {
+    const cells = tr.querySelectorAll('td');
+    const cpcCell = cells[cells.length - 1];
+    if (!cpcCell) return;
+    const t = cpcCell.textContent;
+    if (/^EC$/.test(t.trim())) problems.push('monthly CPC cell ' + i + ' shows bare "EC"');
+    if (/Rain|Temp|—/.test(t) === false) {
+      problems.push('monthly CPC cell ' + i + ' has no Rain/Temp label: ' + t);
+    }
+    if (/Rain/.test(t) && !cpcCell.querySelector('.cpc-var-prcp')) {
+      problems.push('monthly CPC cell ' + i + ' claims Rain with no prcp chip');
+    }
+  });
+
+  // 10. A labelled source link must point at the endpoint its label names.
+  //     These were picked by array position, so inserting the gridpoint source
+  //     made "Open on weather.gov" resolve to an api.weather.gov URL.
+  const EXPECTED_LINKS = [
+    ['Open on weather.gov', /^https:\/\/forecast\.weather\.gov\//],
+    ['NWS API endpoint', /^https:\/\/api\.weather\.gov\/gridpoints\//],
+    ['gridpoint data', /^https:\/\/api\.weather\.gov\/gridpoints\/[^/]+\/\d+,\d+$/]
+  ];
+  EXPECTED_LINKS.forEach(([label, re]) => {
+    doc.querySelectorAll('a').forEach(a => {
+      if (a.textContent.trim() !== label) return;
+      const href = a.getAttribute('href') || '';
+      if (!re.test(href)) {
+        problems.push('link "' + label + '" points at the wrong endpoint: ' + href);
+      }
+    });
+  });
+
+  // 11. Humidity must be displayed rounded - the NWS observation carries ~14
+  //     significant figures and rendering them verbatim read like a bug.
+  const longFloat = (text('#nws-obs').match(/\d+\.\d{4,}\s*%/) || [])[0];
+  if (longFloat) problems.push('#nws-obs shows unrounded humidity: ' + longFloat);
+
+  // 12. Every day in the official forecast window must carry a gust and a rain
+  //     amount.  The hourly product returns neither for this grid cell, so both
+  //     used to render as em dashes while NWS published them at the same point.
+  const cfDays = (cal.current_forecast || {}).days || [];
+  if (!cfDays.length) problems.push('current_forecast has no days');
+  cfDays.forEach(d => {
+    if (d.gust_max_mph === null || d.gust_max_mph === undefined) {
+      problems.push('forecast day ' + d.date + ' has no gust');
+    }
+    if (d.rain_amount_in === null || d.rain_amount_in === undefined) {
+      problems.push('forecast day ' + d.date + ' has no rain amount');
+    }
+    if (d.gust_max_mph !== null && !d.gust_basis) {
+      problems.push('forecast day ' + d.date + ' shows a gust with no stated basis');
+    }
+    if (d.rain_amount_in !== null && !d.rain_amount_basis) {
+      problems.push('forecast day ' + d.date + ' shows a rain amount with no stated basis');
+    }
+  });
+
   if (problems.length) {
     console.error('SMOKE TEST FAILED');
     problems.forEach(p => console.error(' - ' + p));

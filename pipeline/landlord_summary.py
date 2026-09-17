@@ -41,6 +41,51 @@ def pct(v):
     return float(v)
 
 
+# CPC category explanations, keyed on (variable, category_label) so the sentence
+# on the page always describes the category that is actually displayed.
+# category_label values are produced by build_calendar.py from the raw DBF "Cat"
+# field (EC / Above / Below), so this table mirrors that mapping exactly.
+_CPC_NOTES = {
+    ("prcp", "Above median"):
+        "For precipitation, 'Above median' means CPC favours an above-median total "
+        "for the whole 3-month period.",
+    ("prcp", "Below median"):
+        "For precipitation, 'Below median' means CPC favours a below-median total "
+        "for the whole 3-month period.",
+    ("prcp", "Equal chances"):
+        "For precipitation, 'Equal chances' means CPC sees no tilt: above-median, "
+        "near-median and below-median totals are all about equally likely (33% each). "
+        "This is not a forecast of dry conditions.",
+    ("temp", "Above normal"):
+        "For temperature, 'Above normal' means CPC favours an above-normal average "
+        "temperature for the whole 3-month period.",
+    ("temp", "Below normal"):
+        "For temperature, 'Below normal' means CPC favours a below-normal average "
+        "temperature for the whole 3-month period.",
+    ("temp", "Equal chances"):
+        "For temperature, 'Equal chances' means CPC sees no tilt: above-normal, "
+        "near-normal and below-normal averages are all about equally likely (33% each).",
+}
+
+
+def cpc_category_note(variable, category_label):
+    """Return an explanation of *this* CPC category, or say it is undefined.
+
+    Never falls back to a different category's wording - an unrecognised label
+    gets an explicit 'not documented here' rather than a plausible-looking
+    sentence about some other category.
+    """
+    note = _CPC_NOTES.get((variable, category_label))
+    if note:
+        return note
+    return (
+        f"CPC's meaning for the category '{category_label}' "
+        f"({variable}) is not documented in this project's tables, so no "
+        "interpretation is offered here - see the CPC source map for the "
+        "official legend."
+    )
+
+
 def main():
     calendar = load("calendar.json")
     run = load("run.json")
@@ -199,15 +244,15 @@ def main():
         })
 
     # CPC outlooks
+    # The explanation has to be keyed on the category that is actually shown,
+    # not just on the variable.  Keying it on the variable alone produced
+    # "CPC OND 2026: Equal chances (33%) ... For precipitation, 'Above median'
+    # means CPC favors an above-median total" - an explanation of a different
+    # category than the one on the page, which is exactly the kind of statement
+    # this project is not allowed to make.
     for rec in relevant_cpc:
         if rec.get("valid_season") in ["OND 2026", "NDJ 2026-2027", "DJF 2026-2027", "JFM 2027"]:
-            variable_note = (
-                "For precipitation, 'Above median' means CPC favors an above-median "
-                "total for the period."
-                if rec.get("variable") == "prcp" else
-                "For temperature, 'Above normal' means CPC favors above-normal "
-                "average temperature for the period."
-            )
+            variable_note = cpc_category_note(rec.get("variable"), rec.get("category_label"))
             action_items.append({
                 "category": "Official CPC outlook",
                 "priority": "medium",
