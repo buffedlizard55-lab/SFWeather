@@ -1,0 +1,155 @@
+"""Shared fetch helpers for the SFWeather pipeline.
+
+Every network call in this project goes through :func:`get` so that the exact
+URL, HTTP status, byte count, SHA-256 and retrieval timestamp can be recorded
+in the provenance manifest.  Nothing in this repository is ever hand-typed:
+if a value is not in the manifest, it is not in the site.
+
+The pipeline runs on GitHub Actions runners, which have unrestricted egress to
+NOAA/NWS/NCEI/CPC hosts.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+import zlib
+from pathlib import Path
+
+# NOAA asks that automated clients identify themselves.
+USER_AGENT = (
+    "SFWeather/1.0 (open-source project; +https://github.com/buffedlizard55-lab/SFWeather) "
+    "python-urllib"
+)
+
+DEFAULT_TIMEOUT = 120
+_RETRIES = 3
+
+
+class FetchResult:
+    """Outcome of one HTTP GET."""
+
+    def __init__(self, url, ok, status=None, body=None, error=None,
+                 content_type=None, elapsed=None):
+        self.url = url
+        self.ok = ok
+        self.status = status
+        self.body = body            # bytes, or None on failure
+        self.error = error
+        self.content_type = content_type
+        self.elapsed = elapsed
+        self.retrieved_utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+    # -- convenience -----------------------------------------------------
+    @property
+    def size(self):
+        return len(self.body) if self.body is not None else 0
+
+    @property
+    def sha256(self):
+        if self.body is None:
+            return None
+        return hashlib.sha256(self.body).hexdigest()
+
+    def text(self, encoding="utf-8", errors="replace"):
+        if self.body is None:
+            return ""
+        return self.body.decode(encoding, errors)
+
+    def provenance(self, note=None, **extra):
+        """A provenance record suitable for inclusion in the manifest."""
+        rec = {
+            "url": self.url,
+            "http_status": self.status,
+            "ok": self.ok,
+            "bytes": self.size,
+            "sha256": self.sha256,
+            "content_type": self.content_type,
+            "retrieved_utc": self.retrieved_utc,
+            "elapsed_s": round(self.elapsed, 3) if self.elapsed is not None else None,
+        }
+        if self.error:
+            rec["error"] = self.error
+        if note:
+            rec["note"] = note
+        rec.update(extra)
+        return rec
+
+    def __repr__(self):  # pragma: no cover - debugging aid
+        return f"<FetchResult {self.status} {self.size}B {self.url}>"
+
+
+def get(url, timeout=DEFAULT_TIMEOUT, headers=None, retries=_RETRIES,
+        accept=None, sleep=3.0):
+    """GET *url* and return a :class:`FetchResult`.  Never raises."""
+    hdrs = {"User-Agent": USER_AGENT, "Accept-Encoding": "identity"}
+    if accept:
+        hdrs["Accept"] = accept
+    if headers:
+        hdrs.update(headers)
+
+    last = None
+    for attempt in range(1, retries + 1):
+        started = time.time()
+        req = urllib.request.Request(url, headers=hdrs, method="GET")
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                body = resp.read()
+                ctype = resp.headers.get("Content-Type")
+                return FetchResult(url, True, resp.status, body, None, ctype,
+                                   time.time() - started)
+        except urllib.error.HTTPError as exc:
+            body = None
+            try:
+                body = exc.read()
+            except Exception:  # noqa: BLE001
+                pass
+            last = FetchResult(url, False, exc.code, body,
+                               f"HTTP {exc.code} {exc.reason}",
+                               None, time.time() - started)
+        except Exception as exc:  # noqa: BLE001 - network flakiness is expected
+            last = FetchResult(url, False, None, None,
+                               f"{type(exc).__name__}: {exc}", None,
+                               time.time() - started)
+        if attempt < retries:
+            time.sleep(sleep * attempt)
+    return last
+
+
+def get_json(url, **kwargs):
+    """GET *url* and parse JSON.  Returns ``(obj, FetchResult)``."""
+    res = get(url, accept="application/geo+json, application/ld+json, application/json",
+              **kwargs)
+    if not res.ok or not res.body:
+        return None, res
+    try:
+        return json.loads(res.text()), res
+    except Exception as exc:  # noqa: BLE001
+        res.error = f"JSON parse error: {exc}"
+        res.ok = False
+        return None, res
+
+
+def get_text(url, **kwargs):
+    """GET *url* and return ``(text, FetchResult)``."""
+    res = get(url, **kwargs)
+    return res.text(), res
+
+
+def gunzip(data: bytes) -> bytes:
+    """Decompress gzip bytes (handles the members' concatenation)."""
+    return zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(data)
+
+
+def save_bytes(path: Path, data: bytes):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+    return hashlib.sha256(data).hexdigest()
+
+
+def iso_utc(ts=None):
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ts))

@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.venv/
+pipeline_run.log
+.DS_Store

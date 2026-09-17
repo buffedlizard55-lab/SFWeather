@@ -1,0 +1,85 @@
+name: Update NOAA data
+
+# Runs on GitHub-hosted runners, which have unrestricted egress to NOAA / NWS /
+# NCEI / CPC / Census hosts.  The pipeline commits its output back to the repo,
+# and GitHub Pages serves it.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pipeline/**'
+      - '.github/workflows/update-data.yml'
+  schedule:
+    # 07:15 UTC = 00:15 America/Los_Angeles, just after the NWS 00Z cycle and
+    # after CPC posts its daily 6-10 / 8-14 day outlooks (15:00-16:00 ET).
+    - cron: '15 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-noaa-data
+  cancel-in-progress: true
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run the NOAA fetch pipeline
+        run: |
+          python3 -u pipeline/main.py --outdir data 2>&1 | tee pipeline_run.log
+
+      - name: Build the Oct 2026 - Jan 2027 scoreboard dataset
+        run: |
+          python3 -u pipeline/build_calendar.py 2>&1 | tee -a pipeline_run.log
+
+      - name: Verify that every source URL is an official domain
+        run: |
+          python3 -u pipeline/verify_sources.py 2>&1 | tee -a pipeline_run.log
+
+      - name: Fail loudly if the pipeline lost a critical source
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          q = json.load(open("data/quality_report.json"))
+          errs = [i for i in q["irregularities"] if i["severity"] == "error"]
+          if errs:
+              print("CRITICAL: pipeline reported errors")
+              for e in errs:
+                  print(" -", e["area"], ":", e["message"])
+              sys.exit(1)
+          print(f"No critical errors. warnings={q['counts']['warnings']} info={q['counts']['info']}")
+          PY
+
+      - name: Upload the run log for inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-run-log
+          path: pipeline_run.log
+          retention-days: 7
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A data assets/cpc pipeline_run.log
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+          else
+            git commit -m "data: refresh NOAA/NWS/NCEI/CPC sources [skip ci]
+
+            Automated refresh by .github/workflows/update-data.yml"
+            git push
+          fi
