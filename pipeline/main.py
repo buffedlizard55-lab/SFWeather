@@ -812,19 +812,20 @@ def fetch_ghcn(outdir: Path):
             probe["candidates"].append({"sid": sid, "ok": False, "status": res.status})
             continue
         text = res.text()
-        parsed = climo.parse_ghcn_daily(text)
+        parsed, fmt = climo.parse_ghcn_daily(text)
         lines = text.splitlines()
+        keys = sorted(parsed)
         probe["candidates"].append({
             "sid": sid, "ok": True, "status": res.status, "bytes": res.size,
-            "n_lines": len(lines), "n_parsed_days": len(parsed),
-            "first_lines_raw": [ln[:200] for ln in lines[:5]],
-            "first_lines_repr": [repr(ln[:200]) for ln in lines[:5]],
-            "sample_line_5000": repr(lines[5000]) if len(lines) > 5000 else None,
+            "format": fmt, "n_lines": len(lines), "n_parsed_days": len(parsed),
+            "date_range": [keys[0], keys[-1]] if keys else None,
+            "first_lines_raw": [ln[:160] for ln in lines[:3]],
+            "sample_parsed": {k: parsed[k] for k in keys[len(keys) // 2:len(keys) // 2 + 1]},
         })
         write_json(outdir / "ghcn_probe.json", probe)
         if parsed:
             return {"station_id": sid, "name": name, "url": url,
-                    "sha256": res.sha256, "bytes": res.size,
+                    "sha256": res.sha256, "bytes": res.size, "format": fmt,
                     "data": parsed}
     write_json(outdir / "ghcn_probe.json", probe)
     note_irregularity("error", "ncei", "No GHCN-Daily station file could be retrieved.",

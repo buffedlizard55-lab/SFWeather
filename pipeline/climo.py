@@ -73,28 +73,96 @@ def summarise(values, ndigits=2):
 
 # ------------------------------------------------------------------ GHCN
 
+GHCN_MISSING = -9999.0
+GHCN_ELEMENTS = ("PRCP", "TMAX", "TMIN", "TAVG", "SNOW", "SNWD")
+
+
 def parse_ghcn_daily(text):
     """Parse a GHCN-Daily station CSV into ``{date_iso: {element: value}}``.
 
-    Raw units are kept raw here; conversion happens in the caller so that every
-    conversion is explicit and auditable.
+    NCEI serves two different layouts from
+    ``/data/global-historical-climatology-network-daily/access/<STATION>.csv``:
+
+    * **wide** (what the station files actually use today) - one row per date
+      with a column per element, e.g.::
+
+          "STATION","DATE","LATITUDE","LONGITUDE","ELEVATION","NAME","PRCP",
+          "PRCP_ATTRIBUTES","SNOW",...,"TMAX","TMAX_ATTRIBUTES","TMIN",...
+          "USW00023272","1921-01-01","37.7705","-122.4269","45.7",
+          "SAN FRANCISCO DOWNTOWN, CA US","    0",",,X,2400","    0",...
+
+    * **long** - one row per station/date/element::
+
+          USW00023272,1921-01-01,PRCP,0,,,X,2400
+
+    Both are handled.  Values are space padded and quoted in the wide layout,
+    so every value is stripped before conversion.  Raw units are preserved here
+    (PRCP = tenths of mm, TMAX/TMIN = tenths of degC, SNOW/SNWD = mm); every
+    conversion happens in the caller so it stays explicit and auditable.
+
+    Returns ``(data, format_name)``.
     """
+    lines = text.splitlines()
+    if not lines:
+        return {}, "empty"
+
+    header = next(csv.reader([lines[0]]), [])
+    h = [c.strip().strip('"').upper().lstrip("﻿") for c in header]
+
+    # ---------------------------------------------------------- wide format
+    if "DATE" in h and "PRCP" in h and ("TMAX" in h or "TMIN" in h):
+        idx = {name: i for i, name in enumerate(h)}
+        i_date = idx["DATE"]
+        i_prcp = idx.get("PRCP")
+        i_tmax = idx.get("TMAX")
+        i_tmin = idx.get("TMIN")
+        i_snow = idx.get("SNOW")
+        i_snwd = idx.get("SNWD")
+
+        def val(row, i):
+            if i is None or i >= len(row):
+                return None
+            raw = (row[i] or "").strip().strip('"').strip()
+            if raw in ("", "nan"):
+                return None
+            try:
+                v = float(raw)
+            except ValueError:
+                return None
+            return None if v == GHCN_MISSING else v
+
+        out = {}
+        for row in csv.reader(lines[1:]):
+            if not row or i_date >= len(row):
+                continue
+            date = (row[i_date] or "").strip().strip('"').strip()
+            if len(date) != 10:
+                continue
+            out[date] = {
+                "PRCP": val(row, i_prcp),
+                "TMAX": val(row, i_tmax),
+                "TMIN": val(row, i_tmin),
+                "SNOW": val(row, i_snow),
+                "SNWD": val(row, i_snwd),
+            }
+        return out, "wide"
+
+    # ---------------------------------------------------------- long format
     out = defaultdict(dict)
-    reader = csv.reader(io.StringIO(text))
-    for row in reader:
+    for row in csv.reader(lines[1:]):
         if len(row) < 4:
             continue
         _sid, date, element, value = row[0], row[1], row[2], row[3]
-        if len(date) != 10 or element not in ("PRCP", "TMAX", "TMIN", "TAVG", "SNOW", "SNWD"):
+        if len(date) != 10 or element not in GHCN_ELEMENTS:
             continue
         try:
             v = float(value)
         except ValueError:
             continue
-        if v == -9999.0:
+        if v == GHCN_MISSING:
             v = None
         out[date][element] = v
-    return dict(out)
+    return dict(out), "long"
 
 
 def ghcn_to_inches(tenths_mm):
