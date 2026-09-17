@@ -381,7 +381,7 @@ check("verbatim sentences keep their opening words",
 # "August [Fig. 1] ." must survive as one piece: the old splitter cut it at the
 # period inside "Fig." and left a sentence ending in "Pacific [Fig.".
 check("figure references do not cut a sentence in half",
-      any("August [Fig. 1] ." in s and not s.endswith("[Fig.") for s in sentences),
+      any("August [Fig. 1]." in s and not s.endswith("[Fig.") for s in sentences),
       str(sentences[:3]))
 check("stand-alone headings are not quoted as sentences",
       all(not (s.upper() == s) for s in sentences), str(sentences[:2]))
@@ -396,6 +396,33 @@ wrapped = pipeline_main.html_to_text(
     "the end of the year.\n\n"
     "Above-\nnormal precipitation is favored for the southern half of California.\n")
 wsent = pipeline_main.extract_key_sentences(wrapped)
+
+# The long-lead page is served with a breadcrumb line glued to the text:
+# "HOME > Outlook Maps >Seasonal Forecast Discussion Prognostic Discussion ...
+#  NWS Climate Prediction Center College Park MD 830 AM EDT Thu Sep 17 2026
+#  SUMMARY OF THE OUTLOOK FOR NON-TECHNICAL USERS El Nino conditions are present".
+chrome = pipeline_main.html_to_text(
+    "HOME > <a href=x>Outlook Maps</a> >Seasonal Forecast Discussion Prognostic "
+    "Discussion for Long-Lead Seasonal Outlooks NWS Climate Prediction Center "
+    "College Park MD 830 AM EDT Thu Sep 17 2026 SUMMARY OF THE OUTLOOK FOR "
+    "NON-TECHNICAL USERS El Ni&ntilde;o conditions are present, as represented in "
+    "current oceanic and atmospheric observations.\n")
+csent = pipeline_main.extract_key_sentences(chrome)
+check("page chrome is not glued to the front of a quote",
+      any(s.startswith("El Niño conditions are present") for s in csent), str(csent))
+check("neither breadcrumbs nor document titles are quoted",
+      all("HOME >" not in s and "College Park MD" not in s for s in csent), str(csent))
+
+# Tags become spaces, which put a space before punctuation the page never shows.
+taggy = pipeline_main.html_to_text(
+    "The CPC Official ENSO outlook <a href=x>,</a> which synthesizes multiple models "
+    "from North America and abroad, indicates El Ni&ntilde;o will continue to "
+    "strengthen [Figs. <a href=y>6</a>-<a href=z>7</a>] .\n")
+tsent = pipeline_main.extract_key_sentences(taggy)
+check("no space is left before punctuation",
+      any("outlook, which synthesizes" in s for s in tsent), str(tsent))
+check("figure ranges read as ranges",
+      any("Figs. 6-7" in s for s in tsent), str(tsent))
 check("hard-wrapped lines are re-joined into whole sentences",
       any(s == "El Niño conditions are present, as represented in current oceanic "
               "and atmospheric anomalies." for s in wsent), str(wsent))

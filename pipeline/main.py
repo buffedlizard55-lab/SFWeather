@@ -781,10 +781,28 @@ def extract_key_sentences(text, limit=14):
     flat = re.sub(r"(?<=[a-z])-\s*\n\s*(?=[a-z])", "-", flat)
     flat = re.sub(r"(?i)\b(?:synopsis|discussion|highlights?|"
                   r"enso alert system status)\s*:\s*", " ", flat)
+    # Cut the page chrome that precedes the discussion: the breadcrumb line
+    # ("HOME > Outlook Maps > ... NWS Climate Prediction Center College Park MD
+    # 830 AM EDT Thu Sep 17 2026") otherwise glues itself to the front of the
+    # first real sentence of the product.
+    flat = re.sub(r"(?is)^.*?(?=SUMMARY OF THE OUTLOOK)", "", flat.strip())
+    # ... and the document's own all-caps heading, so the first quote starts at
+    # the first real sentence instead of at "SUMMARY OF THE OUTLOOK FOR ...".
+    flat = re.sub(r"^[A-Z0-9][A-Z0-9 ,/&()'\-]*(?=[A-Z][a-z])", "", flat).strip()
     flat = re.sub(r"\n(?=\S)", " ", flat)                    # unwrap hard-wrapped lines
 
-    sentences = [re.sub(r"\s+", " ", p).strip(" |")
-                 for p in re.split(r"(?<=[.;])\s+(?=[A-Z(])|\n+", flat)]
+    def tidy(piece):
+        out = re.sub(r"\s+", " ", piece).strip(" |")
+        # Turning HTML tags into spaces leaves a space before punctuation that a
+        # browser never shows ("outlook , which") and splits figure ranges
+        # ("Figs. 6 -7 -8").  Put them back the way the page renders.
+        out = re.sub(r"\s+([,.;:])", r"\1", out)
+        out = re.sub(r"(?<=\d)\s*-\s*(?=\d)", "-", out)
+        return out
+
+    sentences = [tidy(p) for p in re.split(r"(?<=[.;])\s+(?=[A-Z(])|\n+", flat)]
+    furniture = ("home >", "site map", "college park md", "outlook maps",
+                 "prognostic discussion", "summary of the outlook")
     keys = ("nino", "niño", "el niño", "el nino", "la niña", "oni", "chance",
             "percent", "%", "above normal", "below normal", "above median",
             "precipitation", "temperature outlook", "wetter", "drier", "historic")
@@ -799,6 +817,8 @@ def extract_key_sentences(text, limit=14):
         if not any(k in low for k in keys):
             continue
         if re.match(r"^(http|www)", low):
+            continue
+        if any(f in low for f in furniture):     # breadcrumbs / document titles
             continue
         key = s[:80]
         if key in seen:
