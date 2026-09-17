@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T21:08:57Z",
+  "generated_utc": "2026-09-17T21:45:46Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset)",
@@ -1049,7 +1049,7 @@
       "category": "Official CPC outlook",
       "priority": "medium",
       "title": "CPC DJF 2026-2027: Above median (40.0%) - prcp",
-      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above median with 40.0% probability. For precipitation, 'Above median' means CPC favors an above-median total for the period.",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above median with 40.0% probability. For precipitation, 'Above median' means CPC favours an above-median total for the whole 3-month period.",
       "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
       "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
     },
@@ -1057,7 +1057,7 @@
       "category": "Official CPC outlook",
       "priority": "medium",
       "title": "CPC DJF 2026-2027: Above normal (33.0%) - temp",
-      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For temperature, 'Above normal' means CPC favors above-normal average temperature for the period.",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For temperature, 'Above normal' means CPC favours an above-normal average temperature for the whole 3-month period.",
       "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
       "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
     },
@@ -1065,7 +1065,7 @@
       "category": "Official CPC outlook",
       "priority": "medium",
       "title": "CPC JFM 2027: Above median (50.0%) - prcp",
-      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above median with 50.0% probability. For precipitation, 'Above median' means CPC favors an above-median total for the period.",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above median with 50.0% probability. For precipitation, 'Above median' means CPC favours an above-median total for the whole 3-month period.",
       "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
       "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
     },
@@ -1073,7 +1073,7 @@
       "category": "Official CPC outlook",
       "priority": "medium",
       "title": "CPC JFM 2027: Equal chances (33.0%) - temp",
-      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Equal chances with 33.0% probability. For temperature, 'Above normal' means CPC favors above-normal average temperature for the period.",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Equal chances with 33.0% probability. For temperature, 'Equal chances' means CPC sees no tilt: above-normal, near-normal and below-normal averages are all about equally likely (33% each).",
       "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
       "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
     },
@@ -1081,7 +1081,7 @@
       "category": "Official CPC outlook",
       "priority": "medium",
       "title": "CPC NDJ 2026-2027: Above median (33.0%) - prcp",
-      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above median with 33.0% probability. For precipitation, 'Above median' means CPC favors an above-median total for the period.",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above median with 33.0% probability. For precipitation, 'Above median' means CPC favours an above-median total for the whole 3-month period.",
       "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
       "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
     },
@@ -1089,7 +1089,7 @@
       "category": "Official CPC outlook",
       "priority": "medium",
       "title": "CPC NDJ 2026-2027: Above normal (33.0%) - temp",
-      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For temperature, 'Above normal' means CPC favors above-normal average temperature for the period.",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For temperature, 'Above normal' means CPC favours an above-normal average temperature for the whole 3-month period.",
       "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
       "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
     },
@@ -1097,7 +1097,7 @@
       "category": "Official CPC outlook",
       "priority": "medium",
       "title": "CPC OND 2026: Equal chances (33.0%) - prcp",
-      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Equal chances with 33.0% probability. For precipitation, 'Above median' means CPC favors an above-median total for the period.",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Equal chances with 33.0% probability. For precipitation, 'Equal chances' means CPC sees no tilt: above-median, near-median and below-median totals are all about equally likely (33% each). This is not a forecast of dry conditions.",
       "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
       "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
     },
@@ -1105,7 +1105,7 @@
       "category": "Official CPC outlook",
       "priority": "medium",
       "title": "CPC OND 2026: Above normal (33.0%) - temp",
-      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For temperature, 'Above normal' means CPC favors above-normal average temperature for the period.",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For temperature, 'Above normal' means CPC favours an above-normal average temperature for the whole 3-month period.",
       "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
       "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
     }

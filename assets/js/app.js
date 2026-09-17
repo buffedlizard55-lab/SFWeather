@@ -56,6 +56,32 @@ function n(v, dp = 0, suffix = '') {
 
 function pct(v, dp = 0) { return v === null || v === undefined ? DASH : Number(v).toFixed(dp) + '%'; }
 
+/** Render CPC outlooks for a month, precipitation first and clearly labelled.
+ *
+ * A CPC outlook is a probability for a whole period and says nothing about a
+ * single day, so each line names the variable (Rain / Temp) and the period it
+ * is valid for.  Rain lines come first because this dashboard is about rain.
+ * If no outlook was sampled for the month this returns an em dash - never
+ * "EC", which is a real CPC category (Equal chances) and would assert a
+ * forecast that was never fetched.
+ */
+function cpcOutlookCell(outlooks) {
+  const list = (outlooks || []).filter(o => o && o.category_label);
+  if (!list.length) return document.createTextNode(DASH);
+  const order = { prcp: 0, temp: 1 };
+  const sorted = list.slice().sort((a, b) =>
+    (order[a.variable] ?? 9) - (order[b.variable] ?? 9));
+  const box = el('div', { class: 'cpc-cell' });
+  sorted.forEach((o, i) => {
+    const label = o.variable === 'prcp' ? 'Rain' : o.variable === 'temp' ? 'Temp' : 'Other';
+    box.append(el('div', { class: 'cpc-line' + (i ? '' : ' first') }, [
+      el('span', { class: 'cpc-var cpc-var-' + (o.variable || 'other'), text: label }),
+      document.createTextNode(` ${o.valid_season || ''}: ${o.category_label} ${pct(o.prob, 0)}`)
+    ]));
+  });
+  return box;
+}
+
 function link(url, label) {
   if (!url) return el('span', { text: label || DASH });
   return el('a', { href: url, target: '_blank', rel: 'noopener', text: label || url });
@@ -66,6 +92,12 @@ function linkShort(url, max = 62) {
   let txt = url.replace(/^https?:\/\//, '');
   if (txt.length > max) txt = txt.slice(0, max - 1) + '\u2026';
   return el('a', { href: url, target: '_blank', rel: 'noopener', text: txt, title: url });
+}
+
+/** Find a source entry by matching its URL, so callers never depend on order. */
+function srcByMatch(sources, re) {
+  const hit = (sources || []).find(s => s && s.url && re.test(s.url));
+  return hit ? hit.url : null;
 }
 
 function table(headers, rows, opts = {}) {
@@ -236,7 +268,11 @@ function renderLandlord(ll, cal) {
       n(m.mean_in, 2), n(m.median_in, 2),
       m.min_in !== undefined ? `${n(m.min_in, 2)} – ${n(m.max_in, 2)}` : DASH,
       n(m.p90_in, 2), n(m.expected_wet_days, 1),
-      (m.cpc_outlooks || []).map(o => `${o.valid_season || ''}: ${o.category_label} ${o.prob}%`).join('; ') || 'EC'
+      // Label each outlook with the variable it belongs to.  This table is
+      // about rain, and an earlier version printed raw "Oct 2026: Above normal
+      // 40%" rows that were actually the *temperature* outlook - sitting next
+      // to rainfall columns with nothing to say so.
+      cpcOutlookCell(m.cpc_outlooks)
     ])
   ));
 
@@ -304,7 +340,13 @@ function renderLandlord(ll, cal) {
       el('p', { text: a.detail }),
       el('div', { class: 'action-source' }, [
         document.createTextNode('Source: '),
-        link(a.source_url || a.source, a.source_url ? a.source_url.replace(/^https?:\/\//, '').slice(0, 80) : a.source)
+        // Show the whole URL.  An earlier version sliced the display text to 80
+        // characters, which rendered "...access/USW000" - a string that looks
+        // like a station ID but is not one, on a page whose entire premise is
+        // that a reader can click through and check the source by hand.
+        link(a.source_url || a.source, a.source_url
+          ? a.source_url.replace(/^https?:\/\//, '')
+          : a.source)
       ])
     ]);
   }));
@@ -323,16 +365,23 @@ function renderReality(cal) {
   $('#rc-horizon').textContent = win.last_day
     ? `${horizon} day(s) of real forecast \u2014 through ${win.last_day}` : DASH;
   $('#rc-end').textContent = 'January 2027';
-  $('#rc-count').innerHTML =
-    (covered === 0
-      ? `No day on this scoreboard is inside the official horizon yet \u2014 the horizon ends ` +
-        `<strong>${win.last_day || 'n/a'}</strong>, before the first day shown (1 Oct 2026). ` +
-        `All <strong>${total}</strong> days therefore show observed climatology. ` +
-        `Days convert automatically as they come into range. `
-      : `Right now <strong>${covered}</strong> of the <strong>${total}</strong> days on this scoreboard `) +
-    `carry a real NWS forecast. The remaining <strong>${total - covered}</strong> show observed ` +
-    `1991\u20132020 climatology and are badged <span class="badge badge-climo">Climatology</span>. ` +
-    `The page rebuilds nightly, so days convert to real forecasts automatically as they come into range.`;
+  // The two branches are fully independent sentences.  An earlier version
+  // shared a tail ("...carry a real NWS forecast.") between them, so when no
+  // day was inside the horizon the page read "...as they come into range.
+  // carry a real NWS forecast." - a broken sentence in the one section that
+  // exists to explain the limits of the data.
+  $('#rc-count').innerHTML = covered === 0
+    ? `No day on this scoreboard is inside the official horizon yet \u2014 the horizon ends ` +
+      `<strong>${win.last_day || 'n/a'}</strong>, before the first day shown (1 Oct 2026). ` +
+      `All <strong>${total}</strong> days therefore show observed 1991\u20132020 climatology and are ` +
+      `badged <span class="badge badge-climo">Climatology</span>; none of them is a forecast. ` +
+      `The page rebuilds nightly, so days convert to real NWS forecasts automatically ` +
+      `as they come into range.`
+    : `Right now <strong>${covered}</strong> of the <strong>${total}</strong> days on this scoreboard ` +
+      `carry a real NWS forecast and are badged <span class="badge badge-nws">NWS forecast</span>. ` +
+      `The remaining <strong>${total - covered}</strong> show observed 1991\u20132020 climatology and are ` +
+      `badged <span class="badge badge-climo">Climatology</span>. ` +
+      `The page rebuilds nightly, so days convert to real forecasts automatically as they come into range.`;
 
   const legend = [
     {
@@ -587,12 +636,12 @@ function renderNow(nws, cal) {
         'part of this site that is a forecast rather than a climatology.' }));
       cfBox.append(table(
         [{ label: 'Day' }, { label: 'High / low', num: true }, { label: 'Humidity (mean)', num: true },
-         { label: 'Rain chance (max hourly POP)', num: true }, { label: 'Rain amount (hourly QPF)', num: true },
+         { label: 'Rain chance (max hourly POP)', num: true }, { label: 'Rain amount (NWS QPF)', num: true },
          { label: 'Wind max', num: true }, { label: 'Gust max', num: true }],
         cfDays.map(d => [
           el('div', {}, [el('strong', { text: d.date }), el('br'),
             el('span', { class: 'fine', text: d.weekday || '' })]),
-          `${n(d.high_f, 0)}\u00b0 / ${n(d.low_f, 0)}\u00b0F`,
+          `${n(d.high_f, 0)}\u00b0F / ${n(d.low_f, 0)}\u00b0F`,
           d.humidity_pct === null ? null : pct(d.humidity_pct, 0) +
             (d.humidity_min_pct !== null && d.humidity_max_pct !== null
               ? ` (${n(d.humidity_min_pct, 0)}\u2013${n(d.humidity_max_pct, 0)}%)` : ''),
@@ -608,10 +657,15 @@ function renderNow(nws, cal) {
       }
       cfBox.append(el('p', { class: 'fine' }, [
         'Issued ', document.createTextNode(cf.forecast_updated || DASH), ' \u00b7 ',
-        link((cf.sources || [])[1] && (cf.sources || [])[1].url, 'Open on weather.gov'),
-        ' \u00b7 ', link((cf.sources || [])[0] && (cf.sources || [])[0].url, 'NWS API endpoint'),
-        document.createTextNode(' \u00b7 rain chance is the maximum hourly NWS POP; rain amount is the sum of hourly NWS QPF; ' +
-          'wind/gust are hourly maxima')
+        // Select sources by what they are, not by position: inserting the
+        // gridpoint endpoint into the list shifted these indices and made
+        // "Open on weather.gov" point at an API URL.
+        link(srcByMatch(cf.sources, /forecast\.weather\.gov/), 'Open on weather.gov'),
+        ' \u00b7 ', link(srcByMatch(cf.sources, /forecast\/hourly/), 'NWS API endpoint'),
+        ' \u00b7 ', link(srcByMatch(cf.sources, /gridpoints\/[^/]+\/\d+,\d+$/), 'gridpoint data'),
+        document.createTextNode(' \u00b7 rain chance is the maximum hourly NWS POP; wind is the hourly maximum. ' +
+          'Rain amount and gusts are not carried by the hourly product for this grid cell, so they come from the ' +
+          'NWS gridpoint QPF and windGust series - each day\u2019s dialog names the basis actually used.')
       ]));
     } else {
       cfBox.append(el('p', { class: 'empty', text: 'No current NWS forecast was captured this run.' }));
@@ -652,7 +706,14 @@ function renderNow(nws, cal) {
           el('div', {}, [el('strong', { text: s.station_id }), el('br'),
             el('span', { class: 'fine', text: s.name || '' })]),
           el('span', { class: 'fine', text: (o.timestamp || DASH).replace('T', ' ').replace('+00:00', 'Z') }),
-          c2f(o.temperature_c), o.relative_humidity_pct === null ? null : o.relative_humidity_pct + '%',
+          c2f(o.temperature_c),
+          // The NWS observation is a computed RH with ~14 significant figures.
+          // No official product publishes humidity to that precision, and
+          // showing it read like a broken value, so it is rounded for display
+          // only - the full value stays in data/nws.json.
+          o.relative_humidity_pct === null || o.relative_humidity_pct === undefined
+            ? null
+            : Number(o.relative_humidity_pct).toFixed(0) + '%',
           kmh2mph(o.wind_speed_kmh), kmh2mph(o.wind_gust_kmh)
         ];
       })));
@@ -787,9 +848,16 @@ function openDay(d) {
       : el('span', {}, [document.createTextNode(pct(d.humidity_pct, 0)),
           d.humidity_basis ? el('span', { class: 'fine', text: ' \u00b7 ' + d.humidity_basis }) : null].filter(Boolean))],
     [isForecast ? 'Chance of rain (max hourly POP)' : 'Chance of rain (1991–2020)', pct(d.rain_chance_pct, 0)],
-    [isForecast ? 'Rain amount (hourly QPF sum)' : 'Rain amount (1991–2020 mean)', d.rain_amount_in === null ? null : Number(d.rain_amount_in).toFixed(2) + ' in'],
+    [isForecast ? 'Rain amount' : 'Rain amount (1991–2020 mean)',
+      d.rain_amount_in === null
+        ? el('span', { class: 'fine', text: 'no official QPF published for this day' })
+        : el('span', {}, [document.createTextNode(Number(d.rain_amount_in).toFixed(2) + ' in'),
+            d.rain_amount_basis ? el('span', { class: 'fine', text: ' \u00b7 ' + d.rain_amount_basis }) : null].filter(Boolean))],
     ['Max wind', d.wind_max_mph === null ? null : n(d.wind_max_mph, 0) + ' mph'],
-    ['Max gust', d.gust_max_mph === null ? null : n(d.gust_max_mph, 0) + ' mph']
+    ['Max gust', d.gust_max_mph === null
+      ? el('span', { class: 'fine', text: 'no official gust published for this day' })
+      : el('span', {}, [document.createTextNode(n(d.gust_max_mph, 0) + ' mph'),
+          d.gust_basis ? el('span', { class: 'fine', text: ' \u00b7 ' + d.gust_basis }) : null].filter(Boolean))]
   ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), kvCell(v)]))));
 
   const c = d.climo || {};

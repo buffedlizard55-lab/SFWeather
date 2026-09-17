@@ -467,8 +467,155 @@ check("the 'Synopsis:' label is stripped, the sentence itself is untouched",
       all(not s.startswith("Synopsis") for s in sentences), str(sentences[:1]))
 
 # --------------------------------------------------------------------------- #
+# CPC category explanations
+#
+# The action checklist explains each CPC outlook category to the reader.  The
+# wording used to be chosen from the *variable* alone, so a "Equal chances"
+# outlook was published with the explanation for "Above median" - the page
+# describing a category it was not showing.  These checks pin the note to the
+# category actually displayed, and pin the label mapping in build_calendar.py
+# that the notes are keyed on.
+# --------------------------------------------------------------------------- #
 
+section("CPC category explanation matches the category shown")
 
+import landlord_summary  # noqa: E402
+
+# build_calendar.py maps the raw DBF "Cat" field to a human label per variable.
+# Reproduce that mapping so the notes are checked against the real labels.
+RAW_CATS = {"EC": "Equal chances", "Above": None, "Below": None}
+for variable in ("prcp", "temp"):
+    for raw in ("Above", "Below"):
+        label = ("Above normal" if variable == "temp" else "Above median") if raw == "Above" \
+            else ("Below normal" if variable == "temp" else "Below median")
+        note = landlord_summary.cpc_category_note(variable, label)
+        check("note for %s/%s names its own category" % (variable, label),
+              ("'%s'" % label) in note, note)
+        check("note for %s/%s does not quote a different category" % (variable, label),
+              all(("'%s'" % other) not in note
+                  for other in ("Above median", "Below median", "Above normal",
+                                "Below normal", "Equal chances") if other != label),
+              note)
+
+for variable in ("prcp", "temp"):
+    note = landlord_summary.cpc_category_note(variable, "Equal chances")
+    check("Equal chances (%s) is explained as no tilt" % variable,
+          "no tilt" in note and "33%" in note, note)
+
+# An unknown label must be reported as undocumented rather than explained with
+# a plausible-sounding sentence about some other category.
+odd = landlord_summary.cpc_category_note("prcp", "Some Future Category")
+check("an unrecognised category is declared, not guessed",
+      "not documented" in odd and "Above median" not in odd, odd)
+
+# The committed landlord.json must satisfy the same rule end to end.
+_ll_path = os.path.join(ROOT, "data", "landlord.json")
+if os.path.exists(_ll_path):
+    with io.open(_ll_path, encoding="utf-8") as fh:
+        _ll = json.load(fh)
+    _cpc_items = [a for a in _ll.get("action_items", [])
+                  if a.get("category") == "Official CPC outlook"]
+    _bad = []
+    for a in _cpc_items:
+        m = __import__("re").match(r"^CPC [^:]+: (.+?) \(", a.get("title", ""))
+        cat = m.group(1) if m else None
+        if cat and ("'%s'" % cat) not in a.get("detail", ""):
+            _bad.append(a.get("title"))
+    check("every CPC action item explains its own category (%d items)" % len(_cpc_items),
+          not _bad, str(_bad))
+    check("CPC action items exist to check", len(_cpc_items) > 0, "found none")
+else:
+    check("data/landlord.json present to audit", False, "missing")
+
+# --------------------------------------------------------------------------- #
+# NWS gridpoint gust / QPF aggregation
+#
+# The /forecast/hourly product returns no windGust and no QPF for the 94122 grid
+# cell (0 of 156 periods on 17 Sep 2026), so gust and rain amount - the two
+# figures the brief asks about first - used to render as em dashes even though
+# NWS publishes both at the same grid point.  These tests pin the interval
+# parsing and the two derivations with hand-computable values.
+# --------------------------------------------------------------------------- #
+
+section("NWS gridpoint gust and QPF aggregation")
+
+start, hours = build_calendar.parse_valid_time("2026-09-17T14:00:00+00:00/PT3H")
+check("PT3H parses to 3 hours", hours == 3.0, repr(hours))
+check("PT3H keeps its start instant",
+      start is not None and start.isoformat() == "2026-09-17T14:00:00+00:00", str(start))
+
+start, hours = build_calendar.parse_valid_time("2026-09-18T00:00:00+00:00/P1DT6H")
+check("P1DT6H parses to 30 hours", hours == 30.0, repr(hours))
+
+check("an unparseable validTime is rejected, not guessed",
+      build_calendar.parse_valid_time("not-a-timestamp") == (None, None), "")
+check("a bare timestamp with no interval is rejected",
+      build_calendar.parse_valid_time("2026-09-17T14:00:00+00:00") == (None, None), "")
+
+# A gust of exactly 20 mph expressed in the km/h NWS actually publishes.
+GUST_KMH = 20.0 * build_calendar.KM_PER_MILE
+gp = {
+    "values": {
+        "windGust": {"uom": "wmoUnit:km_h-1", "values": [
+            # 14:00Z = 07:00 PDT on 17 Sep; 2 hours, both inside 17 Sep local.
+            {"validTime": "2026-09-17T14:00:00+00:00/PT2H", "value": GUST_KMH},
+            {"validTime": "2026-09-17T16:00:00+00:00/PT1H", "value": None},
+        ]},
+        "quantitativePrecipitation": {"uom": "wmoUnit:mm", "values": [
+            # 05:00Z = 22:00 PDT 17 Sep; 4 hours straddle local midnight, so the
+            # 8 mm accumulation must split 4 mm / 4 mm between 17 and 18 Sep.
+            {"validTime": "2026-09-18T05:00:00+00:00/PT4H", "value": 8.0},
+        ]},
+    }
+}
+gdays, g_tz_ok = build_calendar.daily_from_gridpoint(gp, "America/Los_Angeles")
+check("gridpoint timezone resolved by name", g_tz_ok is True, repr(g_tz_ok))
+
+g17 = gdays.get("2026-09-17", {})
+check("gust converted km/h -> mph exactly",
+      g17.get("gust_mph") and abs(max(g17["gust_mph"]) - 20.0) < 1e-9,
+      str(g17.get("gust_mph")))
+check("a null gust value is skipped, not treated as zero",
+      len(g17.get("gust_mph") or []) == 2, str(g17.get("gust_mph")))
+
+check("QPF accumulation split across local midnight (17 Sep = 4 mm)",
+      abs(gdays.get("2026-09-17", {}).get("qpf_mm", -1) - 4.0) < 1e-9,
+      str(gdays.get("2026-09-17", {}).get("qpf_mm")))
+check("QPF accumulation split across local midnight (18 Sep = 4 mm)",
+      abs(gdays.get("2026-09-18", {}).get("qpf_mm", -1) - 4.0) < 1e-9,
+      str(gdays.get("2026-09-18", {}).get("qpf_mm")))
+check("the split conserves the published total",
+      abs(sum(d.get("qpf_mm", 0.0) for d in gdays.values()) - 8.0) < 1e-9,
+      str(sum(d.get("qpf_mm", 0.0) for d in gdays.values())))
+check("a day with QPF is marked known, so 0.00 in is not confused with missing",
+      gdays.get("2026-09-18", {}).get("qpf_known") is True, "")
+
+# Cross-check against the committed run: the gusts now published must agree with
+# the gusts NWS states in its own human-readable forecast text.
+_cal_path = os.path.join(ROOT, "data", "calendar.json")
+if os.path.exists(_cal_path):
+    with io.open(_cal_path, encoding="utf-8") as fh:
+        _cal = json.load(fh)
+    _cf = (_cal.get("current_forecast") or {}).get("days") or []
+    _nogust = [d["date"] for d in _cf if d.get("gust_max_mph") is None]
+    _noqpf = [d["date"] for d in _cf if d.get("rain_amount_in") is None]
+    check("every current-forecast day now carries a gust (%d days)" % len(_cf),
+          bool(_cf) and not _nogust, str(_nogust))
+    check("every current-forecast day now carries a rain amount",
+          bool(_cf) and not _noqpf, str(_noqpf))
+    # NWS's own text forecast for this run says "gusts as high as 18 mph" for
+    # Friday 18 Sep and "gusts as high as 20 mph" for Saturday 19 Sep.
+    _by = {d["date"]: d for d in _cf}
+    for _iso, _expect in (("2026-09-18", 18.0), ("2026-09-19", 20.0)):
+        _got = (_by.get(_iso) or {}).get("gust_max_mph")
+        check("derived gust for %s matches NWS's stated %.0f mph within 2 mph" % (_iso, _expect),
+              _got is not None and abs(_got - _expect) <= 2.0, str(_got))
+    # Tiering must be untouched: no climatology day may carry forecast values.
+    _bad_tier = [d["date"] for d in _cal.get("days", [])
+                 if d.get("tier") == "climatology" and d.get("gust_basis")]
+    check("no climatology day carries an NWS gust basis", not _bad_tier, str(_bad_tier[:3]))
+else:
+    check("data/calendar.json present to audit", False, "missing")
 
 # --------------------------------------------------------------------------- #
 
