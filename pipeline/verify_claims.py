@@ -481,7 +481,52 @@ def main() -> int:
                  method="union of every source URL attached to a day or a CPC record",
                  verified=not untraceable)
 
-    # ------------------------------------------------ 11. doc drift detector
+    # ------------------------------------- 11. quoted prose must be plain text
+    #  NOAA writes its pages with HTML entities ("El Ni&ntilde;o", "90&#37;").
+    #  If decoding is skipped, the site displays entity text to the reader *and*
+    #  the entity semicolons cut the stored sentences short - which is exactly
+    #  what happened before (the Alert System Status read "El Ni").  This check
+    #  fails the run if any quote the project publishes still contains an entity.
+    import re as _re2
+
+    def prose_strings(obj, path="", out=None):
+        out = [] if out is None else out
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if k in ("url", "href", "sha256", "raw_dbf_row", "header",
+                         "columns", "rings", "vertices",
+                         # "text" is the raw captured page kept for audit rather
+                         # than shown; the displayable quotes are key_sentences,
+                         # synopsis and alert_status, which are checked.
+                         "text"):
+                    continue
+                prose_strings(v, f"{path}.{k}", out)
+        elif isinstance(obj, list):
+            for i, v in enumerate(obj):
+                prose_strings(v, f"{path}[{i}]", out)
+        elif isinstance(obj, str):
+            if "://" not in obj and len(obj) > 8:
+                out.append((path, obj))
+        return out
+
+    entity = _re2.compile(r"&(?:[a-zA-Z]{2,10}|#\d{1,5});")
+    offenders = []
+    for fname in ("enso.json", "landlord.json", "calendar.json"):
+        for path, text in prose_strings(load(fname)):
+            m2 = entity.search(text)
+            if m2:
+                offenders.append({"file": fname, "field": path.lstrip("."),
+                                  "entity": m2.group(0),
+                                  "context": text[max(0, m2.start() - 40):m2.start() + 20]})
+    ledger.check("quotes-plain-text",
+                 "Every quoted official sentence is decoded plain text, exactly as a "
+                 "browser shows it (no HTML entities)",
+                 not offenders,
+                 f"{len(offenders)} quoted string(s) still contain entity text"
+                 if offenders else "0 quoted string(s) contain entity text",
+                 evidence={"examples": offenders[:5]})
+
+    # ------------------------------------------------ 12. doc drift detector
     readme = (ROOT / "README.md").read_text() if (ROOT / "README.md").exists() else ""
     import re as _re
     m = _re.search(r"ONI\s*(?:latest|rose from[^.]*?to)?\s*\+?(-?\d\.\d{1,2})\s*(?:°|deg|C)", readme)

@@ -16,8 +16,10 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import html as html_lib
 import json
 import re
+import unicodedata
 import shutil
 import sys
 import tempfile
@@ -95,16 +97,25 @@ def record(res, **kwargs):
 # ------------------------------------------------------------------ helpers
 
 def html_to_text(html):
-    """Very small HTML->text conversion (enough for NOAA's static pages)."""
+    """Very small HTML->text conversion (enough for NOAA's static pages).
+
+    Entities are decoded with :func:`html.unescape` rather than a hand-written
+    list.  The earlier hand-written list missed ``&ntilde;`` (so "El Nino
+    Advisory" was truncated to "El Ni"), ``&#37;`` and ``&deg;``, and because it
+    left the entity text in place the *semicolons* inside entities looked like
+    sentence boundaries, which chopped the verbatim quotes we store.  Everything
+    returned here is therefore what a human sees in a browser, and is normalised
+    to NFC so accented letters never depend on the source's encoding.
+    """
     if not html:
         return ""
     text = re.sub(r"(?is)<(script|style).*?</\1>", " ", html)
     text = re.sub(r"(?i)<br\s*/?>", "\n", text)
     text = re.sub(r"(?i)</(p|div|tr|h[1-6]|li)>", "\n", text)
     text = re.sub(r"<[^>]+>", " ", text)
-    text = (text.replace("&nbsp;", " ").replace("&amp;", "&")
-                .replace("&lt;", "<").replace("&gt;", ">")
-                .replace("&#39;", "'").replace("&quot;", '"'))
+    text = html_lib.unescape(text)            # &ntilde; &#37; &deg; &nbsp; ...
+    text = unicodedata.normalize("NFC", text)  # combining-mark forms -> one char
+    text = text.replace("\xa0", " ")            # non-breaking space -> space
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n\s*\n+", "\n", text)
     return text.strip()
@@ -746,14 +757,19 @@ def extract_key_sentences(text, limit=14):
     are selected on keywords that matter to this project (ENSO strength, the
     odds of a strong event, and the seasonal temperature/precipitation tilt).
     """
-    flat = re.sub(r"\s+", " ", text or " ")
-    sentences = re.split(r"(?<=[.;])\s+", flat)
+    # Split on sentence ends *and* on line breaks.  NOAA's pages put a heading on
+    # its own line, so "El Nino Advisory" would otherwise be glued to the front of
+    # the sentence that follows it.  A decimal point is safe here because the
+    # lookbehind also requires whitespace ("+1.8 C" never splits).
+    sentences = [re.sub(r"\s+", " ", p).strip(" |")
+                 for p in re.split(r"(?<=[.;])\s+|\n+", text or "")]
     keys = ("nino", "niño", "el niño", "el nino", "la niña", "oni", "chance",
             "percent", "%", "above normal", "below normal", "above median",
             "precipitation", "temperature outlook", "wetter", "drier", "historic")
     picked, seen = [], set()
     for s in sentences:
-        s = s.strip(" |")
+        s = re.sub(r"^(?:synopsis|discussion|enso alert system status)\s*:\s*",
+                   "", s.strip(" |"), flags=re.I)
         low = s.lower()
         if len(s) < 30 or len(s) > 420:
             continue
@@ -957,14 +973,17 @@ def fetch_enso():
         entry["text"] = plain[:24000]
         # Keep the exact sentences that carry the numbers a reader will see.
         entry["key_sentences"] = extract_key_sentences(plain)
-        # \w keeps accented letters ("El Niño Advisory"); the earlier [A-Za-z ]
-        # class silently truncated it to "El Ni".
-        status = re.search(r"ENSO Alert System Status:\s*([\w .\u2013-]{3,60})", plain)
+        # The status runs to the end of its line, so read the whole line and
+        # clean it up.  Character classes are a trap here: "&ntilde;" and
+        # combining accents both used to cut the string off at "El Ni".
+        status = re.search(r"ENSO Alert System Status:\s*([^\n]{3,80})", plain)
         if status:
-            entry["alert_status"] = re.sub(r"\s+", " ", status.group(1)).strip()
-        syn = re.search(r"Synopsis:\s*(.{0,900}?)(?:El Ni|La Ni|$)", plain, re.S)
+            entry["alert_status"] = unicodedata.normalize(
+                "NFC", re.sub(r"\s+", " ", status.group(1))).strip(" :;.")
+        syn = re.search(r"Synopsis:\s*([^\n]{40,900})", plain)
         if syn:
-            entry["synopsis"] = re.sub(r"\s+", " ", syn.group(1)).strip()[:600]
+            entry["synopsis"] = unicodedata.normalize(
+                "NFC", re.sub(r"\s+", " ", syn.group(1))).strip()[:600]
         issued = re.search(r"(\d{1,2} [A-Z][a-z]+ \d{4})", plain)
         if issued:
             entry["issued"] = issued.group(1)

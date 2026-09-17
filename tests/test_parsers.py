@@ -40,6 +40,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(ROOT, "pipeline"))
 
 import climo  # noqa: E402
+import main as pipeline_main  # noqa: E402
 
 RESULTS = []
 
@@ -339,6 +340,48 @@ check("single-season distribution is that season",
 check("streak probability reported for a 1-season sample",
       stats["probability_of_at_least_one_streak"]["ge_3_days"]["pct"] == 0.0,
       json.dumps(stats["probability_of_at_least_one_streak"]["ge_3_days"]))
+
+
+# --------------------------------------------------------------------------- #
+# 5. HTML -> text (the quotes on the site must be what a human reads)
+# --------------------------------------------------------------------------- #
+
+section("official prose extraction (HTML entities)")
+
+# The ENSO Diagnostic Discussion writes its accented letters and degree signs as
+# entities, and the entity semicolons used to look like sentence ends.
+sample_html = (
+    "<p>ENSO Alert System Status: El Ni&ntilde;o Advisory</p>"
+    "<p>Synopsis: El Ni&ntilde;o is strengthening, with a greater than 90&#37; "
+    "chance of a very strong event during the fall and winter 2026-27.</p>"
+    "<p>Ni&ntilde;o-3.4 reached +1.8&deg;C in August.</p>"
+)
+plain = pipeline_main.html_to_text(sample_html)
+check("entities decoded to what a browser shows",
+      "El Niño Advisory" in plain and "90%" in plain and "+1.8°C" in plain,
+      repr(plain[:80]))
+check("no entity text survives into the extracted prose",
+      not __import__("re").search(r"&[a-zA-Z]+;|&#\d+;", plain), repr(plain))
+check("entity semicolons no longer look like sentence ends",
+      "chance of a very strong event during the fall and winter 2026-27." in plain,
+      repr(plain))
+
+status = __import__("re").search(r"ENSO Alert System Status:\s*([^\n]{3,80})", plain)
+check("alert status reads in full, not truncated to 'El Ni'",
+      status is not None and status.group(1).strip(" :;.") == "El Niño Advisory",
+      repr(status and status.group(1)))
+
+sentences = pipeline_main.extract_key_sentences(plain)
+check("verbatim sentences keep their opening words",
+      any(s.startswith("El Niño is strengthening, with a greater than 90% chance")
+          for s in sentences),
+      str(sentences[:2]))
+check("the 'Synopsis:' label is stripped, the sentence itself is untouched",
+      all(not s.startswith("Synopsis") for s in sentences), str(sentences[:1]))
+
+# --------------------------------------------------------------------------- #
+
+
 
 # --------------------------------------------------------------------------- #
 
