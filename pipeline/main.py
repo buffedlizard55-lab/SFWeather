@@ -144,22 +144,58 @@ def fetch_zip_centroid():
     import zipfile, io, csv
     with zipfile.ZipFile(io.BytesIO(res.body)) as zf:
         name = next((n for n in zf.namelist() if n.lower().endswith(".txt")), zf.namelist()[0])
-        raw = zf.read(name).decode("utf-8", "replace")
+        raw = zf.read(name).decode("utf-8-sig", "replace")
+
+    # The Census Gazetteer files are tab-delimited with CRLF endings, so header
+    # names and values must be stripped (the last column otherwise arrives as
+    # "INTPTLONG\r").  Column lookup is done case-insensitively.
     reader = csv.DictReader(io.StringIO(raw), delimiter="\t")
+    raw_fields = reader.fieldnames or []
+    fields = {f.strip().upper(): f for f in raw_fields}
+
+    def col(*names):
+        for n in names:
+            if n in fields:
+                return fields[n]
+        return None
+
+    c_geo = col("GEOID")
+    c_lat = col("INTPTLAT", "INTPTLATITUDE", "LAT", "LATITUDE")
+    c_lon = col("INTPTLONG", "INTPTLONGITUDE", "LON", "LONG", "LONGITUDE")
+
+    if not (c_geo and c_lat and c_lon):
+        note_irregularity("error", "geography",
+                          "The Census Gazetteer file did not expose GEOID / INTPTLAT / "
+                          "INTPTLONG columns; the 94122 centroid could not be verified.",
+                          {"url": url, "file_in_archive": name,
+                           "header": raw_fields[:20]})
+        return {"lat": TARGET["fallback_lat"], "lon": TARGET["fallback_lon"],
+                "source": "fallback (unexpected Gazetteer columns)",
+                "verified": False, "url": url, "header": raw_fields[:20]}
+
     for row in reader:
-        if (row.get("GEOID") or "").strip() == TARGET["zip"]:
-            lat = float(row["INTPTLAT"])
-            lon = float(row["INTPTLONG"])
+        if ((row.get(c_geo) or "").strip() == TARGET["zip"]):
+            try:
+                lat = float((row.get(c_lat) or "").strip())
+                lon = float((row.get(c_lon) or "").strip())
+            except ValueError:
+                note_irregularity("error", "geography",
+                                  "Census Gazetteer row for 94122 had un-parseable "
+                                  "coordinates.", {"url": url, "row": dict(row)})
+                break
             return {
                 "zip": TARGET["zip"],
                 "lat": lat, "lon": lon,
-                "aland_sqkm": float(row.get("ALAND_SQMI", 0)) * 2.589988 if row.get("ALAND_SQMI") else None,
+                "land_area_sqmi": float(row[col("ALAND_SQMI")]) if col("ALAND_SQMI") and row.get(col("ALAND_SQMI")) else None,
+                "water_area_sqmi": float(row[col("AWATER_SQMI")]) if col("AWATER_SQMI") and row.get(col("AWATER_SQMI")) else None,
                 "source": "U.S. Census Bureau Gazetteer file (internal point / centroid)",
                 "verified": True,
                 "url": url,
                 "file_in_archive": name,
-                "gazetteer_year": re.search(r"(\d{4})_Gaz", url).group(1) if re.search(r"(\d{4})_Gaz", url) else None,
+                "gazetteer_year": (re.search(r"(\d{4})_Gaz", url) or [None, None])[1],
+                "column_names_used": {"geoid": c_geo, "lat": c_lat, "lon": c_lon},
             }
+
     note_irregularity("warning", "geography",
                       f"ZIP {TARGET['zip']} not found in the Census Gazetteer file; "
                       "falling back to the hard-coded centroid.",
