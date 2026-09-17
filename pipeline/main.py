@@ -447,10 +447,72 @@ def fetch_nws(lat, lon):
 # 3.  Climate Prediction Center (NOAA/NWS/NCEP) outlooks
 # ==========================================================================
 
-def _sample_shapefile(zip_url, lat, lon, label, workdir):
-    """Download a CPC outlook shapefile and point-sample it at (lat, lon)."""
+def _sample_one_bundle(bundle, lat, lon, label, zip_url):
+    """Point-sample a single shapefile bundle at (lat, lon)."""
+    if not bundle["shp"] or not bundle["dbf"]:
+        return {"stem": bundle["stem"], "ok": False,
+                "error": "no .shp/.dbf pair for this bundle"}
+    prj = shapelib.read_prj(bundle["prj"])
+    geographic = shapelib.is_geographic(prj)
+    if geographic is False:
+        note_irregularity("warning", "cpc",
+                          f"CPC shapefile {bundle['stem']} uses a projected CRS; "
+                          "point-sampling was skipped rather than guessing at a reprojection.",
+                          {"url": zip_url, "prj": (prj or "")[:300]})
+        return {"stem": bundle["stem"], "ok": False,
+                "error": "projected CRS - point sampling skipped", "prj": (prj or "")[:300]}
+
+    _stype, shapes = shapelib.read_shp(Path(bundle["shp"]))
+    fields, rows = shapelib.read_dbf(Path(bundle["dbf"]))
+    if len(rows) != len(shapes):
+        note_irregularity("warning", "cpc",
+                          f"CPC shapefile {bundle['stem']}: .shp has {len(shapes)} records "
+                          f"but .dbf has {len(rows)}. Attributes matched by index; verify "
+                          "against the official map before relying on this.",
+                          {"url": zip_url})
+
+    hits, used_nearest = [], False
+    for i, shape in enumerate(shapes):
+        if not shape.rings:
+            continue
+        if not shapelib.bbox_contains(shape.bbox, lon, lat):
+            continue
+        if shapelib.point_in_polygon(lon, lat, shape.rings):
+            hits.append({"index": i, "attrs": rows[i] if i < len(rows) else None})
+
+    if not hits:
+        best, bestd = None, None
+        for i, shape in enumerate(shapes):
+            if not shape.rings or not shape.rings[0]:
+                continue
+            xs = [pt[0] for pt in shape.rings[0]]
+            ys = [pt[1] for pt in shape.rings[0]]
+            cx, cy = sum(xs) / len(xs), sum(ys) / len(ys)
+            d = (cx - lon) ** 2 + (cy - lat) ** 2
+            if bestd is None or d < bestd:
+                bestd, best = d, i
+        if best is not None:
+            used_nearest = True
+            hits.append({"index": best, "attrs": rows[best] if best < len(rows) else None})
+            note_irregularity("warning", "cpc",
+                              f"CPC polygon miss: ({lon:.4f}, {lat:.4f}) fell in no polygon of "
+                              f"{bundle['stem']} (common for coastal cells). Used the nearest "
+                              "polygon instead - flagged for manual review.",
+                              {"url": zip_url})
+
+    return {
+        "stem": bundle["stem"], "ok": bool(hits), "fields": fields,
+        "n_polygons": len(shapes), "n_hits": len(hits),
+        "used_nearest_polygon": used_nearest,
+        "is_geographic": geographic,
+        "hits": hits,
+    }
+
+
+def _sample_shapefile_archive(zip_url, lat, lon, label, workdir):
+    """Download a CPC outlook ZIP and point-sample every shapefile inside it."""
     res = fetchlib.get(zip_url, timeout=240)
-    prov = record(res, note=f"CPC outlook shapefile: {label}")
+    prov = record(res, note=f"CPC outlook shapefile archive: {label}")
     if not res.ok or not res.body or res.body[:2] != b"PK":
         return {"label": label, "ok": False, "status": res.status, "url": zip_url,
                 "error": res.error or "response was not a ZIP archive"}
@@ -459,65 +521,26 @@ def _sample_shapefile(zip_url, lat, lon, label, workdir):
     zpath = tmp / "outlook.zip"
     zpath.write_bytes(res.body)
     try:
-        parts = shapelib.extract_shapefile(zpath, tmp / "shp")
+        extracted = shapelib.extract_all_shapefiles(zpath, tmp / "shp")
     except Exception as exc:  # noqa: BLE001
         return {"label": label, "ok": False, "status": res.status, "url": zip_url,
                 "error": f"zip extract failed: {exc}"}
-    if not parts["shp"] or not parts["dbf"]:
+
+    bundles = extracted["bundles"]
+    if not bundles:
         return {"label": label, "ok": False, "status": res.status, "url": zip_url,
-                "error": f"no .shp/.dbf inside archive; members={parts['members']}"}
+                "error": f"no .shp inside archive; members={extracted['members'][:10]}"}
 
-    prj = shapelib.read_prj(parts["prj"])
-    geographic = shapelib.is_geographic(prj)
-    if geographic is False:
+    sampled = [_sample_one_bundle(b, lat, lon, label, zip_url) for b in bundles]
+    ok_count = sum(1 for smp in sampled if smp["ok"])
+    if ok_count == 0:
         note_irregularity("warning", "cpc",
-                          f"CPC shapefile {label} is in a projected CRS, not geographic "
-                          "coordinates; point-sampling was skipped to avoid producing "
-                          "unverified numbers.", {"url": zip_url, "prj": (prj or "")[:300]})
-        return {"label": label, "ok": False, "url": zip_url,
-                "error": "projected CRS - point sampling skipped", "prj": (prj or "")[:300],
-                "members": parts["members"]}
+                          f"No CPC outlook polygon could be sampled for {label}.",
+                          {"url": zip_url, "n_bundles": len(bundles)})
 
-    _stype, shapes = shapelib.read_shp(Path(parts["shp"]))
-    fields, rows = shapelib.read_dbf(Path(parts["dbf"]))
-    if len(rows) != len(shapes):
-        note_irregularity("warning", "cpc",
-                          f"CPC shapefile {label}: record count mismatch between .shp "
-                          f"({len(shapes)}) and .dbf ({len(rows)}). Attributes were matched "
-                          "by index; verify before trusting.", {"url": zip_url})
-
-    hits = []
-    for i, shape in enumerate(shapes):
-        if not shape.rings:
-            continue
-        if not shapelib.bbox_contains(shape.bbox, lon, lat):
-            continue
-        if shapelib.point_in_polygon(lon, lat, shape.rings):
-            hits.append(rows[i] if i < len(rows) else None)
-    if not hits:
-        # Fall back to nearest polygon centroid (grids can have tiny gaps at
-        # coastlines).  Recorded as an irregularity either way.
-        best, bestd = None, None
-        for i, shape in enumerate(shapes):
-            if not shape.rings:
-                continue
-            xs = [p[0] for p in shape.rings[0]]
-            ys = [p[1] for p in shape.rings[0]]
-            cx, cy = sum(xs) / len(xs), sum(ys) / len(ys)
-            d = (cx - lon) ** 2 + (cy - lat) ** 2
-            if bestd is None or d < bestd:
-                bestd, best = d, i
-        if best is not None:
-            note_irregularity("warning", "cpc",
-                              f"CPC shapefile {label}: point ({lon:.4f}, {lat:.4f}) fell in no "
-                              "polygon (typical for coastal cells). Used the nearest polygon "
-                              "instead - flagged for manual review.", {"url": zip_url})
-            hits.append(rows[best] if best < len(rows) else None)
-
-    return {"label": label, "ok": True, "url": zip_url, "sha256": res.sha256,
-            "fields": fields, "n_records": len(shapes), "n_hits": len(hits),
-            "is_geographic": geographic, "prj": (prj or "")[:300],
-            "attributes": hits, "members": parts["members"]}
+    return {"label": label, "ok": ok_count > 0, "url": zip_url, "sha256": res.sha256,
+            "n_shapefiles": len(bundles), "n_sampled_ok": ok_count,
+            "members": extracted["members"], "sampled": sampled}
 
 
 CPC_SHORTRANGE = [
@@ -543,14 +566,10 @@ CPC_MAP_IMAGES = [
         "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814prcp.new.gif",
     ]),
     ("Week 3-4 Temperature", "wk34_temp", [
-        "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/wk34temp.new.gif",
-        "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/wk34temp.gif",
-        "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/wk34_temp_latest.gif",
+        "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34temp.gif",
     ]),
     ("Week 3-4 Precipitation", "wk34_prcp", [
-        "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/wk34prcp.new.gif",
-        "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/wk34prcp.gif",
-        "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/wk34_prcp_latest.gif",
+        "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34prcp.gif",
     ]),
     ("30-Day (official updated) Temperature", "30day_temp", [
         "https://www.cpc.ncep.noaa.gov/products/predictions/30day/off15_temp.gif",
@@ -573,7 +592,7 @@ CPC_DISCUSSIONS = [
      "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
      "https://www.cpc.ncep.noaa.gov/products/predictions/90day/"),
     ("Week 3-4 Outlook Discussion",
-     "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/fxus05.html",
+     "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/texts/week34fcst.txt",
      "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/"),
 ]
 
@@ -584,7 +603,7 @@ def fetch_cpc(lat, lon, assets_dir: Path, today: dt.date):
     try:
         for fname, label in CPC_SHORTRANGE:
             url = f"{CPC_GIS_BASE}/{fname}"
-            cpc["shapefiles"].append(_sample_shapefile(url, lat, lon, label, workdir))
+            cpc["shapefiles"].append(_sample_shapefile_archive(url, lat, lon, label, workdir))
 
         # Monthly & seasonal long-lead outlooks, keyed by issuance year-month.
         for ym in [today.strftime("%Y%m"),
@@ -592,7 +611,7 @@ def fetch_cpc(lat, lon, assets_dir: Path, today: dt.date):
             for kind, label in (("seasprcp", "Monthly & Seasonal Precipitation Outlook"),
                                 ("seastemp", "Monthly & Seasonal Temperature Outlook")):
                 url = f"{CPC_GIS_BASE}/{kind}_{ym}.zip"
-                out = _sample_shapefile(url, lat, lon, f"{label} (issued {ym})", workdir)
+                out = _sample_shapefile_archive(url, lat, lon, f"{label} (issued {ym})", workdir)
                 out["issuance_ym"] = ym
                 cpc["shapefiles"].append(out)
 
@@ -600,7 +619,7 @@ def fetch_cpc(lat, lon, assets_dir: Path, today: dt.date):
         for kind, label in (("monthupd_prcp", "Latest Monthly Update - Precipitation"),
                             ("monthupd_temp", "Latest Monthly Update - Temperature")):
             url = f"{CPC_GIS_BASE}/monthlyupdate/{kind}_latest.zip"
-            cpc["shapefiles"].append(_sample_shapefile(url, lat, lon, label, workdir))
+            cpc["shapefiles"].append(_sample_shapefile_archive(url, lat, lon, label, workdir))
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
 
@@ -637,13 +656,26 @@ def fetch_cpc(lat, lon, assets_dir: Path, today: dt.date):
         record(res, note=f"CPC outlook discussion: {label}")
         if res.ok:
             plain = html_to_text(text)
-            cpc["discussions"].append({
+            entry = {
                 "label": label, "url": url, "human_url": human,
                 "ok": True, "sha256": res.sha256,
                 "retrieved_utc": res.retrieved_utc,
                 "characters": len(plain),
                 "text": plain[:20000],
-            })
+            }
+            # Staleness guard: an official outlook page must reference the
+            # current year.  A page that does not is treated as stale and its
+            # text is NOT published (CPC still serves some long-dead pages).
+            year_hits = plain.count(str(today.year))
+            entry["current_year_mentions"] = year_hits
+            if year_hits == 0:
+                entry["stale"] = True
+                entry["text"] = ""
+                note_irregularity("warning", "cpc",
+                                  f"CPC discussion '{label}' never mentions {today.year}; "
+                                  "treated as a stale page and its text was discarded.",
+                                  {"url": url})
+            cpc["discussions"].append(entry)
         else:
             cpc["discussions"].append({"label": label, "url": url, "human_url": human,
                                        "ok": False, "status": res.status, "error": res.error})
@@ -721,31 +753,42 @@ def fetch_enso():
         out["latest_oni"] = {"year_month": f"{latest[-1][0]:04d}-{latest[-1][1]:02d}",
                              "oni_c": round(last, 2), "phase": climo.enso_phase(last)}
 
-    # ENSO diagnostic discussion (official narrative)
+    # ENSO narrative.  CPC still serves several long-dead pages under the
+    # enso_advisory path (one of them was last modified in 2016), so each
+    # candidate is checked for a current-year reference before its text is used.
     disc_candidates = [
-        "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/enso_advisory.shtml",
-        "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/index.shtml",
-        "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php",
-        "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/lanina/enso_evolution-status-fcsts-web.pdf",
+        ("https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/enso_advisory.shtml", "html"),
+        ("https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php", "html"),
+        ("https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/lanina/enso_evolution-status-fcsts-web.pdf", "pdf"),
     ]
-    for durl in disc_candidates:
+    rejected = []
+    for durl, kind in disc_candidates:
         dtext, dres = fetchlib.get_text(durl, timeout=120)
-        record(dres, note="CPC ENSO diagnostic discussion (candidate URL)")
-        if dres.ok and dres.body and dres.size > 400:
-            if durl.endswith(".pdf"):
-                out["diagnostic_url"] = durl
-                out["diagnostic_note"] = ("Official ENSO Evolution/Status/Forecast PDF "
-                                          "(linked for manual review; PDF text not parsed).")
-            else:
-                plain = html_to_text(dtext)
-                out["diagnostic_url"] = durl
-                out["diagnostic_text"] = plain[:20000]
-            break
-    if "diagnostic_url" not in out:
-        note_irregularity("warning", "enso",
-                          "No CPC ENSO diagnostic discussion page could be retrieved; only "
-                          "the numeric Niño 3.4 / ONI table is shown.",
-                          {"candidates": disc_candidates})
+        record(dres, note="CPC ENSO discussion / ONI table (candidate URL)")
+        if not (dres.ok and dres.body and dres.size > 400):
+            rejected.append({"url": durl, "reason": f"fetch failed (status {dres.status})"})
+            continue
+        if kind == "pdf":
+            rejected.append({"url": durl, "reason": "PDF - linked for manual review, text not parsed"})
+            out.setdefault("reference_links", []).append({
+                "label": "CPC ENSO: Recent Evolution, Current Status and Predictions (PDF)",
+                "url": durl})
+            continue
+        plain = html_to_text(dtext)
+        year_hits = plain.count(str(dt.date.today().year))
+        if year_hits == 0:
+            rejected.append({"url": durl, "reason": f"stale - no mention of {dt.date.today().year}"})
+            note_irregularity("warning", "enso",
+                              "A CPC ENSO page was discarded because it does not reference "
+                              f"{dt.date.today().year}; it is a stale shell page and quoting "
+                              "it would be misleading.",
+                              {"url": durl, "size": dres.size})
+            continue
+        out["diagnostic_url"] = durl
+        out["diagnostic_text"] = plain[:20000]
+        break
+    out["discarded_enso_urls"] = rejected
+
     return out
 
 
@@ -938,7 +981,20 @@ def main():
 
     log("[5/7] NCEI climatology archives")
     ghcn = fetch_ghcn()
-    gsod_years = list(range(1991, today.year + 1))
+    if ghcn:
+        days = ghcn["data"]
+        keys = sorted(days)
+        log(f"      GHCN {ghcn['station_id']}: {len(days)} station-days parsed; "
+            f"range {keys[0] if keys else 'n/a'} .. {keys[-1] if keys else 'n/a'}")
+        if keys:
+            log(f"      sample record: {keys[len(keys)//2]} -> {days[keys[len(keys)//2]]}")
+        else:
+            note_irregularity("error", "climatology",
+                              "The GHCN-Daily station file parsed to zero usable rows; the "
+                              "rain climatology is unavailable.",
+                              {"station": ghcn["station_id"], "url": ghcn["url"],
+                               "bytes": ghcn["bytes"]})
+    gsod_years = list(range(1991, today.year))
     gsod = fetch_gsod(gsod_years)
     normals = fetch_daily_normals()
 

@@ -194,6 +194,34 @@ def extract_shapefile(zip_path: Path, workdir: Path):
     }
 
 
+def extract_all_shapefiles(zip_path: Path, workdir: Path):
+    """Extract every shapefile bundle inside a CPC outlook ZIP.
+
+    CPC's monthly/seasonal archives hold one shapefile per lead (for example
+    ``lead1_SON_temp.shp``, ``lead2_OND_temp.shp`` ...).  Sampling only the
+    first one silently throws away 13 of the 14 official outlooks, so this
+    returns every bundle found.
+    """
+    workdir.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(zip_path) as zf:
+        names = zf.namelist()
+        zf.extractall(workdir)
+
+    bundles = []
+    stems = sorted({Path(n).stem for n in names if n.lower().endswith(".shp")})
+    for stem in stems:
+        def find(ext):
+            cand = workdir / f"{stem}{ext}"
+            return cand if cand.exists() else None
+        bundles.append({
+            "stem": stem,
+            "shp": find(".shp"),
+            "dbf": find(".dbf"),
+            "prj": find(".prj") or find(".PRJ"),
+        })
+    return {"archive": str(zip_path), "members": names, "bundles": bundles}
+
+
 def read_prj(path):
     if not path or not Path(path).exists():
         return None
