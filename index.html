@@ -27,6 +27,7 @@
       <a href="#wind">Wind &amp; rain</a>
       <a href="#storms">Storms</a>
       <a href="#sources">Sources</a>
+      <a href="#verify">Verification</a>
       <a href="#quality">Data quality</a>
       <a href="#limits">Limits</a>
     </nav>
@@ -193,6 +194,14 @@
     <!-- ============================ now / NWS ======================== -->
     <section id="now" class="section">
       <h2>Current official forecast &amp; conditions</h2>
+      <div class="card">
+        <h3>Today’s real forecast — the official NWS 7-day window</h3>
+        <p class="fine">This is the only genuine day-by-day forecast that exists for 94122 today.
+          Everything on the Oct 2026 – Jan 2027 scoreboard below is climatology until a date comes
+          inside this window.</p>
+        <div id="now-current"></div>
+        <p class="fine"><button class="btn btn-sm" type="button" id="export-current">Download this forecast as CSV</button></p>
+      </div>
       <div class="grid grid-2">
         <div class="card">
           <h3>NWS 7-day forecast</h3>
@@ -236,6 +245,10 @@
         </div>
         <div id="calendar-grid" class="calendar"></div>
         <p class="fine" id="calendar-note"></p>
+        <p class="fine">
+          <button class="btn btn-sm" type="button" id="export-csv">Download the whole scoreboard as CSV</button>
+          <button class="btn btn-sm" type="button" id="print-page">Print / save as PDF</button>
+        </p>
       </div>
     </section>
 
@@ -301,6 +314,20 @@
       </div>
     </section>
 
+    <!-- ============================ verification ===================== -->
+    <section id="verify" class="section">
+      <h2>Verification — every number checked against its source</h2>
+      <div class="card">
+        <p class="fine">The pipeline re-reads its own datasets every night and checks, one claim at
+          a time, that the number shown is the number in the official file, that the file was
+          actually retrieved (with the HTTP status, byte count and SHA-256 of those exact bytes
+          recorded), and that the project’s rules were respected — no day labelled a forecast
+          outside the official horizon, no humidity value presented as an observation when it is a
+          derivation, no NOAA test message shown as a real warning. A failed check stops the build.</p>
+        <div id="verify-body"></div>
+      </div>
+    </section>
+
     <!-- ============================ quality ========================== -->
     <section id="quality" class="section">
       <h2>Data quality — irregularities flagged for review</h2>
@@ -345,7 +372,11 @@
           <li><strong>CPC back-testing</strong> — score past CPC outlooks against what actually happened at 94122 to say “when CPC tips above-median for OND here, it verified X% of the time”.</li>
           <li><strong>Atmospheric river awareness</strong> — parse AR language from NWS Area Forecast Discussion (already fetched) to add signal for long-duration events.</li>
           <li><strong>NWS forecast verification</strong> — store each night’s forecast and score vs observations.</li>
-          <li><strong>CSV export</strong> of full Oct-Jan scoreboard.</li>
+          <li><strong>Humidity for climatology days</strong> now comes from the official NCEI hourly
+            temperature and dew-point normals (Magnus derivation) where that file is available; a
+            per-date rather than per-month value would need the full hourly ISD archive.</li>
+          <li><strong>Wind record still comes from SFO</strong> (KSFO), ~10 miles away: the closest
+            long daily wind record. Hourly ISD at a nearer site would tighten it.</li>
           <li>See full list in <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/LIMITATIONS.md" target="_blank" rel="noopener">LIMITATIONS.md</a></li>
         </ul>
       </div>

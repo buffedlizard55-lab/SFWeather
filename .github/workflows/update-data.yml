@@ -83,6 +83,14 @@ jobs:
           echo "VERIFY_EXIT=$code" >> data/run_diagnostics.txt
           exit $code
 
+      - name: Verify every published number against its source (claim ledger)
+        run: |
+          set +e
+          python3 -u pipeline/verify_claims.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "CLAIMS_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
+
       - name: Fail loudly if the pipeline lost a critical source
         run: |
           python3 - <<'PY'

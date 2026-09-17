@@ -379,23 +379,42 @@ def fetch_nws(lat, lon):
         record(res, note=f"Active NWS alerts/warnings for zone {zone}")
         if al:
             feats = al.get("features", [])
+
+            def _is_test(props_):
+                blob = " ".join(str(props_.get(k) or "") for k in
+                                ("event", "headline", "description")).upper()
+                return ("TEST" in blob and
+                        ("THIS MESSAGE IS FOR TEST" in blob or "TEST TSUNAMI" in blob
+                         or "TEST WARNING" in blob or "DRILL" in blob))
+
+            events = []
+            n_test = 0
+            for f in feats:
+                p = f["properties"]
+                test = _is_test(p)
+                if test:
+                    n_test += 1
+                events.append({
+                    "event": p.get("event"),
+                    "severity": p.get("severity"),
+                    "urgency": p.get("urgency"),
+                    "certainty": p.get("certainty"),
+                    "effective": p.get("effective"),
+                    "expires": p.get("expires"),
+                    "headline": p.get("headline"),
+                    "description": (p.get("description") or "")[:1200],
+                    "id": p.get("id"),
+                    "is_test": test,
+                })
             nws["active_alerts"] = {
-                "zone": zone, "count": len(feats),
+                # Count only alerts that are NOT test messages, so a scheduled
+                # NOAA test (e.g. the annual tsunami test) can never be shown to
+                # a landlord as a real warning.  Tests are kept, flagging them.
+                "zone": zone, "count": len(feats) - n_test,
+                "test_count": n_test,
+                "count_including_tests": len(feats),
                 "updated": al.get("updated"),
-                "events": [
-                    {
-                        "event": f["properties"].get("event"),
-                        "severity": f["properties"].get("severity"),
-                        "urgency": f["properties"].get("urgency"),
-                        "certainty": f["properties"].get("certainty"),
-                        "effective": f["properties"].get("effective"),
-                        "expires": f["properties"].get("expires"),
-                        "headline": f["properties"].get("headline"),
-                        "description": (f["properties"].get("description") or "")[:1200],
-                        "id": f["properties"].get("id"),
-                    }
-                    for f in feats
-                ],
+                "events": events,
                 "source_url": al_url,
                 "human_url": f"https://www.weather.gov/{props.get('cwa','').lower()}",
             }
@@ -712,90 +731,244 @@ def fetch_cpc(lat, lon, assets_dir: Path, today: dt.date):
 # 4.  ENSO (official CPC Niño 3.4 table + diagnostic discussion)
 # ==========================================================================
 
+def extract_key_sentences(text, limit=14):
+    """Pull the verbatim official sentences that carry the numbers we quote.
+
+    Nothing is paraphrased: each returned item is an exact substring of the
+    official product, so a reviewer can Ctrl-F it in the source page.  Sentences
+    are selected on keywords that matter to this project (ENSO strength, the
+    odds of a strong event, and the seasonal temperature/precipitation tilt).
+    """
+    flat = re.sub(r"\s+", " ", text or " ")
+    sentences = re.split(r"(?<=[.;])\s+", flat)
+    keys = ("nino", "niño", "el niño", "el nino", "la niña", "oni", "chance",
+            "percent", "%", "above normal", "below normal", "above median",
+            "precipitation", "temperature outlook", "wetter", "drier", "historic")
+    picked, seen = [], set()
+    for s in sentences:
+        s = s.strip(" |")
+        low = s.lower()
+        if len(s) < 30 or len(s) > 420:
+            continue
+        if not any(k in low for k in keys):
+            continue
+        if re.match(r"^(http|www)", low):
+            continue
+        key = s[:80]
+        if key in seen:
+            continue
+        seen.add(key)
+        picked.append(s)
+        if len(picked) >= limit:
+            break
+    return picked
+
+
 def fetch_enso():
     out = {}
+    # ------------------------------------------------------------------
+    # 1. NOAA's *published* ONI product.  The site shows this directly so the
+    #    number a reader sees is the number NOAA publishes (season-labelled).
+    # ------------------------------------------------------------------
+    oni_url = "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
+    oni_text, oni_res = fetchlib.get_text(oni_url, timeout=120)
+    record(oni_res, note="CPC official Oceanic Nino Index (ONI) product, season-labelled")
+    official_rows = []
+    if oni_res.ok and oni_text:
+        official_rows = climo.parse_oni_seasons(oni_text)
+        out["official_oni"] = {
+            "url": oni_url,
+            "sha256": oni_res.sha256,
+            "retrieved_utc": oni_res.retrieved_utc,
+            "definition": ("ONI = 3-month running mean of ERSSTv5 sea-surface temperature "
+                           "anomalies in the Nino 3.4 region; NOAA declares El Nino at "
+                           ">= +0.5 C and La Nina at <= -0.5 C."),
+            "seasons": official_rows[-14:],
+            "latest": None,
+        }
+        if official_rows:
+            last = official_rows[-1]
+            out["official_oni"]["latest"] = {
+                "label": last["label"],
+                "season": last["season"],
+                "year": last["year"],
+                "oni_c": last["anomaly_c"],
+                "phase": climo.enso_phase(last["anomaly_c"]),
+                "strength": climo.enso_strength(last["anomaly_c"]),
+            }
+    else:
+        note_irregularity("error", "enso",
+                          "The official CPC ONI product could not be retrieved; the site "
+                          "falls back to the project's own 3-month running mean and says so.",
+                          {"url": oni_url, "status": oni_res.status})
+
+    # ------------------------------------------------------------------
+    # 2. Cross-check: this project used to derive ONI from the detrended
+    #    monthly Nino 3.4 table.  That derivation is kept as an independent
+    #    check on the published product - if the two disagree, the difference
+    #    is published instead of being hidden.
+    # ------------------------------------------------------------------
     url = "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt"
     text, res = fetchlib.get_text(url, timeout=120)
-    record(res, note="CPC Niño 3.4 (ERSSTv5, detrended) monthly anomaly table")
+    record(res, note="CPC Nino 3.4 (ERSSTv5, detrended) monthly anomaly table")
     if not res.ok:
-        note_irregularity("error", "enso", "Could not retrieve the CPC Niño 3.4 table.",
+        note_irregularity("error", "enso", "Could not retrieve the CPC Nino 3.4 table.",
                           {"url": url, "status": res.status})
-        return out
-    nino = climo.parse_nino34(text)
-    # ONI = 3-month running mean (NOAA CPC definition)
-    oni = {}
-    for (y, m), _a in sorted(nino.items()):
-        trio = []
-        for k in (-1, 0, 1):
-            mm, yy = m + k, y
-            while mm < 1:
-                mm += 12
-                yy -= 1
-            while mm > 12:
-                mm -= 12
-                yy += 1
-            if (yy, mm) in nino:
-                trio.append(nino[(yy, mm)])
-        if len(trio) == 3:
-            oni[(y, m)] = sum(trio) / 3.0
+    else:
+        nino = climo.parse_nino34(text)
+        # ONI = 3-month running mean (NOAA CPC definition)
+        oni = {}
+        for (y, m), _a in sorted(nino.items()):
+            trio = []
+            for k in (-1, 0, 1):
+                mm, yy = m + k, y
+                while mm < 1:
+                    mm += 12
+                    yy -= 1
+                while mm > 12:
+                    mm -= 12
+                    yy += 1
+                if (yy, mm) in nino:
+                    trio.append(nino[(yy, mm)])
+            if len(trio) == 3:
+                oni[(y, m)] = sum(trio) / 3.0
 
-    latest = sorted(oni)[-6:]
-    out["oni_table_url"] = url
-    out["oni_definition"] = ("ONI = 3-month running mean of ERSSTv5 Niño 3.4 SST anomalies "
-                             "(NOAA CPC). El Niño >= +0.5, La Niña <= -0.5.")
-    out["recent_oni"] = [
-        {"year_month": f"{y:04d}-{m:02d}", "oni_c": round(oni[(y, m)], 2),
-         "phase": climo.enso_phase(oni[(y, m)])}
-        for (y, m) in latest
-    ]
-    out["oni_series"] = {f"{y:04d}-{m:02d}": round(v, 3) for (y, m), v in sorted(oni.items())}
-    out["nino34_raw_last12"] = [
-        {"year_month": f"{y:04d}-{m:02d}", "anomaly_c": v}
-        for (y, m), v in sorted(nino.items())[-12:]
-    ]
-    if latest:
-        last = oni[latest[-1]]
-        out["latest_oni"] = {"year_month": f"{latest[-1][0]:04d}-{latest[-1][1]:02d}",
-                             "oni_c": round(last, 2), "phase": climo.enso_phase(last)}
+        latest = sorted(oni)[-6:]
+        out["oni_table_url"] = url
+        out["oni_table_sha256"] = res.sha256
+        out["oni_definition"] = ("ONI = 3-month running mean of ERSSTv5 Nino 3.4 SST anomalies "
+                                 "(NOAA CPC). El Nino >= +0.5, La Nina <= -0.5.")
+        out["derived_oni_note"] = (
+            "3-month running mean computed by this project from the detrended monthly "
+            "Nino 3.4 table, labelled by the middle month. Used only as a cross-check on "
+            "the official season-labelled ONI product.")
+        out["recent_oni_derived"] = [
+            {"year_month": f"{y:04d}-{m:02d}", "oni_c": round(oni[(y, m)], 2),
+             "phase": climo.enso_phase(oni[(y, m)])}
+            for (y, m) in latest
+        ]
+        out["oni_series"] = {f"{y:04d}-{m:02d}": round(v, 3) for (y, m), v in sorted(oni.items())}
+        out["nino34_raw_last12"] = [
+            {"year_month": f"{y:04d}-{m:02d}", "anomaly_c": v}
+            for (y, m), v in sorted(nino.items())[-12:]
+        ]
+        if latest:
+            last = oni[latest[-1]]
+            out["latest_oni_derived"] = {
+                "year_month": f"{latest[-1][0]:04d}-{latest[-1][1]:02d}",
+                "oni_c": round(last, 2), "phase": climo.enso_phase(last)}
 
-    # ENSO narrative.  CPC still serves several long-dead pages under the
-    # enso_advisory path (one of them was last modified in 2016), so each
-    # candidate is checked for a current-year reference before its text is used.
+        # Compare the derived centred mean with the official season that covers
+        # the same three months, and publish the difference.
+        cross = {"checked": False}
+        if official_rows and latest:
+            y, m = latest[-1]
+            trio_months = []
+            for k in (-1, 0, 1):
+                mm, yy = m + k, y
+                while mm < 1:
+                    mm += 12
+                    yy -= 1
+                while mm > 12:
+                    mm -= 12
+                    yy += 1
+                trio_months.append((yy, mm))
+            for row in official_rows:
+                if [tuple(x) for x in row["months"]] == trio_months:
+                    derived = oni[(y, m)]
+                    cross = {
+                        "checked": True,
+                        "months": f"{trio_months[0][0]}-{trio_months[0][1]:02d} .. "
+                                  f"{trio_months[-1][0]}-{trio_months[-1][1]:02d}",
+                        "season_label": row["label"],
+                        "derived_oni_c": round(derived, 2),
+                        "official_oni_c": row["anomaly_c"],
+                        "difference_c": round(derived - row["anomaly_c"], 2),
+                    }
+                    if abs(derived - row["anomaly_c"]) > 0.15:
+                        note_irregularity(
+                            "warning", "enso",
+                            "The 3-month mean computed here from the detrended monthly table "
+                            f"differs from NOAA's published ONI for {row['label']} by "
+                            f"{cross['difference_c']} C. The published ONI is what the site "
+                            "displays; the difference is likely a revision between the two "
+                            "products.",
+                            cross)
+                    break
+        out["oni_cross_check"] = cross
+
+    # ------------------------------------------------------------------
+    # 3. The current ENSO statement, taken verbatim from the official sources.
+    #    The ENSO Diagnostic Discussion is the authoritative monthly status
+    #    (it carries the Alert System Status), so it is checked first; the
+    #    long-lead discussion is stored as well because it is the seasonal
+    #    outlook a landlord actually cares about.
+    # ------------------------------------------------------------------
     disc_candidates = [
-        ("https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/enso_advisory.shtml", "html"),
-        ("https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php", "html"),
-        ("https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/lanina/enso_evolution-status-fcsts-web.pdf", "pdf"),
+        ("https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml",
+         "html", "CPC ENSO Diagnostic Discussion (monthly status + Alert System Status)"),
+        ("https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
+         "html", "CPC long-lead (monthly/seasonal) outlook discussion"),
+        ("https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/lanina/enso_evolution-status-fcsts-web.pdf",
+         "pdf", "CPC ENSO evolution / status / forecast (PDF)"),
+        ("https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php",
+         "html", "CPC ONI_v5 page (interactive; not machine-readable)"),
     ]
     rejected = []
-    for durl, kind in disc_candidates:
+    year_now = dt.date.today().year
+    for durl, kind, label in disc_candidates:
         dtext, dres = fetchlib.get_text(durl, timeout=120)
-        record(dres, note="CPC ENSO discussion / ONI table (candidate URL)")
+        record(dres, note=f"CPC ENSO / long-lead source candidate: {label}")
         if not (dres.ok and dres.body and dres.size > 400):
-            rejected.append({"url": durl, "reason": f"fetch failed (status {dres.status})"})
+            rejected.append({"url": durl, "label": label,
+                             "reason": f"fetch failed (status {dres.status})"})
             continue
         if kind == "pdf":
-            rejected.append({"url": durl, "reason": "PDF - linked for manual review, text not parsed"})
-            out.setdefault("reference_links", []).append({
-                "label": "CPC ENSO: Recent Evolution, Current Status and Predictions (PDF)",
-                "url": durl})
+            rejected.append({"url": durl, "label": label,
+                             "reason": "PDF - linked for manual review, text not parsed"})
+            out.setdefault("reference_links", []).append({"label": label, "url": durl})
             continue
         plain = html_to_text(dtext)
-        year_hits = plain.count(str(dt.date.today().year))
-        if year_hits == 0:
-            rejected.append({"url": durl, "reason": f"stale - no mention of {dt.date.today().year}"})
-            note_irregularity("warning", "enso",
-                              "A CPC ENSO page was discarded because it does not reference "
-                              f"{dt.date.today().year}; it is a stale shell page and quoting "
-                              "it would be misleading.",
-                              {"url": durl, "size": dres.size})
+        current = str(year_now) in plain
+        entry = {
+            "label": label, "url": durl, "sha256": dres.sha256,
+            "retrieved_utc": dres.retrieved_utc, "characters": len(plain),
+            "mentions_current_year": current,
+        }
+        if not current:
+            # Two different situations look the same from the outside: a page
+            # that is genuinely stale, and a page whose content is rendered by
+            # client-side JavaScript.  Say which, and never quote it.
+            entry["usable_as_current_source"] = False
+            entry["reason"] = ("page text does not mention " + str(year_now) +
+                               "; it is either stale or client-rendered, so it is not "
+                               "used as evidence of current conditions")
+            rejected.append({"url": durl, "label": label, "reason": entry["reason"]})
+            out.setdefault("unusable_pages", []).append(entry)
             continue
-        out["diagnostic_url"] = durl
-        out["diagnostic_text"] = plain[:20000]
-        break
+        entry["usable_as_current_source"] = True
+        entry["text"] = plain[:24000]
+        # Keep the exact sentences that carry the numbers a reader will see.
+        entry["key_sentences"] = extract_key_sentences(plain)
+        status = re.search(r"ENSO Alert System Status:\s*([A-Za-z ]{3,60})", plain)
+        if status:
+            entry["alert_status"] = re.sub(r"\s+", " ", status.group(1)).strip()
+        syn = re.search(r"Synopsis:\s*(.{0,900}?)(?:El Ni|La Ni|$)", plain, re.S)
+        if syn:
+            entry["synopsis"] = re.sub(r"\s+", " ", syn.group(1)).strip()[:600]
+        issued = re.search(r"(\d{1,2} [A-Z][a-z]+ \d{4})", plain)
+        if issued:
+            entry["issued"] = issued.group(1)
+        out.setdefault("sources", []).append(entry)
+        if "ensodisc" in durl:
+            out["diagnostic_url"] = durl
+            out["diagnostic_sha256"] = dres.sha256
+            out["diagnostic_status"] = entry.get("alert_status")
+            out["diagnostic_synopsis"] = entry.get("synopsis")
+            out["diagnostic_key_sentences"] = entry["key_sentences"]
     out["discarded_enso_urls"] = rejected
 
     return out
-
 
 # ==========================================================================
 # 5.  NCEI archives - climate normals, GHCN-Daily, GSOD, Storm Events
@@ -881,6 +1054,97 @@ def fetch_daily_normals():
         if res.ok and res.body:
             return {"station_id": sid, "url": url, "sha256": res.sha256,
                     "text": res.text()[:200000]}
+    return None
+
+
+def fetch_monthly_normals():
+    """NCEI 1991-2020 *monthly* normals - an independent official cross-check.
+
+    The project computes its own monthly rainfall means from GHCN-Daily.  This
+    fetches NOAA's own published monthly normals for the same station so the two
+    can be compared line by line, with any difference published rather than
+    smoothed over.
+    """
+    for sid, name in GHCN_CANDIDATES:
+        url = f"https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/{sid}.csv"
+        res = fetchlib.get(url, timeout=300)
+        record(res, note=f"NCEI 1991-2020 Monthly Climate Normals: {sid}")
+        if not (res.ok and res.body):
+            continue
+        text = res.text()
+        try:
+            summary = climo.monthly_normals_summary(text)
+        except Exception as exc:  # noqa: BLE001 - layout changes must not break the run
+            note_irregularity("warning", "normals",
+                              "The NCEI monthly-normals file could not be parsed; the "
+                              "published cross-check is unavailable this run.",
+                              {"url": url, "error": f"{type(exc).__name__}: {exc}",
+                               "first_400_chars": text[:400]})
+            continue
+        summary.update({
+            "station_id": sid,
+            "station_name": name,
+            "url": url,
+            "sha256": res.sha256,
+            "retrieved_utc": res.retrieved_utc,
+            "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (monthly, by station)",
+        })
+        return summary
+    return None
+
+
+def fetch_humidity_normals():
+    """NCEI 1991-2020 hourly normals -> typical relative humidity by month.
+
+    Relative humidity is not published as a normal, but NCEI publishes hourly
+    temperature and dew-point normals; humidity is derived from those two with
+    the standard Magnus formula and labelled as a derivation on the site.  If the
+    file layout is not what the reader expects, the layout is recorded and no
+    humidity value is produced - the project does not estimate.
+    """
+    for sid, name in GHCN_CANDIDATES:
+        url = f"https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/{sid}.csv"
+        res = fetchlib.get(url, timeout=300)
+        record(res, note=f"NCEI 1991-2020 Hourly Climate Normals: {sid}")
+        if not (res.ok and res.body):
+            continue
+        text = res.text()
+        try:
+            rows, info = climo.hourly_normals_rh_inputs(text)
+        except Exception as exc:  # noqa: BLE001
+            note_irregularity("warning", "normals",
+                              f"Hourly normals for {sid} could not be parsed; daily "
+                              "climatology days will not carry a humidity value.",
+                              {"url": url, "error": f"{type(exc).__name__}: {exc}",
+                               "first_400_chars": text[:400]})
+            continue
+        month_rh = climo.humidity_normals_from_hourly(rows) if rows else {}
+        entry = {
+            "station_id": sid,
+            "station_name": name,
+            "url": url,
+            "sha256": res.sha256,
+            "retrieved_utc": res.retrieved_utc,
+            "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (hourly, by station)",
+            "method": ("mean of hourly relative humidity computed from the official hourly "
+                       "temperature and dew-point normals with the Magnus formula"),
+            "month_rh_pct": {str(k): v for k, v in month_rh.items()},
+            "rows_used": len(rows),
+            "layout": info,
+        }
+        if not month_rh:
+            note_irregularity(
+                "warning", "normals",
+                "Hourly normals were downloaded but produced no humidity values; the "
+                "column layout was recorded in data/humidity_normals.json for review. "
+                "No humidity value is shown for climatology days rather than inventing one.",
+                {"url": url, "layout": info})
+        return entry
+    note_irregularity("info", "normals",
+                      "NCEI hourly normals were not reachable at the documented path; "
+                      "climatology days carry no humidity value.",
+                      {"tried": [f"https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/{s}.csv"
+                                 for s, _ in GHCN_CANDIDATES]})
     return None
 
 
@@ -1025,6 +1289,8 @@ def main():
     gsod_years = list(range(1991, today.year))
     gsod = fetch_gsod(gsod_years)
     normals = fetch_daily_normals()
+    monthly_normals = fetch_monthly_normals()
+    humidity_normals = fetch_humidity_normals()
 
     # season calendar days
     season_month_days = []
@@ -1045,7 +1311,8 @@ def main():
         climo_out["daily"] = climo.build_daily_climatology(
             ghcn["data"], gsod["data"], season_month_days, NORMALS_PERIOD)
         climo_out["season"] = climo.build_season_statistics(
-            ghcn["data"], gsod["data"], season_month_days, NORMALS_PERIOD, oni_series)
+            ghcn["data"], gsod["data"], season_month_days, NORMALS_PERIOD, oni_series,
+            oni_seasons=(enso.get("official_oni") or {}).get("seasons") or None)
         climo_out["meta"] = {
             "normals_period": list(NORMALS_PERIOD),
             "season": SEASON,
@@ -1119,6 +1386,10 @@ def main():
         write_json(outdir / "storm_events.json", storm)
     if normals:
         write_json(outdir / "daily_normals.json", normals)
+    if monthly_normals:
+        write_json(outdir / "monthly_normals.json", monthly_normals)
+    if humidity_normals:
+        write_json(outdir / "humidity_normals.json", humidity_normals)
     write_json(outdir / "provenance.json", {
         "generated_utc": fetchlib.iso_utc(),
         "note": "Every value in this repository comes from one of the URLs below.",

@@ -273,6 +273,9 @@ def main():
     cpc = load("cpc.json")
     climo = load("climatology.json")
     enso = load("enso.json")
+    humidity_normals = load("humidity_normals.json")
+    monthly_normals = load("monthly_normals.json")
+    month_rh = {int(k): v for k, v in (humidity_normals.get("month_rh_pct") or {}).items()}
 
     daily_climo = {d["mmdd"]: d for d in climo.get("daily", [])}
     season_climo = climo.get("season", {})
@@ -354,7 +357,18 @@ def main():
             entry["tier_label"] = "1991-2020 observed climatology"
             entry["high_f"] = c.get("normal_high_f")
             entry["low_f"] = c.get("normal_low_f")
-            entry["humidity_pct"] = None
+            # Relative humidity is not published as a normals element.  Where the
+            # official NCEI hourly normals of temperature and dew point are
+            # available it is derived from them (Magnus formula) and the
+            # derivation is stated on the site.  Where they are not, the field
+            # stays empty - never estimated.
+            entry["humidity_pct"] = month_rh.get(d.month)
+            if entry["humidity_pct"] is not None:
+                entry["humidity_basis"] = (
+                    "derived: mean of NCEI 1991-2020 hourly temperature and dew-point "
+                    "normals for %s, converted with the Magnus formula" % d.strftime("%B"))
+            else:
+                entry["humidity_basis"] = "not available from official normals" 
             entry["wind_max_mph"] = c.get("normal_max_sustained_mph")
             entry["gust_max_mph"] = c.get("normal_max_gust_mph")
             entry["rain_chance_pct"] = c.get("p_rain_day_pct")
@@ -424,6 +438,69 @@ def main():
                              if f"{2026 if month >= 10 else 2027:04d}-{month:02d}" in (r["covers"] or [])],
         })
 
+    # ---- the *current* official forecast (outside the Oct-Jan window too) ----
+    # The day-by-day calendar only starts on 1 Oct, but a landlord asking "what
+    # is the forecast right now" needs the days that are actually inside the
+    # official horizon today.  This block is the raw NWS 7-day forecast, with no
+    # season filtering and no derived numbers beyond simple daily aggregation of
+    # the hourly grid.
+    daily_periods = (nws.get("forecast_daily") or {}).get("periods") or []
+    narrative = {}
+    for p_ in daily_periods:
+        st = p_.get("start_time")
+        if not st:
+            continue
+        try:
+            t_ = dt.datetime.fromisoformat(st.replace("Z", "+00:00")).astimezone(
+                dt.timezone(dt.timedelta(hours=-7)))
+        except ValueError:
+            continue
+        narrative.setdefault(t_.date().isoformat(), []).append({
+            "name": p_.get("name"),
+            "is_daytime": p_.get("is_daytime"),
+            "temperature_f": p_.get("temperature_f"),
+            "wind_speed": p_.get("wind_speed"),
+            "wind_direction": p_.get("wind_direction"),
+            "pop_pct": p_.get("pop_pct"),
+            "short_forecast": p_.get("short_forecast"),
+            "detailed_forecast": p_.get("detailed_forecast"),
+        })
+    current_days = []
+    for iso in sorted(nws_days):
+        n_ = nws_days[iso]
+        current_days.append({
+            "date": iso,
+            "weekday": dt.date.fromisoformat(iso).strftime("%A"),
+            "high_f": r1(max(n_["temps"])) if n_["temps"] else None,
+            "low_f": r1(min(n_["temps"])) if n_["temps"] else None,
+            "humidity_pct": r1(sum(n_["rh"]) / len(n_["rh"])) if n_["rh"] else None,
+            "humidity_min_pct": r1(min(n_["rh"])) if n_["rh"] else None,
+            "humidity_max_pct": r1(max(n_["rh"])) if n_["rh"] else None,
+            "rain_chance_pct": r1(max(n_["pop"])) if n_["pop"] else None,
+            "rain_amount_in": r2(n_["qpf_mm"] / MM_PER_INCH) if n_["qpf_known"] else None,
+            "wind_max_mph": r1(max(n_["wind"])) if n_["wind"] else None,
+            "gust_max_mph": r1(max(n_["gust"])) if n_["gust"] else None,
+            "hours_covered": n_["hours"],
+            "periods": narrative.get(iso, []),
+        })
+    current_forecast = {
+        "generated_utc": (nws.get("forecast_hourly") or {}).get("generated_at"),
+        "forecast_updated": nws_updated,
+        "elevation_m": (nws.get("forecast_hourly") or {}).get("elevation_m"),
+        "horizon_days": len(current_days),
+        "first_day": current_days[0]["date"] if current_days else None,
+        "last_day": current_days[-1]["date"] if current_days else None,
+        "inside_season_window": bool([d_ for d_ in current_days
+                                      if SEASON_START.isoformat() <= d_["date"] <= SEASON_END.isoformat()]),
+        "sources": [
+            {"label": "NWS hourly gridded forecast (api.weather.gov)", "url": hourly_url},
+            {"label": "NWS 7-day forecast for this point (weather.gov)", "url": human_url},
+        ],
+        "alerts": nws.get("active_alerts", {}),
+        "observations": nws.get("stations", {}),
+        "days": current_days,
+    }
+
     out = {
         "generated_utc": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "target": run.get("target", {}),
@@ -454,12 +531,24 @@ def main():
                             for d in cpc.get("discussions", []) if d.get("ok")],
         },
         "enso": {
-            "latest": enso.get("latest_oni"),
-            "recent": enso.get("recent_oni"),
+            # NOAA's published ONI product is the headline value.
+            "official": enso.get("official_oni", {}),
+            "latest_official": (enso.get("official_oni") or {}).get("latest"),
+            # The project's own derivation is kept only as a published cross-check.
+            "derived": enso.get("latest_oni_derived"),
+            "cross_check": enso.get("oni_cross_check"),
             "table_url": enso.get("oni_table_url"),
             "diagnostic_url": enso.get("diagnostic_url"),
+            "diagnostic_status": enso.get("diagnostic_status"),
+            "diagnostic_synopsis": enso.get("diagnostic_synopsis"),
+            "diagnostic_key_sentences": enso.get("diagnostic_key_sentences", []),
+            "diagnostic_sha256": enso.get("diagnostic_sha256"),
+            "sources": enso.get("sources", []),
+            "unusable_pages": enso.get("unusable_pages", []),
             "reference_links": enso.get("reference_links", []),
         },
+        "humidity_normals": humidity_normals or None,
+        "monthly_normals_official": monthly_normals or None,
         "season_summary": dist,
         "streak_probability": season_climo.get("probability_of_at_least_one_streak", {}),
         "enso_stratified": season_climo.get("enso_stratified_season_total_prcp_in", {}),
@@ -471,6 +560,7 @@ def main():
         "caveats": meta.get("caveats", []),
         "units": meta.get("units", {}),
         "stations": {"precip_temp": meta.get("precip_station"), "wind": meta.get("wind_station")},
+        "current_forecast": current_forecast,
         "days": calendar,
     }
 
