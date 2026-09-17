@@ -13,7 +13,8 @@ const FILES = {
   nws: 'data/nws.json',
   provenance: 'data/provenance.json',
   quality: 'data/quality_report.json',
-  storms: 'data/storm_events.json'
+  storms: 'data/storm_events.json',
+  landlord: 'data/landlord.json'
 };
 
 const state = { data: {}, month: '2026-10', dialogDay: null };
@@ -124,6 +125,145 @@ async function loadJSON(name) {
   return res.json();
 }
 
+/* --------------------------------------------------------------- landlord */
+
+function renderLandlord(ll, cal) {
+  if (!ll || !ll.executive_summary) {
+    $('#landlord').append(el('p', { class: 'empty', text: 'Landlord summary unavailable in this run.' }));
+    return;
+  }
+  const exec = ll.executive_summary;
+  $('#landlord-key-finding').textContent = exec.key_finding || '';
+
+  // Stats cards
+  const stats = [
+    {
+      cls: 'total rain',
+      title: 'Season total (Oct-Jan)',
+      value: exec.season_total_prcp ? `${n(exec.season_total_prcp.mean, 2)} in mean` : DASH,
+      sub: exec.season_total_prcp ? `Median ${n(exec.season_total_prcp.median, 2)} in · Range ${n(exec.season_total_prcp.min, 2)} – ${n(exec.season_total_prcp.max, 2)} in · ${exec.season_total_prcp.n} seasons · Source: GHCN-Daily USW00023272` : '',
+    },
+    {
+      cls: 'duration',
+      title: 'Longest wet streak',
+      value: exec.longest_streak ? `${n(exec.longest_streak.mean, 1)} days avg` : DASH,
+      sub: exec.longest_streak ? `Max ${n(exec.longest_streak.max, 0)} days on record · ${exec.streak_probability?.ge_7_days?.pct || DASH}% seasons have ≥7 days, ${exec.streak_probability?.ge_10_days?.pct || DASH}% have ≥10 days` : '',
+    },
+    {
+      cls: 'wind',
+      title: 'Wind + rain together',
+      value: exec.wind_and_rain ? `${n(exec.wind_and_rain.mean, 1)} days/season` : DASH,
+      sub: exec.wind_and_rain ? `At SFO (upper bound for Sunset). Median ${n(exec.wind_and_rain.median, 0)} · Max ${n(exec.wind_and_rain.max, 0)} · Heavy (≥0.5 in + gust ≥35 kt): ${n(exec.heavy_wind_and_rain?.mean, 1)} days avg` : '',
+    },
+    {
+      cls: 'gust',
+      title: 'Strongest gust',
+      value: exec.max_gust ? `${n(exec.max_gust.mean, 0)} mph mean max` : DASH,
+      sub: exec.max_gust ? `Median ${n(exec.max_gust.median, 0)} mph · Record ${n(exec.max_gust.max, 0)} mph · SFO ASOS` : '',
+    },
+    {
+      cls: 'enso',
+      title: 'ENSO now',
+      value: exec.current_enso ? `${exec.current_enso.phase || DASH} ${exec.current_enso.oni_c !== undefined ? (exec.current_enso.oni_c > 0 ? '+' : '') + exec.current_enso.oni_c + '°C' : ''}` : DASH,
+      sub: exec.current_enso ? `${exec.current_enso.year_month || ''} ONI · El Niño mean ${n(exec.enso_stratified?.el_nino?.mean, 2)} in vs La Niña ${n(exec.enso_stratified?.la_nina?.mean, 2)} in` : '',
+    },
+    {
+      cls: 'rain',
+      title: 'Wet days per season',
+      value: exec.wet_days_per_season ? `${n(exec.wet_days_per_season.mean, 1)} days` : DASH,
+      sub: exec.wet_days_per_season ? `Median ${n(exec.wet_days_per_season.median, 0)} · Min ${n(exec.wet_days_per_season.min, 0)} · Max ${n(exec.wet_days_per_season.max, 0)} · 1991-2020` : '',
+    }
+  ];
+  $('#landlord-stats').append(...stats.map(s => el('div', { class: 'card landlord-stat ' + s.cls }, [
+    el('h4', { text: s.title }),
+    el('div', { class: 'stat-value', text: s.value }),
+    el('div', { class: 'stat-sub', text: s.sub })
+  ])));
+
+  // Monthly
+  const monthly = ll.monthly || [];
+  $('#landlord-monthly').append(table(
+    [{ label: 'Month' }, { label: 'Mean (in)', num: true }, { label: 'Median (in)', num: true },
+     { label: 'Range (in)', num: true }, { label: 'P90 (in)', num: true }, { label: 'Wet days', num: true }, { label: 'CPC outlook' }],
+    monthly.map(m => [
+      `${m.month} ${m.year}`,
+      n(m.mean_in, 2), n(m.median_in, 2),
+      m.min_in !== undefined ? `${n(m.min_in, 2)} – ${n(m.max_in, 2)}` : DASH,
+      n(m.p90_in, 2), n(m.expected_wet_days, 1),
+      (m.cpc_outlooks || []).map(o => `${o.valid_season || ''}: ${o.category_label} ${o.prob}%`).join('; ') || 'EC'
+    ])
+  ));
+
+  // Duration
+  const sp = exec.streak_probability || {};
+  $('#landlord-duration').append(table(
+    [{ label: 'Streak' }, { label: 'Share', num: true }, { label: 'Seasons' }],
+    Object.entries(sp).map(([k, v]) => [
+      k.replace('ge_', '≥').replace('_days', ' days'),
+      pct(v.pct, 1), `${v.seasons} of 30`
+    ])
+  ));
+  $('#landlord-duration-note').textContent =
+    `Longest streak per season: mean ${n(exec.longest_streak?.mean, 1)} days, max ${n(exec.longest_streak?.max, 0)} days. ` +
+    `A 7-day wet run happens in ${sp.ge_7_days?.pct || DASH}% of years — close to a coin flip. ` +
+    `Plan gutters, roof drains, and tenant comms for week-long rain.`;
+
+  // Wind+rain
+  $('#landlord-windrain').append(el('table', { class: 'kv' }, [
+    ['Wind+rain days/season (≥20kt + ≥0.01in)', `mean ${n(exec.wind_and_rain?.mean, 1)} · median ${n(exec.wind_and_rain?.median, 0)} · max ${n(exec.wind_and_rain?.max, 0)}`],
+    ['Heavy wind+rain (≥35kt gust + ≥0.5in)', `mean ${n(exec.heavy_wind_and_rain?.mean, 1)} · median ${n(exec.heavy_wind_and_rain?.median, 0)} · max ${n(exec.heavy_wind_and_rain?.max, 0)}`],
+    ['Season max gust (SFO, upper bound)', `mean ${n(exec.max_gust?.mean, 0)} mph · median ${n(exec.max_gust?.median, 0)} mph · max ${n(exec.max_gust?.max, 0)} mph`],
+    ['Source', 'NCEI GSOD 72494023234 (KSFO) + GHCN-Daily USW00023272 — wind at SFO is windier than Sunset, so treat as upper bound']
+  ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
+
+  // CPC
+  const cpcRecs = ll.cpc_outlooks_relevant || [];
+  $('#landlord-cpc').append(table(
+    [{ label: 'Period' }, { label: 'Variable' }, { label: 'Outlook' }, { label: 'Prob' }, { label: 'Issued' }, { label: 'Source' }],
+    cpcRecs.map(r => [
+      r.valid_season || DASH,
+      r.variable === 'temp' ? 'Temp' : r.variable === 'prcp' ? 'Precip' : DASH,
+      r.category_label || DASH,
+      r.prob !== undefined ? r.prob + '%' : DASH,
+      r.issued || DASH,
+      link(r.url, 'CPC shapefile')
+    ]),
+    { empty: 'No CPC outlooks for Oct 2026-Jan 2027 could be sampled at this location in this run.' }
+  ));
+
+  // High-risk dates
+  const high = ll.high_risk_dates || [];
+  $('#landlord-highrisk').append(table(
+    [{ label: 'Date' }, { label: 'Rain chance', num: true }, { label: 'Mean amount (in)', num: true }, { label: 'Max gust record', num: true }, { label: 'Wind+rain chance', num: true }],
+    high.map(d => [
+      `${d.month_label} ${d.day}`,
+      pct(d.rain_chance_pct, 0),
+      n(d.mean_prcp_in, 3),
+      d.max_gust_record_mph ? n(d.max_gust_record_mph, 0) + ' mph' : DASH,
+      pct(d.wind_and_rain_pct, 0)
+    ])
+  ));
+
+  // Actions
+  const actions = ll.action_items || [];
+  const container = $('#landlord-actions');
+  container.append(...actions.map(a => {
+    const prio = (a.priority || 'medium').toLowerCase();
+    return el('div', { class: 'action-item ' + prio }, [
+      el('div', { class: 'action-meta' }, [
+        el('span', { class: 'badge ' + (prio === 'high' ? 'badge-error' : prio === 'medium' ? 'badge-warn' : 'badge-ok'), text: prio }),
+        document.createTextNode(' ' + (a.category || ''))
+      ]),
+      el('h4', { text: a.title }),
+      el('p', { text: a.detail }),
+      el('div', { class: 'action-source' }, [
+        document.createTextNode('Source: '),
+        link(a.source_url || a.source, a.source_url ? a.source_url.replace(/^https?:\/\//, '').slice(0, 80) : a.source)
+      ])
+    ]);
+  }));
+}
+
 /* --------------------------------------------------------------- sections */
 
 function renderReality(cal) {
@@ -227,9 +367,6 @@ function renderSeason(cal) {
   const seasonal = (cal.cpc.records || []).filter(r => r.kind === 'season' || r.kind === 'month');
   const wanted = ['SON 2026', 'OND 2026', 'NDJ 2026', 'DJF 2026'];
   const rows = [];
-  // Show which issuance each outlook came from: the same valid season is
-  // published monthly, and an older issuance can still be the newest official
-  // outlook for a period the latest release no longer covers.
   const periodCell = (label, ...recs) => {
     const issued = recs.filter(Boolean).map(r => r.issued).filter(Boolean).sort().pop();
     return el('div', {}, [
@@ -722,20 +859,21 @@ function renderCaveats(cal) {
 /* ------------------------------------------------------------------ boot */
 
 async function boot() {
-  if (state.booted) return;   // never render twice
+  if (state.booted) return;
   state.booted = true;
   try {
-    const [run, calendar, nws, prov, quality, storms] = await Promise.all([
+    const [run, calendar, nws, prov, quality, storms, landlord] = await Promise.all([
       loadJSON('run'), loadJSON('calendar'), loadJSON('nws'),
-      loadJSON('provenance'), loadJSON('quality'), loadJSON('storms').catch(() => null)
+      loadJSON('provenance'), loadJSON('quality'),
+      loadJSON('storms').catch(() => null),
+      loadJSON('landlord').catch(() => null)
     ]);
-    Object.assign(state.data, { run, calendar, nws, prov, quality, storms });
+    Object.assign(state.data, { run, calendar, nws, prov, quality, storms, landlord });
 
-    // Pick a sensible default month: the first month that still has forecast
-    // coverage, otherwise October.
     const idx = MONTHS.findIndex(m => (calendar.days || []).some(d => d.date.startsWith(m.key) && d.tier === 'nws'));
     state.month = idx >= 0 ? MONTHS[idx].key : MONTHS[0].key;
 
+    if (landlord) renderLandlord(landlord, calendar);
     renderReality(calendar);
     renderLocation(run);
     renderSeason(calendar);
@@ -752,13 +890,13 @@ async function boot() {
       `Data fetched ${calendar.generated_utc || DASH} \u00b7 ` +
       `${(prov.entries || []).length} verified fetches \u00b7 ` +
       `normals period ${(calendar.normals_period || []).join('\u2013')} \u00b7 ` +
-      `rebuilt nightly from official sources.`;
+      `rebuilt nightly from official sources. ` +
+      (landlord ? `Landlord dashboard ${landlord.generated_utc || ''}.` : '');
 
     const loading = $('#loading');
     if (loading) loading.remove();
     $('#content').hidden = false;
   } catch (err) {
-    // Always surface the original failure, even if the page is already rendered.
     console.error('SFWeather boot failed:', err);
     const box = $('#loading-text');
     if (box) {

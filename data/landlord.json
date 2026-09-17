@@ -1,0 +1,883 @@
+{
+  "generated_utc": "2026-09-17T16:51:55Z",
+  "target": {
+    "zip": "94122",
+    "label": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset)",
+    "fallback_lat": 37.7599,
+    "fallback_lon": -122.4849,
+    "centroid": {
+      "zip": "94122",
+      "lat": 37.760459,
+      "lon": -122.483894,
+      "land_area_sqmi": 3.257,
+      "water_area_sqmi": 0.032,
+      "source": "U.S. Census Bureau Gazetteer file (internal point / centroid)",
+      "verified": true,
+      "url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip",
+      "file_in_archive": "2024_Gaz_zcta_national.txt",
+      "gazetteer_year": "2024",
+      "column_names_used": {
+        "geoid": "GEOID",
+        "lat": "INTPTLAT",
+        "lon": "INTPTLONG"
+      }
+    }
+  },
+  "season": {
+    "start": "2026-10-01",
+    "end": "2027-01-31"
+  },
+  "normals_period": [
+    1991,
+    2020
+  ],
+  "executive_summary": {
+    "location": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset) - 37.7605N, -122.4839W",
+    "verified_coordinate_source": "U.S. Census Bureau 2024 Gazetteer ZCTA file",
+    "coordinate_source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip",
+    "season_window": "October 1, 2026 - January 31, 2027 (123 days)",
+    "current_enso": {
+      "year_month": "2026-05",
+      "oni_c": 0.98,
+      "phase": "el_nino"
+    },
+    "season_total_prcp": {
+      "n": 30,
+      "mean": 12.79,
+      "median": 13.26,
+      "min": 1.71,
+      "max": 22.82,
+      "p10": 6.38,
+      "p25": 8.5,
+      "p75": 17.42,
+      "p90": 18.59
+    },
+    "oct_total": {
+      "n": 30,
+      "mean": 0.94,
+      "median": 0.57,
+      "min": 0.0,
+      "max": 3.11,
+      "p10": 0.01,
+      "p25": 0.21,
+      "p75": 1.47,
+      "p90": 2.38
+    },
+    "nov_total": {
+      "n": 30,
+      "mean": 2.6,
+      "median": 2.21,
+      "min": 0.09,
+      "max": 10.5,
+      "p10": 0.49,
+      "p25": 1.26,
+      "p75": 3.1,
+      "p90": 4.73
+    },
+    "dec_total": {
+      "n": 30,
+      "mean": 4.78,
+      "median": 3.78,
+      "min": 0.14,
+      "max": 12.03,
+      "p10": 0.62,
+      "p25": 2.19,
+      "p75": 7.61,
+      "p90": 10.75
+    },
+    "jan_total": {
+      "n": 30,
+      "mean": 4.47,
+      "median": 3.65,
+      "min": 0.0,
+      "max": 12.07,
+      "p10": 0.72,
+      "p25": 2.09,
+      "p75": 6.7,
+      "p90": 8.98
+    },
+    "wet_days_per_season": {
+      "n": 30,
+      "mean": 34.5,
+      "median": 35.0,
+      "min": 7.0,
+      "max": 55.0,
+      "p10": 24.0,
+      "p25": 28.0,
+      "p75": 39.0,
+      "p90": 45.0
+    },
+    "longest_streak": {
+      "n": 30,
+      "mean": 7.3,
+      "median": 7.0,
+      "min": 2.0,
+      "max": 17.0,
+      "p10": 4.0,
+      "p25": 5.0,
+      "p75": 9.0,
+      "p90": 11.0
+    },
+    "streak_probability": {
+      "ge_3_days": {
+        "seasons": 29,
+        "pct": 96.7
+      },
+      "ge_5_days": {
+        "seasons": 24,
+        "pct": 80.0
+      },
+      "ge_7_days": {
+        "seasons": 16,
+        "pct": 53.3
+      },
+      "ge_10_days": {
+        "seasons": 7,
+        "pct": 23.3
+      }
+    },
+    "wind_and_rain": {
+      "n": 30,
+      "mean": 11.1,
+      "median": 10.0,
+      "min": 2.0,
+      "max": 24.0,
+      "p10": 6.0,
+      "p25": 7.0,
+      "p75": 14.0,
+      "p90": 18.0
+    },
+    "heavy_wind_and_rain": {
+      "n": 30,
+      "mean": 2.2,
+      "median": 2.0,
+      "min": 0.0,
+      "max": 8.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "p75": 3.0,
+      "p90": 5.0
+    },
+    "max_gust": {
+      "n": 30,
+      "mean": 53.8,
+      "median": 54.1,
+      "min": 41.3,
+      "max": 70.0,
+      "p10": 44.9,
+      "p25": 47.2,
+      "p75": 58.6,
+      "p90": 64.3
+    },
+    "enso_stratified": {
+      "el_nino": {
+        "n": 11,
+        "mean": 14.23,
+        "median": 13.56,
+        "min": 7.27,
+        "max": 22.82,
+        "p10": 8.85,
+        "p25": 9.71,
+        "p75": 17.5,
+        "p90": 22.49
+      },
+      "la_nina": {
+        "n": 12,
+        "mean": 11.16,
+        "median": 10.39,
+        "min": 5.39,
+        "max": 18.47,
+        "p10": 5.93,
+        "p25": 7.91,
+        "p75": 14.98,
+        "p90": 17.44
+      },
+      "neutral": {
+        "n": 7,
+        "mean": 13.31,
+        "median": 13.58,
+        "min": 1.71,
+        "max": 20.99,
+        "p10": 7.52,
+        "p25": 13.35,
+        "p75": 17.42,
+        "p90": 18.59
+      }
+    },
+    "key_finding": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 11.1 days per season on average at SFO (upper bound for Sunset). Current ENSO: el_nino (ONI 0.98C 2026-05) tilts toward wetter than normal, with CPC favoring above-median precip for JFM 2027 at 50% probability."
+  },
+  "monthly": [
+    {
+      "month": "October",
+      "year": 2026,
+      "mean_in": 0.94,
+      "median_in": 0.57,
+      "min_in": 0.0,
+      "max_in": 3.11,
+      "p90_in": 2.38,
+      "expected_wet_days": 3.5,
+      "days": 31,
+      "cpc_outlooks": [
+        {
+          "valid_season": "Oct 2026",
+          "variable": "prcp",
+          "category_label": "Equal chances",
+          "prob": 33.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/monthlyupdate/monthupd_prcp_latest.zip"
+        },
+        {
+          "valid_season": "OND 2026",
+          "variable": "prcp",
+          "category_label": "Equal chances",
+          "prob": 33.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+        },
+        {
+          "valid_season": "Oct 2026",
+          "variable": "temp",
+          "category_label": "Above normal",
+          "prob": 40.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/monthlyupdate/monthupd_temp_latest.zip"
+        },
+        {
+          "valid_season": "OND 2026",
+          "variable": "temp",
+          "category_label": "Above normal",
+          "prob": 33.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
+        }
+      ]
+    },
+    {
+      "month": "November",
+      "year": 2026,
+      "mean_in": 2.6,
+      "median_in": 2.21,
+      "min_in": 0.09,
+      "max_in": 10.5,
+      "p90_in": 4.73,
+      "expected_wet_days": 7.9,
+      "days": 30,
+      "cpc_outlooks": [
+        {
+          "valid_season": "OND 2026",
+          "variable": "prcp",
+          "category_label": "Equal chances",
+          "prob": 33.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+        },
+        {
+          "valid_season": "OND 2026",
+          "variable": "temp",
+          "category_label": "Above normal",
+          "prob": 33.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
+        },
+        {
+          "valid_season": "SON 2026",
+          "variable": "prcp",
+          "category_label": "Equal chances",
+          "prob": 33.0,
+          "issued": "2026-08-20",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202608.zip"
+        },
+        {
+          "valid_season": "SON 2026",
+          "variable": "temp",
+          "category_label": "Above normal",
+          "prob": 40.0,
+          "issued": "2026-08-20",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202608.zip"
+        }
+      ]
+    },
+    {
+      "month": "December",
+      "year": 2026,
+      "mean_in": 4.78,
+      "median_in": 3.78,
+      "min_in": 0.14,
+      "max_in": 12.03,
+      "p90_in": 10.75,
+      "expected_wet_days": 11.7,
+      "days": 31,
+      "cpc_outlooks": [
+        {
+          "valid_season": "OND 2026",
+          "variable": "prcp",
+          "category_label": "Equal chances",
+          "prob": 33.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+        },
+        {
+          "valid_season": "OND 2026",
+          "variable": "temp",
+          "category_label": "Above normal",
+          "prob": 33.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
+        }
+      ]
+    },
+    {
+      "month": "January",
+      "year": 2027,
+      "mean_in": 4.47,
+      "median_in": 3.65,
+      "min_in": 0.0,
+      "max_in": 12.07,
+      "p90_in": 8.98,
+      "expected_wet_days": 11.4,
+      "days": 31,
+      "cpc_outlooks": [
+        {
+          "valid_season": "JFM 2027",
+          "variable": "prcp",
+          "category_label": "Above median",
+          "prob": 50.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+        },
+        {
+          "valid_season": "JFM 2027",
+          "variable": "temp",
+          "category_label": "Equal chances",
+          "prob": 33.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
+        }
+      ]
+    }
+  ],
+  "cpc_outlooks_relevant": [
+    {
+      "label": "Monthly & Seasonal Precipitation Outlook (issued 202609)",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
+      "stem": "lead3_DJF_prcp",
+      "lead": 3,
+      "abbrev": "DJF",
+      "variable": "prcp",
+      "valid_season": "DJF 2026-2027",
+      "kind": null,
+      "covers": null,
+      "start_date": null,
+      "end_date": null,
+      "prob": 40.0,
+      "category": "Above",
+      "fcst_date": "20260917",
+      "used_nearest_polygon": false,
+      "category_label": "Above median",
+      "issued": "2026-09-17"
+    },
+    {
+      "label": "Monthly & Seasonal Temperature Outlook (issued 202609)",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
+      "stem": "lead3_DJF_temp",
+      "lead": 3,
+      "abbrev": "DJF",
+      "variable": "temp",
+      "valid_season": "DJF 2026-2027",
+      "kind": null,
+      "covers": null,
+      "start_date": null,
+      "end_date": null,
+      "prob": 33.0,
+      "category": "Above",
+      "fcst_date": "20260917",
+      "used_nearest_polygon": false,
+      "category_label": "Above normal",
+      "issued": "2026-09-17"
+    },
+    {
+      "label": "Monthly & Seasonal Precipitation Outlook (issued 202609)",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
+      "stem": "lead2_NDJ_prcp",
+      "lead": 2,
+      "abbrev": "NDJ",
+      "variable": "prcp",
+      "valid_season": "NDJ 2026-2027",
+      "kind": null,
+      "covers": null,
+      "start_date": null,
+      "end_date": null,
+      "prob": 33.0,
+      "category": "Above",
+      "fcst_date": "20260917",
+      "used_nearest_polygon": false,
+      "category_label": "Above median",
+      "issued": "2026-09-17"
+    },
+    {
+      "label": "Monthly & Seasonal Temperature Outlook (issued 202609)",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
+      "stem": "lead2_NDJ_temp",
+      "lead": 2,
+      "abbrev": "NDJ",
+      "variable": "temp",
+      "valid_season": "NDJ 2026-2027",
+      "kind": null,
+      "covers": null,
+      "start_date": null,
+      "end_date": null,
+      "prob": 33.0,
+      "category": "Above",
+      "fcst_date": "20260917",
+      "used_nearest_polygon": false,
+      "category_label": "Above normal",
+      "issued": "2026-09-17"
+    },
+    {
+      "label": "Monthly & Seasonal Precipitation Outlook (issued 202609)",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
+      "stem": "lead1_OND_prcp",
+      "lead": 1,
+      "abbrev": "OND",
+      "variable": "prcp",
+      "valid_season": "OND 2026",
+      "kind": "season",
+      "covers": [
+        "2026-10",
+        "2026-11",
+        "2026-12"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "prob": 33.0,
+      "category": "EC",
+      "fcst_date": "20260917",
+      "used_nearest_polygon": false,
+      "category_label": "Equal chances",
+      "issued": "2026-09-17"
+    },
+    {
+      "label": "Monthly & Seasonal Temperature Outlook (issued 202609)",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
+      "stem": "lead1_OND_temp",
+      "lead": 1,
+      "abbrev": "OND",
+      "variable": "temp",
+      "valid_season": "OND 2026",
+      "kind": "season",
+      "covers": [
+        "2026-10",
+        "2026-11",
+        "2026-12"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "prob": 33.0,
+      "category": "Above",
+      "fcst_date": "20260917",
+      "used_nearest_polygon": false,
+      "category_label": "Above normal",
+      "issued": "2026-09-17"
+    },
+    {
+      "label": "Latest Monthly Update - Precipitation",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/monthlyupdate/monthupd_prcp_latest.zip",
+      "stem": "lead14_Oct_prcp",
+      "lead": 14,
+      "abbrev": "Oct",
+      "variable": "prcp",
+      "valid_season": "Oct 2026",
+      "kind": "month",
+      "covers": [
+        "2026-10"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "prob": 33.0,
+      "category": "EC",
+      "fcst_date": "20260917",
+      "used_nearest_polygon": false,
+      "category_label": "Equal chances",
+      "issued": "2026-09-17"
+    },
+    {
+      "label": "Latest Monthly Update - Temperature",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/monthlyupdate/monthupd_temp_latest.zip",
+      "stem": "lead14_Oct_temp",
+      "lead": 14,
+      "abbrev": "Oct",
+      "variable": "temp",
+      "valid_season": "Oct 2026",
+      "kind": "month",
+      "covers": [
+        "2026-10"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "prob": 40.0,
+      "category": "Above",
+      "fcst_date": "20260917",
+      "used_nearest_polygon": false,
+      "category_label": "Above normal",
+      "issued": "2026-09-17"
+    },
+    {
+      "label": "Monthly & Seasonal Precipitation Outlook (issued 202608)",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202608.zip",
+      "stem": "lead1_SON_prcp",
+      "lead": 1,
+      "abbrev": "SON",
+      "variable": "prcp",
+      "valid_season": "SON 2026",
+      "kind": "season",
+      "covers": [
+        "2026-09",
+        "2026-10",
+        "2026-11"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "prob": 33.0,
+      "category": "EC",
+      "fcst_date": "20260820",
+      "used_nearest_polygon": false,
+      "category_label": "Equal chances",
+      "issued": "2026-08-20"
+    },
+    {
+      "label": "Monthly & Seasonal Temperature Outlook (issued 202608)",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202608.zip",
+      "stem": "lead1_SON_temp",
+      "lead": 1,
+      "abbrev": "SON",
+      "variable": "temp",
+      "valid_season": "SON 2026",
+      "kind": "season",
+      "covers": [
+        "2026-09",
+        "2026-10",
+        "2026-11"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "prob": 40.0,
+      "category": "Above",
+      "fcst_date": "20260820",
+      "used_nearest_polygon": false,
+      "category_label": "Above normal",
+      "issued": "2026-08-20"
+    }
+  ],
+  "high_risk_dates": [
+    {
+      "date": "2027-01-23",
+      "month_label": "January",
+      "day": 23,
+      "rain_chance_pct": 56.7,
+      "mean_prcp_in": 0.171,
+      "max_gust_record_mph": 49.4,
+      "wind_and_rain_pct": 16.7
+    },
+    {
+      "date": "2026-12-06",
+      "month_label": "December",
+      "day": 6,
+      "rain_chance_pct": 53.3,
+      "mean_prcp_in": 0.128,
+      "max_gust_record_mph": 50.5,
+      "wind_and_rain_pct": 10.0
+    },
+    {
+      "date": "2026-12-13",
+      "month_label": "December",
+      "day": 13,
+      "rain_chance_pct": 53.3,
+      "mean_prcp_in": 0.228,
+      "max_gust_record_mph": 47.2,
+      "wind_and_rain_pct": 10.0
+    },
+    {
+      "date": "2027-01-09",
+      "month_label": "January",
+      "day": 9,
+      "rain_chance_pct": 50.0,
+      "mean_prcp_in": 0.127,
+      "max_gust_record_mph": 56.4,
+      "wind_and_rain_pct": 16.7
+    },
+    {
+      "date": "2027-01-21",
+      "month_label": "January",
+      "day": 21,
+      "rain_chance_pct": 50.0,
+      "mean_prcp_in": 0.131,
+      "max_gust_record_mph": 47.2,
+      "wind_and_rain_pct": 20.0
+    },
+    {
+      "date": "2026-12-11",
+      "month_label": "December",
+      "day": 11,
+      "rain_chance_pct": 46.7,
+      "mean_prcp_in": 0.349,
+      "max_gust_record_mph": 52.9,
+      "wind_and_rain_pct": 10.0
+    },
+    {
+      "date": "2026-12-14",
+      "month_label": "December",
+      "day": 14,
+      "rain_chance_pct": 46.7,
+      "mean_prcp_in": 0.172,
+      "max_gust_record_mph": 51.7,
+      "wind_and_rain_pct": 20.0
+    },
+    {
+      "date": "2026-12-28",
+      "month_label": "December",
+      "day": 28,
+      "rain_chance_pct": 46.7,
+      "mean_prcp_in": 0.26,
+      "max_gust_record_mph": 55.0,
+      "wind_and_rain_pct": 16.7
+    },
+    {
+      "date": "2026-12-29",
+      "month_label": "December",
+      "day": 29,
+      "rain_chance_pct": 46.7,
+      "mean_prcp_in": 0.203,
+      "max_gust_record_mph": 50.5,
+      "wind_and_rain_pct": 16.7
+    },
+    {
+      "date": "2026-12-30",
+      "month_label": "December",
+      "day": 30,
+      "rain_chance_pct": 46.7,
+      "mean_prcp_in": 0.099,
+      "max_gust_record_mph": 58.6,
+      "wind_and_rain_pct": 16.7
+    },
+    {
+      "date": "2027-01-04",
+      "month_label": "January",
+      "day": 4,
+      "rain_chance_pct": 46.7,
+      "mean_prcp_in": 0.176,
+      "max_gust_record_mph": 66.9,
+      "wind_and_rain_pct": 16.7
+    },
+    {
+      "date": "2027-01-22",
+      "month_label": "January",
+      "day": 22,
+      "rain_chance_pct": 46.7,
+      "mean_prcp_in": 0.174,
+      "max_gust_record_mph": 50.5,
+      "wind_and_rain_pct": 13.3
+    },
+    {
+      "date": "2026-12-07",
+      "month_label": "December",
+      "day": 7,
+      "rain_chance_pct": 43.3,
+      "mean_prcp_in": 0.136,
+      "max_gust_record_mph": 47.2,
+      "wind_and_rain_pct": 20.0
+    },
+    {
+      "date": "2026-12-10",
+      "month_label": "December",
+      "day": 10,
+      "rain_chance_pct": 43.3,
+      "mean_prcp_in": 0.136,
+      "max_gust_record_mph": 48.3,
+      "wind_and_rain_pct": 16.7
+    },
+    {
+      "date": "2026-12-17",
+      "month_label": "December",
+      "day": 17,
+      "rain_chance_pct": 43.3,
+      "mean_prcp_in": 0.16,
+      "max_gust_record_mph": 39.1,
+      "wind_and_rain_pct": 13.3
+    }
+  ],
+  "low_risk_dates": [
+    {
+      "date": "2026-10-07",
+      "month_label": "October",
+      "day": 7,
+      "rain_chance_pct": 0.0
+    },
+    {
+      "date": "2026-10-08",
+      "month_label": "October",
+      "day": 8,
+      "rain_chance_pct": 3.3
+    },
+    {
+      "date": "2026-10-11",
+      "month_label": "October",
+      "day": 11,
+      "rain_chance_pct": 3.3
+    },
+    {
+      "date": "2026-10-12",
+      "month_label": "October",
+      "day": 12,
+      "rain_chance_pct": 3.3
+    },
+    {
+      "date": "2026-10-13",
+      "month_label": "October",
+      "day": 13,
+      "rain_chance_pct": 3.3
+    },
+    {
+      "date": "2026-10-18",
+      "month_label": "October",
+      "day": 18,
+      "rain_chance_pct": 3.3
+    },
+    {
+      "date": "2026-10-21",
+      "month_label": "October",
+      "day": 21,
+      "rain_chance_pct": 3.3
+    },
+    {
+      "date": "2026-10-16",
+      "month_label": "October",
+      "day": 16,
+      "rain_chance_pct": 6.7
+    },
+    {
+      "date": "2026-10-22",
+      "month_label": "October",
+      "day": 22,
+      "rain_chance_pct": 6.7
+    },
+    {
+      "date": "2026-10-27",
+      "month_label": "October",
+      "day": 27,
+      "rain_chance_pct": 6.7
+    }
+  ],
+  "action_items": [
+    {
+      "category": "Rainfall preparation",
+      "priority": "high",
+      "title": "Prepare for 12.79 inches average seasonal rain (Oct-Jan)",
+      "detail": "Historical range 1.71 to 22.82 inches over 30 seasons. Median 13.26 inches. This is the baseline before any El Ni\u00f1o tilt.",
+      "source": "NCEI GHCN-Daily USW00023272 1991-2020",
+      "source_url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+    },
+    {
+      "category": "Rain duration",
+      "priority": "high",
+      "title": "53.3% of seasons have at least one 7-day wet streak",
+      "detail": "In 1991-2020, 16 of 30 seasons had a run of 7+ consecutive wet days (\u22650.01 in) inside Oct 1-Jan 31. Longest run on record: 17.0 days. Average longest run: 7.3 days. Prepare for roof, gutters, and drainage to handle week-long rain.",
+      "source": "NCEI GHCN-Daily USW00023272",
+      "source_url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+    },
+    {
+      "category": "Rain duration",
+      "priority": "medium",
+      "title": "23.3% of seasons have a 10-day wet streak",
+      "detail": "7 of 30 seasons had 10+ consecutive wet days. This is not rare - about 1 year in 4. Consider tenant communication plan for extended wet periods.",
+      "source": "NCEI GHCN-Daily USW00023272",
+      "source_url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+    },
+    {
+      "category": "Wind + rain",
+      "priority": "high",
+      "title": "Expect 11.1 days per season with both rain and sustained wind \u226520 kt",
+      "detail": "At SFO ASOS (more exposed than Sunset, so upper bound for 94122): mean 11.1, median 10.0, max 24.0 days per Oct-Jan season with \u22650.01 in rain AND \u226520 kt sustained wind. Heavy wind+rain (\u22650.50 in AND gust \u226535 kt): mean 2.2, max 8.0 days.",
+      "source": "NCEI GSOD 72494023234 (KSFO) + GHCN-Daily",
+      "source_url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+    },
+    {
+      "category": "Wind / gusts",
+      "priority": "high",
+      "title": "Seasonal max gust averages 53.8 mph (record 70.0 mph)",
+      "detail": "SFO ASOS reports average strongest gust of season 53.8 mph, median 54.1 mph. Sunset will be less, but this is the verified upper bound. Check trees, fences, and loose items.",
+      "source": "NCEI GSOD 72494023234",
+      "source_url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt"
+    },
+    {
+      "category": "ENSO / seasonal tilt",
+      "priority": "high",
+      "title": "ENSO phase: el_nino (ONI 0.98\u00b0C as of 2026-05)",
+      "detail": "NOAA CPC ONI table shows 2026-05 ONI 0.98\u00b0C = el_nino. In El Ni\u00f1o years, Oct-Jan mean was 14.23 in vs 11.16 in for La Ni\u00f1a (n=11 El Ni\u00f1o seasons). El Ni\u00f1o tilts toward wetter, but spread is wide: wettest El Ni\u00f1o 22.82 in, driest El Ni\u00f1o 7.27 in.",
+      "source": "NOAA CPC Ni\u00f1o 3.4 table",
+      "source_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt"
+    },
+    {
+      "category": "Official CPC outlook",
+      "priority": "medium",
+      "title": "CPC DJF 2026-2027: Above median (40.0%) - prcp",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above median with 40.0% probability. For precipitation, 'Above median' means CPC favors above-normal total for the period.",
+      "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+    },
+    {
+      "category": "Official CPC outlook",
+      "priority": "medium",
+      "title": "CPC DJF 2026-2027: Above normal (33.0%) - temp",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For precipitation, 'Above median' means CPC favors above-normal total for the period.",
+      "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
+    },
+    {
+      "category": "Official CPC outlook",
+      "priority": "medium",
+      "title": "CPC NDJ 2026-2027: Above median (33.0%) - prcp",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above median with 33.0% probability. For precipitation, 'Above median' means CPC favors above-normal total for the period.",
+      "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+    },
+    {
+      "category": "Official CPC outlook",
+      "priority": "medium",
+      "title": "CPC NDJ 2026-2027: Above normal (33.0%) - temp",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For precipitation, 'Above median' means CPC favors above-normal total for the period.",
+      "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
+    },
+    {
+      "category": "Official CPC outlook",
+      "priority": "medium",
+      "title": "CPC OND 2026: Equal chances (33.0%) - prcp",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Equal chances with 33.0% probability. For precipitation, 'Above median' means CPC favors above-normal total for the period.",
+      "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+    },
+    {
+      "category": "Official CPC outlook",
+      "priority": "medium",
+      "title": "CPC OND 2026: Above normal (33.0%) - temp",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For precipitation, 'Above median' means CPC favors above-normal total for the period.",
+      "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
+    }
+  ],
+  "sources": {
+    "census": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip",
+    "nws_api": "https://api.weather.gov/points/37.7605,-122.4839",
+    "nws_human": "https://forecast.weather.gov/MapClick.php?lat=37.760459&lon=-122.483894",
+    "cpc_gis": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/",
+    "cpc_90day_discussion": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
+    "cpc_nino_table": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt",
+    "ghcn_daily": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
+    "gsod": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
+    "gsod_readme": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt",
+    "storm_events": "https://www.ncdc.noaa.gov/stormevents/",
+    "normals": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv"
+  },
+  "disclaimer": "Independent hobby project. Not affiliated with NOAA/NWS/NCEI/CPC. For life-safety decisions use weather.gov and weather.gov/mtr directly. Daily forecast beyond 7 days does not exist; climatology shown is not a forecast.",
+  "verification_note": "Every number traces to a URL in data/provenance.json. No commercial providers (AccuWeather etc.) are used because they require paid keys and are not independently verifiable line by line. All hosts verified against vetted official list."
+}
