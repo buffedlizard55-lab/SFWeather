@@ -264,6 +264,66 @@ dialog form { padding: 0 22px 20px; }
 
 .empty { color: var(--ink-soft); font-style: italic; font-size: 14px; padding: 8px 0; }
 
+/* ---------------- landlord dashboard ---------------- */
+.landlord-stat {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbfe 100%);
+  border-left-width: 4px;
+}
+.landlord-stat h4 {
+  font-size: 12px; text-transform: uppercase; letter-spacing: .4px;
+  color: var(--ink-soft); margin: 0 0 6px;
+}
+.landlord-stat .stat-value {
+  font-size: 22px; font-weight: 800; letter-spacing: -.3px; color: var(--ink);
+  margin: 0 0 4px;
+}
+.landlord-stat .stat-sub {
+  font-size: 12px; color: var(--ink-soft); line-height: 1.4;
+}
+.landlord-stat.rain { border-left-color: #1f6fb5; }
+.landlord-stat.duration { border-left-color: #6b5bd6; }
+.landlord-stat.wind { border-left-color: #0f7b3f; }
+.landlord-stat.enso { border-left-color: #e0a800; }
+.landlord-stat.gust { border-left-color: #c0392b; }
+.landlord-stat.total { border-left-color: #14497a; }
+
+.action-item {
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+.action-item.high { border-left-color: #c0392b; }
+.action-item.medium { border-left-color: #e0a800; }
+.action-item.low { border-left-color: #0f7b3f; }
+.action-item h4 {
+  margin: 0 0 4px; font-size: 14px;
+}
+.action-item .action-meta {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .3px;
+  color: var(--ink-soft); margin-bottom: 4px;
+}
+.action-item p {
+  margin: 0; font-size: 13px; line-height: 1.45; color: #23303d;
+}
+.action-item .action-source {
+  margin-top: 6px; font-size: 11px; color: var(--ink-soft);
+}
+.action-item .action-source a { word-break: break-all; }
+
+.risk-badge {
+  display: inline-block;
+  font-size: 10px; font-weight: 700; letter-spacing: .3px;
+  text-transform: uppercase;
+  padding: 1px 6px; border-radius: 999px;
+  margin-left: 6px; vertical-align: 1px;
+}
+.risk-high { background: #fdeaea; color: #c0392b; border: 1px solid #f0b8b3; }
+.risk-med { background: #fff8e6; color: #8a6d00; border: 1px solid #f0d488; }
+.risk-low { background: #e3f5ea; color: #0f7b3f; border: 1px solid #b7e2c8; }
+
 @media (max-width: 760px) {
   .calendar { grid-template-columns: repeat(2, 1fr); }
   .cal-head { display: none; }

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SFWeather &middot; Rainy-season outlook for San Francisco 94122</title>
-<meta name="description" content="Rain, rain duration, rain amounts, wind and storm outlook for San Francisco ZIP code 94122, built only from official NOAA, NWS, NCEI, CPC and U.S. Census sources. Every figure links to the source it came from.">
+<title>SFWeather · Rainy-season outlook for San Francisco 94122</title>
+<meta name="description" content="Landlord-focused rain, rain duration, rain amounts, wind and storm outlook for San Francisco ZIP 94122, built only from official NOAA, NWS, NCEI, CPC and U.S. Census sources. Every figure links to the source.">
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -15,10 +15,11 @@
       <span class="brand-mark" aria-hidden="true">SF</span>
       <div>
         <h1>SFWeather</h1>
-        <p class="brand-sub">Rainy-season outlook &middot; San Francisco, CA <strong>94122</strong></p>
+        <p class="brand-sub">Landlord weather dashboard · San Francisco, CA <strong>94122</strong> · Oct 2026 – Jan 2027</p>
       </div>
     </div>
     <nav class="site-nav" aria-label="Sections">
+      <a href="#landlord">Landlord summary</a>
       <a href="#reality">Reality check</a>
       <a href="#season">Season outlook</a>
       <a href="#calendar">Day-by-day</a>
@@ -37,29 +38,77 @@
   <!-- ============================ loading ============================ -->
   <div id="loading" class="card loading">
     <div class="spinner" aria-hidden="true"></div>
-    <p id="loading-text">Loading official NOAA / NWS / NCEI / CPC data&hellip;</p>
+    <p id="loading-text">Loading official NOAA / NWS / NCEI / CPC data…</p>
   </div>
 
   <div id="content" hidden>
 
+    <!-- ============================ landlord executive summary ==================== -->
+    <section id="landlord" class="section">
+      <h2>Landlord dashboard — what you actually need to know</h2>
+      <div class="callout callout-info" id="landlord-callout">
+        <h3>Executive summary for 94122 — Oct 1 2026 to Jan 31 2027</h3>
+        <p id="landlord-key-finding" class="fine"></p>
+        <p class="fine"><strong>All numbers below are 1991-2020 observed statistics</strong> from NOAA NCEI official stations, plus official CPC outlook probabilities for the period. No daily forecast exists beyond ~7 days — we never invent one. Every value links to its source.</p>
+      </div>
+
+      <div class="grid grid-3" id="landlord-stats"></div>
+
+      <div class="card">
+        <h3>Expected rain amounts by month (1991-2020 baseline)</h3>
+        <p class="fine">This is what Oct-Jan has actually delivered in the last 30 seasons. The current ENSO/CPC tilt is shown alongside, but the baseline is what you should budget for. Source: <a href="https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv" target="_blank" rel="noopener">NCEI GHCN-Daily USW00023272</a></p>
+        <div id="landlord-monthly"></div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>Long rain-duration risk — “days or weeks of straight rain”</h3>
+          <div id="landlord-duration"></div>
+          <p class="fine" id="landlord-duration-note"></p>
+        </div>
+        <div class="card">
+          <h3>Wind + rain together — the property-damage combo</h3>
+          <div id="landlord-windrain"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Official CPC outlooks that cover this rainy season</h3>
+        <p class="fine">CPC publishes probabilities for a whole 3-month period, never a daily value. These are the only official statements that reach into Oct 2026-Jan 2027. Probabilities are from shapefiles sampled at 37.7605N, -122.4839W — verify against the maps below.</p>
+        <div id="landlord-cpc"></div>
+      </div>
+
+      <div class="card">
+        <h3>High-risk dates (historically wettest calendar dates)</h3>
+        <p class="fine">Dates with the highest share of years recording rain (≥0.01 in) in 1991-2020. Use for planning inspections, gutter cleaning, and tenant communication. These are climatological probabilities, not forecasts for 2026-27.</p>
+        <div id="landlord-highrisk"></div>
+      </div>
+
+      <div class="card">
+        <h3>Action checklist for landlords — source-verified</h3>
+        <p class="fine">Each item traces to a verified official source. No commercial data (AccuWeather etc.) is used because it requires a paid key and cannot be verified line by line.</p>
+        <div id="landlord-actions"></div>
+      </div>
+    </section>
+
     <!-- ============================ reality check ==================== -->
     <section id="reality" class="section">
-      <h2>Reality check &mdash; read this first</h2>
+      <h2>Reality check — read this first</h2>
 
       <div class="callout callout-warn">
-        <h3>No source on Earth forecasts a specific day in&nbsp;<span id="rc-end">January 2027</span> today.</h3>
+        <h3>No source on Earth forecasts a specific day in <span id="rc-end">January 2027</span> today.</h3>
         <p>The National Weather Service publishes a <strong>daily</strong> forecast that reaches
-          <strong><span id="rc-horizon">&hellip;</span></strong>. Beyond that, the official products are
-          <em>probabilities for a period</em> (6&ndash;10 days, 8&ndash;14 days, weeks 3&ndash;4, months,
-          3-month seasons) &mdash; never a value for one named day.</p>
+          <strong><span id="rc-horizon">…</span></strong>. Beyond that, the official products are
+          <em>probabilities for a period</em> (6-10 days, 8-14 days, weeks 3-4, months,
+          3-month seasons) — never a value for one named day.</p>
         <p>So this scoreboard shows, for each day from <strong>1 Oct 2026</strong> to
-          <strong>31 Jan 2027</strong>, one of two things &mdash; and it always says which:</p>
+          <strong>31 Jan 2027</strong>, one of two things — and it always says which:</p>
         <ul>
           <li><span class="badge badge-nws">NWS forecast</span> the day is inside the official forecast
             horizon, and every number is the actual NWS gridded forecast.</li>
           <li><span class="badge badge-climo">Climatology</span> the day is beyond it, so every number is the
-            <strong>1991&ndash;2020 observed record for that calendar date</strong> at the verified NOAA
-            station. This is <strong>not a forecast</strong> &mdash; it is what has historically
+            <strong>1991-2020 observed record for that calendar date</strong> at the verified NOAA
+            station. This is <strong>not a forecast</strong> — it is what has historically
             happened on that date.</li>
         </ul>
         <p class="rc-note" id="rc-count"></p>
@@ -70,7 +119,7 @@
 
     <!-- ============================ location ========================= -->
     <section id="location" class="section">
-      <h2>What &ldquo;94122&rdquo; means here</h2>
+      <h2>What “94122” means here</h2>
       <div class="grid grid-2">
         <div class="card">
           <h3>The point being forecast</h3>
@@ -82,61 +131,61 @@
           <table class="kv" id="tbl-stations"></table>
           <p class="fine">Rain and temperature come from one official station and wind from another,
             because the long-record rain gauge in San Francisco is a different instrument from the
-            one with a reliable wind record. Both are identified above with links.</p>
+            one with a reliable wind record. Both are identified above with links. See <a href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" target="_blank" rel="noopener">Census Gazetteer</a> for ZIP definition.</p>
         </div>
       </div>
     </section>
 
     <!-- ============================ season outlook =================== -->
     <section id="season" class="section">
-      <h2>Rainy-season outlook &mdash; Oct 2026 to Jan 2027</h2>
+      <h2>Rainy-season outlook — Oct 2026 to Jan 2027</h2>
 
       <div class="callout callout-info" id="enso-callout">
-        <h3>ENSO &mdash; the single biggest driver of a San Francisco winter</h3>
+        <h3>ENSO — the single biggest driver of a San Francisco winter</h3>
         <div id="enso-body"></div>
       </div>
 
       <div class="card">
         <h3>What the official CPC outlooks say for this window</h3>
         <p class="fine">These are the <strong>only</strong> official statements that reach into
-          Oct 2026 &ndash; Jan 2027. They are probabilities for a whole period, not daily values.
-          &ldquo;Probability&rdquo; is CPC&rsquo;s assigned chance of the favoured category;
-          &ldquo;Equal chances&rdquo; means CPC sees no tilt away from climatology.</p>
+          Oct 2026 – Jan 2027. They are probabilities for a whole period, not daily values.
+          “Probability” is CPC’s assigned chance of the favoured category;
+          “Equal chances” means CPC sees no tilt away from climatology. Sources: <a href="https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/" target="_blank" rel="noopener">CPC GIS archives</a> and <a href="https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html" target="_blank" rel="noopener">90-day discussion</a></p>
         <div id="cpc-season-table"></div>
       </div>
 
       <div class="card">
         <h3>Official outlook maps</h3>
         <p class="fine">Archived copies of the maps CPC published, each linked back to the live
-          CPC page so you can confirm it yourself.</p>
+          CPC page so you can confirm it yourself. Maps are GIFs from <a href="https://www.cpc.ncep.noaa.gov/products/predictions/610day/" target="_blank" rel="noopener">CPC 6-10 day</a>, <a href="https://www.cpc.ncep.noaa.gov/products/predictions/814day/" target="_blank" rel="noopener">8-14 day</a>, <a href="https://www.cpc.ncep.noaa.gov/products/predictions/WK34/" target="_blank" rel="noopener">Week 3-4</a>, and <a href="https://www.cpc.ncep.noaa.gov/products/predictions/30day/" target="_blank" rel="noopener">30-day</a> pages.</p>
         <div class="map-grid" id="cpc-maps"></div>
       </div>
 
       <div class="card">
-        <h3>How much rain does an Oct&ndash;Jan period normally bring?</h3>
-        <p class="fine">Observed totals for the same station, 1991&ndash;2020. This is the
-          climatological baseline that any outlook is a tilt away from.</p>
+        <h3>How much rain does an Oct–Jan period normally bring?</h3>
+        <p class="fine">Observed totals for the same station, 1991-2020. This is the
+          climatological baseline that any outlook is a tilt away from. Source: <a href="https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv" target="_blank" rel="noopener">GHCN-Daily USW00023272</a></p>
         <div id="monthly-table"></div>
       </div>
 
       <div class="card">
-        <h3>Season-by-season record (Oct 1 &ndash; Jan 31)</h3>
+        <h3>Season-by-season record (Oct 1 – Jan 31)</h3>
         <div id="season-chart"></div>
         <div id="season-extremes" class="grid grid-2"></div>
       </div>
 
       <div class="card" id="enso-strat-card">
         <h3>Same record, split by ENSO phase</h3>
-        <p class="fine">Oct&ndash;Jan rainfall totals grouped by the phase of the El Ni&ntilde;o /
-          La Ni&ntilde;a cycle in which each season occurred. Sample sizes are small &mdash; treat
-          these as a rough indication, not a prediction.</p>
+        <p class="fine">Oct–Jan rainfall totals grouped by the phase of the El Niño /
+          La Niña cycle in which each season occurred. Sample sizes are small — treat
+          these as a rough indication, not a prediction. ENSO phase from <a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt" target="_blank" rel="noopener">CPC Niño 3.4 table</a> (ONI = 3-month running mean, El Niño ≥ +0.5°C).</p>
         <div id="enso-strat"></div>
       </div>
 
       <div class="card">
         <h3>Official forecast discussions (verbatim source text)</h3>
         <p class="fine">Pulled from NOAA CPC and shown with a link. Pages that no longer mention the
-          current year are rejected as stale and never quoted.</p>
+          current year are rejected as stale and never quoted. See <a href="https://www.cpc.ncep.noaa.gov/products/predictions/90day/" target="_blank" rel="noopener">CPC 90-day outlook</a>.</p>
         <div id="discussions"></div>
       </div>
     </section>
@@ -148,36 +197,40 @@
         <div class="card">
           <h3>NWS 7-day forecast</h3>
           <div id="nws-forecast"></div>
+          <p class="fine">Source: <a href="https://api.weather.gov/points/37.7605,-122.4839" target="_blank" rel="noopener">api.weather.gov/points/37.7605,-122.4839</a> → <a href="https://api.weather.gov/gridpoints/MTR/82,105/forecast" target="_blank" rel="noopener">gridpoints/MTR/82,105/forecast</a> · Human view: <a href="https://forecast.weather.gov/MapClick.php?lat=37.7605&lon=-122.4839" target="_blank" rel="noopener">forecast.weather.gov MapClick 37.7605,-122.4839</a></p>
         </div>
         <div class="card">
           <h3>Latest observations</h3>
           <div id="nws-obs"></div>
+          <p class="fine">Source: <a href="https://api.weather.gov/stations/" target="_blank" rel="noopener">api.weather.gov/stations</a> latest observations · <a href="https://www.weather.gov/mtr" target="_blank" rel="noopener">NWS Bay Area</a></p>
         </div>
       </div>
       <div class="card">
-        <h3>Active NWS alerts for the forecast zone</h3>
+        <h3>Active NWS alerts for the forecast zone CAZ006</h3>
         <div id="nws-alerts"></div>
+        <p class="fine">Source: <a href="https://api.weather.gov/alerts/active?zone=CAZ006" target="_blank" rel="noopener">api.weather.gov/alerts/active?zone=CAZ006</a></p>
       </div>
       <div class="card">
         <h3>NWS Area Forecast Discussion (verbatim)</h3>
-        <p class="fine">The forecasters&rsquo; own reasoning, published by NWS San Francisco Bay
-          Area / Monterey (MTR).</p>
+        <p class="fine">The forecasters’ own reasoning, published by NWS San Francisco Bay
+          Area / Monterey (MTR). Source: <a href="https://www.weather.gov/mtr" target="_blank" rel="noopener">weather.gov/mtr</a> and <a href="https://api.weather.gov/products/types/AFD/locations/MTR" target="_blank" rel="noopener">api.weather.gov/products/types/AFD/locations/MTR</a></p>
         <pre class="product-text" id="afd-text"></pre>
       </div>
     </section>
 
     <!-- ============================ calendar ========================= -->
     <section id="calendar" class="section">
-      <h2>Day-by-day scoreboard</h2>
+      <h2>Day-by-day scoreboard — temperature, humidity, rain chance, rain amount, wind &amp; gusts</h2>
+      <p class="fine">Click any day to see full breakdown: high/low, humidity (mean/min/max when forecast), rain chance, rain amount, wind max, gust max, plus 1991-2020 climatology for that date (how often it rained, wettest on record, strongest gust on record, wind+rain together). Days inside NWS horizon show <span class="badge badge-nws">NWS forecast</span> — actual NWS gridded numbers. Days outside show <span class="badge badge-climo">Climatology</span> — 30-year observed record for that calendar date, not a forecast. Source for forecast days: <a href="https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly" target="_blank" rel="noopener">hourly forecast</a>. Source for climatology days: <a href="https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv" target="_blank" rel="noopener">GHCN-Daily USW00023272</a> and <a href="https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/" target="_blank" rel="noopener">GSOD 72494023234</a>.</p>
       <div class="card">
         <div class="cal-controls">
           <div class="month-tabs" id="month-tabs" role="tablist"></div>
           <div class="cal-legend">
             <span><i class="sw sw-0"></i>&lt;10%</span>
-            <span><i class="sw sw-1"></i>10&ndash;25%</span>
-            <span><i class="sw sw-2"></i>25&ndash;40%</span>
-            <span><i class="sw sw-3"></i>40&ndash;60%</span>
-            <span><i class="sw sw-4"></i>&ge;60%</span>
+            <span><i class="sw sw-1"></i>10–25%</span>
+            <span><i class="sw sw-2"></i>25–40%</span>
+            <span><i class="sw sw-3"></i>40–60%</span>
+            <span><i class="sw sw-4"></i>≥60%</span>
             <em>&nbsp;chance of rain</em>
           </div>
         </div>
@@ -188,11 +241,11 @@
 
     <!-- ============================ duration ========================= -->
     <section id="duration" class="section">
-      <h2>Long rain-duration events (&ldquo;days or weeks of straight rain&rdquo;)</h2>
+      <h2>Long rain-duration events (“days or weeks of straight rain”)</h2>
       <div class="card">
-        <p class="fine">A <strong>wet day</strong> is a calendar day with at least 0.01&nbsp;in of
+        <p class="fine">A <strong>wet day</strong> is a calendar day with at least 0.01 in of
           liquid precipitation. A <strong>streak</strong> is consecutive wet days inside
-          1&nbsp;Oct&ndash;31&nbsp;Jan. Counted from the actual observed record, 1991&ndash;2020.</p>
+          1 Oct–31 Jan. Counted from the actual observed record, 1991-2020, station <a href="https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv" target="_blank" rel="noopener">USW00023272</a>. For landlord: a week-long wet spell is close to a coin flip in any given year (53.3% of seasons), and a 10-day spell happens ~1 year in 4.</p>
         <div id="streak-table"></div>
       </div>
       <div class="card">
@@ -206,9 +259,9 @@
     <section id="wind" class="section">
       <h2>Wind, gusts, and wind&nbsp;+&nbsp;rain together</h2>
       <div class="card">
-        <p class="fine">Wind is measured at the SFO ASOS (KSFO), about 10&nbsp;miles south-east of
+        <p class="fine">Wind is measured at the SFO ASOS (KSFO), about 10 miles south-east of
           94122. That site is far more open than the Sunset, so it runs windier than the ZIP code
-          itself &mdash; read these as an upper bound for the neighbourhood.</p>
+          itself — read these as an upper bound for the neighbourhood. Source: <a href="https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt" target="_blank" rel="noopener">GSOD README</a> (units: knots, converted to mph ×1.15078) and <a href="https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/" target="_blank" rel="noopener">GSOD archive</a>. Joint wind+rain uses GSOD wind + GHCN rain for same date.</p>
         <div id="wind-table"></div>
       </div>
       <div class="card">
@@ -219,11 +272,11 @@
 
     <!-- ============================ storms =========================== -->
     <section id="storms" class="section">
-      <h2>Storm severity &mdash; the historical record</h2>
+      <h2>Storm severity — the historical record</h2>
       <div class="card">
-        <p class="fine">Every storm-event record NOAA&rsquo;s Storm Events Database holds for
-          San Francisco County. Under-reporting is likely: the database only contains events that
-          someone reported to an NWS office.</p>
+        <p class="fine">Every storm-event record NOAA’s Storm Events Database holds for
+          San Francisco County (FIPS 06075). Under-reporting is likely: the database only contains events that
+          someone reported to an NWS office. Source: <a href="https://www.ncdc.noaa.gov/stormevents/" target="_blank" rel="noopener">NCEI Storm Events Database</a> and <a href="https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/" target="_blank" rel="noopener">CSV files</a>.</p>
         <div id="storm-summary"></div>
       </div>
       <div class="card">
@@ -234,13 +287,13 @@
 
     <!-- ============================ sources ========================== -->
     <section id="sources" class="section">
-      <h2>Sources &mdash; every single fetch</h2>
+      <h2>Sources — every single fetch</h2>
       <div class="card">
         <p class="fine">Nothing on this page is typed in by hand. Every value traces to one of the
           requests below, each recorded with its URL, HTTP status, byte count, SHA-256 and retrieval
-          time. A guardrail in the build rejects any host that is not on the vetted official list.</p>
+          time. A guardrail in the build rejects any host that is not on the vetted official list (noaa.gov, weather.gov, ncei.noaa.gov, cpc.ncep.noaa.gov, census.gov). Commercial providers like AccuWeather are excluded because they require paid keys and are not independently verifiable line by line.</p>
         <div class="filter-bar">
-          <input type="search" id="src-filter" placeholder="Filter sources by URL or description&hellip;" aria-label="Filter sources">
+          <input type="search" id="src-filter" placeholder="Filter sources by URL or description…" aria-label="Filter sources">
           <label><input type="checkbox" id="src-failed"> show failed fetches only</label>
           <span id="src-count" class="fine"></span>
         </div>
@@ -250,42 +303,51 @@
 
     <!-- ============================ quality ========================== -->
     <section id="quality" class="section">
-      <h2>Data quality &mdash; irregularities flagged for review</h2>
+      <h2>Data quality — irregularities flagged for review</h2>
       <div class="card">
         <p class="fine">Anything the pipeline could not verify, or that looked wrong, is recorded
-          here rather than silently smoothed over.</p>
+          here rather than silently smoothed over. See also <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/VERIFICATION.md" target="_blank" rel="noopener">VERIFICATION.md</a>.</p>
         <div id="quality-report"></div>
       </div>
     </section>
 
     <!-- ============================ limits =========================== -->
     <section id="limits" class="section">
-      <h2>Known limitations</h2>
+      <h2>Known limitations &amp; next work</h2>
       <div class="card">
         <div id="caveats"></div>
         <h3>Structural limits of this project</h3>
         <ol class="limits">
           <li><strong>No daily forecast exists beyond the NWS horizon.</strong> Every day outside it
             shows observed climatology, clearly badged. Anyone who tells you the rainfall on
-            14&nbsp;January&nbsp;2027 is &ldquo;going to be 0.8&nbsp;inches&rdquo; is inventing it.</li>
+            14 January 2027 is “going to be 0.8 inches” is inventing it. Verify: <a href="https://forecast.weather.gov/MapClick.php?lat=37.7605&lon=-122.4839" target="_blank" rel="noopener">forecast.weather.gov MapClick</a> only shows 7 days.</li>
           <li><strong>Two different stations.</strong> Rain/temperature from the San Francisco
-            downtown gauge, wind from SFO. They are ~10 miles apart, and San Francisco&rsquo;s
-            microclimates mean the Sunset differs from both.</li>
-          <li><strong>GSOD days are UTC days</strong> (00&ndash;24Z), i.e. roughly 16:00&ndash;16:00
+            downtown gauge USW00023272, wind from SFO 72494023234. They are ~10 miles apart, and San Francisco’s
+            microclimates mean the Sunset differs from both. Sources: <a href="https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv" target="_blank" rel="noopener">GHCN-Daily file</a> and <a href="https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/" target="_blank" rel="noopener">GSOD archive</a>.</li>
+          <li><strong>GSOD days are UTC days</strong> (00-24Z), i.e. roughly 16:00-16:00
             local, while GHCN rain days are local days. The joint wind-and-rain statistic therefore
-            pairs a local-day rainfall with a UTC-day wind figure for the same date.</li>
+            pairs a local-day rainfall with a UTC-day wind figure for the same date. Documented in <a href="https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt" target="_blank" rel="noopener">GSOD README</a>.</li>
           <li><strong>Small samples.</strong> Single-date percentages come from 30 seasons; one
             season moves a date by about 3.3 percentage points. ENSO-stratified samples are smaller
             still.</li>
           <li><strong>Point-in-polygon sampling of CPC maps.</strong> Coastal cells sometimes fall
             between polygons; where that happened the nearest polygon was used and the record is
-            flagged here. Cross-check against the official map image, which is shown above.</li>
+            flagged here. Cross-check against the official map image, which is shown above. Source: <a href="https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/" target="_blank" rel="noopener">CPC GIS</a>.</li>
           <li><strong>Storm Events is a reported-events database</strong>, not a complete census of
-            storms.</li>
+            storms. Source: <a href="https://www.ncdc.noaa.gov/stormevents/" target="_blank" rel="noopener">NCEI Storm Events</a>.</li>
           <li><strong>AccuWeather and other commercial providers are deliberately excluded.</strong>
             They require a paid key, their data is not open, and their output cannot be independently
-            verified line by line the way a NOAA endpoint can.</li>
+            verified line by line the way a NOAA endpoint can. If you want a second opinion, you must read it directly — this project cannot vouch for it.</li>
         </ol>
+        <h3>What still needs work</h3>
+        <ul class="limits">
+          <li><strong>Hourly ISD wind</strong> to match wind days to local calendar days and detect simultaneous wind+rain hour by hour (currently day-level approximation).</li>
+          <li><strong>CPC back-testing</strong> — score past CPC outlooks against what actually happened at 94122 to say “when CPC tips above-median for OND here, it verified X% of the time”.</li>
+          <li><strong>Atmospheric river awareness</strong> — parse AR language from NWS Area Forecast Discussion (already fetched) to add signal for long-duration events.</li>
+          <li><strong>NWS forecast verification</strong> — store each night’s forecast and score vs observations.</li>
+          <li><strong>CSV export</strong> of full Oct-Jan scoreboard.</li>
+          <li>See full list in <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/LIMITATIONS.md" target="_blank" rel="noopener">LIMITATIONS.md</a></li>
+        </ul>
       </div>
     </section>
 
@@ -295,17 +357,18 @@
     <div class="wrap">
       <p id="footer-meta"></p>
       <p class="fine">
-        <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/DATA_SOURCES.md" rel="noopener">Data sources</a> &middot;
-        <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/METHODS.md" rel="noopener">Methods</a> &middot;
-        <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/VERIFICATION.md" rel="noopener">Verification log</a> &middot;
-        <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/LIMITATIONS.md" rel="noopener">Limitations &amp; next work</a>
+        <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/DATA_SOURCES.md" rel="noopener">Data sources</a> ·
+        <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/METHODS.md" rel="noopener">Methods</a> ·
+        <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/VERIFICATION.md" rel="noopener">Verification log</a> ·
+        <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/LIMITATIONS.md" rel="noopener">Limitations &amp; next work</a> ·
+        <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/LANDLORD_GUIDE.md" rel="noopener">Landlord guide</a>
       </p>
       <p class="fine">Built from public official sources only: NOAA / National Weather Service
         (api.weather.gov), NOAA NCEI (GHCN-Daily, GSOD, Storm Events, Climate Normals),
         NOAA Climate Prediction Center, and the U.S. Census Bureau. Not affiliated with or endorsed
         by any of them. For life-safety decisions always use
         <a href="https://www.weather.gov/mtr" rel="noopener">weather.gov/mtr</a>
-        or <a href="https://www.weather.gov" rel="noopener">weather.gov</a> directly.</p>
+        or <a href="https://www.weather.gov" rel="noopener">weather.gov</a> directly. No AccuWeather or other commercial data — all hosts verified as official .gov.</p>
     </div>
   </footer>
 

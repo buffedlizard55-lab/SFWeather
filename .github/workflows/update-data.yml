@@ -67,6 +67,14 @@ jobs:
           echo "CALENDAR_EXIT=$code" >> data/run_diagnostics.txt
           exit $code
 
+      - name: Build landlord-focused summary
+        run: |
+          set +e
+          python3 -u pipeline/landlord_summary.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "LANDLORD_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
+
       - name: Verify that every source URL is an official domain
         run: |
           set +e
