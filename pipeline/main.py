@@ -62,6 +62,21 @@ CPC_WWW_BASE = "https://www.cpc.ncep.noaa.gov"
 MANIFEST: list[dict] = []
 IRREGULARITIES: list[dict] = []
 
+# The pipeline mirrors everything it prints into <outdir>/pipeline.log.  That
+# file is committed by the workflow, which is the only way to inspect a run
+# from a machine that cannot reach GitHub's log blob storage.
+_LOG_PATH: Path | None = None
+
+
+def log(msg=""):
+    print(msg, flush=True)
+    if _LOG_PATH:
+        try:
+            with open(_LOG_PATH, "a", encoding="utf-8") as fh:
+                fh.write(str(msg) + "\n")
+        except Exception:  # noqa: BLE001 - never let logging break the run
+            pass
+
 
 def note_irregularity(severity, area, message, evidence=None):
     IRREGULARITIES.append({
@@ -845,31 +860,36 @@ def fetch_storm_events(years):
 # ==========================================================================
 
 def main():
+    global _LOG_PATH
     ap = argparse.ArgumentParser()
     ap.add_argument("--outdir", default="data")
     args = ap.parse_args()
     outdir = Path(args.outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+    _LOG_PATH = outdir / "pipeline.log"
+    if _LOG_PATH.exists():
+        _LOG_PATH.unlink()
 
     today = dt.datetime.now(dt.timezone.utc).date()
-    print(f"SFWeather pipeline - {today.isoformat()}")
+    log(f"SFWeather pipeline - {today.isoformat()}")
 
     assets_dir = Path("assets/cpc")
 
-    print("[1/7] ZIP centroid (U.S. Census Bureau)")
+    log("[1/7] ZIP centroid (U.S. Census Bureau)")
     centroid = fetch_zip_centroid()
     lat, lon = centroid["lat"], centroid["lon"]
-    print(f"      94122 centroid: {lat:.4f}, {lon:.4f} ({'verified' if centroid.get('verified') else 'FALLBACK'})")
+    log(f"      94122 centroid: {lat:.4f}, {lon:.4f} ({'verified' if centroid.get('verified') else 'FALLBACK'})")
 
-    print("[2/7] NWS (api.weather.gov)")
+    log("[2/7] NWS (api.weather.gov)")
     nws = fetch_nws(lat, lon)
 
-    print("[3/7] CPC outlooks")
+    log("[3/7] CPC outlooks")
     cpc = fetch_cpc(lat, lon, assets_dir, today)
 
-    print("[4/7] ENSO / ONI")
+    log("[4/7] ENSO / ONI")
     enso = fetch_enso()
 
-    print("[5/7] NCEI climatology archives")
+    log("[5/7] NCEI climatology archives")
     ghcn = fetch_ghcn()
     gsod_years = list(range(1991, today.year + 1))
     gsod = fetch_gsod(gsod_years)
@@ -885,7 +905,7 @@ def main():
 
     climo_out = {}
     if ghcn and gsod:
-        print("[6/7] computing rainy-season climatology")
+        log("[6/7] computing rainy-season climatology")
         oni_series = {}
         if enso.get("oni_series"):
             for k, v in enso["oni_series"].items():
@@ -942,7 +962,7 @@ def main():
                           "Climatology could not be computed because an NCEI archive was "
                           "unavailable.", {"ghcn": bool(ghcn), "gsod": bool(gsod)})
 
-    print("[7/7] Storm Events + writing outputs")
+    log("[7/7] Storm Events + writing outputs")
     storm = fetch_storm_events(set(range(today.year - 12, today.year + 1)))
 
     run = {
@@ -984,14 +1004,25 @@ def main():
         "irregularities": IRREGULARITIES,
     })
 
-    print("\n=== summary ===")
-    print(f"  fetches: {run['counts']['successful_fetches']} ok / "
-          f"{run['counts']['failed_fetches']} failed")
-    print(f"  irregularities: {run['counts']['irregularities']}")
+    log("\n=== summary ===")
+    log(f"  fetches: {run['counts']['successful_fetches']} ok / "
+        f"{run['counts']['failed_fetches']} failed")
+    log(f"  irregularities: {run['counts']['irregularities']}")
     for i in IRREGULARITIES:
-        print(f"    [{i['severity']}] {i['area']}: {i['message'][:150]}")
+        log(f"    [{i['severity']}] {i['area']}: {i['message'][:200]}")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception:  # noqa: BLE001 - surface the traceback in the committed log
+        import traceback
+        tb = traceback.format_exc()
+        print(tb, flush=True)
+        try:
+            log("FATAL: uncaught exception")
+            log(tb)
+        except Exception:  # noqa: BLE001
+            pass
+        sys.exit(1)

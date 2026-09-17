@@ -1,8 +1,10 @@
 name: Update NOAA data
 
 # Runs on GitHub-hosted runners, which have unrestricted egress to NOAA / NWS /
-# NCEI / CPC / Census hosts.  The pipeline commits its output back to the repo,
-# and GitHub Pages serves it.
+# NCEI / CPC / Census hosts.  The pipeline commits its output back to the repo
+# and GitHub Pages serves it.  A human-readable copy of the run log is always
+# committed to data/pipeline.log so a run can be reviewed without downloading
+# Actions logs.
 
 on:
   push:
@@ -36,30 +38,57 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Environment diagnostics
+        run: |
+          mkdir -p data assets/cpc
+          {
+            echo "runner: $(uname -a)"
+            echo "python: $(python3 --version)"
+            echo "date:   $(date -u)"
+            echo "sha:    ${{ github.sha }}"
+            echo "ref:    ${{ github.ref }}"
+          } > data/run_diagnostics.txt
+          cat data/run_diagnostics.txt
+
       - name: Run the NOAA fetch pipeline
         run: |
-          python3 -u pipeline/main.py --outdir data 2>&1 | tee pipeline_run.log
+          set +e
+          python3 -u pipeline/main.py --outdir data > pipeline_run.log 2>&1
+          code=$?
+          cat pipeline_run.log
+          echo "PIPELINE_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
 
       - name: Build the Oct 2026 - Jan 2027 scoreboard dataset
         run: |
+          set +e
           python3 -u pipeline/build_calendar.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "CALENDAR_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
 
       - name: Verify that every source URL is an official domain
         run: |
+          set +e
           python3 -u pipeline/verify_sources.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "VERIFY_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
 
       - name: Fail loudly if the pipeline lost a critical source
         run: |
           python3 - <<'PY'
-          import json, sys
-          q = json.load(open("data/quality_report.json"))
-          errs = [i for i in q["irregularities"] if i["severity"] == "error"]
-          if errs:
-              print("CRITICAL: pipeline reported errors")
-              for e in errs:
-                  print(" -", e["area"], ":", e["message"])
+          import json, sys, pathlib
+          p = pathlib.Path("data/quality_report.json")
+          if not p.exists():
+              print("CRITICAL: quality_report.json was not produced")
               sys.exit(1)
-          print(f"No critical errors. warnings={q['counts']['warnings']} info={q['counts']['info']}")
+          q = json.loads(p.read_text())
+          errs = [i for i in q["irregularities"] if i["severity"] == "error"]
+          print(f"warnings={q['counts']['warnings']} info={q['counts']['info']} errors={len(errs)}")
+          for e in errs:
+              print(" -", e["area"], ":", e["message"])
+          sys.exit(1 if errs else 0)
           PY
 
       - name: Upload the run log for inspection
@@ -72,16 +101,23 @@ jobs:
 
       - name: Commit refreshed data and diagnostics
         if: always()
+        env:
+          BRANCH: ${{ github.ref_name }}
         run: |
-          set +e
+          set -x
+          mkdir -p data assets/cpc
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A data assets/cpc pipeline_run.log
+          git add -A data
+          git add -A assets/cpc || echo "no cpc assets to add"
+          git add -A pipeline_run.log || echo "no run log to add"
+          git status --short | head -40
           if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
-          fi
-          git commit -m "data: refresh NOAA/NWS/NCEI/CPC sources [skip ci]
+            echo "NOTHING_TO_COMMIT"
+          else
+            git commit -m "data: refresh NOAA/NWS/NCEI/CPC sources [skip ci]
 
-          Automated refresh by .github/workflows/update-data.yml (run ${{ github.run_id }}, attempt ${{ github.run_attempt }})"
-          git push
+          Automated refresh by .github/workflows/update-data.yml (run ${{ github.run_id }})"
+            git push origin "HEAD:$BRANCH" || echo "PUSH_FAILED"
+          fi
+          set +x
