@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T21:50:11Z",
+  "generated_utc": "2026-09-17T21:52:57Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -78,7 +78,7 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-17T21:48:38Z"
+        "retrieved_utc": "2026-09-17T21:52:01Z"
       }
     },
     {
@@ -256,7 +256,7 @@
         "http_status": 200,
         "bytes": 1013803,
         "sha256": "7b85c04a131672f58b38a950eb82855d5fd4054f0bd9bc3f69aa28897a714e3d",
-        "retrieved_utc": "2026-09-17T21:48:05Z",
+        "retrieved_utc": "2026-09-17T21:50:43Z",
         "host": "www2.census.gov"
       },
       "verified": true,
@@ -283,7 +283,7 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-17T21:48:38Z",
+        "retrieved_utc": "2026-09-17T21:52:01Z",
         "host": "www.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -311,8 +311,8 @@
         "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
         "http_status": 200,
         "bytes": 162383,
-        "sha256": "9659cc847a15c675d576c9bcace492998ebfda41e22204d3800504e0fd2fdb09",
-        "retrieved_utc": "2026-09-17T21:48:05Z",
+        "sha256": "b0be3ca01c738f5f79d1b635dadf8b1497e717fdcf0dae7558bd3f39111cad6b",
+        "retrieved_utc": "2026-09-17T21:50:44Z",
         "host": "api.weather.gov"
       },
       "verified": true
@@ -354,7 +354,7 @@
         "http_status": 200,
         "bytes": 6423708,
         "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
-        "retrieved_utc": "2026-09-17T21:48:54Z",
+        "retrieved_utc": "2026-09-17T21:52:35Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true
@@ -371,7 +371,7 @@
         "http_status": 200,
         "bytes": 7488380,
         "sha256": "647b301aec57b8ad38287b2353e2a1cdcaeee8f06df205d4983db2fd9feeae19",
-        "retrieved_utc": "2026-09-17T21:48:39Z",
+        "retrieved_utc": "2026-09-17T21:52:16Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -396,7 +396,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-17T21:48:44Z",
+        "retrieved_utc": "2026-09-17T21:52:25Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -421,7 +421,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-17T21:48:44Z",
+        "retrieved_utc": "2026-09-17T21:52:25Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -446,7 +446,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-17T21:48:44Z",
+        "retrieved_utc": "2026-09-17T21:52:25Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -471,7 +471,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-17T21:48:44Z",
+        "retrieved_utc": "2026-09-17T21:52:25Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -495,7 +495,7 @@
         "http_status": 200,
         "bytes": 3607956,
         "sha256": "6e1955b1e38868c38685acd83a0ef92df9bcc52a3acaec11a583e759c46414dc",
-        "retrieved_utc": "2026-09-17T21:48:35Z",
+        "retrieved_utc": "2026-09-17T21:51:55Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -533,7 +533,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-17T21:48:21Z",
+        "retrieved_utc": "2026-09-17T21:51:15Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -571,7 +571,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-17T21:48:21Z",
+        "retrieved_utc": "2026-09-17T21:51:15Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -609,7 +609,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-17T21:48:21Z",
+        "retrieved_utc": "2026-09-17T21:51:15Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -647,7 +647,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-17T21:48:21Z",
+        "retrieved_utc": "2026-09-17T21:51:15Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -685,7 +685,7 @@
         "http_status": 200,
         "bytes": 3621792,
         "sha256": "6119ef340649ba4ba21072ef910e1579b7ed01251708cb81531082ab6627ab2f",
-        "retrieved_utc": "2026-09-17T21:48:36Z",
+        "retrieved_utc": "2026-09-17T21:51:57Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
