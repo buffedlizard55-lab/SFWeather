@@ -405,15 +405,26 @@ def fetch_nws(lat, lon):
         record(res, note=f"NWS {ptype} ({label}) product list for {office}")
         if not lst:
             continue
-        feats = lst.get("features") or lst.get("@graph") or []
-        if isinstance(lst, dict) and "features" in lst:
-            feats = lst["features"]
+        # The NWS products endpoint is JSON-LD: the newest product is the first
+        # entry of "@graph", and its URL lives in "@id" ("id" is only a UUID).
+        feats = lst.get("@graph") or lst.get("features") or []
         if not feats:
-            note_irregularity("warning", "nws", f"No {ptype} products returned for office {office}.",
+            note_irregularity("warning", "nws",
+                              f"No {ptype} products returned for office {office}.",
                               {"url": lst_url})
             continue
-        p_url = feats[0].get("id") or feats[0].get("@id")
+        p_url = None
+        for f in feats:
+            cand = f.get("@id") or f.get("id")
+            if isinstance(cand, str) and cand.startswith("http"):
+                p_url = cand
+                break
         if not p_url:
+            note_irregularity("warning", "nws",
+                              f"{ptype} product list for {office} contained no usable "
+                              "product URL (expected a JSON-LD '@id').",
+                              {"url": lst_url,
+                               "keys": sorted(feats[0].keys()) if feats else []})
             continue
         p, pres = fetchlib.get_json(p_url)
         record(pres, note=f"NWS {ptype} ({label}) full text")
