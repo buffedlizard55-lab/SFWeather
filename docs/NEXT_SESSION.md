@@ -123,9 +123,13 @@ SFO is ~10 mi away and more exposed, so every wind number is an upper bound. Ass
 documented ratio (labelled an estimate) alongside — never instead of — the raw SFO
 numbers.
 
-### 6. Per-field provenance in the day dialog
-Every number in the dialog should link to the exact element of the exact file it came
-from. Cheap, and it makes the manual line-by-line check faster.
+### 6. Per-field provenance in the day dialog (partly done)
+**Done 17 Sep 2026:** humidity, gust and rain amount each publish the basis actually
+used (`humidity_basis`, `gust_basis`, `rain_amount_basis`) and the dialog shows it.
+**Still open:** temperature, wind and rain chance carry no per-field basis, and none of
+the six links to the exact *element of the exact file* (e.g. the `PRCP` column of the
+`2026-12-14` row of `USW00023272.csv`). Cheap, and it makes the manual line-by-line
+check faster.
 
 ### 7. Multi-ZIP support and a digest
 The pipeline is already parameterised by coordinate; multi-ZIP is mostly front-end
