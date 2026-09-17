@@ -8,13 +8,10 @@ SFWeather pipeline - 2026-09-17
       GHCN USW00023272: 38570 station-days parsed; range 1921-01-01 .. 2026-09-13
       sample record: 1973-10-20 -> {'PRCP': 5.0, 'TMAX': 206.0, 'TMIN': 139.0, 'SNOW': None, 'SNWD': None}
 [6/7] computing rainy-season climatology
-FATAL: uncaught exception
-Traceback (most recent call last):
-  File "/home/runner/work/SFWeather/SFWeather/pipeline/main.py", line 1520, in <module>
-    sys.exit(main())
-             ^^^^^^
-  File "/home/runner/work/SFWeather/SFWeather/pipeline/main.py", line 1323, in main
-    climo_out["daily"] = climo.build_daily_climatology(
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: module 'climo' has no attribute 'build_daily_climatology'
+[7/7] Storm Events + writing outputs
 
+=== summary ===
+  fetches: 103 ok / 2 failed
+  irregularities: 2
+    [info] nws: Some hourly forecast fields are null in the NWS gridded forecast for this grid cell.
+    [warning] nws: No HWO products returned for office MTR.

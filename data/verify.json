@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T19:06:33Z",
+  "generated_utc": "2026-09-17T19:16:27Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,13 +9,11 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 18,
-    "passed": 17,
-    "failed": 1,
+    "total": 19,
+    "passed": 19,
+    "failed": 0,
     "warnings": 0,
-    "failed_checks": [
-      "oni-official-present"
-    ],
+    "failed_checks": [],
     "warning_checks": []
   },
   "checks": [
@@ -66,21 +64,21 @@
       "id": "oni-official-read-directly",
       "title": "The ONI on the site is the last row of NOAA's published ONI file",
       "status": "pass",
-      "detail": "site None vs file None",
+      "detail": "site 1.8 vs file 1.8",
       "evidence": null
     },
     {
       "id": "oni-official-present",
       "title": "The official NOAA ONI product was retrieved and read this run",
-      "status": "fail",
-      "detail": "latest official ONI: None None C",
+      "status": "pass",
+      "detail": "latest official ONI: JJA 2026 1.8 C",
       "evidence": {
         "label": "NOAA CPC official ONI product",
         "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-17T19:05:30Z"
+        "retrieved_utc": "2026-09-17T19:15:43Z"
       }
     },
     {
@@ -117,6 +115,20 @@
       "status": "pass",
       "detail": "0 day(s) carry an unexplained humidity value",
       "evidence": []
+    },
+    {
+      "id": "oni-cross-check",
+      "title": "The project's own ONI derivation agrees with NOAA's published ONI",
+      "status": "pass",
+      "detail": "AMJ 2026: derived 0.98 vs official 0.95 (difference 0.03 C)",
+      "evidence": {
+        "checked": true,
+        "months": "2026-04 .. 2026-06",
+        "season_label": "AMJ 2026",
+        "derived_oni_c": 0.98,
+        "official_oni_c": 0.95,
+        "difference_c": 0.03
+      }
     },
     {
       "id": "season-mean-arithmetic",
@@ -198,7 +210,7 @@
       "id": "source-traceability",
       "title": "Every source URL printed on the site is either fetched (with a hash) or an official landing page with fetched files beneath it",
       "status": "pass",
-      "detail": "10 URL(s) traced, 1 landing page(s), 0 untraceable",
+      "detail": "12 URL(s) traced, 1 landing page(s), 0 untraceable",
       "evidence": {
         "untraceable": [],
         "landing_pages": [
@@ -228,7 +240,7 @@
         "http_status": 200,
         "bytes": 1013803,
         "sha256": "7b85c04a131672f58b38a950eb82855d5fd4054f0bd9bc3f69aa28897a714e3d",
-        "retrieved_utc": "2026-09-17T19:02:52Z",
+        "retrieved_utc": "2026-09-17T19:14:16Z",
         "host": "www2.census.gov"
       },
       "verified": true,
@@ -242,10 +254,10 @@
       "id": "oni-latest",
       "statement": "Current ENSO state is NOAA's published ONI",
       "value": {
-        "season": null,
-        "oni_c": null,
-        "phase": null,
-        "strength": null
+        "season": "JJA 2026",
+        "oni_c": 1.8,
+        "phase": "el_nino",
+        "strength": "strong"
       },
       "unit": "deg C",
       "method": "last row of the official oni.ascii.txt product, read directly (not re-derived)",
@@ -255,12 +267,17 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-17T19:05:30Z",
+        "retrieved_utc": "2026-09-17T19:15:43Z",
         "host": "www.cpc.ncep.noaa.gov"
       },
-      "verified": false,
+      "verified": true,
       "cross_check": {
-        "checked": false
+        "checked": true,
+        "months": "2026-04 .. 2026-06",
+        "season_label": "AMJ 2026",
+        "derived_oni_c": 0.98,
+        "official_oni_c": 0.95,
+        "difference_c": 0.03
       }
     },
     {
@@ -278,8 +295,8 @@
         "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
         "http_status": 200,
         "bytes": 162354,
-        "sha256": "7007e593e2081ce333d70faa9ca2d5bc793ea3710b628492718853181944aba4",
-        "retrieved_utc": "2026-09-17T19:02:53Z",
+        "sha256": "b69aa8336f96b24d972cca87d2bef728543b20d166ec0a87624f99ad2712db29",
+        "retrieved_utc": "2026-09-17T19:14:17Z",
         "host": "api.weather.gov"
       },
       "verified": true
@@ -299,7 +316,20 @@
     {
       "id": "humidity-normals",
       "statement": "Source of the humidity values on climatology days",
-      "value": {},
+      "value": {
+        "1": 77.9,
+        "2": 75.9,
+        "3": 73.5,
+        "4": 70.3,
+        "5": 70.6,
+        "6": 70.0,
+        "7": 73.9,
+        "8": 74.5,
+        "9": 71.9,
+        "10": 68.3,
+        "11": 73.1,
+        "12": 75.4
+      },
       "unit": "% relative humidity",
       "method": "mean of hourly relative humidity computed from the official hourly temperature and dew-point normals with the Magnus formula",
       "source": {
@@ -308,7 +338,7 @@
         "http_status": 200,
         "bytes": 6423708,
         "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
-        "retrieved_utc": "2026-09-17T19:06:01Z",
+        "retrieved_utc": "2026-09-17T19:16:05Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true
@@ -325,7 +355,7 @@
         "http_status": 200,
         "bytes": 7488380,
         "sha256": "647b301aec57b8ad38287b2353e2a1cdcaeee8f06df205d4983db2fd9feeae19",
-        "retrieved_utc": "2026-09-17T19:05:35Z",
+        "retrieved_utc": "2026-09-17T19:15:46Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -350,7 +380,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-17T19:05:50Z",
+        "retrieved_utc": "2026-09-17T19:15:55Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -375,7 +405,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-17T19:05:50Z",
+        "retrieved_utc": "2026-09-17T19:15:55Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -400,7 +430,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-17T19:05:50Z",
+        "retrieved_utc": "2026-09-17T19:15:55Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -425,7 +455,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-17T19:05:50Z",
+        "retrieved_utc": "2026-09-17T19:15:55Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -449,12 +479,26 @@
         "http_status": 200,
         "bytes": 3607956,
         "sha256": "6e1955b1e38868c38685acd83a0ef92df9bcc52a3acaec11a583e759c46414dc",
-        "retrieved_utc": "2026-09-17T19:05:10Z",
+        "retrieved_utc": "2026-09-17T19:15:37Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
       "cross_check": {
-        "used_nearest_polygon": false
+        "used_nearest_polygon": false,
+        "containing_polygon_index": 1,
+        "containing_polygon_bbox_lon_lat": [
+          -124.7628,
+          24.5232,
+          -66.949,
+          49.3833
+        ],
+        "raw_dbf_attributes": {
+          "Fcst_Date": "20260917",
+          "Valid_Seas": "Oct 2026",
+          "Prob": 33.0,
+          "Cat": "EC"
+        },
+        "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the bounding box is published so the polygon can be identified on the official map."
       }
     },
     {
@@ -473,12 +517,26 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-17T19:03:57Z",
+        "retrieved_utc": "2026-09-17T19:14:51Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
       "cross_check": {
-        "used_nearest_polygon": false
+        "used_nearest_polygon": false,
+        "containing_polygon_index": 1,
+        "containing_polygon_bbox_lon_lat": [
+          -124.7628,
+          36.2261,
+          -66.949,
+          49.3813
+        ],
+        "raw_dbf_attributes": {
+          "Fcst_Date": "20260917",
+          "Valid_Seas": "OND 2026",
+          "Prob": 33.0,
+          "Cat": "EC"
+        },
+        "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the bounding box is published so the polygon can be identified on the official map."
       }
     },
     {
@@ -497,12 +555,26 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-17T19:03:57Z",
+        "retrieved_utc": "2026-09-17T19:14:51Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
       "cross_check": {
-        "used_nearest_polygon": false
+        "used_nearest_polygon": false,
+        "containing_polygon_index": 10,
+        "containing_polygon_bbox_lon_lat": [
+          -123.1279,
+          33.1325,
+          -69.9275,
+          44.3003
+        ],
+        "raw_dbf_attributes": {
+          "Fcst_Date": "20260917",
+          "Valid_Seas": "NDJ 2026-2027",
+          "Prob": 33.0,
+          "Cat": "Above"
+        },
+        "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the bounding box is published so the polygon can be identified on the official map."
       }
     },
     {
@@ -521,12 +593,26 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-17T19:03:57Z",
+        "retrieved_utc": "2026-09-17T19:14:51Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
       "cross_check": {
-        "used_nearest_polygon": false
+        "used_nearest_polygon": false,
+        "containing_polygon_index": 14,
+        "containing_polygon_bbox_lon_lat": [
+          -123.711,
+          25.8381,
+          -70.4479,
+          42.0683
+        ],
+        "raw_dbf_attributes": {
+          "Fcst_Date": "20260917",
+          "Valid_Seas": "DJF 2026-2027",
+          "Prob": 40.0,
+          "Cat": "Above"
+        },
+        "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the bounding box is published so the polygon can be identified on the official map."
       }
     },
     {
@@ -545,12 +631,26 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-17T19:03:57Z",
+        "retrieved_utc": "2026-09-17T19:14:51Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
       "cross_check": {
-        "used_nearest_polygon": false
+        "used_nearest_polygon": false,
+        "containing_polygon_index": 15,
+        "containing_polygon_bbox_lon_lat": [
+          -123.5326,
+          31.3292,
+          -110.0694,
+          38.9849
+        ],
+        "raw_dbf_attributes": {
+          "Fcst_Date": "20260917",
+          "Valid_Seas": "JFM 2027",
+          "Prob": 50.0,
+          "Cat": "Above"
+        },
+        "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the bounding box is published so the polygon can be identified on the official map."
       }
     },
     {
@@ -569,19 +669,33 @@
         "http_status": 200,
         "bytes": 3621792,
         "sha256": "6119ef340649ba4ba21072ef910e1579b7ed01251708cb81531082ab6627ab2f",
-        "retrieved_utc": "2026-09-17T19:05:12Z",
+        "retrieved_utc": "2026-09-17T19:15:38Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
       "cross_check": {
-        "used_nearest_polygon": false
+        "used_nearest_polygon": false,
+        "containing_polygon_index": 7,
+        "containing_polygon_bbox_lon_lat": [
+          -124.4097,
+          34.5429,
+          -119.6101,
+          42.0986
+        ],
+        "raw_dbf_attributes": {
+          "Fcst_Date": "20260917",
+          "Valid_Seas": "Oct 2026",
+          "Prob": 40.0,
+          "Cat": "Above"
+        },
+        "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the bounding box is published so the polygon can be identified on the official map."
       }
     },
     {
       "id": "sources-listed",
       "statement": "Source URLs referenced by the scoreboard",
       "value": {
-        "count": 10,
+        "count": 12,
         "all_traced": true,
         "landing_pages": 1
       },
@@ -609,94 +723,6 @@
       "message": "No HWO products returned for office MTR.",
       "evidence": {
         "url": "https://api.weather.gov/products/types/HWO/locations/MTR"
-      }
-    },
-    {
-      "severity": "warning",
-      "area": "normals",
-      "message": "Hourly normals were downloaded but produced no humidity values; the column layout was recorded in data/humidity_normals.json for review. No humidity value is shown for climatology days rather than inventing one.",
-      "evidence": {
-        "url": "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv",
-        "layout": {
-          "header": [
-            "STATION",
-            "NAME",
-            "LATITUDE",
-            "LONGITUDE",
-            "ELEVATION",
-            "DATE",
-            "month",
-            "day",
-            "hour",
-            "HLY-TEMP-NORMAL",
-            "meas_flag_HLY-TEMP-NORMAL",
-            "comp_flag_HLY-TEMP-NORMAL",
-            "years_HLY-TEMP-NORMAL",
-            "HLY-TEMP-10PCTL",
-            "meas_flag_HLY-TEMP-10PCTL",
-            "comp_flag_HLY-TEMP-10PCTL",
-            "years_HLY-TEMP-10PCTL",
-            "HLY-TEMP-90PCTL",
-            "meas_flag_HLY-TEMP-90PCTL",
-            "comp_flag_HLY-TEMP-90PCTL",
-            "years_HLY-TEMP-90PCTL",
-            "HLY-DEWP-NORMAL",
-            "meas_flag_HLY-DEWP-NORMAL",
-            "comp_flag_HLY-DEWP-NORMAL",
-            "years_HLY-DEWP-NORMAL",
-            "HLY-DEWP-10PCTL",
-            "meas_flag_HLY-DEWP-10PCTL",
-            "comp_flag_HLY-DEWP-10PCTL",
-            "years_HLY-DEWP-10PCTL",
-            "HLY-DEWP-90PCTL",
-            "meas_flag_HLY-DEWP-90PCTL",
-            "comp_flag_HLY-DEWP-90PCTL",
-            "years_HLY-DEWP-90PCTL",
-            "HLY-PRES-NORMAL",
-            "meas_flag_HLY-PRES-NORMAL",
-            "comp_flag_HLY-PRES-NORMAL",
-            "years_HLY-PRES-NORMAL",
-            "HLY-PRES-10PCTL",
-            "meas_flag_HLY-PRES-10PCTL",
-            "comp_flag_HLY-PRES-10PCTL",
-            "years_HLY-PRES-10PCTL",
-            "HLY-PRES-90PCTL",
-            "meas_flag_HLY-PRES-90PCTL",
-            "comp_flag_HLY-PRES-90PCTL",
-            "years_HLY-PRES-90PCTL",
-            "HLY-CLDH-NORMAL",
-            "meas_flag_HLY-CLDH-NORMAL",
-            "comp_flag_HLY-CLDH-NORMAL",
-            "years_HLY-CLDH-NORMAL",
-            "HLY-HTDH-NORMAL",
-            "meas_flag_HLY-HTDH-NORMAL",
-            "comp_flag_HLY-HTDH-NORMAL",
-            "years_HLY-HTDH-NORMAL",
-            "HLY-CLOD-PCTCLR",
-            "meas_flag_HLY-CLOD-PCTCLR",
-            "comp_flag_HLY-CLOD-PCTCLR",
-            "years_HLY-CLOD-PCTCLR",
-            "HLY-CLOD-PCTFEW",
-            "meas_flag_HLY-CLOD-PCTFEW",
-            "comp_flag_HLY-CLOD-PCTFEW"
-          ],
-          "row_count": 8760,
-          "temp_columns": [
-            "HLY-TEMP-NORMAL",
-            "meas_flag_HLY-TEMP-NORMAL",
-            "comp_flag_HLY-TEMP-NORMAL",
-            "years_HLY-TEMP-NORMAL"
-          ],
-          "dewpoint_columns": [
-            "HLY-DEWP-NORMAL",
-            "meas_flag_HLY-DEWP-NORMAL",
-            "comp_flag_HLY-DEWP-NORMAL",
-            "years_HLY-DEWP-NORMAL"
-          ],
-          "hour_column": false,
-          "usable": false,
-          "usable_rows": 0
-        }
       }
     }
   ]
