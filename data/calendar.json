@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T19:00:45Z",
+  "generated_utc": "2026-09-17T19:06:32Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset)",
@@ -875,13 +875,13 @@
     ],
     "valid_periods": {
       "610day": {
-        "valid": "September 22 to 26, 2026",
-        "issued": "16 Sep 2026",
+        "valid": "September 23 to 27, 2026",
+        "issued": "17 Sep 2026",
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/610day/"
       },
       "814day": {
-        "valid": "September 24 to 30, 2026",
-        "issued": "16 Sep 2026",
+        "valid": "September 25 to October 01, 2026",
+        "issued": "17 Sep 2026",
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/814day/"
       },
       "30day": {
@@ -896,7 +896,10 @@
       }
     },
     "span_610day": null,
-    "span_814day": null,
+    "span_814day": [
+      "2026-09-25",
+      "2026-10-01"
+    ],
     "maps": {
       "610day_temp": {
         "label": "6-10 Day Temperature",
@@ -905,9 +908,9 @@
           "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610temp.new.gif"
         ],
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610temp.new.gif",
-        "sha256": "9aafe69cc076d3d29ba8ba8df5859ba8058f1e9c233b85865ede278ba91df243",
-        "bytes": 272877,
-        "retrieved_utc": "2026-09-17T16:59:29Z",
+        "sha256": "876e9e267f98959f9d63e1b5e38bd362490181ab29690221a1e975edf70d06bc",
+        "bytes": 291177,
+        "retrieved_utc": "2026-09-17T19:05:13Z",
         "ok": true,
         "local_path": "assets/cpc/610day_temp.gif"
       },
@@ -918,9 +921,9 @@
           "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610prcp.new.gif"
         ],
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610prcp.new.gif",
-        "sha256": "b5bf46c20b8bea1507668ab845a586c9aa71557a0189c41b9b2778c265167cb2",
-        "bytes": 285276,
-        "retrieved_utc": "2026-09-17T16:59:30Z",
+        "sha256": "55b9587968fb1bb6532f30d46c6c3992e0a2b3da31d50161310aa52fd43dad3a",
+        "bytes": 286477,
+        "retrieved_utc": "2026-09-17T19:05:13Z",
         "ok": true,
         "local_path": "assets/cpc/610day_prcp.gif"
       },
@@ -931,9 +934,9 @@
           "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814temp.new.gif"
         ],
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814temp.new.gif",
-        "sha256": "d79d47910f3995c892d37c5fe3322a2804890dc7e1c56b6782d85f622275f304",
-        "bytes": 260587,
-        "retrieved_utc": "2026-09-17T16:59:30Z",
+        "sha256": "f131aec5179d26058459f9579f999fa7d6d1179e229c0508f05d7a84860d333f",
+        "bytes": 278056,
+        "retrieved_utc": "2026-09-17T19:05:14Z",
         "ok": true,
         "local_path": "assets/cpc/814day_temp.gif"
       },
@@ -944,9 +947,9 @@
           "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814prcp.new.gif"
         ],
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814prcp.new.gif",
-        "sha256": "7eff050a5bbc4f5d842965674aa616c979340e3118b3562fddaa9a7cdfea8e95",
-        "bytes": 275928,
-        "retrieved_utc": "2026-09-17T16:59:31Z",
+        "sha256": "9829fe79dd6876f0311f3d9b4e5530eb63542cd7487d5b5d16f59e61f5183b64",
+        "bytes": 281181,
+        "retrieved_utc": "2026-09-17T19:05:14Z",
         "ok": true,
         "local_path": "assets/cpc/814day_prcp.gif"
       },
@@ -959,7 +962,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34temp.gif",
         "sha256": "a4c93d39ceb6e9f1e023465a0cd4222a65f091d2a5ebd1fa1485aa639d028dde",
         "bytes": 253449,
-        "retrieved_utc": "2026-09-17T16:59:31Z",
+        "retrieved_utc": "2026-09-17T19:05:14Z",
         "ok": true,
         "local_path": "assets/cpc/wk34_temp.gif"
       },
@@ -972,7 +975,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34prcp.gif",
         "sha256": "9b1dc1e219d24101427b6923fa7eda68fbfc588e6381b957444d585890bf20d7",
         "bytes": 271372,
-        "retrieved_utc": "2026-09-17T16:59:32Z",
+        "retrieved_utc": "2026-09-17T19:05:15Z",
         "ok": true,
         "local_path": "assets/cpc/wk34_prcp.gif"
       },
@@ -986,7 +989,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/30day/off15_temp.gif",
         "sha256": "40177cb325e4b902940c5c1fba1388abc17071f85645f5a04b1edf9e5a4a3bae",
         "bytes": 246338,
-        "retrieved_utc": "2026-09-17T16:59:33Z",
+        "retrieved_utc": "2026-09-17T19:05:16Z",
         "ok": true,
         "local_path": "assets/cpc/30day_temp.gif"
       },
@@ -1000,7 +1003,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/30day/off15_prcp.gif",
         "sha256": "4c138aa986dfe3a0933327f68c65ddfc63109d536ce2bb0480d3306a184d78f1",
         "bytes": 248509,
-        "retrieved_utc": "2026-09-17T16:59:33Z",
+        "retrieved_utc": "2026-09-17T19:05:16Z",
         "ok": true,
         "local_path": "assets/cpc/30day_prcp.gif"
       }
@@ -1033,27 +1036,302 @@
     ]
   },
   "enso": {
-    "official": {},
+    "official": {
+      "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+      "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
+      "retrieved_utc": "2026-09-17T19:05:30Z",
+      "definition": "ONI = 3-month running mean of ERSSTv5 sea-surface temperature anomalies in the Nino 3.4 region; NOAA declares El Nino at >= +0.5 C and La Nina at <= -0.5 C.",
+      "seasons": [],
+      "latest": null
+    },
     "latest_official": null,
-    "derived": null,
-    "cross_check": null,
+    "derived": {
+      "year_month": "2026-05",
+      "oni_c": 0.98,
+      "phase": "el_nino"
+    },
+    "cross_check": {
+      "checked": false
+    },
     "table_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt",
-    "diagnostic_url": null,
-    "diagnostic_status": null,
-    "diagnostic_synopsis": null,
-    "diagnostic_key_sentences": [],
-    "diagnostic_sha256": null,
-    "sources": [],
-    "unusable_pages": [],
+    "diagnostic_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml",
+    "diagnostic_status": "El Ni",
+    "diagnostic_synopsis": "",
+    "diagnostic_key_sentences": [
+      "chance of a very strong event during the Northern Hemisphere fall and winter 2026-27.",
+      "chance of a historic event that would exceed the strength of previous El Ni&ntilde;o events dating back to 1950 (+2.5&deg;C or more for a 3-month RONI value ).",
+      "With an event of this magnitude, the chances of experiencing impacts consistent with El Ni&ntilde;o are larger, though not guaranteed (see CPC outlooks for probabilities of seasonal anomalies)."
+    ],
+    "diagnostic_sha256": "eacaf2fa573069c599ad95006be54a1f363384d2fea7b6ef25abdc8c654af575",
+    "sources": [
+      {
+        "label": "CPC ENSO Diagnostic Discussion (monthly status + Alert System Status)",
+        "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml",
+        "sha256": "eacaf2fa573069c599ad95006be54a1f363384d2fea7b6ef25abdc8c654af575",
+        "retrieved_utc": "2026-09-17T19:05:31Z",
+        "characters": 3642,
+        "mentions_current_year": true,
+        "usable_as_current_source": true,
+        "text": "Climate Prediction Center: ENSO Diagnostic Discussion \n www.nws.noaa.gov \n Home \n Site Map \n News \n Organization \n Search \n Search the CPC \nAbout Us \n Our Mission \n Who We Are \nContact Us \n CPC Information \n CPC Web Team \n ENSO Diagnostic Discussion \n EL NI&Ntilde;O/SOUTHERN OSCILLATION (ENSO) \n DIAGNOSTIC DISCUSSION \n issued by\n CLIMATE PREDICTION CENTER/NCEP/NWS\n 10 September 2026 \n ENSO Alert System Status: \n El Ni&ntilde;o Advisory \n Synopsis: \nEl Ni&ntilde;o is strengthening, with a greater than 90&#37; chance of a very strong event during the Northern Hemisphere fall and winter 2026-27.\n El Ni&ntilde;o strengthened further over the past month, with sea surface temperature anomalies exceeding +3.0&deg;C in the eastern equatorial Pacific [Fig. 1] . Except for the Ni&ntilde;o-4 index, which decreased to +0.1&deg;C in August, values in the other Ni&ntilde;o indices increased, reaching +1.8&deg;C in Ni&ntilde;o-3.4, +2.5&deg;C in Ni&ntilde;o-3, and +3.4&deg;C in Ni&ntilde;o-1+2 [Fig. 2] . The equatorial subsurface temperature index (average from 180&deg;-100&deg;W) remained steady during August [Fig. 3] , reflecting a deeper-than-average thermocline [Fig. 4] . Subsurface temperatures continued to be significantly above average, with widespread anomalies in excess of +10.0&deg;C at depth. Low-level westerly wind anomalies and upper-level easterly wind anomalies extended from the western to the east-central equatorial Pacific. Enhanced convection and rainfall persisted from the central to the eastern Pacific, while anomalies remained suppressed over Indonesia [Fig. 5] . The traditional and equatorial Southern Oscillation indices remained negative. Collectively, the coupled ocean-atmosphere system reflected a strengthening El Ni&ntilde;o.\n The CPC Official ENSO outlook , which synthesizes multiple models from North America and abroad, indicates El Ni&ntilde;o will continue to strengthen through the end of the year [Figs. 6 -7 -8] . During the October-December 2026 season, there is a 75&#37; chance of a historic event that would exceed the strength of previous El Ni&ntilde;o events dating back to 1950 (+2.5&deg;C or more for a 3-month RONI value ). With an event of this magnitude, the chances of experiencing impacts consistent with El Ni&ntilde;o are larger, though not guaranteed (see CPC outlooks for probabilities of seasonal anomalies). In summary, El Ni&ntilde;o is strengthening, with a greater than 90&#37; chance of a very strong event during the Northern Hemisphere fall and winter 2026-27.\n This discussion is a consolidated effort of the National Oceanic and Atmospheric Administration (NOAA), NOAA's National Weather Service, and their funded institutions. Oceanic and atmospheric conditions are updated weekly on the Climate Prediction Center web site ( El Ni&ntilde;o/La Ni&ntilde;a Current Conditions and Expert Discussions ). A probabilistic strength forecast is available here . The next ENSO Diagnostics Discussion is scheduled for 8 October 2026. \nTo receive an e-mail notification when the monthly ENSO Diagnostic Discussions are released, please send an e-mail message to: ncep.list.enso-update@noaa.gov . \n Climate Prediction Center\n5830 University Research Court\nCollege Park, Maryland 20740\n NOAA/ \n National Weather Service \n National Centers for Environmental Prediction \n Climate Prediction Center\n5830 University Research Court\nCollege Park, Maryland 20740\n Page Author: \n Climate Prediction Center Internet Team \n Page last modified: \n Disclaimer \n Information Quality \n Credits \n Glossary \n Privacy Policy \n Freedom of Information Act (FOIA) \n About Us \n Career Opportunities",
+        "key_sentences": [
+          "chance of a very strong event during the Northern Hemisphere fall and winter 2026-27.",
+          "chance of a historic event that would exceed the strength of previous El Ni&ntilde;o events dating back to 1950 (+2.5&deg;C or more for a 3-month RONI value ).",
+          "With an event of this magnitude, the chances of experiencing impacts consistent with El Ni&ntilde;o are larger, though not guaranteed (see CPC outlooks for probabilities of seasonal anomalies)."
+        ],
+        "alert_status": "El Ni",
+        "synopsis": "",
+        "issued": "10 September 2026"
+      },
+      {
+        "label": "CPC long-lead (monthly/seasonal) outlook discussion",
+        "url": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
+        "sha256": "c6307e499e46cf2c0047f87de6a3169ed484923b62755f5e4350d786589ea781",
+        "retrieved_utc": "2026-09-17T19:05:31Z",
+        "characters": 16942,
+        "mentions_current_year": true,
+        "usable_as_current_source": true,
+        "text": "Climate Prediction Center - Seasonal Outlook \n www.nws.noaa.gov \n Site Map \n News \n Organization \n Search \n Search by city or zip code. Press enter or select the go button to submit request\n Local forecast by\n\"City, St\" or Zip Code \n -->\n CPC Search \n About Us \n Our Mission \n Who We Are \n Contact Us \n CPC Information \n CPC Web Team \n Official 90-day Outlooks are issued once each month near mid-month\n at 8:30am Eastern Time. Please consult the schedule of 30 & 90-day outlooks\n for exact release dates. \n Text Discussions \n 90day Prognostic \n 30day Prognostic \n Hawaiian \n Tools \n More Outlooks \n 0.5mn OND 2026 \n 1.5mn NDJ 2026 \n 2.5mn DJF 2026 \n 3.5mn JFM 2027 \n 4.5mn FMA 2027 \n 5.5mn MAM 2027 \n 6.5mn AMJ 2027 \n 7.5mn MJJ 2027 \n 8.5mn JJA 2027 \n 9.5mn JAS 2027 \n 10.5mn ASO 2027 \n 11.5mn SON 2027 \n 12.5mn OND 2027 \n 0.5mn Oct 2026 \n Tools Used (see Discussion for explanation) \n CCA \n OCN \n CMP \n SMT \n POE \n HOME > Outlook Maps >Seasonal Forecast Discussion \nPrognostic Discussion for Long-Lead Seasonal Outlooks \nNWS Climate Prediction Center College Park MD \n830 AM EDT Thu Sep 17 2026 \nSUMMARY OF THE OUTLOOK FOR NON-TECHNICAL USERS \nEl Ni\u00f1o conditions are present, as represented in current oceanic and \natmospheric observations. El Ni\u00f1o is strengthening, with a greater than 90 \npercent chance of a very strong event this fall and winter. \nThe October-November-December (OND) 2026 Temperature Outlook favors above \nnormal temperatures for much of Alaska as well as most areas west of the \nRockies, nearly all areas east of the Mississippi River, and the northcentral \nstates in-between. The highest probabilities (greater than 50 percent) of above \nnormal temperatures are forecast across Southeast Alaska, the Northern Great \nBasin, and the vicinity of North Dakota and northwestern Minnesota. \nThe OND 2026 Precipitation Outlook depicts enhanced probabilities of above \nnormal precipitation amounts from the southern half of California \neast-northeastward across most of the Four Corners region and Great Plains, \nmuch of the Mississippi and Tennessee Valleys, the Southeast, and the \nMid-Atlantic. The greatest chances (higher than 60 percent) for above normal \nprecipitation are indicated for parts of the eastern Gulf Coast region and \nSoutheast coast. A modest tilt in the odds towards above normal precipitation \nis depicted from portions of southcentral Alaska eastward through much of \nSoutheast Alaska. Modest tilts towards below normal precipitation amounts are \nfavored over the Aleutians, interior portions of Mainland Alaska, interior \nportions of the northwestern CONUS, and parts of the Great Lakes region. \n Equal chances (EC) are forecast for areas where probabilities for each category \nof seasonal mean temperatures and seasonal accumulated precipitation amounts \nare expected to be similar to climatological probabilities. \nBASIS AND SUMMARY OF THE CURRENT LONG-LEAD OUTLOOKS \nNote: For Graphical Displays of the Forecast Tools Discussed Below See: \nhttp://www. cpc .ncep.noaa.gov/products/predictions/90day/tools/briefing \nCURRENT ATMOSPHERIC AND OCEANIC CONDITIONS \nEl Ni\u00f1o strengthened over the past month, with sea surface temperature (SST) \n anomalies exceeding +3.0\u00b0C in the eastern equatorial Pacific. The latest \nweekly Ni\u00f1o index value for Ni\u00f1o-3.4 was +2.0\u00b0C, and for Ni\u00f1o-3 the index \nvalue was +2.8\u00b0C. The equatorial subsurface temperature index (average from \n180\u00b0-100\u00b0W) remained steady during August, reflecting a deeper-than-average \nthermocline. Subsurface temperature anomalies were significant, reaching \n+10.0\u00b0C at depth. Low-level westerly wind anomalies and upper-level easterly \nwind anomalies extended from the western to east-central equatorial Pacific. \n Convection and rainfall were enhanced from the central to eastern Pacific and \nwere suppressed over Indonesia. The traditional and equatorial Southern \nOscillation indices were significantly negative. Collectively, the coupled \nocean-atmosphere system reflected a strengthening El Ni\u00f1o. \nPROGNOSTIC DISCUSSION OF SST FORECASTS \nThe CPC Official El Ni\u00f1o Southern Oscillation (ENSO) Outlook, which \nsynthesizes multiple models from North America and abroad, indicates El Ni\u00f1o \nwill continue to strengthen through the end of the year. During the \nOctober-November-December (OND) 2026 season, there is a 75% chance of a \nhistoric event that would exceed the strength of previous El Ni\u00f1o events \ndating back to 1950 (+2.5\u00b0C or more for a 3-month RONI value). With an event \nof this magnitude, the chances of experiencing impacts consistent with El Ni\u00f1o \nare larger, but they are not guaranteed. In summary, El Ni\u00f1o is strengthening, \nwith a greater than 90% chance of a very strong event during the Northern \nHemisphere fall and winter 2026-27. \nPROGNOSTIC TOOLS USED FOR U.S. TEMPERATURE AND PRECIPITATION OUTLOOKS \nNewer RONI ENSO composites derived from the current and forecast state of ENSO \nwere strongly utilized due to the magnitude of this El Ni\u00f1o event. Analogs of \nthe \"Big Three\" El Ni\u00f1o's were also considered in making the temperature \noutlooks throughout the fall and winter. Dynamical model forecasts from the \nNorth American Multi-Model Ensemble (NMME), the Climate Forecast System version \n2 (CFSv2), and the Copernicus (C3S) multi-model ensemble system were also used \nfor the first six leads when they are available, as was the objective, \nhistorical skill-weighted consolidation and Calibration, Bridging, and Merging \n(CBaM) guidance, that combines both dynamical and statistical forecast \ninformation. Analysis of antecedent conditions such as extratropical SST \n anomalies and sea ice extent were considered where appropriate. At later leads, \ndecadal trends in temperature and precipitation were increasingly relied upon \nin creating the seasonal outlooks. \nPROGNOSTIC DISCUSSION OF OUTLOOKS - OND 2026 TO OND 2027 \nTEMPERATURE \nThe seasonal temperature outlooks for this fall and winter rely heavily on the \nhigh likelihood of a very strong El Ni\u00f1o. In most cas es, the presence of a \nvery strong El Ni\u00f1o would overwhelm contributions from climatic modes of mid \nto high-latitude variability, such as the Arctic Oscillation (AO) or North \nAtlantic Oscillation (NAO). There are two factors that make the current \nsituation unique. The first factor is the presence of a fairly strong, \nnegatively phased Pacific Decadal Oscillation (PDO), with the August PDO index \nvalue of -1.11 . The \"\u0080\u009cBig Three\"\u0080\u009d historical El Ni\u00f1o's since 1950 include the \nwarm events of 1982-83, 1997-98, and 2015-16, all of which occurred when the \nPDO phase was positive, leading to constructive interference. This time, \nhowever, the PDO phase is negative and may dampen the typical impacts of a \nstrong El Ni\u00f1o in certain areas. The second factor involves the large region \nof warmer-than-normal SSTs that is typically present in the Gulf of Alaska \nduring strong El Ni\u00f1os. The current situation shows a significant westward \nshift in these warmer SSTs, which may allow for slightly cooler water to \ninfluence portions of the U.S. West coast. In addition, even with the \npossibility of one or more cold air outbreaks across the northwestern quarter \nof the Lower 48 states, it is unlikely that this will have much of an impact on \nthe average temperature for a 90-day season. \nWith the above considerations in mind, the October-November-December (OND) 2026 \ntemperature outlook favors above normal mean temperatures over most of the \nwestern, northern, and eastern Contiguous U.S. (CONUS). This is based on much \nof the dynamical and statistical temperature guidance, including the hybrid \nCBaM output. Adjustments rendered to the OND outlook made last month include an \nexpansion of modest probabilities of above normal temperatures across most of \nthe Southeast, which is reasonable given the typical El Ni\u00f1o cool signal \ndoesn't usually show up in this region until December. Over the Northern CONUS, \nthe 40-50 percent probabilities favoring relative warmth were extended eastward \nacross the Great Lakes and Northeast, with October and November warmth also \nsupported by longer-term trends . Over the Pacific Northwest coastal region, \nprobabilities favoring warmer-than-normal temperatures were tempered a bit in \nresponse to potential influences from a negative PDO. In Alaska, most of the \nmodels and tools support above normal temperatures over much of the central and \neastern Mainland, the North Slope, and Southeast Alaska, with the highest \nprobabilities (50-60 percent) favored over Southeast Alaska. A broad area of \nEqual Chances (EC) of above, near, and below normal temperatures is depicted \nfrom the southern Rockies eastward across the southern Plains and into the \nLower Mississippi Valley, based on weak and/or conflicting signals . \nFrom late fall to early spring (November-December-January (NDJ 2026-27) to \nFebruary-March-April (FMA 2027), the outlooks showcase a classic El Ni\u00f1o \nsignature featuring increased chances of above normal temperatures over many \nareas west of the Rockies, and over northern and central portions of the \ncountry east of the Rockies. The highest chances (50-60 percent) for above \nnormal temperatures are indicated over interior portions of the Northwest and \nalong much of the northern tier of states. Over the Southwest, the modest tilt \ntowards relative warmth gradually gives way to EC. For much of the Southeast, a \nregion of near normal temperatures is introduced during NDJ and continues \nthrough the FMA season. This reflects competing influences between the cooler \nEl Ni\u00f1o signal during winter and milder historical trends . \nBy March-April-May (MAM 2027), the current El Ni\u00f1o is forecast to weaken \nsignificantly, possibly becoming ENSO-neutral later in the spring. Anomalous \nwarmth is expected to return to the Southeast by this time, with much of the \nEast favoring above normal temperatures with the highest chances of 50-60 \npercent depicted from the Lower Great Lakes eastward to the Northeast coast. \nRelative warmth is also favored to extend westward across the Dakotas, Northern \nRockies, and Pacific Northwest. From April-May-June (AMJ 2027) through the \nremaining leads, the temperature outlooks are based primarily on long-term \nhistorical trends and feature widespread above normal temperatures. \nFor Alaska temperatures, widespread above normal temperatures are favored over \nthe central and eastern Mainland, Southeast Alaska, and the North Slope for the \nfirst three leads, OND 2026 through DJF 2026-27. This is supported by most of \nthe dynamical and statistical guidance, the hybrid CBaM output, and trends . The \ngreatest probabilities are indicated over Southeast Alaska, and range from \n50-60 percent. Relatively warm mean temperatures are favored over the state for \nthe remaining leads, with the exception of EC over western portions of Alaska \nduring MJJ, JJA, and JAS 2027, in part due to the effects of sea ice and cooler \nSSTs. \nPRECIPITATION \nEl Ni\u00f1o composites highlight a robust wet signal across the southern and \ncentral CONUS in OND, primarily from the Four Corners region eastward across \nthe southern Plains to the Southeast coast. Modest extensions of this wet \n signal extend westward across the southern half of California, northward over \nthe Great Plains into portions of South Dakota, and northward along the Eastern \nSeaboard to include the Upper Mid-Atlantic region. Maximum probabilities for \nabove normal precipitation range from 60-70 percent over parts of the \nSoutheast, which is well supported by a large number of models and tools, and \nis reasonable given the current and predicted strength of El Ni\u00f1o. Two \nrelatively modest signals for below normal precipitation are depicted over the \ninterior northwestern CONUS and the Great Lakes region, consistent with \nhistorical El Ni\u00f1o events and many of the objective tools. \nFrom NDJ 2026-27 through FMA 2027, the precipitation outlooks are heavily based \non ENSO composites, with adjustments rendered according to dynamical and \nstatistical model guidance. The wet signal across the southern and central \nCONUS, and extending northward along the Atlantic coast into New England, is \nthe dominant precipitation signal this fall and winter, and is associated in \nlarge part with the mean position of the subtropical jet stream and the mean \nstorm track. Probabilities favoring wetter-than-normal conditions increase \nacross California, reaching a maximum of 50-60 percent near the coast during \nDJF, JFM, and FMA. These probabilities may be increased further in the next set \nof seasonal outlooks, to be released in mid-late October, pending reassessment \nof the latest model forecasts. The favored area of above normal precipitation \nis expected to reach as far north as central Oregon, and possibly farther north \ngiven the intensity of this current El Ni\u00f1o event. Over the southern Plains, \nprobabilities for above normal precipitation reach a maximum of 40-50 percent, \nincreasing across much of the Gulf and Southeast coasts to a maximum of 70-80 \npercent over southern Georgia and northern Florida. The two areas of modestly \nfavored below normal precipitation over the interior Northwest and Great Lakes \nregion are expected to persist but remain rather weak through FMA 2027. \nDuring March-April-May (MAM) 2027, the El Nino signal is expected to weaken \nconsiderably with the dominant and contiguous wet signal over the southern and \ncentral CONUS forecast to split into three separate, and less widespread, \nregions: one over California and the Southwest, another over the Upper \nMidwest/eastern Dakotas, and the third encompassing much of the Gulf and \nAtlantic coasts. The token dry signal favored over the Great Lakes during the \nfall and winter disappears, and the below normal precipitation region over the \ninterior Northwest begins to expand in spatial extent from MAM to JJA 2027, \nheavily influenced by decadal trends . In addition, the precipitation anomalies \ntypically associated with El Ni\u00f1o are forecast to gradually wane during the \nspring. For the summer and early fall of 2027, long-term precipitation trends \nplay a large role in the outlooks. \nIn Alaska, newer ENSO composites were used for the fall and winter, followed by \n dynamical model output; for subsequent seasons decadal precipitation trends \nformed the basis of the outlooks. In OND 2026, small areas of slightly favored \nbelow normal precipitation are depicted over portions of the Central Interior \nand the Aleutians, while above normal precipitation is slightly favored from \nthe southeastern Alaska Mainland to the northern Panhandle region. In NDJ, the \ntwo dry signals consolidate into one larger one that extends from the \nsouthwestern Mainland to the Central Interior, and above normal precipitation \ncontinues over Southeast Alaska, the latter being a common occurrence during \nwarm events. By DJF, composites show a widespread dry signal over most of the \nMainland, which continues through FMA but weakens significantly by MAM 2027. \nThe Southeast Alaska wet signal remains throughout these seasons, though waxes \nand wanes in coverage. The precipitation outlooks from AMJ 2027 onward are \nbased on longer-term precipitation trends , with the primary and most durable \n signal being above normal precipitation favored over much of the southern coast \nof Alaska. \nFORECASTER: Anthony Artusa \nThe Climatic normals are based on conditions between 1991 and 2020, following \nthe World Meterological Organization convention of using the most recent 3 \ncomplete decades as the climatic reference period. The probability anomalies \nfor temperature and precipitation based on these new normals better represent \nshorter term climatic anomalies than the forecasts based on older normals. \nFor a description of of the standard forecast tools - their skill- and the \nforecast format please see our web page at \nhttp://www. cpc .ncep.noaa.gov/products/predictions/long_range/tools.html \n(Use Lower Cas e Letters) \nInformation on the formation of skill of the CAS forecasts may be found at: \nhttp://www. cpc .ncep.noaa.gov/products/Soilmst_Monitoring/US/Outlook/outlook.shtm \nl \n(use lowercase letters) \nNotes - These climate outlooks are intended for use prior to the start of their \nvalid period. Within any given valid period observations and short and medium \nrange forecasts should be consulted. \nThis set of outlooks will be superseded by the issuance of the new set next \nmonth on Oct 15 2026 \n1991-2020 base period means were implemented effective with the May 20, 2021 \nforecast release. \n$$ \n NOAA/ \n National Weather Service \n National Centers for Environmental Prediction \n Climate Prediction Center\n 5830 University Research Court\n College Park, Maryland 20740\n Climate Prediction Center Web Team \n Page last modified: August 15, 2024\n Disclaimer \n Information Quality \n Credits \n Glossary \n Privacy Policy \n Freedom of Information Act \n About Us \n Career Opportunities",
+        "key_sentences": [
+          "El Ni\u00f1o is strengthening, with a greater than 90 percent chance of a very strong event this fall and winter.",
+          "The October-November-December (OND) 2026 Temperature Outlook favors above normal temperatures for much of Alaska as well as most areas west of the Rockies, nearly all areas east of the Mississippi River, and the northcentral states in-between.",
+          "The highest probabilities (greater than 50 percent) of above normal temperatures are forecast across Southeast Alaska, the Northern Great Basin, and the vicinity of North Dakota and northwestern Minnesota.",
+          "The OND 2026 Precipitation Outlook depicts enhanced probabilities of above normal precipitation amounts from the southern half of California east-northeastward across most of the Four Corners region and Great Plains, much of the Mississippi and Tennessee Valleys, the Southeast, and the Mid-Atlantic.",
+          "The greatest chances (higher than 60 percent) for above normal precipitation are indicated for parts of the eastern Gulf Coast region and Southeast coast.",
+          "A modest tilt in the odds towards above normal precipitation is depicted from portions of southcentral Alaska eastward through much of Southeast Alaska.",
+          "Modest tilts towards below normal precipitation amounts are favored over the Aleutians, interior portions of Mainland Alaska, interior portions of the northwestern CONUS, and parts of the Great Lakes region.",
+          "Equal chances (EC) are forecast for areas where probabilities for each category of seasonal mean temperatures and seasonal accumulated precipitation amounts are expected to be similar to climatological probabilities.",
+          "cpc .ncep.noaa.gov/products/predictions/90day/tools/briefing CURRENT ATMOSPHERIC AND OCEANIC CONDITIONS El Ni\u00f1o strengthened over the past month, with sea surface temperature (SST) anomalies exceeding +3.0\u00b0C in the eastern equatorial Pacific.",
+          "The latest weekly Ni\u00f1o index value for Ni\u00f1o-3.4 was +2.0\u00b0C, and for Ni\u00f1o-3 the index value was +2.8\u00b0C.",
+          "Collectively, the coupled ocean-atmosphere system reflected a strengthening El Ni\u00f1o.",
+          "PROGNOSTIC DISCUSSION OF SST FORECASTS The CPC Official El Ni\u00f1o Southern Oscillation (ENSO) Outlook, which synthesizes multiple models from North America and abroad, indicates El Ni\u00f1o will continue to strengthen through the end of the year.",
+          "During the October-November-December (OND) 2026 season, there is a 75% chance of a historic event that would exceed the strength of previous El Ni\u00f1o events dating back to 1950 (+2.5\u00b0C or more for a 3-month RONI value).",
+          "With an event of this magnitude, the chances of experiencing impacts consistent with El Ni\u00f1o are larger, but they are not guaranteed."
+        ]
+      }
+    ],
+    "unusable_pages": [
+      {
+        "label": "CPC ONI_v5 page (interactive; not machine-readable)",
+        "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php",
+        "sha256": "7e9cef7ebf78acaede6847bc2134751811b0807d263f43bc11023f0b6d0a6815",
+        "retrieved_utc": "2026-09-17T19:05:34Z",
+        "characters": 1805,
+        "mentions_current_year": false,
+        "usable_as_current_source": false,
+        "reason": "page text does not mention 2026; it is either stale or client-rendered, so it is not used as evidence of current conditions"
+      }
+    ],
     "reference_links": [
       {
-        "label": "CPC ENSO: Recent Evolution, Current Status and Predictions (PDF)",
+        "label": "CPC ENSO evolution / status / forecast (PDF)",
         "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/lanina/enso_evolution-status-fcsts-web.pdf"
       }
     ]
   },
-  "humidity_normals": null,
-  "monthly_normals_official": null,
+  "humidity_normals": {
+    "station_id": "USW00023234",
+    "station_name": "SAN FRANCISCO INTL AP, CA US",
+    "url": "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv",
+    "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
+    "retrieved_utc": "2026-09-17T19:06:01Z",
+    "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (hourly, by station)",
+    "method": "mean of hourly relative humidity computed from the official hourly temperature and dew-point normals with the Magnus formula",
+    "month_rh_pct": {},
+    "rows_used": 0,
+    "layout": {
+      "header": [
+        "STATION",
+        "NAME",
+        "LATITUDE",
+        "LONGITUDE",
+        "ELEVATION",
+        "DATE",
+        "month",
+        "day",
+        "hour",
+        "HLY-TEMP-NORMAL",
+        "meas_flag_HLY-TEMP-NORMAL",
+        "comp_flag_HLY-TEMP-NORMAL",
+        "years_HLY-TEMP-NORMAL",
+        "HLY-TEMP-10PCTL",
+        "meas_flag_HLY-TEMP-10PCTL",
+        "comp_flag_HLY-TEMP-10PCTL",
+        "years_HLY-TEMP-10PCTL",
+        "HLY-TEMP-90PCTL",
+        "meas_flag_HLY-TEMP-90PCTL",
+        "comp_flag_HLY-TEMP-90PCTL",
+        "years_HLY-TEMP-90PCTL",
+        "HLY-DEWP-NORMAL",
+        "meas_flag_HLY-DEWP-NORMAL",
+        "comp_flag_HLY-DEWP-NORMAL",
+        "years_HLY-DEWP-NORMAL",
+        "HLY-DEWP-10PCTL",
+        "meas_flag_HLY-DEWP-10PCTL",
+        "comp_flag_HLY-DEWP-10PCTL",
+        "years_HLY-DEWP-10PCTL",
+        "HLY-DEWP-90PCTL",
+        "meas_flag_HLY-DEWP-90PCTL",
+        "comp_flag_HLY-DEWP-90PCTL",
+        "years_HLY-DEWP-90PCTL",
+        "HLY-PRES-NORMAL",
+        "meas_flag_HLY-PRES-NORMAL",
+        "comp_flag_HLY-PRES-NORMAL",
+        "years_HLY-PRES-NORMAL",
+        "HLY-PRES-10PCTL",
+        "meas_flag_HLY-PRES-10PCTL",
+        "comp_flag_HLY-PRES-10PCTL",
+        "years_HLY-PRES-10PCTL",
+        "HLY-PRES-90PCTL",
+        "meas_flag_HLY-PRES-90PCTL",
+        "comp_flag_HLY-PRES-90PCTL",
+        "years_HLY-PRES-90PCTL",
+        "HLY-CLDH-NORMAL",
+        "meas_flag_HLY-CLDH-NORMAL",
+        "comp_flag_HLY-CLDH-NORMAL",
+        "years_HLY-CLDH-NORMAL",
+        "HLY-HTDH-NORMAL",
+        "meas_flag_HLY-HTDH-NORMAL",
+        "comp_flag_HLY-HTDH-NORMAL",
+        "years_HLY-HTDH-NORMAL",
+        "HLY-CLOD-PCTCLR",
+        "meas_flag_HLY-CLOD-PCTCLR",
+        "comp_flag_HLY-CLOD-PCTCLR",
+        "years_HLY-CLOD-PCTCLR",
+        "HLY-CLOD-PCTFEW",
+        "meas_flag_HLY-CLOD-PCTFEW",
+        "comp_flag_HLY-CLOD-PCTFEW"
+      ],
+      "row_count": 8760,
+      "temp_columns": [
+        "HLY-TEMP-NORMAL",
+        "meas_flag_HLY-TEMP-NORMAL",
+        "comp_flag_HLY-TEMP-NORMAL",
+        "years_HLY-TEMP-NORMAL"
+      ],
+      "dewpoint_columns": [
+        "HLY-DEWP-NORMAL",
+        "meas_flag_HLY-DEWP-NORMAL",
+        "comp_flag_HLY-DEWP-NORMAL",
+        "years_HLY-DEWP-NORMAL"
+      ],
+      "hour_column": false,
+      "usable": false,
+      "usable_rows": 0
+    }
+  },
+  "monthly_normals_official": {
+    "precip_in": {
+      "1": 4.4,
+      "2": 4.37,
+      "3": 3.15,
+      "4": 1.6,
+      "5": 0.7,
+      "6": 0.2,
+      "7": 0.01,
+      "8": 0.06,
+      "9": 0.1,
+      "10": 0.94,
+      "11": 2.6,
+      "12": 4.76
+    },
+    "temp_f": {
+      "1": 52.2,
+      "2": 54.2,
+      "3": 55.5,
+      "4": 56.4,
+      "5": 57.8,
+      "6": 59.7,
+      "7": 60.3,
+      "8": 61.7,
+      "9": 62.9,
+      "10": 62.1,
+      "11": 57.2,
+      "12": 52.5
+    },
+    "layout": {
+      "header": [
+        "STATION",
+        "DATE",
+        "LATITUDE",
+        "LONGITUDE",
+        "ELEVATION",
+        "NAME",
+        "month",
+        "day",
+        "hour",
+        "MLY-TAVG-NORMAL",
+        "meas_flag_MLY-TAVG-NORMAL",
+        "comp_flag_MLY-TAVG-NORMAL",
+        "years_MLY-TAVG-NORMAL",
+        "MLY-TMAX-NORMAL",
+        "meas_flag_MLY-TMAX-NORMAL",
+        "comp_flag_MLY-TMAX-NORMAL",
+        "years_MLY-TMAX-NORMAL",
+        "MLY-TMIN-NORMAL",
+        "meas_flag_MLY-TMIN-NORMAL",
+        "comp_flag_MLY-TMIN-NORMAL",
+        "years_MLY-TMIN-NORMAL",
+        "MLY-DUTR-NORMAL",
+        "meas_flag_MLY-DUTR-NORMAL",
+        "comp_flag_MLY-DUTR-NORMAL",
+        "years_MLY-DUTR-NORMAL",
+        "MLY-TAVG-STDDEV",
+        "meas_flag_MLY-TAVG-STDDEV",
+        "comp_flag_MLY-TAVG-STDDEV",
+        "years_MLY-TAVG-STDDEV",
+        "MLY-TMAX-STDDEV",
+        "meas_flag_MLY-TMAX-STDDEV",
+        "comp_flag_MLY-TMAX-STDDEV",
+        "years_MLY-TMAX-STDDEV",
+        "MLY-TMIN-STDDEV",
+        "meas_flag_MLY-TMIN-STDDEV",
+        "comp_flag_MLY-TMIN-STDDEV",
+        "years_MLY-TMIN-STDDEV",
+        "MLY-DUTR-STDDEV",
+        "meas_flag_MLY-DUTR-STDDEV",
+        "comp_flag_MLY-DUTR-STDDEV",
+        "years_MLY-DUTR-STDDEV",
+        "MLY-TMIN-AVGNDS-LSTH000",
+        "meas_flag_MLY-TMIN-AVGNDS-LSTH000",
+        "comp_flag_MLY-TMIN-AVGNDS-LSTH000",
+        "years_MLY-TMIN-AVGNDS-LSTH000",
+        "MLY-TMIN-AVGNDS-LSTH010",
+        "meas_flag_MLY-TMIN-AVGNDS-LSTH010",
+        "comp_flag_MLY-TMIN-AVGNDS-LSTH010",
+        "years_MLY-TMIN-AVGNDS-LSTH010",
+        "MLY-TMIN-AVGNDS-LSTH020",
+        "meas_flag_MLY-TMIN-AVGNDS-LSTH020",
+        "comp_flag_MLY-TMIN-AVGNDS-LSTH020",
+        "years_MLY-TMIN-AVGNDS-LSTH020",
+        "MLY-TMIN-AVGNDS-LSTH032",
+        "meas_flag_MLY-TMIN-AVGNDS-LSTH032",
+        "comp_flag_MLY-TMIN-AVGNDS-LSTH032",
+        "years_MLY-TMIN-AVGNDS-LSTH032",
+        "MLY-TMIN-AVGNDS-LSTH040",
+        "meas_flag_MLY-TMIN-AVGNDS-LSTH040",
+        "comp_flag_MLY-TMIN-AVGNDS-LSTH040"
+      ],
+      "row_count": 12,
+      "precip_columns": [
+        "MLY-PRCP-NORMAL",
+        "meas_flag_MLY-PRCP-NORMAL",
+        "comp_flag_MLY-PRCP-NORMAL",
+        "years_MLY-PRCP-NORMAL"
+      ],
+      "temp_columns": [
+        "MLY-TAVG-NORMAL",
+        "meas_flag_MLY-TAVG-NORMAL",
+        "comp_flag_MLY-TAVG-NORMAL",
+        "years_MLY-TAVG-NORMAL"
+      ]
+    },
+    "station_id": "USW00023272",
+    "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
+    "url": "https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv",
+    "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
+    "retrieved_utc": "2026-09-17T19:05:50Z",
+    "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (monthly, by station)"
+  },
   "season_summary": {
     "season_total_prcp_in": {
       "n": 30,
@@ -1286,6 +1564,7 @@
       "max_gust_kt": 35.9,
       "max_gust_mph": 41.3,
       "oni_ond": 1.21,
+      "oni_source": "derived 3-month running mean centred on Nov 1991",
       "enso_phase": "el_nino"
     },
     {
@@ -1310,6 +1589,7 @@
       "max_gust_kt": 47.8,
       "max_gust_mph": 55.0,
       "oni_ond": -0.28,
+      "oni_source": "derived 3-month running mean centred on Nov 1992",
       "enso_phase": "neutral"
     },
     {
@@ -1334,6 +1614,7 @@
       "max_gust_kt": 38.9,
       "max_gust_mph": 44.8,
       "oni_ond": 0.04,
+      "oni_source": "derived 3-month running mean centred on Nov 1993",
       "enso_phase": "neutral"
     },
     {
@@ -1358,6 +1639,7 @@
       "max_gust_kt": 49.0,
       "max_gust_mph": 56.4,
       "oni_ond": 1.0,
+      "oni_source": "derived 3-month running mean centred on Nov 1994",
       "enso_phase": "el_nino"
     },
     {
@@ -1382,6 +1664,7 @@
       "max_gust_kt": 60.8,
       "max_gust_mph": 70.0,
       "oni_ond": -1.01,
+      "oni_source": "derived 3-month running mean centred on Nov 1995",
       "enso_phase": "la_nina"
     },
     {
@@ -1406,6 +1689,7 @@
       "max_gust_kt": 43.9,
       "max_gust_mph": 50.5,
       "oni_ond": -0.45,
+      "oni_source": "derived 3-month running mean centred on Nov 1996",
       "enso_phase": "neutral"
     },
     {
@@ -1430,6 +1714,7 @@
       "max_gust_kt": 39.0,
       "max_gust_mph": 44.9,
       "oni_ond": 2.4,
+      "oni_source": "derived 3-month running mean centred on Nov 1997",
       "enso_phase": "el_nino"
     },
     {
@@ -1454,6 +1739,7 @@
       "max_gust_kt": 43.9,
       "max_gust_mph": 50.5,
       "oni_ond": -1.48,
+      "oni_source": "derived 3-month running mean centred on Nov 1998",
       "enso_phase": "la_nina"
     },
     {
@@ -1478,6 +1764,7 @@
       "max_gust_kt": 39.0,
       "max_gust_mph": 44.9,
       "oni_ond": -1.46,
+      "oni_source": "derived 3-month running mean centred on Nov 1999",
       "enso_phase": "la_nina"
     },
     {
@@ -1502,6 +1789,7 @@
       "max_gust_kt": 37.9,
       "max_gust_mph": 43.6,
       "oni_ond": -0.75,
+      "oni_source": "derived 3-month running mean centred on Nov 2000",
       "enso_phase": "la_nina"
     },
     {
@@ -1526,6 +1814,7 @@
       "max_gust_kt": 48.0,
       "max_gust_mph": 55.2,
       "oni_ond": -0.35,
+      "oni_source": "derived 3-month running mean centred on Nov 2001",
       "enso_phase": "neutral"
     },
     {
@@ -1550,6 +1839,7 @@
       "max_gust_kt": 55.9,
       "max_gust_mph": 64.3,
       "oni_ond": 1.31,
+      "oni_source": "derived 3-month running mean centred on Nov 2002",
       "enso_phase": "el_nino"
     },
     {
@@ -1574,6 +1864,7 @@
       "max_gust_kt": 47.0,
       "max_gust_mph": 54.1,
       "oni_ond": 0.35,
+      "oni_source": "derived 3-month running mean centred on Nov 2003",
       "enso_phase": "neutral"
     },
     {
@@ -1598,6 +1889,7 @@
       "max_gust_kt": 50.9,
       "max_gust_mph": 58.6,
       "oni_ond": 0.66,
+      "oni_source": "derived 3-month running mean centred on Nov 2004",
       "enso_phase": "el_nino"
     },
     {
@@ -1622,6 +1914,7 @@
       "max_gust_kt": 55.9,
       "max_gust_mph": 64.3,
       "oni_ond": -0.57,
+      "oni_source": "derived 3-month running mean centred on Nov 2005",
       "enso_phase": "la_nina"
     },
     {
@@ -1646,6 +1939,7 @@
       "max_gust_kt": 49.9,
       "max_gust_mph": 57.4,
       "oni_ond": 0.94,
+      "oni_source": "derived 3-month running mean centred on Nov 2006",
       "enso_phase": "el_nino"
     },
     {
@@ -1670,6 +1964,7 @@
       "max_gust_kt": 58.1,
       "max_gust_mph": 66.9,
       "oni_ond": -1.5,
+      "oni_source": "derived 3-month running mean centred on Nov 2007",
       "enso_phase": "la_nina"
     },
     {
@@ -1694,6 +1989,7 @@
       "max_gust_kt": 47.0,
       "max_gust_mph": 54.1,
       "oni_ond": -0.56,
+      "oni_source": "derived 3-month running mean centred on Nov 2008",
       "enso_phase": "la_nina"
     },
     {
@@ -1718,6 +2014,7 @@
       "max_gust_kt": 51.1,
       "max_gust_mph": 58.8,
       "oni_ond": 1.36,
+      "oni_source": "derived 3-month running mean centred on Nov 2009",
       "enso_phase": "el_nino"
     },
     {
@@ -1742,6 +2039,7 @@
       "max_gust_kt": 50.9,
       "max_gust_mph": 58.6,
       "oni_ond": -1.64,
+      "oni_source": "derived 3-month running mean centred on Nov 2010",
       "enso_phase": "la_nina"
     },
     {
@@ -1766,6 +2064,7 @@
       "max_gust_kt": 41.0,
       "max_gust_mph": 47.2,
       "oni_ond": -1.02,
+      "oni_source": "derived 3-month running mean centred on Nov 2011",
       "enso_phase": "la_nina"
     },
     {
@@ -1790,6 +2089,7 @@
       "max_gust_kt": 47.0,
       "max_gust_mph": 54.1,
       "oni_ond": 0.12,
+      "oni_source": "derived 3-month running mean centred on Nov 2012",
       "enso_phase": "neutral"
     },
     {
@@ -1814,6 +2114,7 @@
       "max_gust_kt": 42.0,
       "max_gust_mph": 48.3,
       "oni_ond": -0.1,
+      "oni_source": "derived 3-month running mean centred on Nov 2013",
       "enso_phase": "neutral"
     },
     {
@@ -1838,6 +2139,7 @@
       "max_gust_kt": 42.0,
       "max_gust_mph": 48.3,
       "oni_ond": 0.71,
+      "oni_source": "derived 3-month running mean centred on Nov 2014",
       "enso_phase": "el_nino"
     },
     {
@@ -1862,6 +2164,7 @@
       "max_gust_kt": 46.0,
       "max_gust_mph": 52.9,
       "oni_ond": 2.65,
+      "oni_source": "derived 3-month running mean centred on Nov 2015",
       "enso_phase": "el_nino"
     },
     {
@@ -1886,6 +2189,7 @@
       "max_gust_kt": 53.0,
       "max_gust_mph": 61.0,
       "oni_ond": -0.6,
+      "oni_source": "derived 3-month running mean centred on Nov 2016",
       "enso_phase": "la_nina"
     },
     {
@@ -1910,6 +2214,7 @@
       "max_gust_kt": 40.0,
       "max_gust_mph": 46.0,
       "oni_ond": -0.76,
+      "oni_source": "derived 3-month running mean centred on Nov 2017",
       "enso_phase": "la_nina"
     },
     {
@@ -1934,6 +2239,7 @@
       "max_gust_kt": 53.0,
       "max_gust_mph": 61.0,
       "oni_ond": 0.97,
+      "oni_source": "derived 3-month running mean centred on Nov 2018",
       "enso_phase": "el_nino"
     },
     {
@@ -1958,6 +2264,7 @@
       "max_gust_kt": 41.0,
       "max_gust_mph": 47.2,
       "oni_ond": 0.58,
+      "oni_source": "derived 3-month running mean centred on Nov 2019",
       "enso_phase": "el_nino"
     },
     {
@@ -1982,6 +2289,7 @@
       "max_gust_kt": 46.0,
       "max_gust_mph": 52.9,
       "oni_ond": -1.2,
+      "oni_source": "derived 3-month running mean centred on Nov 2020",
       "enso_phase": "la_nina"
     }
   ],
@@ -2415,7 +2723,7 @@
     }
   },
   "current_forecast": {
-    "generated_utc": "2026-09-17T16:56:57+00:00",
+    "generated_utc": "2026-09-17T19:02:53+00:00",
     "forecast_updated": null,
     "elevation_m": 45.1104,
     "horizon_days": 7,
@@ -2434,21 +2742,11 @@
     ],
     "alerts": {
       "zone": "CAZ006",
-      "count": 1,
-      "updated": "2026-09-17T16:54:56+00:00",
-      "events": [
-        {
-          "event": "Tsunami Warning",
-          "severity": "Extreme",
-          "urgency": "Immediate",
-          "certainty": "Likely",
-          "effective": "2026-09-17T09:30:00-07:00",
-          "expires": "2026-09-17T10:30:00-07:00",
-          "headline": "TEST Tsunami Warning issued September 17 at 9:30AM PDT until September 17 at 10:30AM PDT by NWS National Tsunami Warning Center",
-          "description": "PZZ530-531-CAZ043-354-362-366-367-552-087-549-550-349-350-\n340>342-346-529-530-006-156-505-506-508>510-109-104-103-101-\nORZ021-022-103-101-102-WAZ001-201-310-311-324>326-330>333-\nBCZ098-099-096-097-AKZ328>332-323-324-326-327-318>322-325-\n317-731-735-721>723-725-728-729-771>773-781-785-787-795-791-\n171730-\n/T.NEW.PAAQ.TS.W.9016.260917T1630Z-260917T1730Z/\nAlaska, British Columbia, Washington, Oregon and California\ncoastal areas\n\n...THIS_MESSAGE_IS_FOR_TEST_PURPOSES_ONLY...\n\n...THIS IS A TEST TO DETERMINE TRANSMISSION TIMES INVOLVED IN THE\nDISSEMINATION OF TSUNAMI INFORMATION...\n\n\nRESPONSES ARE REQUIRED FROM\n---------------------------\n* All Coastal Weather Forecast Offices in Alaska, Washington,\nOregon and California\n\n* USAF 11th Rescue Coordination Center at Elmendorf AFB\n\n* California, Oregon, Washington and Alaska State Warning Points\n\n* Emergency Management British Columbia\n\n* The Pacific Storm Prediction Centre in British Columbia\n\n* Joint Typhoon Warning Center in Hawaii\n\n* U.S. Coast Guard 11th, 13th, 17th District Offices\n\n* U.S. Coast Guard Kodiak COMMSTA and CAMSPAC Point Reyes, CA\n\n* Canadian Coast Guard MCTS COMOX and/or Victoria\n\n* FAA Regional Operations Center in Seatt",
-          "id": "urn:oid:2.49.0.1.840.0.2baa5412824a9c1329f893022c33612980e402c4.001.1"
-        }
-      ],
+      "count": 0,
+      "test_count": 0,
+      "count_including_tests": 0,
+      "updated": "2026-09-17T19:02:56+00:00",
+      "events": [],
       "source_url": "https://api.weather.gov/alerts/active?zone=CAZ006",
       "human_url": "https://www.weather.gov/mtr"
     },
@@ -2459,10 +2757,10 @@
         "elevation_m": 45.72,
         "distance_m": 5900.9262123232,
         "observation": {
-          "timestamp": "2026-09-17T15:43:00+00:00",
-          "temperature_c": 16.91,
-          "dewpoint_c": 13.62,
-          "relative_humidity_pct": 80.958816732454,
+          "timestamp": "2026-09-17T17:43:00+00:00",
+          "temperature_c": 17.36,
+          "dewpoint_c": 13.34,
+          "relative_humidity_pct": 77.264658346142,
           "wind_speed_kmh": null,
           "wind_gust_kmh": null,
           "wind_direction_deg": null,
@@ -2479,14 +2777,14 @@
         "elevation_m": 62.419992,
         "distance_m": 17818.193337506,
         "observation": {
-          "timestamp": "2026-09-17T16:30:00+00:00",
+          "timestamp": "2026-09-17T18:45:00+00:00",
           "temperature_c": null,
           "dewpoint_c": null,
           "relative_humidity_pct": null,
           "wind_speed_kmh": null,
           "wind_gust_kmh": null,
           "wind_direction_deg": null,
-          "barometric_pressure_pa": 101760,
+          "barometric_pressure_pa": 101900,
           "precipitation_last_hour_mm": null,
           "precipitation_last_3_hours_mm": null,
           "text_description": ""
@@ -2499,17 +2797,17 @@
         "elevation_m": 3.048,
         "distance_m": 19117.58413345,
         "observation": {
-          "timestamp": "2026-09-17T16:35:00+00:00",
-          "temperature_c": 18,
+          "timestamp": "2026-09-17T18:35:00+00:00",
+          "temperature_c": 20,
           "dewpoint_c": 12,
-          "relative_humidity_pct": 67.97370121525,
+          "relative_humidity_pct": 60.000416407888,
           "wind_speed_kmh": null,
           "wind_gust_kmh": null,
           "wind_direction_deg": null,
-          "barometric_pressure_pa": 101930.3,
+          "barometric_pressure_pa": 102031.89,
           "precipitation_last_hour_mm": null,
           "precipitation_last_3_hours_mm": null,
-          "text_description": "Mostly Cloudy"
+          "text_description": "Cloudy"
         },
         "observation_url": "https://api.weather.gov/stations/KSFO/observations/latest"
       },
@@ -2519,13 +2817,13 @@
         "elevation_m": 712.9272,
         "distance_m": 20512.547709146,
         "observation": {
-          "timestamp": "2026-09-17T15:36:00+00:00",
+          "timestamp": "2026-09-17T18:36:00+00:00",
           "temperature_c": null,
-          "dewpoint_c": null,
+          "dewpoint_c": 11.36,
           "relative_humidity_pct": null,
-          "wind_speed_kmh": 8.028,
-          "wind_gust_kmh": 20.916,
-          "wind_direction_deg": 238,
+          "wind_speed_kmh": 6.444,
+          "wind_gust_kmh": 17.712,
+          "wind_direction_deg": 186,
           "barometric_pressure_pa": null,
           "precipitation_last_hour_mm": null,
           "precipitation_last_3_hours_mm": null,
@@ -2547,14 +2845,14 @@
         "elevation_m": 29.410152,
         "distance_m": 22798.124785519,
         "observation": {
-          "timestamp": "2026-09-17T16:30:00+00:00",
-          "temperature_c": 17.22,
-          "dewpoint_c": 14.33,
-          "relative_humidity_pct": 83.125728816881,
-          "wind_speed_kmh": 0,
-          "wind_gust_kmh": 0,
-          "wind_direction_deg": 258,
-          "barometric_pressure_pa": 101880,
+          "timestamp": "2026-09-17T18:31:00+00:00",
+          "temperature_c": null,
+          "dewpoint_c": null,
+          "relative_humidity_pct": null,
+          "wind_speed_kmh": null,
+          "wind_gust_kmh": 1.62,
+          "wind_direction_deg": null,
+          "barometric_pressure_pa": null,
           "precipitation_last_hour_mm": null,
           "precipitation_last_3_hours_mm": null,
           "text_description": ""
@@ -2568,24 +2866,24 @@
         "weekday": "Thursday",
         "high_f": 65,
         "low_f": 60,
-        "humidity_pct": 91.6,
+        "humidity_pct": 91.1,
         "humidity_min_pct": 86,
         "humidity_max_pct": 96,
-        "rain_chance_pct": 15,
+        "rain_chance_pct": 0,
         "rain_amount_in": null,
         "wind_max_mph": 8.0,
         "gust_max_mph": null,
-        "hours_covered": 15,
+        "hours_covered": 12,
         "periods": [
           {
-            "name": "Today",
+            "name": "This Afternoon",
             "is_daytime": true,
             "temperature_f": 65,
             "wind_speed": "8 mph",
-            "wind_direction": "SW",
-            "pop_pct": 15,
-            "short_forecast": "Slight Chance Drizzle then Mostly Sunny",
-            "detailed_forecast": "A slight chance of drizzle before 11am. Mostly sunny, with a high near 65. Southwest wind around 8 mph. Chance of precipitation is 20%."
+            "wind_direction": "WSW",
+            "pop_pct": 0,
+            "short_forecast": "Mostly Sunny",
+            "detailed_forecast": "Mostly sunny, with a high near 65. West southwest wind around 8 mph."
           },
           {
             "name": "Tonight",
@@ -2676,7 +2974,7 @@
         "weekday": "Sunday",
         "high_f": 63,
         "low_f": 58,
-        "humidity_pct": 92.9,
+        "humidity_pct": 92.0,
         "humidity_min_pct": 88,
         "humidity_max_pct": 95,
         "rain_chance_pct": 1,
@@ -2691,7 +2989,7 @@
             "temperature_f": 63,
             "wind_speed": "13 mph",
             "wind_direction": "W",
-            "pop_pct": 1,
+            "pop_pct": 0,
             "short_forecast": "Mostly Cloudy",
             "detailed_forecast": "Mostly cloudy, with a high near 63."
           },
@@ -2699,7 +2997,7 @@
             "name": "Sunday Night",
             "is_daytime": false,
             "temperature_f": 58,
-            "wind_speed": "8 to 13 mph",
+            "wind_speed": "9 to 13 mph",
             "wind_direction": "W",
             "pop_pct": 1,
             "short_forecast": "Mostly Cloudy",
@@ -2710,32 +3008,32 @@
       {
         "date": "2026-09-21",
         "weekday": "Monday",
-        "high_f": 64,
+        "high_f": 62,
         "low_f": 58,
-        "humidity_pct": 91.7,
-        "humidity_min_pct": 87,
+        "humidity_pct": 92.3,
+        "humidity_min_pct": 90,
         "humidity_max_pct": 94,
         "rain_chance_pct": 1,
         "rain_amount_in": null,
-        "wind_max_mph": 12.0,
+        "wind_max_mph": 13.0,
         "gust_max_mph": null,
         "hours_covered": 24,
         "periods": [
           {
             "name": "Monday",
             "is_daytime": true,
-            "temperature_f": 65,
-            "wind_speed": "8 to 12 mph",
-            "wind_direction": "W",
-            "pop_pct": 1,
+            "temperature_f": 63,
+            "wind_speed": "12 mph",
+            "wind_direction": "WSW",
+            "pop_pct": 0,
             "short_forecast": "Mostly Cloudy",
-            "detailed_forecast": "Mostly cloudy, with a high near 65."
+            "detailed_forecast": "Mostly cloudy, with a high near 63."
           },
           {
             "name": "Monday Night",
             "is_daytime": false,
             "temperature_f": 58,
-            "wind_speed": "8 to 12 mph",
+            "wind_speed": "7 to 12 mph",
             "wind_direction": "WSW",
             "pop_pct": 0,
             "short_forecast": "Mostly Cloudy",
@@ -2746,10 +3044,10 @@
       {
         "date": "2026-09-22",
         "weekday": "Tuesday",
-        "high_f": 65,
+        "high_f": 66,
         "low_f": 58,
-        "humidity_pct": 90.5,
-        "humidity_min_pct": 84,
+        "humidity_pct": 88.1,
+        "humidity_min_pct": 78,
         "humidity_max_pct": 95,
         "rain_chance_pct": 0,
         "rain_amount_in": null,
@@ -2761,7 +3059,7 @@
             "name": "Tuesday",
             "is_daytime": true,
             "temperature_f": 66,
-            "wind_speed": "6 to 12 mph",
+            "wind_speed": "7 to 12 mph",
             "wind_direction": "WSW",
             "pop_pct": 0,
             "short_forecast": "Partly Sunny",
@@ -2771,8 +3069,8 @@
             "name": "Tuesday Night",
             "is_daytime": false,
             "temperature_f": 58,
-            "wind_speed": "6 to 12 mph",
-            "wind_direction": "WSW",
+            "wind_speed": "5 to 12 mph",
+            "wind_direction": "W",
             "pop_pct": 0,
             "short_forecast": "Partly Cloudy",
             "detailed_forecast": "Partly cloudy, with a low around 58."
@@ -2782,32 +3080,32 @@
       {
         "date": "2026-09-23",
         "weekday": "Wednesday",
-        "high_f": 66,
+        "high_f": 68,
         "low_f": 58,
-        "humidity_pct": 86.0,
-        "humidity_min_pct": 78,
-        "humidity_max_pct": 93,
+        "humidity_pct": 82.3,
+        "humidity_min_pct": 70,
+        "humidity_max_pct": 91,
         "rain_chance_pct": 0,
         "rain_amount_in": null,
         "wind_max_mph": 10.0,
         "gust_max_mph": null,
-        "hours_covered": 21,
+        "hours_covered": 24,
         "periods": [
           {
             "name": "Wednesday",
             "is_daytime": true,
-            "temperature_f": 68,
+            "temperature_f": 69,
             "wind_speed": "5 to 10 mph",
             "wind_direction": "WSW",
             "pop_pct": 0,
             "short_forecast": "Mostly Sunny",
-            "detailed_forecast": "Mostly sunny, with a high near 68."
+            "detailed_forecast": "Mostly sunny, with a high near 69."
           },
           {
             "name": "Wednesday Night",
             "is_daytime": false,
             "temperature_f": 58,
-            "wind_speed": "6 to 10 mph",
+            "wind_speed": "5 to 10 mph",
             "wind_direction": "W",
             "pop_pct": 0,
             "short_forecast": "Partly Cloudy",

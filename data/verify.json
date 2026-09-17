@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T19:01:30Z",
+  "generated_utc": "2026-09-17T19:06:33Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,13 +9,12 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 17,
-    "passed": 15,
-    "failed": 2,
+    "total": 18,
+    "passed": 17,
+    "failed": 1,
     "warnings": 0,
     "failed_checks": [
-      "oni-official-present",
-      "alert-test-filter"
+      "oni-official-present"
     ],
     "warning_checks": []
   },
@@ -24,9 +23,9 @@
       "id": "provenance-present",
       "title": "A provenance manifest exists with fetches",
       "status": "pass",
-      "detail": "100 recorded fetches",
+      "detail": "104 recorded fetches",
       "evidence": {
-        "count": 100
+        "count": 104
       }
     },
     {
@@ -78,10 +77,10 @@
       "evidence": {
         "label": "NOAA CPC official ONI product",
         "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
-        "http_status": null,
-        "bytes": null,
-        "sha256": null,
-        "retrieved_utc": null
+        "http_status": 200,
+        "bytes": 23000,
+        "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
+        "retrieved_utc": "2026-09-17T19:05:30Z"
       }
     },
     {
@@ -143,6 +142,38 @@
       "evidence": null
     },
     {
+      "id": "normals-cross-check",
+      "title": "The project's monthly rainfall means agree with NOAA's published 1991-2020 monthly normals for the same station",
+      "status": "pass",
+      "detail": "largest difference 0.07 in",
+      "evidence": [
+        {
+          "month": 10,
+          "project_mean_in": 0.94,
+          "noaa_normal_in": 0.94,
+          "difference_in": 0.0
+        },
+        {
+          "month": 11,
+          "project_mean_in": 2.6,
+          "noaa_normal_in": 2.6,
+          "difference_in": 0.0
+        },
+        {
+          "month": 12,
+          "project_mean_in": 4.78,
+          "noaa_normal_in": 4.76,
+          "difference_in": 0.02
+        },
+        {
+          "month": 1,
+          "project_mean_in": 4.47,
+          "noaa_normal_in": 4.4,
+          "difference_in": 0.07
+        }
+      ]
+    },
+    {
       "id": "cpc-dedup",
       "title": "No duplicate CPC outlook is attached for the same period and variable",
       "status": "pass",
@@ -159,15 +190,9 @@
     {
       "id": "alert-test-filter",
       "title": "NOAA test messages are counted separately from real alerts",
-      "status": "fail",
-      "detail": "real alerts=1, tests=None, total=1",
-      "evidence": [
-        {
-          "event": "Tsunami Warning",
-          "is_test": null,
-          "headline": "TEST Tsunami Warning issued September 17 at 9:30AM PDT until September 17 at 10:30AM PDT b"
-        }
-      ]
+      "status": "pass",
+      "detail": "real alerts=0, tests=0, total=0",
+      "evidence": []
     },
     {
       "id": "source-traceability",
@@ -203,7 +228,7 @@
         "http_status": 200,
         "bytes": 1013803,
         "sha256": "7b85c04a131672f58b38a950eb82855d5fd4054f0bd9bc3f69aa28897a714e3d",
-        "retrieved_utc": "2026-09-17T16:56:56Z",
+        "retrieved_utc": "2026-09-17T19:02:52Z",
         "host": "www2.census.gov"
       },
       "verified": true,
@@ -227,13 +252,16 @@
       "source": {
         "label": "NOAA CPC official ONI product (season-labelled)",
         "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
-        "http_status": null,
-        "bytes": null,
-        "sha256": null,
-        "retrieved_utc": null,
+        "http_status": 200,
+        "bytes": 23000,
+        "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
+        "retrieved_utc": "2026-09-17T19:05:30Z",
         "host": "www.cpc.ncep.noaa.gov"
       },
-      "verified": false
+      "verified": false,
+      "cross_check": {
+        "checked": false
+      }
     },
     {
       "id": "nws-current-horizon",
@@ -249,9 +277,9 @@
         "label": "NWS hourly gridded forecast",
         "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
         "http_status": 200,
-        "bytes": 162352,
-        "sha256": "71db546e8f6355d2277ef46ddacbfed50b074728c9279a2672cfc09f6ce03aee",
-        "retrieved_utc": "2026-09-17T16:56:57Z",
+        "bytes": 162354,
+        "sha256": "7007e593e2081ce333d70faa9ca2d5bc793ea3710b628492718853181944aba4",
+        "retrieved_utc": "2026-09-17T19:02:53Z",
         "host": "api.weather.gov"
       },
       "verified": true
@@ -269,6 +297,23 @@
       "verified": true
     },
     {
+      "id": "humidity-normals",
+      "statement": "Source of the humidity values on climatology days",
+      "value": {},
+      "unit": "% relative humidity",
+      "method": "mean of hourly relative humidity computed from the official hourly temperature and dew-point normals with the Magnus formula",
+      "source": {
+        "label": "NCEI 1991-2020 hourly normals",
+        "url": "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv",
+        "http_status": 200,
+        "bytes": 6423708,
+        "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
+        "retrieved_utc": "2026-09-17T19:06:01Z",
+        "host": "www.ncei.noaa.gov"
+      },
+      "verified": true
+    },
+    {
       "id": "streak-duration",
       "statement": "Chance of at least one 7-day run of wet days in a season",
       "value": 53.3,
@@ -280,12 +325,112 @@
         "http_status": 200,
         "bytes": 7488380,
         "sha256": "647b301aec57b8ad38287b2353e2a1cdcaeee8f06df205d4983db2fd9feeae19",
-        "retrieved_utc": "2026-09-17T17:00:03Z",
+        "retrieved_utc": "2026-09-17T19:05:35Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
       "cross_check": {
         "note": "Computed inside the pipeline from the raw GHCN-Daily file; recomputable from the same URL by anyone."
+      }
+    },
+    {
+      "id": "normals-month-10",
+      "statement": "October-January monthly rainfall: project mean vs NOAA normal (10)",
+      "value": {
+        "month": 10,
+        "project_mean_in": 0.94,
+        "noaa_normal_in": 0.94,
+        "difference_in": 0.0
+      },
+      "unit": "inches",
+      "method": "project mean from GHCN-Daily vs NOAA's published monthly normal",
+      "source": {
+        "label": "NOAA NCEI 1991-2020 monthly climate normals",
+        "url": "https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv",
+        "http_status": 200,
+        "bytes": 31536,
+        "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
+        "retrieved_utc": "2026-09-17T19:05:50Z",
+        "host": "www.ncei.noaa.gov"
+      },
+      "verified": true,
+      "cross_check": {
+        "difference_in": 0.0
+      }
+    },
+    {
+      "id": "normals-month-11",
+      "statement": "October-January monthly rainfall: project mean vs NOAA normal (11)",
+      "value": {
+        "month": 11,
+        "project_mean_in": 2.6,
+        "noaa_normal_in": 2.6,
+        "difference_in": 0.0
+      },
+      "unit": "inches",
+      "method": "project mean from GHCN-Daily vs NOAA's published monthly normal",
+      "source": {
+        "label": "NOAA NCEI 1991-2020 monthly climate normals",
+        "url": "https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv",
+        "http_status": 200,
+        "bytes": 31536,
+        "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
+        "retrieved_utc": "2026-09-17T19:05:50Z",
+        "host": "www.ncei.noaa.gov"
+      },
+      "verified": true,
+      "cross_check": {
+        "difference_in": 0.0
+      }
+    },
+    {
+      "id": "normals-month-12",
+      "statement": "October-January monthly rainfall: project mean vs NOAA normal (12)",
+      "value": {
+        "month": 12,
+        "project_mean_in": 4.78,
+        "noaa_normal_in": 4.76,
+        "difference_in": 0.02
+      },
+      "unit": "inches",
+      "method": "project mean from GHCN-Daily vs NOAA's published monthly normal",
+      "source": {
+        "label": "NOAA NCEI 1991-2020 monthly climate normals",
+        "url": "https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv",
+        "http_status": 200,
+        "bytes": 31536,
+        "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
+        "retrieved_utc": "2026-09-17T19:05:50Z",
+        "host": "www.ncei.noaa.gov"
+      },
+      "verified": true,
+      "cross_check": {
+        "difference_in": 0.02
+      }
+    },
+    {
+      "id": "normals-month-01",
+      "statement": "October-January monthly rainfall: project mean vs NOAA normal (01)",
+      "value": {
+        "month": 1,
+        "project_mean_in": 4.47,
+        "noaa_normal_in": 4.4,
+        "difference_in": 0.07
+      },
+      "unit": "inches",
+      "method": "project mean from GHCN-Daily vs NOAA's published monthly normal",
+      "source": {
+        "label": "NOAA NCEI 1991-2020 monthly climate normals",
+        "url": "https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv",
+        "http_status": 200,
+        "bytes": 31536,
+        "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
+        "retrieved_utc": "2026-09-17T19:05:50Z",
+        "host": "www.ncei.noaa.gov"
+      },
+      "verified": true,
+      "cross_check": {
+        "difference_in": 0.07
       }
     },
     {
@@ -304,7 +449,7 @@
         "http_status": 200,
         "bytes": 3607956,
         "sha256": "6e1955b1e38868c38685acd83a0ef92df9bcc52a3acaec11a583e759c46414dc",
-        "retrieved_utc": "2026-09-17T16:59:26Z",
+        "retrieved_utc": "2026-09-17T19:05:10Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -328,7 +473,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-17T16:57:59Z",
+        "retrieved_utc": "2026-09-17T19:03:57Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -352,7 +497,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-17T16:57:59Z",
+        "retrieved_utc": "2026-09-17T19:03:57Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -376,7 +521,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-17T16:57:59Z",
+        "retrieved_utc": "2026-09-17T19:03:57Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -400,7 +545,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-17T16:57:59Z",
+        "retrieved_utc": "2026-09-17T19:03:57Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -424,7 +569,7 @@
         "http_status": 200,
         "bytes": 3621792,
         "sha256": "6119ef340649ba4ba21072ef910e1579b7ed01251708cb81531082ab6627ab2f",
-        "retrieved_utc": "2026-09-17T16:59:28Z",
+        "retrieved_utc": "2026-09-17T19:05:12Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -468,11 +613,90 @@
     },
     {
       "severity": "warning",
-      "area": "enso",
-      "message": "A CPC ENSO page was discarded because it does not reference 2026; it is a stale shell page and quoting it would be misleading.",
+      "area": "normals",
+      "message": "Hourly normals were downloaded but produced no humidity values; the column layout was recorded in data/humidity_normals.json for review. No humidity value is shown for climatology days rather than inventing one.",
       "evidence": {
-        "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php",
-        "size": 17341
+        "url": "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv",
+        "layout": {
+          "header": [
+            "STATION",
+            "NAME",
+            "LATITUDE",
+            "LONGITUDE",
+            "ELEVATION",
+            "DATE",
+            "month",
+            "day",
+            "hour",
+            "HLY-TEMP-NORMAL",
+            "meas_flag_HLY-TEMP-NORMAL",
+            "comp_flag_HLY-TEMP-NORMAL",
+            "years_HLY-TEMP-NORMAL",
+            "HLY-TEMP-10PCTL",
+            "meas_flag_HLY-TEMP-10PCTL",
+            "comp_flag_HLY-TEMP-10PCTL",
+            "years_HLY-TEMP-10PCTL",
+            "HLY-TEMP-90PCTL",
+            "meas_flag_HLY-TEMP-90PCTL",
+            "comp_flag_HLY-TEMP-90PCTL",
+            "years_HLY-TEMP-90PCTL",
+            "HLY-DEWP-NORMAL",
+            "meas_flag_HLY-DEWP-NORMAL",
+            "comp_flag_HLY-DEWP-NORMAL",
+            "years_HLY-DEWP-NORMAL",
+            "HLY-DEWP-10PCTL",
+            "meas_flag_HLY-DEWP-10PCTL",
+            "comp_flag_HLY-DEWP-10PCTL",
+            "years_HLY-DEWP-10PCTL",
+            "HLY-DEWP-90PCTL",
+            "meas_flag_HLY-DEWP-90PCTL",
+            "comp_flag_HLY-DEWP-90PCTL",
+            "years_HLY-DEWP-90PCTL",
+            "HLY-PRES-NORMAL",
+            "meas_flag_HLY-PRES-NORMAL",
+            "comp_flag_HLY-PRES-NORMAL",
+            "years_HLY-PRES-NORMAL",
+            "HLY-PRES-10PCTL",
+            "meas_flag_HLY-PRES-10PCTL",
+            "comp_flag_HLY-PRES-10PCTL",
+            "years_HLY-PRES-10PCTL",
+            "HLY-PRES-90PCTL",
+            "meas_flag_HLY-PRES-90PCTL",
+            "comp_flag_HLY-PRES-90PCTL",
+            "years_HLY-PRES-90PCTL",
+            "HLY-CLDH-NORMAL",
+            "meas_flag_HLY-CLDH-NORMAL",
+            "comp_flag_HLY-CLDH-NORMAL",
+            "years_HLY-CLDH-NORMAL",
+            "HLY-HTDH-NORMAL",
+            "meas_flag_HLY-HTDH-NORMAL",
+            "comp_flag_HLY-HTDH-NORMAL",
+            "years_HLY-HTDH-NORMAL",
+            "HLY-CLOD-PCTCLR",
+            "meas_flag_HLY-CLOD-PCTCLR",
+            "comp_flag_HLY-CLOD-PCTCLR",
+            "years_HLY-CLOD-PCTCLR",
+            "HLY-CLOD-PCTFEW",
+            "meas_flag_HLY-CLOD-PCTFEW",
+            "comp_flag_HLY-CLOD-PCTFEW"
+          ],
+          "row_count": 8760,
+          "temp_columns": [
+            "HLY-TEMP-NORMAL",
+            "meas_flag_HLY-TEMP-NORMAL",
+            "comp_flag_HLY-TEMP-NORMAL",
+            "years_HLY-TEMP-NORMAL"
+          ],
+          "dewpoint_columns": [
+            "HLY-DEWP-NORMAL",
+            "meas_flag_HLY-DEWP-NORMAL",
+            "comp_flag_HLY-DEWP-NORMAL",
+            "years_HLY-DEWP-NORMAL"
+          ],
+          "hour_column": false,
+          "usable": false,
+          "usable_rows": 0
+        }
       }
     }
   ]

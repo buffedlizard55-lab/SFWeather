@@ -5437,6 +5437,7 @@
         "max_gust_kt": 35.9,
         "max_gust_mph": 41.3,
         "oni_ond": 1.21,
+        "oni_source": "derived 3-month running mean centred on Nov 1991",
         "enso_phase": "el_nino"
       },
       {
@@ -5461,6 +5462,7 @@
         "max_gust_kt": 47.8,
         "max_gust_mph": 55.0,
         "oni_ond": -0.28,
+        "oni_source": "derived 3-month running mean centred on Nov 1992",
         "enso_phase": "neutral"
       },
       {
@@ -5485,6 +5487,7 @@
         "max_gust_kt": 38.9,
         "max_gust_mph": 44.8,
         "oni_ond": 0.04,
+        "oni_source": "derived 3-month running mean centred on Nov 1993",
         "enso_phase": "neutral"
       },
       {
@@ -5509,6 +5512,7 @@
         "max_gust_kt": 49.0,
         "max_gust_mph": 56.4,
         "oni_ond": 1.0,
+        "oni_source": "derived 3-month running mean centred on Nov 1994",
         "enso_phase": "el_nino"
       },
       {
@@ -5533,6 +5537,7 @@
         "max_gust_kt": 60.8,
         "max_gust_mph": 70.0,
         "oni_ond": -1.01,
+        "oni_source": "derived 3-month running mean centred on Nov 1995",
         "enso_phase": "la_nina"
       },
       {
@@ -5557,6 +5562,7 @@
         "max_gust_kt": 43.9,
         "max_gust_mph": 50.5,
         "oni_ond": -0.45,
+        "oni_source": "derived 3-month running mean centred on Nov 1996",
         "enso_phase": "neutral"
       },
       {
@@ -5581,6 +5587,7 @@
         "max_gust_kt": 39.0,
         "max_gust_mph": 44.9,
         "oni_ond": 2.4,
+        "oni_source": "derived 3-month running mean centred on Nov 1997",
         "enso_phase": "el_nino"
       },
       {
@@ -5605,6 +5612,7 @@
         "max_gust_kt": 43.9,
         "max_gust_mph": 50.5,
         "oni_ond": -1.48,
+        "oni_source": "derived 3-month running mean centred on Nov 1998",
         "enso_phase": "la_nina"
       },
       {
@@ -5629,6 +5637,7 @@
         "max_gust_kt": 39.0,
         "max_gust_mph": 44.9,
         "oni_ond": -1.46,
+        "oni_source": "derived 3-month running mean centred on Nov 1999",
         "enso_phase": "la_nina"
       },
       {
@@ -5653,6 +5662,7 @@
         "max_gust_kt": 37.9,
         "max_gust_mph": 43.6,
         "oni_ond": -0.75,
+        "oni_source": "derived 3-month running mean centred on Nov 2000",
         "enso_phase": "la_nina"
       },
       {
@@ -5677,6 +5687,7 @@
         "max_gust_kt": 48.0,
         "max_gust_mph": 55.2,
         "oni_ond": -0.35,
+        "oni_source": "derived 3-month running mean centred on Nov 2001",
         "enso_phase": "neutral"
       },
       {
@@ -5701,6 +5712,7 @@
         "max_gust_kt": 55.9,
         "max_gust_mph": 64.3,
         "oni_ond": 1.31,
+        "oni_source": "derived 3-month running mean centred on Nov 2002",
         "enso_phase": "el_nino"
       },
       {
@@ -5725,6 +5737,7 @@
         "max_gust_kt": 47.0,
         "max_gust_mph": 54.1,
         "oni_ond": 0.35,
+        "oni_source": "derived 3-month running mean centred on Nov 2003",
         "enso_phase": "neutral"
       },
       {
@@ -5749,6 +5762,7 @@
         "max_gust_kt": 50.9,
         "max_gust_mph": 58.6,
         "oni_ond": 0.66,
+        "oni_source": "derived 3-month running mean centred on Nov 2004",
         "enso_phase": "el_nino"
       },
       {
@@ -5773,6 +5787,7 @@
         "max_gust_kt": 55.9,
         "max_gust_mph": 64.3,
         "oni_ond": -0.57,
+        "oni_source": "derived 3-month running mean centred on Nov 2005",
         "enso_phase": "la_nina"
       },
       {
@@ -5797,6 +5812,7 @@
         "max_gust_kt": 49.9,
         "max_gust_mph": 57.4,
         "oni_ond": 0.94,
+        "oni_source": "derived 3-month running mean centred on Nov 2006",
         "enso_phase": "el_nino"
       },
       {
@@ -5821,6 +5837,7 @@
         "max_gust_kt": 58.1,
         "max_gust_mph": 66.9,
         "oni_ond": -1.5,
+        "oni_source": "derived 3-month running mean centred on Nov 2007",
         "enso_phase": "la_nina"
       },
       {
@@ -5845,6 +5862,7 @@
         "max_gust_kt": 47.0,
         "max_gust_mph": 54.1,
         "oni_ond": -0.56,
+        "oni_source": "derived 3-month running mean centred on Nov 2008",
         "enso_phase": "la_nina"
       },
       {
@@ -5869,6 +5887,7 @@
         "max_gust_kt": 51.1,
         "max_gust_mph": 58.8,
         "oni_ond": 1.36,
+        "oni_source": "derived 3-month running mean centred on Nov 2009",
         "enso_phase": "el_nino"
       },
       {
@@ -5893,6 +5912,7 @@
         "max_gust_kt": 50.9,
         "max_gust_mph": 58.6,
         "oni_ond": -1.64,
+        "oni_source": "derived 3-month running mean centred on Nov 2010",
         "enso_phase": "la_nina"
       },
       {
@@ -5917,6 +5937,7 @@
         "max_gust_kt": 41.0,
         "max_gust_mph": 47.2,
         "oni_ond": -1.02,
+        "oni_source": "derived 3-month running mean centred on Nov 2011",
         "enso_phase": "la_nina"
       },
       {
@@ -5941,6 +5962,7 @@
         "max_gust_kt": 47.0,
         "max_gust_mph": 54.1,
         "oni_ond": 0.12,
+        "oni_source": "derived 3-month running mean centred on Nov 2012",
         "enso_phase": "neutral"
       },
       {
@@ -5965,6 +5987,7 @@
         "max_gust_kt": 42.0,
         "max_gust_mph": 48.3,
         "oni_ond": -0.1,
+        "oni_source": "derived 3-month running mean centred on Nov 2013",
         "enso_phase": "neutral"
       },
       {
@@ -5989,6 +6012,7 @@
         "max_gust_kt": 42.0,
         "max_gust_mph": 48.3,
         "oni_ond": 0.71,
+        "oni_source": "derived 3-month running mean centred on Nov 2014",
         "enso_phase": "el_nino"
       },
       {
@@ -6013,6 +6037,7 @@
         "max_gust_kt": 46.0,
         "max_gust_mph": 52.9,
         "oni_ond": 2.65,
+        "oni_source": "derived 3-month running mean centred on Nov 2015",
         "enso_phase": "el_nino"
       },
       {
@@ -6037,6 +6062,7 @@
         "max_gust_kt": 53.0,
         "max_gust_mph": 61.0,
         "oni_ond": -0.6,
+        "oni_source": "derived 3-month running mean centred on Nov 2016",
         "enso_phase": "la_nina"
       },
       {
@@ -6061,6 +6087,7 @@
         "max_gust_kt": 40.0,
         "max_gust_mph": 46.0,
         "oni_ond": -0.76,
+        "oni_source": "derived 3-month running mean centred on Nov 2017",
         "enso_phase": "la_nina"
       },
       {
@@ -6085,6 +6112,7 @@
         "max_gust_kt": 53.0,
         "max_gust_mph": 61.0,
         "oni_ond": 0.97,
+        "oni_source": "derived 3-month running mean centred on Nov 2018",
         "enso_phase": "el_nino"
       },
       {
@@ -6109,6 +6137,7 @@
         "max_gust_kt": 41.0,
         "max_gust_mph": 47.2,
         "oni_ond": 0.58,
+        "oni_source": "derived 3-month running mean centred on Nov 2019",
         "enso_phase": "el_nino"
       },
       {
@@ -6133,6 +6162,7 @@
         "max_gust_kt": 46.0,
         "max_gust_mph": 52.9,
         "oni_ond": -1.2,
+        "oni_source": "derived 3-month running mean centred on Nov 2020",
         "enso_phase": "la_nina"
       }
     ],

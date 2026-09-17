@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T19:02:23Z",
+  "generated_utc": "2026-09-17T19:06:32Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset)",
@@ -36,11 +36,7 @@
     "verified_coordinate_source": "U.S. Census Bureau 2024 Gazetteer ZCTA file",
     "coordinate_source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip",
     "season_window": "October 1, 2026 - January 31, 2027 (123 days)",
-    "current_enso": {
-      "year_month": "2026-05",
-      "oni_c": 0.98,
-      "phase": "el_nino"
-    },
+    "current_enso": {},
     "season_total_prcp": {
       "n": 30,
       "mean": 12.79,
@@ -204,7 +200,7 @@
         "p90": 18.59
       }
     },
-    "key_finding": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 11.1 days per season on average at SFO (upper bound for Sunset). Current ENSO: el_nino (official ONI 0.98C, 2026-05) tilts toward wetter than normal; the CPC outlooks attached to each day show the official probabilities for this window."
+    "key_finding": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 11.1 days per season on average at SFO (upper bound for Sunset). Current ENSO: None (official ONI NoneC, unknown period) tilts toward wetter than normal, with CPC status \"El Ni\"; the CPC outlooks attached to each day show the official probabilities for this window."
   },
   "monthly": [
     {
@@ -807,14 +803,6 @@
       "detail": "SFO ASOS reports average strongest gust of season 53.8 mph, median 54.1 mph. Sunset will be less, but this is the verified upper bound. Check trees, fences, and loose items.",
       "source": "NCEI GSOD 72494023234",
       "source_url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt"
-    },
-    {
-      "category": "ENSO / seasonal tilt",
-      "priority": "high",
-      "title": "ENSO phase: el_nino (official ONI 0.98\u00b0C for 2026-05)",
-      "detail": "NOAA's published ONI product shows 2026-05 at 0.98\u00b0C = el_nino. In El Ni\u00f1o years, Oct-Jan mean was 14.23 in vs 11.16 in for La Ni\u00f1a (n=11 El Ni\u00f1o seasons). El Ni\u00f1o tilts toward wetter, but spread is wide: wettest El Ni\u00f1o 22.82 in, driest El Ni\u00f1o 7.27 in.",
-      "source": "NOAA CPC official ONI product (oni.ascii.txt)",
-      "source_url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
     },
     {
       "category": "Official CPC outlook",
