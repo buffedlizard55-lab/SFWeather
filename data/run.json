@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T05:27:26Z",
+  "generated_utc": "2026-09-17T14:11:06Z",
   "pipeline_version": "1.0",
   "target": {
     "zip": "94122",
@@ -20,7 +20,7 @@
       "column_names_used": {
         "geoid": "GEOID",
         "lat": "INTPTLAT",
-        "lon": "INTPTLONG                                                                                                                                  "
+        "lon": "INTPTLONG"
       }
     }
   },
@@ -34,8 +34,8 @@
   ],
   "counts": {
     "manifest_entries": 100,
-    "successful_fetches": 96,
-    "failed_fetches": 4,
+    "successful_fetches": 98,
+    "failed_fetches": 2,
     "irregularities": 3
   }
 }
