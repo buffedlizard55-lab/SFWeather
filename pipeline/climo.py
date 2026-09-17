@@ -109,41 +109,96 @@ def ghcn_to_f(tenths_c):
 
 # ------------------------------------------------------------------- GSOD
 
+# Unit convention verified against the official NCEI GSOD README
+# (https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt):
+# every element in the *CSV* access files is already stored in decimal units -
+# "TEMP ... degrees Fahrenheit to tenths. Missing = 9999.9", "WDSP ... knots to
+# tenths. Missing = 999.9", "PRCP ... (.01 inches)".  The parenthetical is the
+# reporting PRECISION, not a multiplier, so no scaling is applied below.
+#
+# Caveat recorded in the same README: "The data are reported and summarized
+# based on Greenwich Mean Time (GMT, 0000Z - 2359Z)".  A GSOD day is therefore
+# a UTC day, i.e. 16:00-16:00 local time in San Francisco, not a local day.
 GSOD_MISSING = {"WDSP": 999.9, "MXSPD": 999.9, "GUST": 999.9,
                 "PRCP": 99.99, "MAX": 9999.9, "MIN": 9999.9, "TEMP": 9999.9}
+GSOD_README_URL = "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt"
+GSOD_SCALE = 1.0
+
+
+def _split_gsod_row(row, n_fields, name_idx):
+    """Repair a GSOD row whose NAME field contains unquoted commas.
+
+    NCEI writes the station NAME unquoted, e.g.
+    ``72494023234,2020-01-01,...,SAN FRANCISCO INTERNATIONAL AIRPORT, CA US,...``
+    so the row arrives with more fields than the header.  The surplus fields
+    belong to NAME and are rejoined here.
+    """
+    if len(row) == n_fields:
+        return row
+    if len(row) > n_fields:
+        extra = len(row) - n_fields
+        return row[:name_idx] + [", ".join(p.strip() for p in row[name_idx:name_idx + extra + 1])] + row[name_idx + extra + 1:]
+    return None
 
 
 def parse_gsod(text):
     """Parse one GSOD station-year CSV into a list of daily dicts.
 
-    GSOD units: WDSP/MXSPD/GUST = tenths of knots, PRCP = hundredths of inches,
-    MAX/MIN/TEMP = tenths of degrees Fahrenheit.
+    GSOD CSV units (see GSOD_README_URL): WDSP/MXSPD/GUST in knots, PRCP in
+    inches, MAX/MIN/TEMP in degrees Fahrenheit.  Missing values are all-9s.
     """
+    lines = text.splitlines()
+    if not lines:
+        return []
+    header = next(csv.reader([lines[0]]), [])
+    if not header:
+        return []
+    header = [h.strip().lstrip("﻿") for h in header]
+    n_fields = len(header)
+    try:
+        name_idx = header.index("NAME")
+    except ValueError:
+        name_idx = 5
+
+    def col(name):
+        return header.index(name) if name in header else None
+
+    i_date, i_wdsp = col("DATE"), col("WDSP")
+    i_mxspd, i_gust = col("MXSPD"), col("GUST")
+    i_prcp, i_max, i_min = col("PRCP"), col("MAX"), col("MIN")
+
+    def num(row, index, scale, missing):
+        if index is None or index >= len(row):
+            return None
+        raw = (row[index] or "").strip()
+        if raw in ("", "nan"):
+            return None
+        try:
+            v = float(raw)
+        except ValueError:
+            return None
+        if abs(v - missing) < 1e-6:
+            return None
+        return v * scale
+
     rows = []
-    reader = csv.DictReader(io.StringIO(text))
-    for row in reader:
-        date = (row.get("DATE") or "").strip()
+    for raw in csv.reader(lines[1:]):
+        if not raw or (i_date is not None and i_date >= len(raw)):
+            continue
+        row = _split_gsod_row(raw, n_fields, name_idx)
+        if row is None or (i_date is not None and len(row) != n_fields):
+            continue
+        date = (row[i_date] or "").strip() if i_date is not None else ""
         if len(date) != 10:
             continue
-
-        def num(field, scale, missing):
-            raw = (row.get(field) or "").strip()
-            try:
-                v = float(raw)
-            except ValueError:
-                return None
-            if abs(v - missing) < 1e-6:
-                return None
-            return v * scale
-
         rows.append({
             "date": date,
-            "wind_kt": num("WDSP", 0.1, GSOD_MISSING["WDSP"]),        # tenths kt -> kt
-            "max_wind_kt": num("MXSPD", 0.1, GSOD_MISSING["MXSPD"]),  # tenths kt -> kt
-            "gust_kt": num("GUST", 0.1, GSOD_MISSING["GUST"]),        # tenths kt -> kt
-            "prcp_in": num("PRCP", 0.01, GSOD_MISSING["PRCP"]),       # hund. in -> in
-            "max_f": num("MAX", 0.1, GSOD_MISSING["MAX"]),
-            "min_f": num("MIN", 0.1, GSOD_MISSING["MIN"]),
+            "wind_kt": num(row, i_wdsp, GSOD_SCALE, GSOD_MISSING["WDSP"]),        # knots
+            "max_wind_kt": num(row, i_mxspd, GSOD_SCALE, GSOD_MISSING["MXSPD"]),  # knots
+            "gust_kt": num(row, i_gust, GSOD_SCALE, GSOD_MISSING["GUST"]),        # knots
+            "prcp_in": num(row, i_prcp, GSOD_SCALE, GSOD_MISSING["PRCP"]),        # inches
+            "max_f": num(row, i_max, GSOD_SCALE, GSOD_MISSING["MAX"]),
+            "min_f": num(row, i_min, GSOD_SCALE, GSOD_MISSING["MIN"]),
         })
     return rows
 

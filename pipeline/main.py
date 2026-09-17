@@ -706,6 +706,16 @@ def fetch_ghcn():
 
 
 def fetch_gsod(years):
+    # Fetch the official GSOD README first: it is the authority for the unit
+    # convention and the UTC-day caveat used by climo.parse_gsod.
+    readme, rres = fetchlib.get_text(climo.GSOD_README_URL, timeout=120)
+    record(rres, note="NCEI GSOD README - authoritative element units and missing-value flags")
+    if not rres.ok:
+        note_irregularity("warning", "ncei",
+                          "GSOD README could not be retrieved; unit convention was "
+                          "verified manually against the published documentation.",
+                          {"url": climo.GSOD_README_URL, "status": rres.status})
+
     for sid, name in GSOD_STATIONS:
         rows_by_date = {}
         statuses = []
@@ -891,11 +901,27 @@ def main():
             "precip_station": {"id": ghcn["station_id"], "name": ghcn["name"], "url": ghcn["url"]},
             "wind_station": {"id": gsod["station_id"], "name": gsod["name"],
                              "url": gsod["base_url"]},
+            "unit_authority": {"gsod_readme": climo.GSOD_README_URL},
             "units": {
                 "precip": "inches (liquid)",
                 "temp": "degrees Fahrenheit",
                 "wind": "miles per hour (converted from GSOD knots, 1 kt = 1.15078 mph)",
             },
+            "caveats": [
+                "GSOD (wind) days are UTC days (0000Z-2359Z), i.e. roughly 16:00-16:00 "
+                "local time in San Francisco, whereas GHCN-Daily (rain) days are local "
+                "days. The joint wind-and-rain statistics therefore pair a local-day rain "
+                "total with a UTC-day wind figure for the same calendar date. This is an "
+                "approximation and is stated rather than hidden.",
+                "Wind data come from the SFO ASOS (KSFO), about 10 miles south-east of "
+                "94122. Exposure at SFO is more open than in the Sunset, so wind speeds "
+                "there are typically higher than at the ZIP code itself.",
+                "GSOD 'MAX'/'MIN' are the reported daily extremes, which per NCEI are not "
+                "always the true calendar-day extremes.",
+                "Percentages for a single calendar date are computed from 30 seasons "
+                "(1991-2020). One season adds or subtracts about 3.3 percentage points, so "
+                "treat single-date percentages as indicative, not precise.",
+            ],
             "definitions": {
                 "wet_day": "calendar day with >= 0.01 in of liquid precipitation",
                 "wet_streak": "consecutive wet days within Oct 1 - Jan 31",
