@@ -2,7 +2,7 @@
   "official_oni": {
     "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
     "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-    "retrieved_utc": "2026-09-17T19:29:33Z",
+    "retrieved_utc": "2026-09-17T19:34:19Z",
     "definition": "ONI = 3-month running mean of ERSSTv5 sea-surface temperature anomalies in the Nino 3.4 region; NOAA declares El Nino at >= +0.5 C and La Nina at <= -0.5 C.",
     "seasons": [
       {
@@ -1331,7 +1331,7 @@
       "label": "CPC ENSO Diagnostic Discussion (monthly status + Alert System Status)",
       "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml",
       "sha256": "eacaf2fa573069c599ad95006be54a1f363384d2fea7b6ef25abdc8c654af575",
-      "retrieved_utc": "2026-09-17T19:29:53Z",
+      "retrieved_utc": "2026-09-17T19:34:19Z",
       "characters": 3482,
       "mentions_current_year": true,
       "usable_as_current_source": true,
@@ -1355,7 +1355,7 @@
       "label": "CPC long-lead (monthly/seasonal) outlook discussion",
       "url": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
       "sha256": "c6307e499e46cf2c0047f87de6a3169ed484923b62755f5e4350d786589ea781",
-      "retrieved_utc": "2026-09-17T19:29:54Z",
+      "retrieved_utc": "2026-09-17T19:34:20Z",
       "characters": 16942,
       "mentions_current_year": true,
       "usable_as_current_source": true,
@@ -1369,12 +1369,12 @@
         "A modest tilt in the odds towards above normal precipitation is depicted from portions of southcentral Alaska eastward through much of Southeast Alaska.",
         "Modest tilts towards below normal precipitation amounts are favored over the Aleutians, interior portions of Mainland Alaska, interior portions of the northwestern CONUS, and parts of the Great Lakes region.",
         "Equal chances (EC) are forecast for areas where probabilities for each category of seasonal mean temperatures and seasonal accumulated precipitation amounts are expected to be similar to climatological probabilities.",
-        "BASIS AND SUMMARY OF THE CURRENT LONG-LEAD OUTLOOKS Note: For Graphical Displays of the Forecast Tools Discussed Below See: http://www. cpc.ncep.noaa.gov/products/predictions/90day/tools/briefing CURRENT ATMOSPHERIC AND OCEANIC CONDITIONS El Ni\u00f1o strengthened over the past month, with sea surface temperature (SST)",
         "The latest weekly Ni\u00f1o index value for Ni\u00f1o-3.4 was +2.0\u00b0C, and for Ni\u00f1o-3 the index value was +2.8\u00b0C.",
         "Collectively, the coupled ocean-atmosphere system reflected a strengthening El Ni\u00f1o.",
         "During the October-November-December (OND) 2026 season, there is a 75% chance of a historic event that would exceed the strength of previous El Ni\u00f1o events dating back to 1950 (+2.5\u00b0C or more for a 3-month RONI value).",
         "With an event of this magnitude, the chances of experiencing impacts consistent with El Ni\u00f1o are larger, but they are not guaranteed.",
-        "In summary, El Ni\u00f1o is strengthening, with a greater than 90% chance of a very strong event during the Northern Hemisphere fall and winter 2026-27."
+        "In summary, El Ni\u00f1o is strengthening, with a greater than 90% chance of a very strong event during the Northern Hemisphere fall and winter 2026-27.",
+        "TEMPERATURE AND PRECIPITATION OUTLOOKS Newer RONI ENSO composites derived from the current and forecast state of ENSO were strongly utilized due to the magnitude of this El Ni\u00f1o event."
       ]
     }
   ],
@@ -1404,7 +1404,7 @@
       "label": "CPC ONI_v5 page (interactive; not machine-readable)",
       "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php",
       "sha256": "7e9cef7ebf78acaede6847bc2134751811b0807d263f43bc11023f0b6d0a6815",
-      "retrieved_utc": "2026-09-17T19:29:57Z",
+      "retrieved_utc": "2026-09-17T19:34:22Z",
       "characters": 1702,
       "mentions_current_year": false,
       "usable_as_current_source": false,

@@ -25,7 +25,7 @@
   },
   "forecast_daily": {
     "updated": "2026-09-17T18:27:41+00:00",
-    "generated_at": "2026-09-17T19:18:44+00:00",
+    "generated_at": "2026-09-17T19:02:52+00:00",
     "valid_times": "2026-09-17T12:00:00+00:00/P7DT13H",
     "elevation_m": 45.1104,
     "periods": [
@@ -273,7 +273,7 @@
   },
   "forecast_hourly": {
     "updated": "2026-09-17T18:27:41+00:00",
-    "generated_at": "2026-09-17T19:18:44+00:00",
+    "generated_at": "2026-09-17T19:02:53+00:00",
     "elevation_m": 45.1104,
     "periods": [
       {
@@ -5032,7 +5032,7 @@
     "count": 0,
     "test_count": 0,
     "count_including_tests": 0,
-    "updated": "2026-09-17T19:26:06+00:00",
+    "updated": "2026-09-17T19:30:55+00:00",
     "events": [],
     "source_url": "https://api.weather.gov/alerts/active?zone=CAZ006",
     "human_url": "https://www.weather.gov/mtr"
