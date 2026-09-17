@@ -25,23 +25,23 @@
   },
   "forecast_daily": {
     "updated": null,
-    "generated_at": "2026-09-17T14:15:20+00:00",
+    "generated_at": "2026-09-17T16:56:57+00:00",
     "valid_times": "2026-09-17T02:00:00+00:00/P7DT23H",
     "elevation_m": 45.1104,
     "periods": [
       {
         "number": 1,
         "name": "Today",
-        "start_time": "2026-09-17T07:00:00-07:00",
+        "start_time": "2026-09-17T09:00:00-07:00",
         "end_time": "2026-09-17T18:00:00-07:00",
         "is_daytime": true,
         "temperature_f": 65,
         "temperature_unit": "F",
         "wind_speed": "8 mph",
         "wind_direction": "SW",
-        "icon": "https://api.weather.gov/icons/land/day/rain,20/bkn?size=medium",
-        "short_forecast": "Slight Chance Drizzle then Partly Sunny",
-        "detailed_forecast": "A slight chance of drizzle before 11am. Partly sunny, with a high near 65. Southwest wind around 8 mph. Chance of precipitation is 20%.",
+        "icon": "https://api.weather.gov/icons/land/day/rain,20/sct?size=medium",
+        "short_forecast": "Slight Chance Drizzle then Mostly Sunny",
+        "detailed_forecast": "A slight chance of drizzle before 11am. Mostly sunny, with a high near 65. Southwest wind around 8 mph. Chance of precipitation is 20%.",
         "pop_pct": 15,
         "dewpoint_f": null,
         "relative_humidity_pct": null
@@ -273,7 +273,7 @@
   },
   "forecast_hourly": {
     "updated": null,
-    "generated_at": "2026-09-17T16:46:06+00:00",
+    "generated_at": "2026-09-17T16:56:57+00:00",
     "elevation_m": 45.1104,
     "periods": [
       {
@@ -5187,7 +5187,7 @@
       "elevation_m": 62.419992,
       "distance_m": 17818.193337506,
       "observation": {
-        "timestamp": "2026-09-17T16:15:00+00:00",
+        "timestamp": "2026-09-17T16:30:00+00:00",
         "temperature_c": null,
         "dewpoint_c": null,
         "relative_humidity_pct": null,
@@ -5207,7 +5207,7 @@
       "elevation_m": 3.048,
       "distance_m": 19117.58413345,
       "observation": {
-        "timestamp": "2026-09-17T16:30:00+00:00",
+        "timestamp": "2026-09-17T16:35:00+00:00",
         "temperature_c": 18,
         "dewpoint_c": 12,
         "relative_humidity_pct": 67.97370121525,
@@ -5217,7 +5217,7 @@
         "barometric_pressure_pa": 101930.3,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
-        "text_description": "Cloudy"
+        "text_description": "Mostly Cloudy"
       },
       "observation_url": "https://api.weather.gov/stations/KSFO/observations/latest"
     },
@@ -5255,14 +5255,14 @@
       "elevation_m": 29.410152,
       "distance_m": 22798.124785519,
       "observation": {
-        "timestamp": "2026-09-17T16:10:00+00:00",
+        "timestamp": "2026-09-17T16:30:00+00:00",
         "temperature_c": 17.22,
-        "dewpoint_c": 14.14,
-        "relative_humidity_pct": 82.109869615189,
+        "dewpoint_c": 14.33,
+        "relative_humidity_pct": 83.125728816881,
         "wind_speed_kmh": 0,
         "wind_gust_kmh": 0,
-        "wind_direction_deg": 158,
-        "barometric_pressure_pa": 101860,
+        "wind_direction_deg": 258,
+        "barometric_pressure_pa": 101880,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
         "text_description": ""
@@ -5273,7 +5273,7 @@
   "active_alerts": {
     "zone": "CAZ006",
     "count": 1,
-    "updated": "2026-09-17T16:45:00+00:00",
+    "updated": "2026-09-17T16:54:56+00:00",
     "events": [
       {
         "event": "Tsunami Warning",
