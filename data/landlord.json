@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T19:16:27Z",
+  "generated_utc": "2026-09-17T19:22:55Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset)",
@@ -207,7 +207,7 @@
         "p90": 18.59
       }
     },
-    "key_finding": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 11.1 days per season on average at SFO (upper bound for Sunset). Current ENSO: el_nino (official ONI 1.8C, JJA 2026) tilts toward wetter than normal, with CPC status \"El Ni\"; the CPC outlooks attached to each day show the official probabilities for this window."
+    "key_finding": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 11.1 days per season on average at SFO (upper bound for Sunset). Current ENSO: el_nino (official ONI 1.8C, JJA 2026) tilts toward wetter than normal, with CPC status \"El Ni\u00f1o Advisory\"; the CPC outlooks attached to each day show the official probabilities for this window."
   },
   "monthly": [
     {
@@ -965,7 +965,7 @@
       "category": "ENSO / seasonal tilt",
       "priority": "high",
       "title": "ENSO phase: el_nino (official ONI 1.8\u00b0C for JJA 2026)",
-      "detail": "NOAA's published ONI product shows JJA 2026 at 1.8\u00b0C = el_nino, strong by CPC's own strength bands. CPC Alert System Status: El Ni. In El Ni\u00f1o years, Oct-Jan mean was 14.23 in vs 11.16 in for La Ni\u00f1a (n=11 El Ni\u00f1o seasons). El Ni\u00f1o tilts toward wetter, but spread is wide: wettest El Ni\u00f1o 22.82 in, driest El Ni\u00f1o 7.27 in.",
+      "detail": "NOAA's published ONI product shows JJA 2026 at 1.8\u00b0C = el_nino, strong by CPC's own strength bands. CPC Alert System Status: El Ni\u00f1o Advisory. In El Ni\u00f1o years, Oct-Jan mean was 14.23 in vs 11.16 in for La Ni\u00f1a (n=11 El Ni\u00f1o seasons). El Ni\u00f1o tilts toward wetter, but spread is wide: wettest El Ni\u00f1o 22.82 in, driest El Ni\u00f1o 7.27 in.",
       "source": "NOAA CPC official ONI product (oni.ascii.txt)",
       "source_url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
     },
