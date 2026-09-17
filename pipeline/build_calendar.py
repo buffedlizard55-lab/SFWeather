@@ -1,39 +1,46 @@
 #!/usr/bin/env python3
 """Assemble the Oct 1 2026 - Jan 31 2027 day-by-day scoreboard.
 
-Tiering rules (these are the anti-hallucination rules of the whole project):
+Tiering rules - these are the anti-hallucination rules of the whole project:
 
-1. ``nws``          - the day falls inside the official NWS gridded forecast
-                      horizon.  Temperature, humidity, wind, gusts, rain chance
-                      and rain amount are the actual NWS numbers.
-2. ``cpc_week2``    - the day falls inside the CPC 6-10 or 8-14 day outlook
-                      window.  Only CPC's probability-of-above/below-normal
-                      statement is carried; daily numbers come from climatology.
-3. ``cpc_monthly``  - the day falls in a month that has an official CPC
-                      monthly outlook.  Same rule: outlook probabilities only.
-4. ``climatology``  - beyond the official forecast horizon.  Everything shown is
-                      the 1991-2020 observed climatology for that calendar date
-                      at the verified NCEI station, and is labelled as such.
+1. ``nws``         - the day is inside the official NWS gridded forecast
+                     horizon.  Temperature, humidity, wind, gusts, rain chance
+                     and rain amount are the actual NWS numbers.
+2. ``climatology`` - beyond the official forecast horizon.  Every number shown
+                     is a 1991-2020 observed statistic for that calendar date
+                     at the verified NCEI station, and is labelled as such.
 
-No day ever shows a made-up "forecast" number.
+CPC outlooks (6-10 day, 8-14 day, Week 3-4, monthly and 3-month seasonal) are
+attached to the days they validly cover as *probability statements only* - they
+never become made-up daily numbers.
 """
 
 from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 import sys
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 OUT = DATA / "calendar.json"
 
+# Test hook: SFWEATHER_DATA lets the builder be exercised against a fixture
+# directory without touching the real datasets.
+_env_dir = __import__("os").environ.get("SFWEATHER_DATA")
+if _env_dir:
+    DATA = Path(_env_dir)
+    OUT = DATA / "calendar.json"
+
 SEASON_START = dt.date(2026, 10, 1)
 SEASON_END = dt.date(2027, 1, 31)
 MM_PER_INCH = 25.4
+
+MONTH_ABBR = {"JAN": 1, "FEB": 2, "MAR": 3, "APR": 4, "MAY": 5, "JUN": 6,
+              "JUL": 7, "AUG": 8, "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12}
+MONTH_NAME = {v: k for k, v in MONTH_ABBR.items()}
 
 
 def load(name):
@@ -44,13 +51,11 @@ def load(name):
 
 
 def parse_wind(s):
-    """NWS hourly windSpeed strings look like '8 mph' or '5 to 11 mph'."""
+    """NWS wind strings look like '8 mph' or '5 to 11 mph' -> take the max."""
     if not s:
         return None
-    nums = [float(x) for x in __import__("re").findall(r"(\d+(?:\.\d+)?)", s)]
-    if not nums:
-        return None
-    return max(nums)
+    nums = [float(x) for x in re.findall(r"(\d+(?:\.\d+)?)", s)]
+    return max(nums) if nums else None
 
 
 def daily_from_hourly(periods, tz_name="America/Los_Angeles"):
@@ -60,9 +65,8 @@ def daily_from_hourly(periods, tz_name="America/Los_Angeles"):
         tz = ZoneInfo(tz_name)
         tz_ok = True
     except Exception:  # noqa: BLE001
-        tz = dt.timezone(dt.timedelta(hours=-8))   # PST fallback
+        tz = dt.timezone(dt.timedelta(hours=-8))
         tz_ok = False
-
     days = {}
     for p in periods:
         st = p.get("start_time")
@@ -72,19 +76,14 @@ def daily_from_hourly(periods, tz_name="America/Los_Angeles"):
             t = dt.datetime.fromisoformat(st.replace("Z", "+00:00"))
         except ValueError:
             continue
-        local = t.astimezone(tz)
-        key = local.date().isoformat()
-        d = days.setdefault(key, {
-            "temps": [], "rh": [], "dewpoint": [], "wind": [], "gust": [],
-            "pop": [], "qpf_mm": 0.0, "hours": 0, "qpf_known": False,
-        })
+        key = t.astimezone(tz).date().isoformat()
+        d = days.setdefault(key, {"temps": [], "rh": [], "wind": [], "gust": [],
+                                  "pop": [], "qpf_mm": 0.0, "hours": 0, "qpf_known": False})
         d["hours"] += 1
         if p.get("temperature_f") is not None:
             d["temps"].append(p["temperature_f"])
         if p.get("rh_pct") is not None:
             d["rh"].append(p["rh_pct"])
-        if p.get("dewpoint_f") is not None:
-            d["dewpoint"].append(p["dewpoint_f"])
         w = parse_wind(p.get("wind_speed"))
         if w is not None:
             d["wind"].append(w)
@@ -107,6 +106,141 @@ def r2(x):
     return None if x is None else round(x, 2)
 
 
+# --------------------------------------------------------------------------
+# CPC outlook parsing
+# --------------------------------------------------------------------------
+
+# First letter -> candidate months.  CPC seasons are written with month
+# initials, so J/M/A are ambiguous and resolved by requiring three consecutive
+# months (DJF -> 12,1,2 ; JJA -> 6,7,8 ; MAM -> 3,4,5).
+MONTH_INITIALS = {"J": (1, 6, 7), "F": (2,), "M": (3, 5), "A": (4, 8),
+                  "S": (9,), "O": (10,), "N": (11,), "D": (12,)}
+
+
+def season_months(token):
+    """Resolve a CPC 3-letter season code to three consecutive months.
+
+    Returns ``(m1, m2, m3)`` or ``None`` if it is not a valid season code.
+    """
+    token = token.upper()
+    if len(token) != 3:
+        return None
+    cands = [MONTH_INITIALS.get(ch) for ch in token]
+    if any(c is None for c in cands):
+        return None
+    import itertools
+    for combo in itertools.product(*cands):
+        m1, m2, m3 = combo
+        if m2 == (m1 % 12) + 1 and m3 == (m2 % 12) + 1:
+            return (m1, m2, m3)
+    return None
+
+
+def parse_season_key(valid_season, stem):
+    """Turn a CPC 'Valid_Seas' string into the (year, month) pairs it covers.
+
+    CPC writes 3-month seasons in upper case (``OND 2026``) and single months
+    in mixed case (``Sep 2026``); the shapefile stem repeats the same
+    convention (``lead2_OND_prcp`` vs ``lead14_Sep_prcp``).
+    """
+    if not valid_season:
+        return None, None
+    parts = valid_season.split()
+    if len(parts) < 2:
+        return None, None
+    token, year_s = parts[0], parts[1]
+    try:
+        year = int(year_s)
+    except ValueError:
+        return None, None
+
+    if token.isupper():
+        triple = season_months(token)
+        if triple:
+            start = triple[0]
+            return [(year + (1 if m < start else 0), m) for m in triple], "season"
+    # mixed-case (or word) single month, e.g. "Sep"
+    if token.upper()[:3] in MONTH_ABBR:
+        return [(year, MONTH_ABBR[token.upper()[:3]])], "month"
+    return None, None
+
+
+def collect_cpc(cpc, default_year):
+    """Flatten every point-sampled CPC outlook into a list of records."""
+    out = []
+    for sf in cpc.get("shapefiles", []):
+        if not sf.get("ok"):
+            continue
+        for smp in sf.get("sampled", []):
+            if not smp.get("ok") or not smp.get("hits"):
+                continue
+            stem = smp.get("stem") or ""
+            # Real CPC stems: seasonal  "lead1_SON_prcp"
+            #                 short    "610temp_latest", "814prcp_latest",
+            #                          "wk34temp_latest"
+            # Normalise the trailing "_latest" off before matching so both
+            # families can be recognised by one pair of patterns.
+            stem_norm = re.sub(r"_latest$", "", stem, flags=re.I)
+            m = re.match(r"lead(\d+)_([A-Za-z]+)_(temp|prcp)$", stem_norm, re.I)
+            lead = int(m.group(1)) if m else None
+            abbrev = m.group(2) if m else None
+            var_from_stem = (m.group(3).lower() if m else None)  # 'temp' | 'prcp'
+            if var_from_stem is None:
+                m2 = re.match(r"^(610|814|wk34)_?(temp|prcp)$", stem_norm, re.I)
+                if m2:
+                    var_from_stem = m2.group(2).lower()
+
+            for hit in smp["hits"]:
+                a = hit.get("attrs") or {}
+                months, kind = parse_season_key(a.get("Valid_Seas"), stem)
+                start_date = a.get("Start_Date")
+                end_date = a.get("End_Date")
+
+                def iso(yyyymmdd):
+                    """DBF numeric fields arrive as floats (20260922.0), so
+                    coerce through int before slicing."""
+                    if yyyymmdd in (None, ""):
+                        return None
+                    try:
+                        s = str(int(float(yyyymmdd)))
+                    except (TypeError, ValueError):
+                        s = str(yyyymmdd).strip()
+                    if len(s) != 8:
+                        return None
+                    try:
+                        return dt.date(int(s[:4]), int(s[4:6]), int(s[6:8])).isoformat()
+                    except ValueError:
+                        return None
+
+                rec = {
+                    "label": sf["label"],
+                    "url": sf["url"],
+                    "stem": stem,
+                    "lead": lead,
+                    "abbrev": abbrev,
+                    "variable": var_from_stem,
+                    "valid_season": a.get("Valid_Seas"),
+                    "kind": kind,
+                    "covers": [f"{y:04d}-{m:02d}" for (y, m) in months] if months else None,
+                    "start_date": iso(start_date),
+                    "end_date": iso(end_date),
+                    "prob": a.get("Prob"),
+                    "category": a.get("Cat"),
+                    "fcst_date": a.get("Fcst_Date"),
+                    "used_nearest_polygon": bool(smp.get("used_nearest_polygon")),
+                }
+                # Human-readable category
+                cat = (rec["category"] or "").strip()
+                rec["category_label"] = {
+                    "EC": "Equal chances",
+                    "Above": "Above normal" if rec["variable"] == "temp" else "Above median",
+                    "Below": "Below normal" if rec["variable"] == "temp" else "Below median",
+                    "A": "Above", "B": "Below", "N": "Near normal",
+                }.get(cat, cat)
+                out.append(rec)
+    return out
+
+
 def main():
     run = load("run.json")
     nws = load("nws.json")
@@ -118,48 +252,29 @@ def main():
     season_climo = climo.get("season", {})
     meta = climo.get("meta", {})
 
-    # ---- NWS daily aggregation -------------------------------------------
     hourly = (nws.get("forecast_hourly") or {}).get("periods") or []
     nws_days, tz_ok = daily_from_hourly(hourly)
-    nws_min_date = min(nws_days) if nws_days else None
-    nws_max_date = max(nws_days) if nws_days else None
+    if not tz_ok:
+        print("  WARNING: zoneinfo unavailable; used fixed -08:00 offset.")
     nws_updated = (nws.get("forecast_hourly") or {}).get("updated")
     hourly_url = (nws.get("forecast_hourly") or {}).get("source_url")
     daily_url = (nws.get("forecast_daily") or {}).get("source_url")
     human_url = (nws.get("forecast_daily") or {}).get("human_url")
 
-    if not tz_ok:
-        print("  WARNING: zoneinfo/America_Los_Angeles not available; used a fixed "
-              "-08:00 offset. Day assignment in November-January may be off by an hour.")
-
-    # ---- CPC windows -------------------------------------------------------
-    cpc_windows = []
-    for sf in cpc.get("shapefiles", []):
-        if not sf.get("ok"):
-            continue
-        cpc_windows.append({
-            "label": sf["label"],
-            "url": sf["url"],
-            "attributes": sf.get("attributes"),
-            "fields": sf.get("fields"),
-            "issuance_ym": sf.get("issuance_ym"),
-        })
-    cpc_valid = cpc.get("valid_periods", {})
+    cpc_records = collect_cpc(cpc, SEASON_START.year)
     cpc_maps = {m["slug"]: m for m in cpc.get("maps", []) if m.get("ok")}
+    cpc_valid = cpc.get("valid_periods", {})
 
-    # Parse the "Valid: <Month> <D> to <Month> <D>, <YYYY>" strings into spans.
     def parse_span(text, default_year):
         if not text:
             return None
-        import re
-        m = re.search(r"([A-Za-z]+)\s+(\d{1,2})\s+(?:to|-|through)\s+([A-Za-z]+)\s+(\d{1,2}),?\s*(\d{4})?",
-                      text, re.I)
+        m = re.search(r"([A-Za-z]+)\s+(\d{1,2})\s+(?:to|-|through)\s+([A-Za-z]+)\s+(\d{1,2}),?\s*(\d{4})?", text, re.I)
         if not m:
             return None
-        months = {mo.lower(): i for i, mo in enumerate(
+        names = {n.lower(): i for i, n in enumerate(
             ["january", "february", "march", "april", "may", "june", "july",
              "august", "september", "october", "november", "december"], 1)}
-        m1, m2 = months.get(m.group(1).lower()), months.get(m.group(3).lower())
+        m1, m2 = names.get(m.group(1).lower()), names.get(m.group(3).lower())
         if not m1 or not m2:
             return None
         y = int(m.group(5)) if m.group(5) else default_year
@@ -174,25 +289,23 @@ def main():
     span_610 = parse_span((cpc_valid.get("610day") or {}).get("valid"), today.year)
     span_814 = parse_span((cpc_valid.get("814day") or {}).get("valid"), today.year)
 
-    # ---- walk the season ---------------------------------------------------
+    # Index short-range outlooks by their explicit date span
+    short_range = [r for r in cpc_records if r["start_date"] and r["end_date"]]
+    seasonal = [r for r in cpc_records if r["covers"]]
+
     calendar = []
     d = SEASON_START
     while d <= SEASON_END:
         mmdd = f"{d.month:02d}-{d.day:02d}"
         iso = d.isoformat()
+        ym = f"{d.year:04d}-{d.month:02d}"
         c = daily_climo.get(mmdd, {})
         n = nws_days.get(iso)
 
-        entry = {
-            "date": iso,
-            "month": d.month,
-            "day": d.day,
-            "weekday": d.strftime("%A"),
-            "month_label": d.strftime("%B"),
-            "mmdd": mmdd,
-        }
+        entry = {"date": iso, "month": d.month, "day": d.day,
+                 "weekday": d.strftime("%A"), "month_label": d.strftime("%B"),
+                 "mmdd": mmdd}
 
-        # --- tier 1: official NWS forecast
         if n and n["hours"] >= 8:
             entry["tier"] = "nws"
             entry["tier_label"] = "Official NWS forecast"
@@ -207,9 +320,8 @@ def main():
             entry["rain_amount_in"] = r2(n["qpf_mm"] / MM_PER_INCH) if n["qpf_known"] else None
             entry["hours_covered"] = n["hours"]
             entry["sources"] = [
-                {"label": "NWS hourly gridded forecast", "url": hourly_url},
-                {"label": "NWS 7-day forecast (readable)", "url": daily_url},
-                {"label": "NWS forecast for this point", "url": human_url},
+                {"label": "NWS hourly gridded forecast (api.weather.gov)", "url": hourly_url},
+                {"label": "NWS 7-day forecast for this point (weather.gov)", "url": human_url},
             ]
         else:
             entry["tier"] = "climatology"
@@ -221,31 +333,24 @@ def main():
             entry["gust_max_mph"] = c.get("normal_max_gust_mph")
             entry["rain_chance_pct"] = c.get("p_rain_day_pct")
             entry["rain_amount_in"] = c.get("mean_daily_prcp_in")
+            entry["hours_covered"] = 0
             entry["sources"] = [
-                {"label": meta.get("precip_station", {}).get("name", "NCEI GHCN-Daily"),
+                {"label": f"NCEI GHCN-Daily {meta.get('precip_station', {}).get('id', '')}",
                  "url": meta.get("precip_station", {}).get("url")},
-                {"label": meta.get("wind_station", {}).get("name", "NCEI GSOD"),
+                {"label": f"NCEI GSOD {meta.get('wind_station', {}).get('id', '')}",
                  "url": meta.get("wind_station", {}).get("url")},
             ]
 
-        # --- CPC overlay
-        entry["cpc"] = []
-        if span_610 and span_610[0] <= iso <= span_610[1]:
-            entry["cpc"].append({"period": "6-10 Day Outlook",
-                                 "valid": (cpc_valid.get("610day") or {}).get("valid"),
-                                 "issued": (cpc_valid.get("610day") or {}).get("issued"),
-                                 "url": "https://www.cpc.ncep.noaa.gov/products/predictions/610day/",
-                                 "map": cpc_maps.get("610day_temp", {}).get("local_path"),
-                                 "map_prcp": cpc_maps.get("610day_prcp", {}).get("local_path")})
-        if span_814 and span_814[0] <= iso <= span_814[1]:
-            entry["cpc"].append({"period": "8-14 Day Outlook",
-                                 "valid": (cpc_valid.get("814day") or {}).get("valid"),
-                                 "issued": (cpc_valid.get("814day") or {}).get("issued"),
-                                 "url": "https://www.cpc.ncep.noaa.gov/products/predictions/814day/",
-                                 "map": cpc_maps.get("814day_temp", {}).get("local_path"),
-                                 "map_prcp": cpc_maps.get("814day_prcp", {}).get("local_path")})
+        # CPC outlooks that validly cover this day
+        covering = []
+        for r in short_range:
+            if r["start_date"] <= iso <= r["end_date"]:
+                covering.append(r)
+        for r in seasonal:
+            if ym in (r["covers"] or []):
+                covering.append(r)
+        entry["cpc"] = covering
 
-        # --- always carry the climatological context
         entry["climo"] = {
             "p_rain_day_pct": c.get("p_rain_day_pct"),
             "p_rain_ge_025in_pct": c.get("p_rain_ge_025in_pct"),
@@ -274,7 +379,25 @@ def main():
         calendar.append(entry)
         d += dt.timedelta(days=1)
 
-    # ------------------------------------------------------------------
+    # ---- monthly roll-ups -------------------------------------------------
+    dist = season_climo.get("distribution", {})
+    monthly = []
+    for month in (10, 11, 12, 1):
+        key = {10: "october_total_prcp_in", 11: "november_total_prcp_in",
+               12: "december_total_prcp_in", 1: "january_total_prcp_in"}[month]
+        days_in_month = [x for x in calendar if x["month"] == month]
+        exp_wet = round(sum((x["climo"]["p_rain_day_pct"] or 0) for x in days_in_month) / 100.0, 1)
+        monthly.append({
+            "month": month,
+            "label": dt.date(2026, month, 1).strftime("%B"),
+            "year": 2026 if month >= 10 else 2027,
+            "total_prcp": dist.get(key),
+            "expected_wet_days": exp_wet,
+            "days": len(days_in_month),
+            "cpc_seasonal": [r for r in seasonal
+                             if f"{2026 if month >= 10 else 2027:04d}-{month:02d}" in (r["covers"] or [])],
+        })
+
     out = {
         "generated_utc": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "target": run.get("target", {}),
@@ -285,8 +408,8 @@ def main():
             "climatology": "Beyond the official forecast horizon. Values are 1991-2020 observed statistics for this calendar date - NOT a forecast.",
         },
         "nws_window": {
-            "first_day": nws_min_date,
-            "last_day": nws_max_date,
+            "first_day": min(nws_days) if nws_days else None,
+            "last_day": max(nws_days) if nws_days else None,
             "days_covered": sum(1 for e in calendar if e["tier"] == "nws"),
             "forecast_updated": nws_updated,
             "hourly_url": hourly_url,
@@ -294,30 +417,34 @@ def main():
             "human_url": human_url,
         },
         "cpc": {
-            "windows": cpc_windows,
+            "records": cpc_records,
             "valid_periods": cpc_valid,
             "span_610day": span_610,
             "span_814day": span_814,
             "maps": cpc_maps,
+            "discussions": [{"label": d["label"], "url": d["url"],
+                             "human_url": d["human_url"],
+                             "stale": d.get("stale", False)}
+                            for d in cpc.get("discussions", []) if d.get("ok")],
         },
         "enso": {
             "latest": enso.get("latest_oni"),
             "recent": enso.get("recent_oni"),
             "table_url": enso.get("oni_table_url"),
             "diagnostic_url": enso.get("diagnostic_url"),
+            "reference_links": enso.get("reference_links", []),
         },
-        "season_summary": season_climo.get("distribution", {}),
+        "season_summary": dist,
         "streak_probability": season_climo.get("probability_of_at_least_one_streak", {}),
         "enso_stratified": season_climo.get("enso_stratified_season_total_prcp_in", {}),
         "wettest_seasons": season_climo.get("wettest_seasons", []),
         "driest_seasons": season_climo.get("driest_seasons", []),
         "season_by_year": season_climo.get("seasons", []),
+        "monthly": monthly,
         "definitions": meta.get("definitions", {}),
+        "caveats": meta.get("caveats", []),
         "units": meta.get("units", {}),
-        "stations": {
-            "precip_temp": meta.get("precip_station"),
-            "wind": meta.get("wind_station"),
-        },
+        "stations": {"precip_temp": meta.get("precip_station"), "wind": meta.get("wind_station")},
         "days": calendar,
     }
 
@@ -327,6 +454,8 @@ def main():
     print(f"  wrote {OUT} ({OUT.stat().st_size:,} bytes)")
     print(f"  {n_forecast} day(s) carry an official NWS forecast; "
           f"{len(calendar) - n_forecast} day(s) show 1991-2020 climatology.")
+    print(f"  CPC records attached: {len(cpc_records)} "
+          f"({len(seasonal)} seasonal/monthly, {len(short_range)} short-range)")
     return 0
 
 

@@ -7,11 +7,11 @@ name: Update NOAA data
 # Actions logs.
 
 on:
+  # Triggered by ANY push to any branch, not just pipeline changes: the data in
+  # data/ is committed by this job, so a push that touches the site must also
+  # refresh the datasets rather than leaving stale ones behind.
   push:
     branches: ['**']
-    paths:
-      - 'pipeline/**'
-      - '.github/workflows/update-data.yml'
   schedule:
     # 07:15 UTC = 00:15 America/Los_Angeles, just after the NWS 00Z cycle and
     # after CPC posts its daily 6-10 / 8-14 day outlooks (15:00-16:00 ET).

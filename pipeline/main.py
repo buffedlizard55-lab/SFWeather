@@ -193,7 +193,12 @@ def fetch_zip_centroid():
                 "url": url,
                 "file_in_archive": name,
                 "gazetteer_year": (re.search(r"(\d{4})_Gaz", url) or [None, None])[1],
-                "column_names_used": {"geoid": c_geo, "lat": c_lat, "lon": c_lon},
+                # The Gazetteer's last column (INTPTLONG) is space-padded to the
+                # full record width; trim before reporting so the manifest is
+                # readable rather than a wall of trailing blanks.
+                "column_names_used": {"geoid": (c_geo or "").strip(),
+                                      "lat": (c_lat or "").strip(),
+                                      "lon": (c_lon or "").strip()},
             }
 
     note_irregularity("warning", "geography",
@@ -1131,6 +1136,94 @@ def main():
     })
 
     log("\n=== summary ===")
+    # A compact, human-readable digest is written next to the JSON so the
+    # numbers can be checked at a glance (and from anywhere) without parsing
+    # the large datasets.
+    lines = [
+        "SFWeather - rainy season digest",
+        f"generated_utc: {run['generated_utc']}",
+        f"target: 94122  centroid {centroid['lat']:.4f}, {centroid['lon']:.4f}  "
+        f"(verified={centroid.get('verified')}) source={centroid.get('source')}",
+        "",
+    ]
+    if climo_out.get("meta"):
+        m = climo_out["meta"]
+        lines += [
+            "STATIONS",
+            f"  rain/temp: {m['precip_station']['id']}  {m['precip_station']['name']}",
+            f"             {m['precip_station']['url']}",
+            f"  wind:      {m['wind_station']['id']}  {m['wind_station']['name']}",
+            f"             {m['wind_station']['url']}",
+            f"  normals period: {m['normals_period'][0]}-{m['normals_period'][1]}",
+            "",
+        ]
+    dist = climo_out.get("season", {}).get("distribution", {})
+    if dist:
+        lines.append("MONTHLY / SEASONAL RAINFALL (inches, 1991-2020)")
+        for label, key in (("October", "october_total_prcp_in"),
+                           ("November", "november_total_prcp_in"),
+                           ("December", "december_total_prcp_in"),
+                           ("January", "january_total_prcp_in"),
+                           ("Oct 1 - Jan 31 total", "season_total_prcp_in")):
+            d = dist.get(key) or {}
+            if d:
+                lines.append(f"  {label:22s} mean {d['mean']:>6}  median {d['median']:>6}  "
+                             f"min {d['min']:>6}  max {d['max']:>6}  p10 {d['p10']:>6}  p90 {d['p90']:>6}")
+        lines.append("")
+        streaks = climo_out.get("season", {}).get("probability_of_at_least_one_streak", {})
+        if streaks:
+            lines.append("LONG WET STREAKS (consecutive days >= 0.01 in, Oct 1 - Jan 31)")
+            for k, v in streaks.items():
+                lines.append(f"  at least one run >= {k.replace('ge_','').replace('_days','')} days: "
+                             f"{v['pct']}% of {NORMALS_PERIOD[1]-NORMALS_PERIOD[0]+1} seasons "
+                             f"({v['seasons']} seasons)")
+            lws = dist.get("longest_wet_streak_days") or {}
+            if lws:
+                lines.append(f"  longest run per season: mean {lws['mean']}  median {lws['median']}  "
+                             f"min {lws['min']}  max {lws['max']}")
+            lines.append("")
+        wd = dist.get("wet_days") or {}
+        if wd:
+            lines.append(f"WET DAYS per season: mean {wd['mean']}  median {wd['median']}  "
+                         f"min {wd['min']}  max {wd['max']}")
+        jr = dist.get("wind_and_rain_days") or {}
+        hj = dist.get("heavy_wind_and_rain_days") or {}
+        mg = dist.get("max_gust_mph") or {}
+        if jr:
+            lines.append(f"WIND+RAIN DAYS per season (SFO, >=20kt & >=0.01in): mean {jr['mean']}  "
+                         f"median {jr['median']}  max {jr['max']}")
+        if hj:
+            lines.append(f"HEAVY wind+rain days (>=35kt gust & >=0.50in): mean {hj['mean']}  "
+                         f"median {hj['median']}  max {hj['max']}")
+        if mg:
+            lines.append(f"SEASON MAX GUST (mph, SFO): mean {mg['mean']}  median {mg['median']}  max {mg['max']}")
+        lines.append("")
+        en = climo_out.get("season", {}).get("enso_stratified_season_total_prcp_in", {})
+        if en:
+            lines.append("OCT-JAN TOTAL RAINFALL BY ENSO PHASE (inches)")
+            for phase, d in en.items():
+                if d:
+                    lines.append(f"  {phase:10s} n={d.get('n')}  mean {d.get('mean')}  "
+                                 f"median {d.get('median')}  min {d.get('min')}  max {d.get('max')}")
+            lines.append("")
+    if enso.get("latest_oni"):
+        lines += ["ENSO (NOAA CPC ONI)",
+                  f"  latest: {enso['latest_oni']['year_month']}  ONI {enso['latest_oni']['oni_c']} C  "
+                  f"({enso['latest_oni']['phase']})",
+                  f"  table: {enso.get('oni_table_url')}", ""]
+    ws = climo_out.get("season", {}).get("wettest_seasons") or []
+    ds = climo_out.get("season", {}).get("driest_seasons") or []
+    if ws:
+        lines.append("WETTEST Oct-Jan seasons: " + ", ".join(f"{w['season']} {w['total_prcp_in']}in" for w in ws))
+    if ds:
+        lines.append("DRIEST  Oct-Jan seasons: " + ", ".join(f"{w['season']} {w['total_prcp_in']}in" for w in ds))
+        lines.append("")
+    lines.append(f"FETCHES: {run['counts']['successful_fetches']} ok / {run['counts']['failed_fetches']} failed")
+    lines.append(f"IRREGULARITIES: {run['counts']['irregularities']}")
+    for i in IRREGULARITIES:
+        lines.append(f"  [{i['severity']}] {i['area']}: {i['message']}")
+    (outdir / "summary.txt").write_text("\n".join(lines) + "\n")
+
     log(f"  fetches: {run['counts']['successful_fetches']} ok / "
         f"{run['counts']['failed_fetches']} failed")
     log(f"  irregularities: {run['counts']['irregularities']}")
