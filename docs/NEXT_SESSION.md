@@ -8,129 +8,122 @@ official, free, no-key sources; nothing here depends on commercial data.
 
 ## State at the end of this session (17 Sep 2026)
 
-**Working:** the nightly pipeline, the Oct 2026 – Jan 2027 scoreboard, the landlord
-dashboard, the current-forecast panel, the verification ledger, the headless site
-test, and the GitHub Pages site.
+**What is live:** the nightly pipeline, the Oct 2026 – Jan 2027 scoreboard, the
+landlord dashboard, the current-forecast panel, the verification ledger and the
+headless tests. The site is published on GitHub Pages from `data/` in this repo,
+and the datasets are refreshed by the `Update NOAA data` workflow on every push and
+every night at 07:15 UTC.
 
-**Verified end to end:** every headline number is re-derived from its dataset by
-`pipeline/verify_claims.py`, and the nightly job publishes data only when every
-check passes. The ledger, the claim list and the checks are rendered on the site
-under **Verification**.
+**How to tell whether the last run was good** (do this before anything else):
 
-**What this session changed**
+```bash
+gh run list --branch <branch> --limit 3
+git fetch origin && git show FETCH_HEAD:data/run_diagnostics.txt   # *_EXIT codes
+git show FETCH_HEAD:data/verify_report.txt | head -6               # checks: N passed, M failed
+git log --oneline -3                                               # "refresh NOT published" means the gate held
+```
 
-1. **ENSO is now NOAA's published ONI product**, not a value derived here. This
-   fixed a real defect: the site had been showing a derived value labelled
-   "May 2026, +0.98 °C" while NOAA's published product already listed JJA 2026 at
-   **+1.80 °C** (a strong El Niño). The derivation is kept only as a published
-   cross-check against the official season, and any disagreement > 0.15 °C is
-   raised as an irregularity.
-2. **ENSO statements are captured verbatim.** The ENSO Diagnostic Discussion
-   (`ensodisc.shtml`) — which carries the Alert System Status — is now fetched
-   alongside the long-lead discussion, and the exact sentences containing numbers
-   are stored with the SHA-256 of the page. No sentence on the site is typed by
-   hand any more. (Previously the page hard-coded quotes from a superseded
-   issuance: "69% chance of a historic event" when the live discussion says 75%.)
-3. **Test alerts are separated from real alerts.** A NOAA TEST tsunami warning had
-   been counted as an active warning.
-4. **Humidity exists for climatology days.** NCEI's 1991-2020 hourly normals of
-   temperature and dew point are fetched; RH is derived per calendar date with the
-   Magnus formula and labelled as a derivation, naming the station.
-5. **Independent cross-check on the climatology.** NOAA's published monthly normals
-   are fetched and compared with the project's GHCN-derived monthly means (largest
-   difference 0.07 in on the first run).
-6. **CPC outlook records are auditable.** Each sampled outlook now carries the
-   containing polygon index, its bounding box and the raw DBF attribute row.
-7. **Verification ledger + site test**, both wired into CI. The ledger caught four
-   bugs in code written the same session before they could reach the site.
+A run that fails the ledger commits **diagnostics only** (message: "refresh NOT
+published"), so the site keeps the last verified dataset. That is normal and safe.
+
+### What this session changed
+
+1. **ENSO is NOAA's published ONI product**, not a value derived here. The site had
+   been showing a derived "+0.98 °C for May 2026" while NOAA's published product
+   already listed **JJA 2026 at +1.80 °C**. The derivation survives only as a
+   published cross-check (AMJ 2026: 0.98 derived vs 0.95 official).
+2. **Every quoted CPC sentence is fetched at build time** and stored verbatim with
+   the SHA-256 of the page. Previously the ENSO prose was hard-coded and quoted a
+   superseded issuance (69% where the live discussion says 75%).
+3. **Humidity exists on climatology days**, derived per calendar date from NCEI's
+   1991-2020 hourly normals of temperature and dew point (Magnus formula), labelled
+   as a derivation and naming the station. 365 dated values, all 123 days covered.
+4. **NOAA test messages** are counted separately and never shown as real warnings.
+5. **CPC records are auditable**: every sampled outlook carries the containing
+   polygon index, its bounding box, vertex count and the raw DBF attribute row.
+6. **Verification ledger** (`pipeline/verify_claims.py`): 20 checks, 17 claims, each
+   claim with URL, HTTP status, bytes, SHA-256, retrieval time, method and a
+   cross-check. A failure blocks publication.
+7. **Offline unit tests** (`tests/test_parsers.py`, 53 assertions, stdlib only) and a
+   **headless site test** (`npm test`, jsdom). Both run in the `Tests` workflow.
+8. Bugs **14–22** found and fixed this session are listed in
+   [`docs/VERIFICATION.md`](VERIFICATION.md) — including a function deletion that
+   broke the pipeline, HTML-entity corruption of every quote, and a banner that read
+   "reaches 0 day(s)".
 
 ---
 
 ## Open work, in priority order
 
 ### 1. Hourly ISD wind → hour-by-hour simultaneous wind and rain
-**Why:** the joint wind+rain statistic currently pairs a local-day rain total with
-a UTC-day wind figure (GSOD is 00-24Z ≈ 16:00-16:00 Pacific). This is the single
-biggest accuracy gap for the landlord's "wind and rain at the same time" question.
+**Why:** the joint wind+rain statistic pairs a local-day rain total with a UTC-day
+wind figure (GSOD is 00–24Z ≈ 16:00–16:00 Pacific). This is the biggest remaining
+accuracy gap for "wind and rain at the same time".
 **Source:** `https://www.ncei.noaa.gov/data/global-hourly/access/{year}/{station}.csv`
-(free, public, no key, same station `72494023234`).
-**Work:** fetch the Oct-Jan hours of 1991-2025, convert to `America/Los_Angeles`,
-count hours where precipitation > 0 and wind ≥ 20 kt simultaneously, and compare
-with the current daily-max method. Publish only aggregates; never commit the raw
-hourly files.
-**Caveat to publish:** the result must be presented *next to* the existing daily
-approximation, not instead of it, until the two are shown to agree.
-**Effort:** ~1 day plus runtime; put it in its own job with its own timeout.
+(free, no key, same station `72494023234`).
+**Work:** fetch Oct–Jan hours for 1991–2025, convert to `America/Los_Angeles`, count
+hours where precipitation > 0 and wind ≥ 20 kt coincide, and publish that **next to**
+the current daily approximation until the two are shown to agree. Keep raw hourly
+files out of the repository; publish aggregates only. Give it its own job/timeout.
+**Effort:** ~1 day plus runtime.
 
 ### 2. NWS forecast verification loop
-**Why:** accountability. The forecast is already fetched nightly; scoring it costs
-almost nothing and proves the pipeline's value over time.
-**Work:** append each run's 7-day forecast to a compact history file, then score
-against the next day's GHCN/GSOD observations. Publish: POP calibration (did it
-rain when POP ≥ 50%?), mean absolute error of the forecast high, and the same by
-month. Everything stays inside already-verified hosts.
+**Why:** accountability, and the data is already fetched every night.
+**Work:** append each run's 7-day forecast to a compact history file, then score it
+against the next day's GHCN/GSOD observations: POP calibration (did it rain when POP
+≥ 50%?), mean absolute error of the forecast high, by month. Publish the score.
 **Effort:** ~1 day.
 
 ### 3. CPC back-testing for this location
-**Why:** the site reports CPC tips but never scores them.
-**Work:** accumulate every issuance into a history file (the shapefiles are already
-downloaded nightly), then once each valid period completes, compare the sampled
-probability category with the observed GHCN total at 94122 and publish hit rates.
-**Effort:** ~1-2 days, mostly waiting for seasons to complete. A short back-test
-over the last 5-10 years of archived issuances (`seasprcp_YYYYMM.zip`) is possible
-immediately if the storage/time budget allows.
+**Work:** keep a small history of each issuance (`seasprcp_YYYYMM.zip` is already
+downloaded nightly, so archive a compact extract), then once each valid period has
+completed, compare the sampled probability category with the observed GHCN total at
+94122 and publish hit rates. A 5–10 year back-test is possible immediately from the
+archived issuances if storage/time allows.
+**Effort:** ~1–2 days.
 
 ### 4. Atmospheric-river flag from the NWS Area Forecast Discussion
-**Why:** ARs drive nearly all high-impact California rain and are the best available
-signal for "days of straight rain". The AFD text is already fetched verbatim.
-**Work:** regex for atmospheric-river language, attach the *date-coded* mentions to
-the days they refer to, and show the quoted sentence with its source. Never convert
-a mention into a number or a probability.
+**Why:** ARs drive most high-impact California rain and are the best available signal
+for "days of straight rain". The AFD is already fetched verbatim.
+**Work:** match AR language, attach date-coded mentions to the days they refer to, and
+show the quoted sentence with its source. Never turn a mention into a number.
 **Effort:** ~0.5 day.
 
 ### 5. A nearer wind record than SFO
-**Why:** SFO is ~10 mi away and more exposed; every wind number is an upper bound.
-**Work:** assess `SFOC1` and any other ISD stations in the city; if a usable
-overlap exists, publish a documented ratio (labelled an estimate) alongside the raw
-SFO numbers, not instead of them.
+SFO is ~10 mi away and more exposed; every wind number is an upper bound. Assess
+`SFOC1` and other ISD stations in the city; if a usable overlap exists, publish a
+documented ratio (labelled an estimate) alongside the raw SFO numbers.
 
 ### 6. Per-field provenance in the day dialog
 Each number in the dialog should link to the exact element of the exact file it came
-from. Cheap, and it makes the manual line-by-line check faster for a reviewer.
+from. Cheap, and it speeds up the manual line-by-line check.
 
 ### 7. Multi-ZIP support and a digest
 The pipeline is already parameterised by coordinate; multi-ZIP is mostly front-end
-work. A digest (RSS or email) for "day enters the 7-day window with POP ≥ X" or "NWS
-alert for CAZ006" needs an opt-in and a privacy story before it is built.
+work. A digest (RSS or email) for "a day enters the 7-day window with POP ≥ X" or "an
+NWS alert is issued for CAZ006" needs an opt-in and a privacy story first.
 
 ### 8. Model guidance (only with heavy caveats)
-CFSv2/NMME on NOMADS would give a genuine model view of Oct-Jan, but it needs GRIB2
-decoding, large storage, and it is **not an official forecast**. If it is ever
-built, it must be a separate tier or page with prominent warnings — never merged
-into the scoreboard.
+CFSv2/NMME on NOMADS would give a genuine model view of Oct–Jan, but it needs GRIB2
+decoding, large storage, and it is **not an official forecast**. If built, it must be
+a separate tier or page with prominent warnings — never merged into the scoreboard.
 
 ---
 
-## Operational notes
+## Standing rules (do not break these)
 
-* **Nightly:** `.github/workflows/update-data.yml`, 07:15 UTC, after the NWS 00Z
-  cycle and CPC's daily outlook posts. Also runs on every push.
-* **Verification gate:** if `verify_claims.py` fails, the workflow commits
-  *diagnostics only* (`data/pipeline.log`, `run_diagnostics.txt`,
-  `quality_report.json`, `verify.json`, `verify_report.txt`) with the message
-  "refresh NOT published", so the site keeps the last verified numbers.
-* **Site test:** `.github/workflows/site-test.yml` runs `npm test`
-  (`tests/smoke.js`, jsdom) on any change to the page, CSS, JS or tests. It renders
-  the page against the committed data and fails on empty sections, a broken day
-  dialog or a broken CSV export.
-* **Local run:** standard library only —
-  `python3 pipeline/main.py --outdir data`, then `build_calendar.py`,
-  `landlord_summary.py`, `verify_claims.py`, then `python3 -m http.server 8000`.
-* **No-hallucination rule:** never invent a daily value beyond the NWS horizon; always
-  badge `NWS FORECAST` vs `CLIMATOLOGY`; CPC outlooks stay probabilities for a
-  period; every number on the page must exist in `data/` with a source URL and a
-  recorded fetch. If a number cannot be traced, it does not get published — the
-  ledger enforces this.
+* **No invented daily values** beyond the NWS horizon. Days are badged
+  `NWS FORECAST` or `CLIMATOLOGY`; CPC outlooks stay probabilities for a period.
+* **Every number must be traceable** to a recorded official fetch (URL + status +
+  bytes + SHA-256). If it cannot be traced, it does not get published — the ledger
+  enforces this and the workflow gate refuses to publish on failure.
+* **Never loosen a check to make a run pass.** Loosening hides exactly the class of
+  defect the project exists to prevent.
+* **Never force-push.** The data workflow appends commits to the same branch, so a
+  rejected push means `git pull --rebase origin <branch>` first.
+* **`gh` only works from the repository directory.**
+* Commercial providers (AccuWeather and similar) stay excluded and that exclusion is
+  documented on the site, in the README and in `docs/LIMITATIONS.md`.
 
 ---
 
@@ -138,20 +131,16 @@ into the scoreboard.
 
 * Live site — <https://buffedlizard55-lab.github.io/SFWeather/>
 * Repo — <https://github.com/buffedlizard55-lab/SFWeather>
+* **Official ONI product** — <https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt>
+* **ENSO Diagnostic Discussion** (Alert System Status) — <https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml>
+* CPC long-lead discussion — <https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html>
+* CPC GIS outlooks — <https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/>
 * Census Gazetteer (ZCTA 94122) — <https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip>
 * Census reverse geocoder (check the point) — <https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json>
 * NWS point → grid — <https://api.weather.gov/points/37.7605,-122.4839>
 * NWS hourly grid — <https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly>
-* NWS human forecast — <https://forecast.weather.gov/MapClick.php?lat=37.7605&lon=-122.4839>
 * NWS alerts (CAZ006) — <https://api.weather.gov/alerts/active?zone=CAZ006>
 * NWS Area Forecast Discussion — <https://api.weather.gov/products/types/AFD/locations/MTR>
-* **Official ONI product** — <https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt>
-* **ENSO Diagnostic Discussion** — <https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml>
-* CPC long-lead discussion — <https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html>
-* CPC GIS outlooks — <https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/>
-* CPC seasonal index — <https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasonal.php>
-* CPC 6-10 / 8-14 / weeks 3-4 / 30-day — <https://www.cpc.ncep.noaa.gov/products/predictions/610day/>, <https://www.cpc.ncep.noaa.gov/products/predictions/814day/>, <https://www.cpc.ncep.noaa.gov/products/predictions/WK34/>, <https://www.cpc.ncep.noaa.gov/products/predictions/30day/>
-* Niño 3.4 monthly table (cross-check only) — <https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt>
 * GHCN-Daily `USW00023272` — <https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv>
 * GSOD archive — <https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/>
 * GSOD README (units) — <https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt>

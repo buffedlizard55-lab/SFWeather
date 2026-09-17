@@ -802,7 +802,8 @@ def extract_key_sentences(text, limit=14):
 
     sentences = [tidy(p) for p in re.split(r"(?<=[.;])\s+(?=[A-Z(])|\n+", flat)]
     furniture = ("home >", "site map", "college park md", "outlook maps",
-                 "prognostic discussion", "summary of the outlook")
+                 "prognostic discussion", "summary of the outlook",
+                 "basis and summary", "http", "www.")
     keys = ("nino", "niño", "el niño", "el nino", "la niña", "oni", "chance",
             "percent", "%", "above normal", "below normal", "above median",
             "precipitation", "temperature outlook", "wetter", "drier", "historic")

@@ -410,6 +410,15 @@ chrome = pipeline_main.html_to_text(
 csent = pipeline_main.extract_key_sentences(chrome)
 check("page chrome is not glued to the front of a quote",
       any(s.startswith("El Niño conditions are present") for s in csent), str(csent))
+styles = pipeline_main.extract_key_sentences(pipeline_main.html_to_text(
+    "<p>BASIS AND SUMMARY OF THE CURRENT LONG-LEAD OUTLOOKS</p>"
+    "<p>Note: For Graphical Displays of the Forecast Tools Discussed Below See: "
+    "http://www.cpc.ncep.noaa.gov</p>"
+    "<p>The OND 2026 Precipitation Outlook favors above normal precipitation.</p>\n"))
+check("heading/boilerplate lines with links are not quoted",
+      all("BASIS AND SUMMARY" not in s and "http" not in s for s in styles)
+      and any(s.startswith("The OND 2026") for s in styles), str(styles))
+
 check("neither breadcrumbs nor document titles are quoted",
       all("HOME >" not in s and "College Park MD" not in s for s in csent), str(csent))
 

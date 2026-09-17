@@ -99,10 +99,10 @@ this project will not republish numbers it cannot verify.
 
 ## Line-by-line verification (the point of this project)
 
-`pipeline/verify_claims.py` re-reads the produced datasets every night and checks,
-one claim at a time, that the number shown is the number in the official file, that
-the file was really retrieved (with status, bytes and SHA-256 recorded), and that
-the project's rules were respected:
+`pipeline/verify_claims.py` re-reads the produced datasets every night and runs
+**20 automated checks over 17 recorded claims**: that the number shown is the number
+in the official file, that the file was really retrieved (HTTP status, byte count and
+SHA-256 of those exact bytes recorded), and that the project's rules were respected:
 
 * no day labelled an NWS forecast outside the official horizon;
 * no invented daily value beyond that horizon;
@@ -112,7 +112,9 @@ the project's rules were respected:
   same file and compared;
 * the project's GHCN-derived monthly rainfall means compared against NOAA's
   published monthly normals for the same station;
-* every source URL printed on the site traced to a recorded official fetch.
+* every source URL printed on the site traced to a recorded official fetch;
+* every quoted official sentence decoded to plain text, exactly as a browser shows
+  it, with no HTML entity text left in it.
 
 The result is published as `data/verify.json`, `data/verify_report.txt` and the
 **Verification** section of the site. **A failing check stops the data being
@@ -120,10 +122,22 @@ published** — the workflow then commits the diagnostics only, so the site keep
 last verified numbers rather than showing unverified ones.
 
 The mistakes found this way are kept in [`docs/VERIFICATION.md`](docs/VERIFICATION.md),
-not deleted. The third-session audit (17 Sep 2026) found, among others: a stale ENSO
-value, hard-coded quotes quoting a superseded CPC issuance, a NOAA *test* tsunami
-warning counted as a real alert, and two bugs in newly written code that the ledger
-caught on its first run.
+not deleted. The third-session audit (17 Sep 2026), checking every headline number
+against the live product, found and fixed: **a stale ENSO value** (the site showed a
+locally derived +0.98 °C from May 2026 while NOAA's published ONI already stood at
+**+1.80 °C for JJA 2026**), **hard-coded quotes** from a superseded CPC issuance
+(69% where the live discussion says 75%), a NOAA **test** tsunami warning counted as
+a real alert, missing humidity on climatology days, and four defects in newly written
+code — including function deletion and HTML-entity corruption of every quote — that
+the ledger and the offline tests caught before they could ship.
+
+Two further layers run on every push:
+
+* `tests/test_parsers.py` — 52 offline assertions (standard library only, no network)
+  over the parsing and derivation code, including the ONI season convention and a
+  hand-computable end-to-end aggregation;
+* `npm test` — renders the page in jsdom against the committed data and fails if a
+  section is empty, the day dialog breaks or the CSV export throws.
 
 ---
 
@@ -139,6 +153,8 @@ pipeline/build_calendar.py          assembles data/calendar.json + the current f
 pipeline/landlord_summary.py        builds data/landlord.json (landlord dashboard)
 pipeline/verify_sources.py          rejects any non-official host
 pipeline/verify_claims.py           re-derives every headline number; fails the build on error
+tests/test_parsers.py               52 offline assertions on the parsing/derivation code
+tests/smoke.js                      renders the page headlessly and checks it
         │
         ▼
 data/*.json + assets/cpc/*.gif      committed back to the repo (only when verification passes)
@@ -158,6 +174,8 @@ python3 pipeline/main.py --outdir data
 python3 pipeline/build_calendar.py
 python3 pipeline/landlord_summary.py
 python3 pipeline/verify_claims.py
+python3 tests/test_parsers.py   # offline unit tests, no network needed
+npm install && npm test         # headless render of the page
 python3 -m http.server 8000     # then open http://localhost:8000
 ```
 

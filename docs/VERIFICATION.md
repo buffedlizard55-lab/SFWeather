@@ -206,3 +206,56 @@ them until the ledger caught this.
   against the last verified data: 123 days, 38 CPC records, 17 claims, 17/18 checks
   with only `oni-official-present` failing (expected: the local copy of the dataset
   is the pre-fix snapshot).
+
+---
+
+# Session 3 audit — 17 September 2026 (line-by-line, against live sources)
+
+This is the audit the project promised: every headline number taken back to the
+official product it came from, on the day it was published, with the disagreement
+recorded rather than hidden. The table below is the audit; the bugs it produced are
+listed after it, and every one of them was fixed and is now guarded by a test or a
+ledger check.
+
+## What was checked, and what was found
+
+| Claim on the site | Where it was checked | Result |
+| --- | --- | --- |
+| "Current ENSO: derived ONI +0.98 °C (May 2026)" | NOAA's published ONI product, [`oni.ascii.txt`](https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt) | **Wrong product.** NOAA publishes the ONI directly, season-labelled: **JJA 2026 = +1.80 °C, a strong El Nino**, with MJJ +1.39, AMJ +0.95, MAM +0.46, FMA +0.11, JFM −0.21, DJF −0.39, NDJ −0.60, OND −0.61. The site had been showing a locally derived value two months behind and ~0.8 °C too low. **Fixed:** the displayed value is now NOAA's published ONI; the derivation is kept only as a cross-check (AMJ 2026: derived 0.98 vs official 0.95, difference 0.03 °C, published on the site) |
+| Quoted CPC statements ("69% chance of a historic event", originating from a 20 Aug 2026 issuance) | Live ENSO Diagnostic Discussion, issued 10 Sep 2026, and the 90-day outlook discussion, issued 17 Sep 2026 | **Stale wording.** The live discussion says **75%** for a historic event in OND 2026 and **>90%** for a very strong event, and gives August indices of +1.8 (Nino-3.4), +2.5 (Nino-3), +3.4 (Nino-1+2). The page had been hard-coding prose from an earlier issuance. **Fixed:** every quoted sentence is fetched at build time, stored verbatim with the SHA-256 of the page, and shown with a link |
+| "Active NWS alerts: 1" | [`api.weather.gov/alerts/active?zone=CAZ006`](https://api.weather.gov/alerts/active?zone=CAZ006) | **A test message counted as a real warning.** The single alert was a NOAA *TEST* tsunami warning. **Fixed:** test messages are counted and shown separately, never as active warnings |
+| The 94122 coordinate | Census 2024 Gazetteer ZCTA file, plus an independent reverse geocode of the same point | Confirmed: the point is the ZCTA internal point, and the geocoder places it in San Francisco County (06075), 2020 Census Block 060750326013006, Sunset CCD |
+| NWS forecast for the point (stored copy) | Live [`gridpoints/MTR/82,105/forecast`](https://api.weather.gov/gridpoints/MTR/82,105/forecast) and the hourly grid | Matched in structure and values for the same cycle (e.g. the daily high equals the max of its hourly periods). The live forecast had moved on by the time of the check — normal nightly drift, not an error |
+| Climatology means for Oct/Nov/Dec/Jan rain (GHCN-Daily) | NOAA's *published* 1991-2020 monthly normals for the same station | Agree to within **0.07 in** (largest gap: Dec 4.78 derived vs 4.76 published). Cross-check now published on the site every night |
+| "Humidity: —" on climatology days | NCEI 1991-2020 hourly normals | **Gap, not an error.** NOAA publishes no RH normal. **Fixed:** humidity is derived from the official hourly temperature and dew-point normals by calendar date and labelled as a derivation everywhere |
+| CPC prose: OND precipitation "above normal from the southern half of California east-northeastward" | The sampled forecast polygon containing the 94122 point | **Not a conflict, but worth knowing:** the polygon covering the point is **Equal Chances (33%)**; the tilt starts south/east of San Francisco. Regional prose is not a point forecast, and the site reports the polygon, not the prose |
+| Verbatim CPC quotes | The stored sentences against the live pages | **Two bugs**, below: entities were not decoded, and figure references split sentences |
+
+## Bugs found by this audit
+
+| # | Symptom | Root cause | Fix |
+| --- | --- | --- | --- |
+| 19 | The page showed `El Nino Advisory` as **"El Ni"**, and every quote contained `&ntilde;`, `&#37;`, `&deg;` | `html_to_text()` decoded a hand-written list of five entities and left the rest; the status regex then stopped at the first non-word character, and the semicolon inside `&#37;` looked like a sentence end, chopping quotes mid-sentence | Decode with `html.unescape()` + NFC normalisation; read the status to end of line; take the synopsis from its own line. **New ledger check `quotes-plain-text` fails the run if any published quote still contains an entity** |
+| 20 | Quotes were cut at figure references ("... the eastern equatorial Pacific [Fig.") and long-lead quotes were single wrapped lines ("... a greater than 90" / "percent chance of ...") | The splitter treated the period in "[Fig. 1]" as a sentence end, and treated hard-wrapped line breaks as sentence boundaries | A sentence now ends only at `.` or `;` followed by whitespace **and a capital**; wrapped lines are re-joined; a trailing hyphen is kept ("above-\nnormal" -> "above-normal") so no quote is edited |
+| 21 | The reality-check banner read "reaches **0 day(s)**" | The number shown was *scoreboard days inside the horizon* (0 until 1 October), not the length of the horizon | The banner now reports the horizon length and states separately that no scoreboard day is inside it yet; `nws_window.horizon_days` is published in the data |
+| 22 | The first long-lead quote was the page breadcrumb glued to a sentence: "HOME > Outlook Maps > Seasonal Forecast Discussion ... College Park MD 830 AM EDT Thu Sep 17 2026 SUMMARY OF THE OUTLOOK FOR NON-TECHNICAL USERS El Nino conditions are present, ..." | HTML tags become spaces, so nothing marked where the page content began | Everything before the document's own "SUMMARY OF THE OUTLOOK" marker is cut, the all-caps document heading is dropped, and remaining breadcrumb/title fragments are filtered out of the quote list |
+
+Bugs 19-22 were all found by reading the published page against its source, which is
+the workflow this project is built around. 21 and 22 were found in the **rendered
+site**, not in the data — a reminder that a correct dataset can still be displayed
+wrongly, which is why `npm test` renders the page headlessly on every push.
+
+## How the ledger and the tests stand now
+
+* `pipeline/verify_claims.py`: **20 automated checks, 17 recorded claims**, each claim
+  carrying value, unit, method, official URL, HTTP status, bytes, SHA-256, retrieval
+  time and (where one exists) an independent cross-check.
+* `tests/test_parsers.py`: **52 offline assertions** (standard library only, no
+  network) over the things that have actually broken: ONI season rotations and the
+  NDJ/DJF year convention, exact column matching in the NCEI normals files, per-date
+  humidity derivation against an independent Magnus formulation, entity decoding,
+  sentence integrity, and an end-to-end aggregation over a synthetic GHCN file.
+* `npm test` (jsdom): renders the page against the committed data and fails if a
+  section is empty, the day dialog breaks or the CSV export throws.
+* The nightly job runs the ledger **before** publishing: `summary.failed > 0` commits
+  diagnostics only and the message "refresh NOT published".
