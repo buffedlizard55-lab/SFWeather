@@ -711,7 +711,7 @@ def fetch_enso():
          "phase": climo.enso_phase(oni[(y, m)])}
         for (y, m) in latest
     ]
-    out["oni_series"] = {f"{y:04d}-{m:02d}": round(v, 3) for (y, m) in sorted(oni)}
+    out["oni_series"] = {f"{y:04d}-{m:02d}": round(v, 3) for (y, m), v in sorted(oni.items())}
     out["nino34_raw_last12"] = [
         {"year_month": f"{y:04d}-{m:02d}", "anomaly_c": v}
         for (y, m), v in sorted(nino.items())[-12:]
