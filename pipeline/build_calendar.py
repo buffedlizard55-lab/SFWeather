@@ -532,6 +532,10 @@ def main():
             "first_day": min(nws_days) if nws_days else None,
             "last_day": max(nws_days) if nws_days else None,
             "days_covered": sum(1 for e in calendar if e["tier"] == "nws"),
+            # How long the official daily horizon is today, independent of how
+            # many scoreboard days fall inside it (today: none, because the
+            # horizon ends in September and the scoreboard starts on 1 October).
+            "horizon_days": len(current_forecast.get("days") or []),
             "forecast_updated": nws_updated,
             "hourly_url": hourly_url,
             "daily_url": daily_url,

@@ -354,7 +354,9 @@ sample_html = (
     "<p>ENSO Alert System Status: El Ni&ntilde;o Advisory</p>"
     "<p>Synopsis: El Ni&ntilde;o is strengthening, with a greater than 90&#37; "
     "chance of a very strong event during the fall and winter 2026-27.</p>"
-    "<p>Ni&ntilde;o-3.4 reached +1.8&deg;C in August.</p>"
+    "<p>Ni&ntilde;o-3.4 reached +1.8&deg;C in August [Fig. 1] . Except for "
+    "Ni&ntilde;o-4, values increased.</p>"
+    "<p>EL NI&Ntilde;O/SOUTHERN OSCILLATION (ENSO)</p>"
 )
 plain = pipeline_main.html_to_text(sample_html)
 check("entities decoded to what a browser shows",
@@ -376,6 +378,32 @@ check("verbatim sentences keep their opening words",
       any(s.startswith("El Niño is strengthening, with a greater than 90% chance")
           for s in sentences),
       str(sentences[:2]))
+# "August [Fig. 1] ." must survive as one piece: the old splitter cut it at the
+# period inside "Fig." and left a sentence ending in "Pacific [Fig.".
+check("figure references do not cut a sentence in half",
+      any("August [Fig. 1] ." in s and not s.endswith("[Fig.") for s in sentences),
+      str(sentences[:3]))
+check("stand-alone headings are not quoted as sentences",
+      all(not (s.upper() == s) for s in sentences), str(sentences[:2]))
+# The long-lead discussion is hard-wrapped, and a naive splitter turned each
+# wrapped line into its own "sentence" ("... a greater than 90" / "percent
+# chance of ...").
+wrapped = pipeline_main.html_to_text(
+    "El Ni&ntilde;o conditions are present, as represented in current oceanic and\n"
+    "atmospheric anomalies.\n\n"
+    "The CPC Official ENSO outlook, which synthesizes multiple models from North\n"
+    "America and abroad, indicates El Ni&ntilde;o will continue to strengthen through\n"
+    "the end of the year.\n\n"
+    "Above-\nnormal precipitation is favored for the southern half of California.\n")
+wsent = pipeline_main.extract_key_sentences(wrapped)
+check("hard-wrapped lines are re-joined into whole sentences",
+      any(s == "El Niño conditions are present, as represented in current oceanic "
+              "and atmospheric anomalies." for s in wsent), str(wsent))
+check("a hyphen at end of line is re-joined, not treated as a word break",
+      any("Above-normal precipitation is favored" in s for s in wsent), str(wsent))
+check("no quote is a dangling line fragment",
+      all(not s.endswith((" and", " of", " the", " a", " from")) for s in wsent), str(wsent))
+
 check("the 'Synopsis:' label is stripped, the sentence itself is untouched",
       all(not s.startswith("Synopsis") for s in sentences), str(sentences[:1]))
 

@@ -753,25 +753,48 @@ def extract_key_sentences(text, limit=14):
     """Pull the verbatim official sentences that carry the numbers we quote.
 
     Nothing is paraphrased: each returned item is an exact substring of the
-    official product, so a reviewer can Ctrl-F it in the source page.  Sentences
-    are selected on keywords that matter to this project (ENSO strength, the
-    odds of a strong event, and the seasonal temperature/precipitation tilt).
+    official product (once it has been decoded to the form a browser shows), so a
+    reviewer can Ctrl-F it in the source page.  Sentences are selected on keywords
+    that matter to this project: ENSO strength, the odds of a strong event, and
+    the seasonal temperature/precipitation tilt.
+
+    Getting this right is fiddly, and every rule below exists because the obvious
+    version produced a truncated quote:
+
+    * entities are decoded first (``html_to_text``) - otherwise the semicolon in
+      ``&#37;`` looked like a sentence end;
+    * a hyphen at end of line is a wrap, not part of the word, so it is re-joined
+      before anything else ("above-\nnormal" -> "above-normal");
+    * the pages are hard-wrapped, so a single newline is a *wrap*: it is turned
+      into a space so sentences read whole.  Blank lines are left as boundaries;
+    * a heading on its own line ("EL NINO/SOUTHERN OSCILLATION (ENSO)") is not a
+      sentence and is dropped;
+    * section labels ("Synopsis:", "Discussion:") are formatting, not content;
+    * a sentence ends at ``. ;`` **followed by whitespace and a capital**, which
+      is what stops "[Fig. 1] ." and "+1.8 C" from splitting a sentence.
     """
-    # Split on sentence ends *and* on line breaks.  NOAA's pages put a heading on
-    # its own line, so "El Nino Advisory" would otherwise be glued to the front of
-    # the sentence that follows it.  A decimal point is safe here because the
-    # lookbehind also requires whitespace ("+1.8 C" never splits).
+    flat = (text or "").replace("\r", "\n")
+    # A hyphen at end of line is a wrap: join the word back without inserting a
+    # space.  The hyphen itself is kept, because that is exactly what a browser
+    # renders ("above-\nnormal" -> "above-normal"); dropping it would edit the
+    # source, which this project never does to a quote.
+    flat = re.sub(r"(?<=[a-z])-\s*\n\s*(?=[a-z])", "-", flat)
+    flat = re.sub(r"(?i)\b(?:synopsis|discussion|highlights?|"
+                  r"enso alert system status)\s*:\s*", " ", flat)
+    flat = re.sub(r"\n(?=\S)", " ", flat)                    # unwrap hard-wrapped lines
+
     sentences = [re.sub(r"\s+", " ", p).strip(" |")
-                 for p in re.split(r"(?<=[.;])\s+|\n+", text or "")]
+                 for p in re.split(r"(?<=[.;])\s+(?=[A-Z(])|\n+", flat)]
     keys = ("nino", "niño", "el niño", "el nino", "la niña", "oni", "chance",
             "percent", "%", "above normal", "below normal", "above median",
             "precipitation", "temperature outlook", "wetter", "drier", "historic")
     picked, seen = [], set()
     for s in sentences:
-        s = re.sub(r"^(?:synopsis|discussion|enso alert system status)\s*:\s*",
-                   "", s.strip(" |"), flags=re.I)
+        s = s.strip(" |")
         low = s.lower()
         if len(s) < 30 or len(s) > 420:
+            continue
+        if s.upper() == s:          # a heading such as "EL NINO/ENSO", not a sentence
             continue
         if not any(k in low for k in keys):
             continue

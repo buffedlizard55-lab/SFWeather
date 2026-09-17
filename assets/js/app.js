@@ -278,11 +278,20 @@ function renderReality(cal) {
   const win = cal.nws_window || {};
   const covered = win.days_covered || 0;
   const total = (cal.days || []).length;
+  // Say how long the official horizon is, not how many scoreboard days fall
+  // inside it: today that count is 0 (the horizon ends before 1 October), and
+  // "reaches 0 day(s)" reads like a bug rather than a fact.
+  const horizon = win.horizon_days || (cal.current_forecast && cal.current_forecast.horizon_days) || 0;
   $('#rc-horizon').textContent = win.last_day
-    ? `${win.days_covered || 0} day(s) \u2014 through ${win.last_day}` : DASH;
+    ? `${horizon} day(s) of real forecast \u2014 through ${win.last_day}` : DASH;
   $('#rc-end').textContent = 'January 2027';
   $('#rc-count').innerHTML =
-    `Right now <strong>${covered}</strong> of the <strong>${total}</strong> days on this scoreboard ` +
+    (covered === 0
+      ? `No day on this scoreboard is inside the official horizon yet \u2014 the horizon ends ` +
+        `<strong>${win.last_day || 'n/a'}</strong>, before the first day shown (1 Oct 2026). ` +
+        `All <strong>${total}</strong> days therefore show observed climatology. ` +
+        `Days convert automatically as they come into range. `
+      : `Right now <strong>${covered}</strong> of the <strong>${total}</strong> days on this scoreboard `) +
     `carry a real NWS forecast. The remaining <strong>${total - covered}</strong> show observed ` +
     `1991\u20132020 climatology and are badged <span class="badge badge-climo">Climatology</span>. ` +
     `The page rebuilds nightly, so days convert to real forecasts automatically as they come into range.`;
