@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T17:00:53Z",
+  "generated_utc": "2026-09-17T19:40:09Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset)",
@@ -37,9 +37,12 @@
     "coordinate_source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip",
     "season_window": "October 1, 2026 - January 31, 2027 (123 days)",
     "current_enso": {
-      "year_month": "2026-05",
-      "oni_c": 0.98,
-      "phase": "el_nino"
+      "label": "JJA 2026",
+      "season": "JJA",
+      "year": 2026,
+      "oni_c": 1.8,
+      "phase": "el_nino",
+      "strength": "strong"
     },
     "season_total_prcp": {
       "n": 30,
@@ -204,7 +207,7 @@
         "p90": 18.59
       }
     },
-    "key_finding": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 11.1 days per season on average at SFO (upper bound for Sunset). Current ENSO: el_nino (ONI 0.98C 2026-05) tilts toward wetter than normal, with CPC favoring above-median precip for JFM 2027 at 50% probability."
+    "key_finding": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 11.1 days per season on average at SFO (upper bound for Sunset). Current ENSO: el_nino (official ONI 1.8C, JJA 2026) tilts toward wetter than normal, with CPC status \"El Ni\u00f1o Advisory\"; the CPC outlooks attached to each day show the official probabilities for this window."
   },
   "monthly": [
     {
@@ -361,6 +364,21 @@
       "label": "Monthly & Seasonal Precipitation Outlook (issued 202609)",
       "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
       "stem": "lead3_DJF_prcp",
+      "polygon_index": 14,
+      "polygon_bbox_lon_lat": [
+        -123.711,
+        25.8381,
+        -70.4479,
+        42.0683
+      ],
+      "polygon_rings": 608,
+      "polygon_vertices": 41042,
+      "raw_dbf_row": {
+        "Fcst_Date": "20260917",
+        "Valid_Seas": "DJF 2026-2027",
+        "Prob": 40.0,
+        "Cat": "Above"
+      },
       "lead": 3,
       "abbrev": "DJF",
       "variable": "prcp",
@@ -380,6 +398,21 @@
       "label": "Monthly & Seasonal Temperature Outlook (issued 202609)",
       "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
       "stem": "lead3_DJF_temp",
+      "polygon_index": 6,
+      "polygon_bbox_lon_lat": [
+        -124.5661,
+        30.7779,
+        -75.1778,
+        46.9743
+      ],
+      "polygon_rings": 454,
+      "polygon_vertices": 31246,
+      "raw_dbf_row": {
+        "Fcst_Date": "20260917",
+        "Valid_Seas": "DJF 2026-2027",
+        "Prob": 33.0,
+        "Cat": "Above"
+      },
       "lead": 3,
       "abbrev": "DJF",
       "variable": "temp",
@@ -399,6 +432,21 @@
       "label": "Monthly & Seasonal Precipitation Outlook (issued 202609)",
       "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
       "stem": "lead2_NDJ_prcp",
+      "polygon_index": 10,
+      "polygon_bbox_lon_lat": [
+        -123.1279,
+        33.1325,
+        -69.9275,
+        44.3003
+      ],
+      "polygon_rings": 408,
+      "polygon_vertices": 22571,
+      "raw_dbf_row": {
+        "Fcst_Date": "20260917",
+        "Valid_Seas": "NDJ 2026-2027",
+        "Prob": 33.0,
+        "Cat": "Above"
+      },
       "lead": 2,
       "abbrev": "NDJ",
       "variable": "prcp",
@@ -418,6 +466,21 @@
       "label": "Monthly & Seasonal Temperature Outlook (issued 202609)",
       "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
       "stem": "lead2_NDJ_temp",
+      "polygon_index": 7,
+      "polygon_bbox_lon_lat": [
+        -124.5661,
+        31.764,
+        -66.949,
+        47.3598
+      ],
+      "polygon_rings": 1384,
+      "polygon_vertices": 73189,
+      "raw_dbf_row": {
+        "Fcst_Date": "20260917",
+        "Valid_Seas": "NDJ 2026-2027",
+        "Prob": 33.0,
+        "Cat": "Above"
+      },
       "lead": 2,
       "abbrev": "NDJ",
       "variable": "temp",
@@ -437,6 +500,21 @@
       "label": "Monthly & Seasonal Precipitation Outlook (issued 202609)",
       "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
       "stem": "lead1_OND_prcp",
+      "polygon_index": 1,
+      "polygon_bbox_lon_lat": [
+        -124.7628,
+        36.2261,
+        -66.949,
+        49.3813
+      ],
+      "polygon_rings": 1013,
+      "polygon_vertices": 49989,
+      "raw_dbf_row": {
+        "Fcst_Date": "20260917",
+        "Valid_Seas": "OND 2026",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
       "lead": 1,
       "abbrev": "OND",
       "variable": "prcp",
@@ -460,6 +538,21 @@
       "label": "Monthly & Seasonal Temperature Outlook (issued 202609)",
       "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
       "stem": "lead1_OND_temp",
+      "polygon_index": 5,
+      "polygon_bbox_lon_lat": [
+        -124.5661,
+        36.1977,
+        -121.7214,
+        46.3897
+      ],
+      "polygon_rings": 48,
+      "polygon_vertices": 6493,
+      "raw_dbf_row": {
+        "Fcst_Date": "20260917",
+        "Valid_Seas": "OND 2026",
+        "Prob": 33.0,
+        "Cat": "Above"
+      },
       "lead": 1,
       "abbrev": "OND",
       "variable": "temp",
@@ -483,6 +576,21 @@
       "label": "Latest Monthly Update - Precipitation",
       "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/monthlyupdate/monthupd_prcp_latest.zip",
       "stem": "lead14_Oct_prcp",
+      "polygon_index": 1,
+      "polygon_bbox_lon_lat": [
+        -124.7628,
+        24.5232,
+        -66.949,
+        49.3833
+      ],
+      "polygon_rings": 2665,
+      "polygon_vertices": 123260,
+      "raw_dbf_row": {
+        "Fcst_Date": "20260917",
+        "Valid_Seas": "Oct 2026",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
       "lead": 14,
       "abbrev": "Oct",
       "variable": "prcp",
@@ -504,6 +612,21 @@
       "label": "Latest Monthly Update - Temperature",
       "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/monthlyupdate/monthupd_temp_latest.zip",
       "stem": "lead14_Oct_temp",
+      "polygon_index": 7,
+      "polygon_bbox_lon_lat": [
+        -124.4097,
+        34.5429,
+        -119.6101,
+        42.0986
+      ],
+      "polygon_rings": 34,
+      "polygon_vertices": 5620,
+      "raw_dbf_row": {
+        "Fcst_Date": "20260917",
+        "Valid_Seas": "Oct 2026",
+        "Prob": 40.0,
+        "Cat": "Above"
+      },
       "lead": 14,
       "abbrev": "Oct",
       "variable": "temp",
@@ -525,6 +648,21 @@
       "label": "Monthly & Seasonal Precipitation Outlook (issued 202608)",
       "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202608.zip",
       "stem": "lead1_SON_prcp",
+      "polygon_index": 2,
+      "polygon_bbox_lon_lat": [
+        -124.7297,
+        25.8381,
+        -69.9275,
+        49.3813
+      ],
+      "polygon_rings": 1790,
+      "polygon_vertices": 91713,
+      "raw_dbf_row": {
+        "Fcst_Date": "20260820",
+        "Valid_Seas": "SON 2026",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
       "lead": 1,
       "abbrev": "SON",
       "variable": "prcp",
@@ -548,6 +686,21 @@
       "label": "Monthly & Seasonal Temperature Outlook (issued 202608)",
       "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202608.zip",
       "stem": "lead1_SON_temp",
+      "polygon_index": 7,
+      "polygon_bbox_lon_lat": [
+        -123.7799,
+        32.5309,
+        -96.4131,
+        49.0008
+      ],
+      "polygon_rings": 56,
+      "polygon_vertices": 8198,
+      "raw_dbf_row": {
+        "Fcst_Date": "20260820",
+        "Valid_Seas": "SON 2026",
+        "Prob": 40.0,
+        "Cat": "Above"
+      },
       "lead": 1,
       "abbrev": "SON",
       "variable": "temp",
@@ -811,10 +964,10 @@
     {
       "category": "ENSO / seasonal tilt",
       "priority": "high",
-      "title": "ENSO phase: el_nino (ONI 0.98\u00b0C as of 2026-05)",
-      "detail": "NOAA CPC ONI table shows 2026-05 ONI 0.98\u00b0C = el_nino. In El Ni\u00f1o years, Oct-Jan mean was 14.23 in vs 11.16 in for La Ni\u00f1a (n=11 El Ni\u00f1o seasons). El Ni\u00f1o tilts toward wetter, but spread is wide: wettest El Ni\u00f1o 22.82 in, driest El Ni\u00f1o 7.27 in.",
-      "source": "NOAA CPC Ni\u00f1o 3.4 table",
-      "source_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt"
+      "title": "ENSO phase: el_nino (official ONI 1.8\u00b0C for JJA 2026)",
+      "detail": "NOAA's published ONI product shows JJA 2026 at 1.8\u00b0C = el_nino, strong by CPC's own strength bands. CPC Alert System Status: El Ni\u00f1o Advisory. In El Ni\u00f1o years, Oct-Jan mean was 14.23 in vs 11.16 in for La Ni\u00f1a (n=11 El Ni\u00f1o seasons). El Ni\u00f1o tilts toward wetter, but spread is wide: wettest El Ni\u00f1o 22.82 in, driest El Ni\u00f1o 7.27 in.",
+      "source": "NOAA CPC official ONI product (oni.ascii.txt)",
+      "source_url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
     },
     {
       "category": "Official CPC outlook",
@@ -871,7 +1024,9 @@
     "nws_human": "https://forecast.weather.gov/MapClick.php?lat=37.760459&lon=-122.483894",
     "cpc_gis": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/",
     "cpc_90day_discussion": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
-    "cpc_nino_table": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt",
+    "cpc_oni_product": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+    "cpc_enso_diagnostic_discussion": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml",
+    "cpc_nino_table_crosscheck": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt",
     "ghcn_daily": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
     "gsod": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
     "gsod_readme": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt",

@@ -318,7 +318,427 @@ def enso_phase(oni_value):
     return "neutral"
 
 
-# ------------------------------------------------------------- statistics
+# NOAA CPC strength classes for the Oceanic Nino Index.  Source of the bands:
+# CPC ENSO Alert System / strength outlook, which describes a "strong" event as
+# an ONI of at least 1.5 C and a "very strong" event as at least 2.0 C.
+def enso_strength(oni_value):
+    if oni_value is None:
+        return "unknown"
+    if oni_value >= 2.0:
+        return "very_strong"
+    if oni_value >= 1.5:
+        return "strong"
+    if oni_value >= 1.0:
+        return "moderate"
+    if oni_value >= 0.5:
+        return "weak"
+    if oni_value <= -2.0:
+        return "very_strong"
+    if oni_value <= -1.5:
+        return "strong"
+    if oni_value <= -1.0:
+        return "moderate"
+    if oni_value <= -0.5:
+        return "weak"
+    return "neutral"
+
+
+def _season_tokens():
+    """Map every 3-month CPC season token (DJF, JFM, ...) to its calendar months.
+
+    CPC writes a season as three *month initials*, so "DJF" is Dec-Jan-Feb and
+    "NDJ" is Nov-Dec-Jan - the letters are initials, not three-letter month
+    codes.  Building the 12 possible rotations is the only unambiguous way to
+    resolve tokens where a letter repeats (J, M, A).
+    """
+    initials = {1: "J", 2: "F", 3: "M", 4: "A", 5: "M", 6: "J", 7: "J", 8: "A",
+                9: "S", 10: "O", 11: "N", 12: "D"}
+    out = {}
+    for start_month in range(1, 13):
+        months = [((start_month - 1 + k) % 12) + 1 for k in range(3)]
+        token = "".join(initials[m] for m in months)
+        # CPC labels a season with the year that contains two of its three
+        # months.  For NDJ (Nov, Dec, Jan) that is the year of Nov/Dec, so the
+        # January is in the following calendar year; for DJF (Dec, Jan, Feb) it
+        # is the year of Jan/Feb, so the December is in the *previous* calendar
+        # year.  Both are verified against the published file: NDJ 2015 = 2.59
+        # covers Nov 2015 - Jan 2016, and DJF 2016 = 2.50 covers Dec 2015 -
+        # Feb 2016 (the 2015-16 El Nino peak).
+        if start_month == 12:      # DJF : December is in year - 1
+            offsets = (-1, 0, 0)
+        elif start_month == 11:    # NDJ : January is in year + 1
+            offsets = (0, 0, 1)
+        else:                      # all three months inside the label year
+            offsets = (0, 0, 0)
+        out[token] = {"months": months, "year_offsets": offsets}
+    return out
+
+
+SEASON_TOKENS = _season_tokens()
+
+
+def parse_oni_seasons(text):
+    """Parse CPC's *official* ONI product (season-labelled 3-month means).
+
+    ``https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt`` has the layout::
+
+        SEAS  YR   TOTAL   ANOM
+        DJF 1950  25.01  -1.32
+
+    where ``SEAS`` is the three-month season written as month initials (DJF =
+    Dec-Jan-Feb of ``YR``).  This is NOAA's published ONI: the project displays
+    it directly rather than re-deriving it, so the number on the site is the
+    number NOAA publishes.
+
+    Returns a list of dicts ordered oldest -> newest:
+    ``{"season", "year", "anomaly_c", "months", "label"}``.
+    """
+    out = []
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) < 4:
+            continue
+        season, ys, total, anom = parts[0], parts[1], parts[2], parts[3]
+        token = season.upper()
+        if token not in SEASON_TOKENS:
+            continue
+        try:
+            year, anom_f = int(ys), float(anom)
+        except ValueError:
+            continue
+        spec = SEASON_TOKENS[token]
+        months, offsets = spec["months"], spec["year_offsets"]
+        calendar = [(year + offsets[i], m) for i, m in enumerate(months)]
+        out.append({
+            "season": token,
+            "year": year,
+            "anomaly_c": anom_f,
+            "total_c": float(total) if total not in ("", "-") else None,
+            "months": calendar,
+            "label": f"{token} {year}",
+        })
+    out.sort(key=lambda r: (r["months"][0][0], r["months"][0][1]))
+    return out
+
+
+def oni_for_calendar_year(season_rows, year):
+    """Return the (y, m) -> official ONI anomaly map for **calendar** months.
+
+    A season shot is assigned to the calendar month that starts it, which is how
+    NOAA writes its seasonal ENSO statements ("DJF", "JFM", ...).  Two seasons
+    touch any given month; the map keeps the season whose midpoint is nearest,
+    which is the standard way of turning overlapping 3-month means into a
+    monthly series for stratification.
+    """
+    monthly = {}
+    for row in season_rows:
+        start_y, start_m = row["months"][0]
+        monthly[(start_y, start_m)] = row["anomaly_c"]
+    return monthly
+
+
+def season_mean_oni(season_rows, calendar_year):
+    """Mean official ONI over the Oct-Dec-Feb window of a rainy season.
+
+    The project's rainy season runs 1 Oct - 31 Jan.  The officially published
+    seasons covering it are OND (Oct-Nov-Dec) and NDJ (Nov-Dec-Jan) of
+    ``calendar_year``; DJF is also shown because it is the season most often
+    quoted for the winter as a whole.
+    """
+    # OND Y = Oct-Dec of year Y; NDJ Y = Nov Y - Jan Y+1; DJF Y+1 = Dec Y - Feb Y+1.
+    want = {f"OND {calendar_year}", f"NDJ {calendar_year}", f"DJF {calendar_year + 1}"}
+    vals = [r["anomaly_c"] for r in season_rows if r["label"] in want]
+    return (sum(vals) / len(vals)) if vals else None
+
+
+# ------------------------------------------------- relative humidity normals
+
+def rh_from_dewpoint(temp_c, dewpoint_c):
+    """Relative humidity (%) from temperature and dew point (Magnus formula).
+
+    This is the standard meteorological conversion; it is a *derivation* from
+    two official normals (NCEI hourly temperature and dew point normals), not an
+    observation, and the site labels it as such.  Returns ``None`` if either
+    input is missing or if the result is physically impossible.
+    """
+    if temp_c is None or dewpoint_c is None:
+        return None
+    import math
+    a, b = 17.625, 243.04
+    try:
+        gamma_t = (a * temp_c) / (b + temp_c)
+        gamma_d = (a * dewpoint_c) / (b + dewpoint_c)
+        rh = 100.0 * math.exp(gamma_d - gamma_t)
+    except (ValueError, ZeroDivisionError, OverflowError):
+        return None
+    if rh < 0 or rh > 100.5:
+        return None
+    return min(100.0, rh)
+
+
+def humidity_normals_by_date(rows):
+    """Per calendar date (MM-DD) mean relative humidity from hourly normals.
+
+    Where the hourly normals file carries a day column, every day of the year gets
+    its own value - far better than a single monthly figure.  Returns
+    ``{"MM-DD": pct}``.
+    """
+    by_date = defaultdict(list)
+    for r in rows:
+        if not r.get("day"):
+            continue
+        rh = rh_from_dewpoint(r.get("temp_c"), r.get("dewpoint_c"))
+        if rh is None:
+            continue
+        by_date["%02d-%02d" % (r["month"], r["day"])].append(rh)
+    return {k: round(sum(v) / len(v), 1) for k, v in sorted(by_date.items()) if v}
+
+
+def humidity_normals_from_hourly(rows):
+    """Build (month -> mean relative humidity %) from NCEI hourly normals rows.
+
+    ``rows`` is whatever the tolerant CSV reader in ``main.fetch_humidity_normals``
+    could recover: an iterable of dicts with keys ``month`` (1-12), ``hour``
+    (0-23 or None), ``temp_c`` and ``dewpoint_c``.  Only rows that carry both a
+    temperature and a dew point are used; nothing is interpolated.
+    """
+    by_month = defaultdict(list)
+    for r in rows:
+        rh = rh_from_dewpoint(r.get("temp_c"), r.get("dewpoint_c"))
+        if rh is None:
+            continue
+        by_month[r["month"]].append(rh)
+    return {m: round(sum(v) / len(v), 1) for m, v in sorted(by_month.items()) if v}
+
+
+# ------------------------------------------------- NCEI normals CSV handling
+#
+# The NCEI normals CSVs are published "by station".  The column names are
+# documented in NCEI's normals readme; the reader below does not assume a fixed
+# column order - it looks the names up case-insensitively and reports exactly
+# what it found, so a layout change shows up in the pipeline log instead of
+# silently producing wrong numbers.
+
+F_TO_C = lambda f: (f - 32.0) * 5.0 / 9.0  # noqa: E731
+
+
+def read_normals_csv(text):
+    """Parse an NCEI by-station normals CSV into ``(header, rows)``.
+
+    ``rows`` are dicts keyed by the (stripped, upper-cased) column names.
+    Raises ``ValueError`` with a human-readable reason if no header is found.
+    """
+    reader = csv.reader(io.StringIO(text))
+    header = None
+    for row in reader:
+        cells = [c.strip() for c in row]
+        joined = " ".join(cells).upper()
+        if any("NORMAL" in c.upper() for c in cells) and len(cells) > 2:
+            header = cells
+            break
+    if header is None:
+        raise ValueError("no header row containing an element name was found")
+    rows = []
+    for row in reader:
+        if not row or all(not c.strip() for c in row):
+            continue
+        if len(row) < len(header) - 2:
+            continue
+        rows.append({header[i].strip().upper(): row[i].strip()
+                     for i in range(min(len(header), len(row))) if header[i].strip()})
+    return header, rows
+
+
+def _col(header, pattern):
+    """Column names matching *pattern* (case-insensitive regex), in file order."""
+    import re as _re
+    rx = _re.compile(pattern, _re.I)
+    return [h for h in header if rx.search(h)]
+
+
+def _month_of_row(row, header, index):
+    """Best-effort month (1-12) for a normals row; ``None`` if undetermined."""
+    for key in ("MONTH", "MM", "MO"):
+        if key in row and row[key]:
+            try:
+                m = int(float(row[key]))
+                if 1 <= m <= 12:
+                    return m
+            except ValueError:
+                pass
+    for key in ("DATE", "VALID_DATE", "MMDD"):
+        val = row.get(key)
+        if val:
+            parts = str(val).replace("/", "-").split("-")
+            try:
+                if len(parts) >= 2:
+                    m = int(parts[0])
+                    if 1 <= m <= 12:
+                        return m
+                m = int(float(val))
+                if 1 <= m <= 12:
+                    return m
+            except ValueError:
+                pass
+    # Last resort: the by-station monthly file holds 12 rows in calendar order.
+    if header and 1 <= index + 1 <= 12:
+        return index + 1
+    return None
+
+
+def monthly_normals_summary(text):
+    """Extract the monthly precipitation and temperature normals.
+
+    Returns ``{"precip_in": {month: value}, "temp_f": {month: value},
+    "layout": {...}}``.  Only columns that actually exist are populated; the
+    layout block records the header names that were used so the number on the
+    site can always be traced to a named column.
+    """
+    header, rows = read_normals_csv(text)
+    # Exact match only: a substring match also picks up ``meas_flag_MLY-PRCP-NORMAL``
+    # and ``years_MLY-PRCP-NORMAL``, which are not values.
+    prcp_cols = [c[0] for c in _exact_col(header, "MLY-PRCP-NORMAL")]
+    temp_cols = [c[0] for c in _exact_col(header, "MLY-TAVG-NORMAL")]
+    out = {"precip_in": {}, "temp_f": {},
+           "layout": {"header": header[:120], "column_count": len(header),
+                      "row_count": len(rows),
+                      "precip_columns": prcp_cols, "temp_columns": temp_cols,
+                      "month_column": next((k for k in ("MONTH", "DATE", "MM")
+                                            if k in (rows[0] if rows else {})), None)}}
+    for i, row in enumerate(rows):
+        month = _month_of_row(row, header, i)
+        if not month:
+            continue
+        for name, target in ((prcp_cols[0] if prcp_cols else None, "precip_in"),
+                             (temp_cols[0] if temp_cols else None, "temp_f")):
+            if not name:
+                continue
+            raw = row.get(name)
+            if raw in (None, "", "9999.99", "999.9"):
+                continue
+            try:
+                out[target][month] = float(raw)
+            except ValueError:
+                continue
+    return out
+
+
+def _exact_col(header, name):
+    """Columns whose name is exactly *name* or that name plus an hour suffix.
+
+    NCEI's hourly normals file carries the element and then several derived
+    columns (``meas_flag_...``, ``HLY-TEMP-10PCTL``, ``years_...``).  A substring
+    match would pick those up as if they were the element itself, so the match
+    has to be exact (optionally with a ``_00``.._23`` hour suffix).
+    """
+    import re as _re
+    rx = _re.compile(r"^" + _re.escape(name) + r"(?:_(\d{1,2}))?$", _re.I)
+    return [(h, (int(rx.match(h).group(1)) if rx.match(h).group(1) is not None else None))
+            for h in header if rx.match(h)]
+
+
+def hourly_normals_rh_inputs(text):
+    """Extract (month, day, hour, temp_c, dewpoint_c) from NCEI hourly normals.
+
+    Observed layout of ``normals-hourly/1991-2020/access/<STATION>.csv`` (checked
+    against the file NCEI served on 2026-09-17, recorded in the run log)::
+
+        STATION,NAME,LATITUDE,LONGITUDE,ELEVATION,DATE,month,day,hour,
+        HLY-TEMP-NORMAL,meas_flag_HLY-TEMP-NORMAL,...,HLY-DEWP-NORMAL,...
+
+    One row per month/day/hour, values in degrees Fahrenheit.  The reader does not
+    rely on column order: it looks up the month/day/hour columns and the exact
+    element columns, and records what it saw.  If those columns are absent it
+    returns no rows and the caller publishes the layout instead of a number.
+    """
+    header, rows = read_normals_csv(text)
+    temp_cols = _exact_col(header, "HLY-TEMP-NORMAL")
+    dew_cols = _exact_col(header, "HLY-DEWP-NORMAL")
+    first = rows[0] if rows else {}
+    info = {"header": header[:60], "column_count": len(header), "row_count": len(rows),
+            "temp_columns": [c[0] for c in temp_cols],
+            "dewpoint_columns": [c[0] for c in dew_cols],
+            "month_column": next((k for k in ("MONTH", "MM", "MO", "DATE") if k in first), None),
+            "day_column": next((k for k in ("DAY", "DD") if k in first), None),
+            "hour_column": next((k for k in ("HOUR", "TIME") if k in first), None),
+            "first_row": {k: first[k] for k in ("MONTH", "DAY", "HOUR", "DATE") if k in first}}
+    if not temp_cols or not dew_cols:
+        info["usable"] = False
+        info["reason"] = ("no exact HLY-TEMP-NORMAL / HLY-DEWP-NORMAL columns in this "
+                          "file; layout recorded for review")
+        return [], info
+
+    def _num(row, col, missing=("", "9999.9", "999.9", "99999")):
+        raw = row.get(col)
+        if raw is None or raw in missing:
+            return None
+        try:
+            return float(raw)
+        except ValueError:
+            return None
+
+    def _hour_of_row(row):
+        if row.get("HOUR"):
+            try:
+                h = int(float(row["HOUR"]))
+                if 0 <= h <= 23:
+                    return h
+            except ValueError:
+                pass
+        val = row.get("TIME")
+        if val:
+            digits = "".join(ch for ch in str(val) if ch.isdigit())
+            if len(digits) >= 2:
+                try:
+                    h = int(digits[:2])
+                    if 0 <= h <= 23:
+                        return h
+                except ValueError:
+                    pass
+        return None
+
+    out = []
+    # Wide files carry one column per hour ("HLY-TEMP-NORMAL_00" ...); long files
+    # carry one row per hour.  Handle both, and only then treat a single exact
+    # column as the element for the row's own hour.
+    wide = len(temp_cols) > 1 and len(dew_cols) > 1 and any(c[1] is not None for c in temp_cols)
+    for i, row in enumerate(rows):
+        month = _month_of_row(row, header, i)
+        if not month:
+            continue
+        day = None
+        for key in ("DAY", "DD"):
+            if row.get(key):
+                try:
+                    dv = int(float(row[key]))
+                    if 1 <= dv <= 31:
+                        day = dv
+                except ValueError:
+                    pass
+                break
+        if wide:
+            dew_by_hour = {h: c for c, h in dew_cols if h is not None}
+            for col, hour in temp_cols:
+                if hour is None or hour not in dew_by_hour:
+                    continue
+                t, d = _num(row, col), _num(row, dew_by_hour[hour])
+                if t is None or d is None:
+                    continue
+                out.append({"month": month, "day": day, "hour": hour,
+                            "temp_c": F_TO_C(t), "dewpoint_c": F_TO_C(d)})
+        else:
+            t, d = _num(row, temp_cols[0][0]), _num(row, dew_cols[0][0])
+            if t is None or d is None:
+                continue
+            out.append({"month": month, "day": day, "hour": _hour_of_row(row),
+                        "temp_c": F_TO_C(t), "dewpoint_c": F_TO_C(d)})
+    info["usable"] = bool(out)
+    info["usable_rows"] = len(out)
+    info["wide_layout"] = wide
+    return out, info
+
+
+# ------------------------------------------------- rainy-season climatology
 
 def build_daily_climatology(ghcn, gsod_by_date, season_month_days, period):
     """Per calendar-date statistics across Oct 1 - Jan 31.
@@ -433,7 +853,8 @@ def build_daily_climatology(ghcn, gsod_by_date, season_month_days, period):
     return daily
 
 
-def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_series):
+def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_series,
+                            oni_seasons=None):
     """Year-by-year wet-season statistics plus their distribution.
 
     A season is Oct 1 (year Y) through Jan 31 (year Y+1).
@@ -500,9 +921,21 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
             if g is not None and (max_gust is None or g > max_gust):
                 max_gust = g
 
-        # ENSO phase: use the Oct-Nov-Dec ONI of the season start year
-        oni_key = (season_year, 11)
-        oni = oni_series.get(oni_key)
+        # ENSO phase: prefer NOAA's published season-labelled ONI (mean of the
+        # official OND / NDJ / DJF values covering this rainy season).  The
+        # locally derived monthly series is only a fallback.
+        oni = None
+        oni_source = None
+        if oni_seasons:
+            oni = season_mean_oni(oni_seasons, season_year)
+            if oni is not None:
+                oni_source = ("mean of official CPC ONI for OND %d, NDJ %d and "
+                              "DJF %d" % (season_year, season_year, season_year + 1))
+        if oni is None:
+            oni_key = (season_year, 11)
+            oni = oni_series.get(oni_key)
+            if oni is not None:
+                oni_source = "derived 3-month running mean centred on Nov %d" % season_year
         seasons.append({
             "season": f"{season_year}-{season_year + 1}",
             "total_prcp_in": _f(total, 2),
@@ -520,6 +953,7 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
             "max_gust_kt": _f(max_gust, 1) if max_gust is not None else None,
             "max_gust_mph": _f(max_gust * KT_TO_MPH, 1) if max_gust is not None else None,
             "oni_ond": _f(oni, 2),
+            "oni_source": oni_source,
             "enso_phase": enso_phase(oni),
         })
 

@@ -75,8 +75,18 @@ def main():
     heavy_wind_rain = dist.get("heavy_wind_and_rain_days", {})
     max_gust = dist.get("max_gust_mph", {})
 
-    # 4. ENSO context
-    latest_oni = enso.get("latest_oni") or calendar.get("enso", {}).get("latest", {})
+    # 4. ENSO context - NOAA's published ONI product is the headline value.
+    enso_cal = calendar.get("enso", {}) or {}
+    latest_oni = (enso_cal.get("latest_official") or enso.get("latest_oni")
+                  or (enso.get("official_oni") or {}).get("latest") or {})
+    # The official product is season-labelled (e.g. "JJA 2026"); older drafts of
+    # this file used a month label.  Both are rendered without inventing a label.
+    oni_when = latest_oni.get("label") or latest_oni.get("year_month") or "unknown period"
+    oni_url = ((enso_cal.get("official") or {}).get("url")
+               or "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt")
+    diagnostic_url = (enso_cal.get("diagnostic_url")
+                      or "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml")
+    diagnostic_status = enso_cal.get("diagnostic_status")
 
     # 5. CPC outlooks for our window - filter to relevant valid seasons
     relevant_cpc = []
@@ -175,10 +185,13 @@ def main():
         action_items.append({
             "category": "ENSO / seasonal tilt",
             "priority": "high" if phase == "el_nino" else "medium",
-            "title": f"ENSO phase: {phase} (ONI {latest_oni.get('oni_c')}°C as of {latest_oni.get('year_month')})",
-            "detail": f"NOAA CPC ONI table shows {latest_oni.get('year_month')} ONI {latest_oni.get('oni_c')}°C = {phase}. In El Niño years, Oct-Jan mean was {enso_strat.get('el_nino', {}).get('mean')} in vs {enso_strat.get('la_nina', {}).get('mean')} in for La Niña (n={enso_strat.get('el_nino', {}).get('n')} El Niño seasons). El Niño tilts toward wetter, but spread is wide: wettest El Niño 22.82 in, driest El Niño 7.27 in.",
-            "source": "NOAA CPC Niño 3.4 table",
-            "source_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt"
+            "title": f"ENSO phase: {phase} (official ONI {latest_oni.get('oni_c')}°C for {oni_when})",
+            "detail": f"NOAA's published ONI product shows {oni_when} at {latest_oni.get('oni_c')}°C = {phase}"
+                      + (f", {str(latest_oni.get('strength')).replace('_', ' ')} by CPC's own strength bands" if latest_oni.get("strength") else "")
+                      + (f". CPC Alert System Status: {diagnostic_status}." if diagnostic_status else ".")
+                      + f" In El Niño years, Oct-Jan mean was {enso_strat.get('el_nino', {}).get('mean')} in vs {enso_strat.get('la_nina', {}).get('mean')} in for La Niña (n={enso_strat.get('el_nino', {}).get('n')} El Niño seasons). El Niño tilts toward wetter, but spread is wide: wettest El Niño 22.82 in, driest El Niño 7.27 in.",
+            "source": "NOAA CPC official ONI product (oni.ascii.txt)",
+            "source_url": oni_url
         })
 
     # CPC outlooks
@@ -244,8 +257,10 @@ def main():
                 f"{streak_prob.get('ge_7_days', {}).get('pct')}% of seasons had a 7+ day wet streak, "
                 f"{streak_prob.get('ge_10_days', {}).get('pct')}% had 10+ days. "
                 f"Wind+rain together occurred {wind_rain.get('mean')} days per season on average at SFO (upper bound for Sunset). "
-                f"Current ENSO: {latest_oni.get('phase')} (ONI {latest_oni.get('oni_c')}C {latest_oni.get('year_month')}) "
-                f"tilts toward wetter than normal, with CPC favoring above-median precip for JFM 2027 at 50% probability."
+                f"Current ENSO: {latest_oni.get('phase')} (official ONI {latest_oni.get('oni_c')}C, {oni_when}) "
+                f"tilts toward wetter than normal"
+                + (f", with CPC status \"{diagnostic_status}\"" if diagnostic_status else "")
+                + "; the CPC outlooks attached to each day show the official probabilities for this window."
             )
         },
         "monthly": monthly_summary,
@@ -278,7 +293,9 @@ def main():
             "nws_human": "https://forecast.weather.gov/MapClick.php?lat=37.760459&lon=-122.483894",
             "cpc_gis": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/",
             "cpc_90day_discussion": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
-            "cpc_nino_table": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt",
+            "cpc_oni_product": oni_url,
+            "cpc_enso_diagnostic_discussion": diagnostic_url,
+            "cpc_nino_table_crosscheck": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt",
             "ghcn_daily": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
             "gsod": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
             "gsod_readme": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt",

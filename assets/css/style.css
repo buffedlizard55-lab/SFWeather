@@ -334,3 +334,44 @@ dialog form { padding: 0 22px 20px; }
   .calendar { grid-template-columns: 1fr; }
   .bar-row { grid-template-columns: 74px 1fr 74px; }
 }
+
+/* ---------------------------------------------------------------- add-ons */
+/* Verification ledger, export buttons, print view (session 3 additions). */
+
+.pill {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.pill-ok { background: #e5f5ea; color: #14663a; }
+.pill-warn { background: #fdf3d8; color: #7a5300; }
+.pill-fail { background: #fde7e7; color: #8f1d1d; }
+
+.callout-ok { background: #f1faf4; border-left: 4px solid #2e8b57; }
+.callout-ok h3 { color: #14663a; }
+
+.btn {
+  font: inherit;
+  padding: 7px 13px;
+  border-radius: 8px;
+  border: 1px solid #c9d2dd;
+  background: #fff;
+  color: #16324a;
+  cursor: pointer;
+}
+.btn:hover { background: #f2f6fa; }
+.btn-sm { padding: 5px 10px; font-size: 13px; }
+
+#verify-body code { font-size: 12px; }
+#verify-body .src-url { word-break: break-all; font-size: 11px; color: #52606d; }
+
+@media print {
+  .site-nav, .month-tabs, .cal-controls, #export-csv, #print-page, #export-current,
+  .site-footer p.fine a[href^="https://github.com"] { display: none !important; }
+  .card { break-inside: avoid; box-shadow: none; border: 1px solid #d5dbe3; }
+  body { background: #fff; }
+}

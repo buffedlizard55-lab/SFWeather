@@ -11,8 +11,7 @@ SFWeather pipeline - 2026-09-17
 [7/7] Storm Events + writing outputs
 
 === summary ===
-  fetches: 98 ok / 2 failed
-  irregularities: 3
+  fetches: 103 ok / 2 failed
+  irregularities: 2
     [info] nws: Some hourly forecast fields are null in the NWS gridded forecast for this grid cell.
     [warning] nws: No HWO products returned for office MTR.
-    [warning] enso: A CPC ENSO page was discarded because it does not reference 2026; it is a stale shell page and quoting it would be misleading.

@@ -1,9 +1,9 @@
 {
-  "generated_utc": "2026-09-17T17:00:52Z",
+  "generated_utc": "2026-09-17T19:40:08Z",
   "counts": {
-    "total": 3,
+    "total": 2,
     "errors": 0,
-    "warnings": 2,
+    "warnings": 1,
     "info": 1
   },
   "irregularities": [
@@ -24,15 +24,6 @@
       "message": "No HWO products returned for office MTR.",
       "evidence": {
         "url": "https://api.weather.gov/products/types/HWO/locations/MTR"
-      }
-    },
-    {
-      "severity": "warning",
-      "area": "enso",
-      "message": "A CPC ENSO page was discarded because it does not reference 2026; it is a stale shell page and quoting it would be misleading.",
-      "evidence": {
-        "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php",
-        "size": 17341
       }
     }
   ]

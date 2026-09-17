@@ -3,3 +3,4 @@ __pycache__/
 .venv/
 pipeline_run.log
 .DS_Store
+node_modules/

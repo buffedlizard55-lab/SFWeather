@@ -14,7 +14,8 @@ const FILES = {
   provenance: 'data/provenance.json',
   quality: 'data/quality_report.json',
   storms: 'data/storm_events.json',
-  landlord: 'data/landlord.json'
+  landlord: 'data/landlord.json',
+  verify: 'data/verify.json'
 };
 
 const state = { data: {}, month: '2026-10', dialogDay: null };
@@ -89,6 +90,13 @@ function table(headers, rows, opts = {}) {
   const tbody = el('tbody', {}, bodyRows);
   const tbl = el('table', {}, [thead, tbody]);
   return opts.scroll === false ? tbl : el('div', { class: 'table-scroll' }, [tbl]);
+}
+
+/** A table cell that accepts a string, a number or an existing DOM node. */
+function kvCell(v) {
+  if (v === null || v === undefined) return el('td', { text: DASH });
+  if (v.nodeType) return el('td', {}, [v]);
+  return el('td', { text: String(v) });
 }
 
 function kvTable(pairs) {
@@ -270,11 +278,20 @@ function renderReality(cal) {
   const win = cal.nws_window || {};
   const covered = win.days_covered || 0;
   const total = (cal.days || []).length;
+  // Say how long the official horizon is, not how many scoreboard days fall
+  // inside it: today that count is 0 (the horizon ends before 1 October), and
+  // "reaches 0 day(s)" reads like a bug rather than a fact.
+  const horizon = win.horizon_days || (cal.current_forecast && cal.current_forecast.horizon_days) || 0;
   $('#rc-horizon').textContent = win.last_day
-    ? `${win.days_covered || 0} day(s) \u2014 through ${win.last_day}` : DASH;
+    ? `${horizon} day(s) of real forecast \u2014 through ${win.last_day}` : DASH;
   $('#rc-end').textContent = 'January 2027';
   $('#rc-count').innerHTML =
-    `Right now <strong>${covered}</strong> of the <strong>${total}</strong> days on this scoreboard ` +
+    (covered === 0
+      ? `No day on this scoreboard is inside the official horizon yet \u2014 the horizon ends ` +
+        `<strong>${win.last_day || 'n/a'}</strong>, before the first day shown (1 Oct 2026). ` +
+        `All <strong>${total}</strong> days therefore show observed climatology. ` +
+        `Days convert automatically as they come into range. `
+      : `Right now <strong>${covered}</strong> of the <strong>${total}</strong> days on this scoreboard `) +
     `carry a real NWS forecast. The remaining <strong>${total - covered}</strong> show observed ` +
     `1991\u20132020 climatology and are badged <span class="badge badge-climo">Climatology</span>. ` +
     `The page rebuilds nightly, so days convert to real forecasts automatically as they come into range.`;
@@ -334,34 +351,71 @@ function renderLocation(run) {
 
 function renderSeason(cal) {
   /* ENSO ------------------------------------------------------------- */
+  /* Everything below is read from data/enso.json, which the nightly job fills
+   * from official CPC endpoints.  No sentence and no number is typed here: the
+   * quotes are the verbatim official strings captured at fetch time, each with
+   * the SHA-256 of the page they came from. */
   const enso = cal.enso || {};
-  const latest = enso.latest || {};
+  const official = enso.latest_official || (enso.official || {}).latest || {};
+  const cross = enso.cross_check || {};
   const box = $('#enso-body');
-  const facts = el('table', { class: 'kv' }, [
-    el('tr', {}, [el('th', { text: 'Latest ONI' }), el('td', { text: (latest.year_month || DASH) +
-      (latest.oni_c === undefined ? '' : `  \u2192  ${latest.oni_c > 0 ? '+' : ''}${latest.oni_c}\u00b0C (${latest.phase || DASH})`) })]),
-    el('tr', {}, [el('th', { text: 'Definition' }), el('td', { text: 'ONI = 3-month running mean of ERSSTv5 Ni\u00f1o 3.4 anomalies. El Ni\u00f1o \u2265 +0.5, La Ni\u00f1a \u2264 \u22120.5.' })]),
-    el('tr', {}, [el('th', { text: 'Numeric source' }), el('td', {}, [link(enso.table_url, 'CPC Ni\u00f1o 3.4 anomaly table')])])
-  ]);
-  box.append(facts);
-  if (enso.recent && enso.recent.length) {
-    box.append(el('p', { class: 'fine', text: 'Recent monthly ONI values:' }));
-    box.append(table([{ label: 'Month' }, { label: 'ONI (\u00b0C)', num: true }, { label: 'Phase' }],
-      enso.recent.slice().reverse().map(r => [r.year_month,
-        r.oni_c === undefined ? null : (r.oni_c > 0 ? '+' : '') + r.oni_c, r.phase])));
+  if (!box) return;
+
+  const facts = [
+    ['ENSO state (official ONI)', official.label
+      ? `${official.label} \u2192 ${official.oni_c > 0 ? '+' : ''}${official.oni_c}\u00b0C ` +
+        `(${(official.phase || '').replace('_', ' ')}, ${(official.strength || '').replace('_', ' ')})`
+      : null],
+    ['CPC Alert System Status', enso.diagnostic_status || null],
+    ['Official ONI definition', 'ONI = 3-month running mean of ERSSTv5 Ni\u00f1o 3.4 ' +
+      'sea-surface-temperature anomalies. NOAA declares El Ni\u00f1o at \u2265 +0.5\u00b0C and ' +
+      'La Ni\u00f1a at \u2264 \u22120.5\u00b0C.'],
+    ['Official ONI product (number shown above)',
+      link((enso.official || {}).url || enso.table_url, 'CPC oni.ascii.txt')],
+    ['Raw monthly Ni\u00f1o 3.4 table (cross-check only)',
+      link(enso.table_url, 'CPC detrend.nino34.ascii.txt')]
+  ];
+  box.append(kvTable(facts));
+
+  if (cross && cross.checked) {
+    box.append(el('p', { class: 'fine', text:
+      'Cross-check: the project also computes its own 3-month mean from the raw monthly ' +
+      `table. For ${cross.season_label} it gets ${cross.derived_oni_c}\u00b0C against NOAA's ` +
+      `published ${cross.official_oni_c}\u00b0C (difference ${cross.difference_c}\u00b0C). ` +
+      'The published product is what this site displays.' }));
   }
-  box.append(el('p', { class: 'fine' }, [
-    'Verbatim from the CPC ',
-    link('https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html',
-      'long-lead seasonal outlook discussion'), ', issued 20 Aug 2026:'
-  ]));
-  box.append(el('div', { class: 'quote', html:
-    '\u201cEl Ni\u00f1o conditions are present, as represented in current oceanic and atmospheric ' +
-    'observations. El Ni\u00f1o is strengthening, with a greater than 90 percent chance of a very ' +
-    'strong event this fall and winter.\u201d' }));
-  box.append(el('div', { class: 'quote', html:
-    '\u201cDuring the October-November-December (OND) 2026 season, there is a 69% chance of a historic ' +
-    'event that would exceed the strength of previous El Ni\u00f1o events dating back to 1950.\u201d' }));
+
+  const seasons = (enso.official || {}).seasons || [];
+  if (seasons.length) {
+    box.append(el('p', { class: 'fine', text: 'Most recent official ONI seasons (as published):' }));
+    box.append(table([{ label: 'Season' }, { label: 'ONI (\u00b0C)', num: true }, { label: 'Phase' }],
+      seasons.slice().reverse().map(r => [r.label, (r.anomaly_c > 0 ? '+' : '') + r.anomaly_c,
+        (r.anomaly_c >= 0.5 ? 'El Ni\u00f1o' : (r.anomaly_c <= -0.5 ? 'La Ni\u00f1a' : 'Neutral'))])));
+  }
+
+  /* Verbatim official statements, straight from the fetched pages -------- */
+  const sources = (enso.sources || []).filter(x => x.ok !== false);
+  sources.forEach(src => {
+    const issued = src.issued ? ' issued ' + src.issued : '';
+    box.append(el('p', { class: 'fine' }, [
+      el('strong', { text: 'Verbatim from ' }), link(src.url, src.label || src.url),
+      document.createTextNode(issued + (src.retrieved_utc ? ' \u00b7 retrieved ' + src.retrieved_utc : '') +
+        (src.sha256 ? ' \u00b7 sha256 ' + src.sha256.slice(0, 16) + '\u2026' : ''))
+    ]));
+    (src.key_sentences || []).slice(0, 6).forEach(q =>
+      box.append(el('div', { class: 'quote', html: '&ldquo;' + esc(q) + '&rdquo;' })));
+  });
+  if (!sources.length) {
+    box.append(el('p', { class: 'empty', text:
+      'No ENSO narrative could be captured from CPC this run; the numbers above still come ' +
+      'from the official ONI product.' }));
+  }
+  const unusable = enso.unusable_pages || [];
+  if (unusable.length) {
+    box.append(el('p', { class: 'fine', text:
+      'Not quoted because the page carries no current-year text (stale or client-rendered): ' +
+      unusable.map(u => u.label || u.url).join(', ') + '.' }));
+  }
 
   /* CPC seasonal outlooks -------------------------------------------- */
   const seasonal = (cal.cpc.records || []).filter(r => r.kind === 'season' || r.kind === 'month');
@@ -382,7 +436,10 @@ function renderSeason(cal) {
     rows.push([
       periodCell(w, prcp, temp),
       fmt(temp), fmt(prcp),
-      link(prcp ? prcp.url : temp.url, 'CPC shapefile')
+      el('div', {}, [link(prcp ? prcp.url : temp.url, 'CPC shapefile'),
+        (prcp && prcp.polygon_bbox_lon_lat) ? el('div', { class: 'fine',
+          text: 'polygon #' + prcp.polygon_index + ' bbox ' +
+            prcp.polygon_bbox_lon_lat.join(', ') }) : null].filter(Boolean))
     ]);
   });
   const other = seasonal.filter(r => !(wanted.includes(r.valid_season)));
@@ -475,7 +532,54 @@ function renderSeason(cal) {
   if (!discs.length) $('#discussions').append(el('p', { class: 'empty', text: 'No CPC discussion passed the staleness check in this run.' }));
 }
 
-function renderNow(nws) {
+function renderNow(nws, cal) {
+  /* Current official forecast, day by day ---------------------------------
+   * This is the only part of the site that is a real forecast, so it is shown
+   * first and it is not filtered to the Oct-Jan window: whatever the NWS
+   * horizon reaches today is what appears here. */
+  const cf = (cal || {}).current_forecast || {};
+  const cfDays = cf.days || [];
+  const cfBox = $('#now-current');
+  if (cfBox) {
+    if (cfDays.length) {
+      cfBox.append(el('p', { class: 'fine', text:
+        'Official NWS gridded forecast for the 94122 point, aggregated to local calendar ' +
+        `days from the hourly grid. Horizon: ${cf.first_day} to ${cf.last_day} ` +
+        `(${cf.horizon_days} days). This window is updated by the nightly job; it is the only ` +
+        'part of this site that is a forecast rather than a climatology.' }));
+      cfBox.append(table(
+        [{ label: 'Day' }, { label: 'High / low', num: true }, { label: 'Humidity (mean)', num: true },
+         { label: 'Rain chance', num: true }, { label: 'Rain amount', num: true },
+         { label: 'Wind max', num: true }, { label: 'Gust max', num: true }],
+        cfDays.map(d => [
+          el('div', {}, [el('strong', { text: d.date }), el('br'),
+            el('span', { class: 'fine', text: d.weekday || '' })]),
+          `${n(d.high_f, 0)}\u00b0 / ${n(d.low_f, 0)}\u00b0F`,
+          d.humidity_pct === null ? null : pct(d.humidity_pct, 0) +
+            (d.humidity_min_pct !== null && d.humidity_max_pct !== null
+              ? ` (${n(d.humidity_min_pct, 0)}\u2013${n(d.humidity_max_pct, 0)}%)` : ''),
+          pct(d.rain_chance_pct, 0),
+          d.rain_amount_in === null ? null : Number(d.rain_amount_in).toFixed(2) + ' in',
+          d.wind_max_mph === null ? null : n(d.wind_max_mph, 0) + ' mph',
+          d.gust_max_mph === null ? null : n(d.gust_max_mph, 0) + ' mph'
+        ])));
+      if (!cf.inside_season_window) {
+        cfBox.append(el('p', { class: 'fine', text:
+          'Note: these days fall before 1 October 2026, so they are outside the Oct 2026 \u2013 ' +
+          'Jan 2027 scoreboard. They are shown because they are the current official forecast.' }));
+      }
+      cfBox.append(el('p', { class: 'fine' }, [
+        'Issued ', document.createTextNode(cf.forecast_updated || DASH), ' \u00b7 ',
+        link((cf.sources || [])[1] && (cf.sources || [])[1].url, 'Open on weather.gov'),
+        ' \u00b7 ', link((cf.sources || [])[0] && (cf.sources || [])[0].url, 'NWS API endpoint'),
+        document.createTextNode(' \u00b7 daily values are simple maxima/sums of the hourly grid, ' +
+          'nothing else')
+      ]));
+    } else {
+      cfBox.append(el('p', { class: 'empty', text: 'No current NWS forecast was captured this run.' }));
+    }
+  }
+
   const fc = nws.forecast_daily || {};
   const periods = fc.periods || [];
   if (periods.length) {
@@ -520,19 +624,27 @@ function renderNow(nws) {
 
   const alerts = nws.active_alerts || {};
   const events = alerts.events || [];
-  if (events.length) {
+  const real = events.filter(a => !a.is_test);
+  const tests = events.filter(a => a.is_test);
+  if (real.length) {
     $('#nws-alerts').append(table(
       [{ label: 'Event' }, { label: 'Severity' }, { label: 'Effective \u2192 Expires' }, { label: 'Headline' }],
-      events.map(a => [
+      real.map(a => [
         el('strong', { text: a.event }), a.severity,
         `${(a.effective || '').replace('T', ' ')} \u2192 ${(a.expires || '').replace('T', ' ')}`,
         el('span', { class: 'fine', html: esc(a.headline || '') })
       ])));
   } else {
     $('#nws-alerts').append(el('p', { class: 'empty' }, [
-      'No active NWS alerts for this forecast zone. ',
+      'No active NWS warning, watch or advisory for this forecast zone. ',
       link('https://www.weather.gov/mtr', 'Check NWS San Francisco Bay Area')
     ]));
+  }
+  if (tests.length) {
+    $('#nws-alerts').append(el('p', { class: 'fine', text:
+      `${tests.length} NOAA test message(s) were also active at retrieval time and are ` +
+      'deliberately NOT counted as real alerts: ' +
+      tests.map(t => (t.headline || t.event || 'test message')).join(' | ') }));
   }
 
   const afd = (nws.products || {}).AFD;
@@ -610,7 +722,8 @@ function dayCell(d) {
     el('div', { class: 'day-rain', text: pct(d.rain_chance_pct, 0) }),
     el('div', { class: 'day-meta' }, [
       el('span', { text: d.rain_amount_in === null ? 'rain \u2014' : 'rain ' + Number(d.rain_amount_in).toFixed(2) + '"' }),
-      el('span', { text: `wind ${n(d.wind_max_mph, 0)} / gust ${n(d.gust_max_mph, 0)}` })
+      el('span', { text: `wind ${n(d.wind_max_mph, 0)} / gust ${n(d.gust_max_mph, 0)}` }),
+      el('span', { text: d.humidity_pct === null ? 'RH \u2014' : 'RH ' + n(d.humidity_pct, 0) + '%' })
     ])
   ]);
 }
@@ -631,12 +744,15 @@ function openDay(d) {
   body.append(el('h4', { text: 'Headline numbers' }));
   body.append(el('table', { class: 'kv' }, [
     ['High / low', `${n(d.high_f, 0)}\u00b0F / ${n(d.low_f, 0)}\u00b0F`],
-    ['Humidity (mean)', d.humidity_pct === null ? null : pct(d.humidity_pct, 0)],
+    ['Humidity (mean)', d.humidity_pct === null
+      ? el('span', { class: 'fine', text: 'not available from official normals' })
+      : el('span', {}, [document.createTextNode(pct(d.humidity_pct, 0)),
+          d.humidity_basis ? el('span', { class: 'fine', text: ' \u00b7 ' + d.humidity_basis }) : null].filter(Boolean))],
     ['Chance of rain', pct(d.rain_chance_pct, 0)],
     ['Rain amount', d.rain_amount_in === null ? null : Number(d.rain_amount_in).toFixed(2) + ' in'],
     ['Max wind', d.wind_max_mph === null ? null : n(d.wind_max_mph, 0) + ' mph'],
     ['Max gust', d.gust_max_mph === null ? null : n(d.gust_max_mph, 0) + ' mph']
-  ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v === null ? DASH : v })]))));
+  ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), kvCell(v)]))));
 
   const c = d.climo || {};
   body.append(el('h4', { text: 'Observed record for this date (1991\u20132020)' }));
@@ -653,10 +769,15 @@ function openDay(d) {
       : `${n(c.max_gust_on_record_mph, 0)} mph (${c.max_gust_on_record_date || DASH})`],
     ['Rain + wind together', pct(c.p_wind_and_rain_pct, 0)],
     ['Heavy rain + strong gust', pct(c.p_heavy_wind_and_rain_pct, 0)]
-  ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v === null ? DASH : v })]))));
+  ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), kvCell(v)]))));
 
   if (d.cpc && d.cpc.length) {
     body.append(el('h4', { text: 'Official CPC outlooks covering this day' }));
+    body.append(el('p', { class: 'fine', text:
+      'Each row is a point-in-polygon sample of the official CPC shapefile at the 94122 ' +
+      'coordinate. Probability and category come straight from that polygon\u2019s DBF row; ' +
+      'the polygon index and bounding box are in the JSON record so it can be found on the ' +
+      'official map.' }));
     body.append(table([{ label: 'Period' }, { label: 'Issued' }, { label: 'Variable' },
       { label: 'Outlook' }, { label: 'Source' }],
       d.cpc.map(r => [
@@ -675,7 +796,11 @@ function openDay(d) {
   body.append(el('ul', {}, (d.sources || []).map(s =>
     el('li', { class: 'fine' }, [link(s.url, s.label)]))));
 
-  $('#day-dialog').showModal();
+  // showModal() is standard in every current browser; the fallback keeps the
+  // page usable (and testable headlessly) where it is not implemented.
+  const dlg = $('#day-dialog');
+  if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
+  else if (dlg) dlg.setAttribute('open', '');
 }
 
 /* ------------------------------------------------------ duration / wind */
@@ -856,19 +981,163 @@ function renderCaveats(cal) {
   }
 }
 
+/* ------------------------------------------------------------ verification */
+
+function renderVerify(verify, prov) {
+  const box = $('#verify-body');
+  if (!box) return;
+  if (!verify) {
+    box.append(el('p', { class: 'empty', text:
+      'No verification ledger was produced in this run (pipeline/verify_claims.py writes ' +
+      'data/verify.json).' }));
+    return;
+  }
+  const s = verify.summary || {};
+  const banner = el('div', { class: 'callout ' + (s.failed ? 'callout-error' : 'callout-ok') }, [
+    el('h3', { text: `${s.passed || 0} of ${s.total || 0} automated checks passed` }),
+    el('p', { class: 'fine', text:
+      `${s.warnings || 0} warning(s), ${s.failed || 0} failure(s). A failure stops the nightly ` +
+      'build, so a number that cannot be re-derived from its source never reaches this page.' }),
+    (s.failed ? el('p', { class: 'fine', text: 'Failed: ' + (s.failed_checks || []).join(', ') }) : null),
+    ((s.warning_checks || []).length
+      ? el('p', { class: 'fine', text: 'Warnings: ' + s.warning_checks.join(', ') }) : null)
+  ].filter(Boolean));
+  box.append(banner);
+  (verify.how_to_read || []).forEach(t => box.append(el('p', { class: 'fine', text: t })));
+
+  box.append(el('h4', { text: 'Automated checks' }));
+  box.append(table(
+    [{ label: 'Check' }, { label: 'Status' }, { label: 'What it proves' }, { label: 'Detail' }],
+    (verify.checks || []).map(c => [
+      el('code', { text: c.id }),
+      el('span', { class: 'pill pill-' + (c.status === 'pass' ? 'ok' : (c.status === 'warn' ? 'warn' : 'fail')),
+        text: c.status }),
+      el('span', { class: 'fine', text: c.title }),
+      el('span', { class: 'fine', text: c.detail || '' })
+    ])));
+
+  box.append(el('h4', { text: 'Claim ledger — every headline number and its source' }));
+  box.append(table(
+    [{ label: 'Claim' }, { label: 'Value' }, { label: 'Official source' },
+     { label: 'Retrieved / SHA-256' }, { label: 'Method' }],
+    (verify.claims || []).map(c => {
+      const src = c.source || {};
+      const v = typeof c.value === 'object' && c.value !== null
+        ? Object.entries(c.value).map(([k, val]) => `${k}: ${val}`).join(' \u00b7 ')
+        : String(c.value);
+      return [
+        el('div', {}, [el('strong', { text: c.id }), el('br'),
+          el('span', { class: 'fine', text: c.statement || '' })]),
+        el('span', { text: v + (c.unit ? ' ' + c.unit : '') }),
+        el('div', {}, [link(src.url, src.label || src.url),
+          src.host ? el('div', { class: 'fine', text: src.host }) : null].filter(Boolean)),
+        el('div', { class: 'fine' }, [
+          document.createTextNode((src.retrieved_utc || DASH) + ' \u00b7 HTTP ' + (src.http_status || DASH) +
+            ' \u00b7 ' + (src.bytes ? Number(src.bytes).toLocaleString() + ' bytes' : DASH)),
+          src.sha256 ? el('div', { class: 'src-url', text: 'sha256 ' + src.sha256 }) : null
+        ].filter(Boolean)),
+        el('span', { class: 'fine', text: c.method || DASH })
+      ];
+    })));
+
+  const irr = (verify.open_irregularities || []);
+  if (irr.length) {
+    box.append(el('h4', { text: 'Irregularities still open (from the fetch run)' }));
+    box.append(table([{ label: 'Severity' }, { label: 'Area' }, { label: 'Message' }],
+      irr.map(i => [el('span', { class: 'pill pill-' +
+        (i.severity === 'error' ? 'fail' : (i.severity === 'warning' ? 'warn' : 'ok')), text: i.severity }),
+        i.area, el('span', { class: 'fine', text: i.message })])));
+  }
+  box.append(el('p', { class: 'fine' }, [
+    'Raw ledgers: ', link('data/verify.json', 'data/verify.json'), ' \u00b7 ',
+    link('data/verify_report.txt', 'data/verify_report.txt'), ' \u00b7 ',
+    link('data/provenance.json', `data/provenance.json (${(prov.entries || []).length} recorded fetches)`),
+    document.createTextNode(' \u00b7 generated ' + (verify.generated_utc || DASH))
+  ]));
+}
+
+/* ------------------------------------------------------------------- export */
+
+const CSV_FIELDS = [
+  ['date', 'Date'], ['weekday', 'Weekday'], ['tier', 'Tier'],
+  ['high_f', 'High_F'], ['low_f', 'Low_F'], ['humidity_pct', 'Humidity_pct'],
+  ['rain_chance_pct', 'Rain_chance_pct'], ['rain_amount_in', 'Rain_amount_in'],
+  ['wind_max_mph', 'Wind_max_mph'], ['gust_max_mph', 'Gust_max_mph'],
+  ['hours_covered', 'Hours_from_NWS_grid']
+];
+
+function csvCell(v) {
+  if (v === null || v === undefined) return '';
+  const t = String(v);
+  return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+}
+
+function exportCalendarCSV() {
+  const cal = state.data.calendar;
+  if (!cal || !cal.days) return;
+  const lines = [];
+  lines.push('# SFWeather - San Francisco 94122 rainy-season scoreboard');
+  lines.push('# Generated ' + cal.generated_utc + ' from official NOAA/NWS/NCEI/CPC sources');
+  lines.push('# tier=nws means the row is the official NWS forecast; ' +
+    'tier=climatology means it is the 1991-2020 observed record for that date, NOT a forecast');
+  lines.push('# humidity on climatology rows is derived from NCEI hourly temperature and ' +
+    'dew-point normals (Magnus formula); blank means not available');
+  lines.push(CSV_FIELDS.map(f => f[1]).join(','));
+  cal.days.forEach(d => lines.push(CSV_FIELDS.map(f => csvCell(d[f[0]])).join(',')));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = el('a', { href: url, download: 'sfweather-94122-oct2026-jan2027.csv' });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+function exportCurrentCSV() {
+  const cal = state.data.calendar || {};
+  const cf = cal.current_forecast || {};
+  const days = cf.days || [];
+  if (!days.length) return;
+  const fields = [['date', 'Date'], ['weekday', 'Weekday'], ['high_f', 'High_F'], ['low_f', 'Low_F'],
+    ['humidity_pct', 'Humidity_pct'], ['rain_chance_pct', 'Rain_chance_pct'],
+    ['rain_amount_in', 'Rain_amount_in'], ['wind_max_mph', 'Wind_max_mph'],
+    ['gust_max_mph', 'Gust_max_mph']];
+  const lines = ['# SFWeather - current official NWS forecast for 94122 (real forecast, not climatology)',
+    '# Issued ' + (cf.forecast_updated || '') + '; horizon ' + cf.first_day + ' to ' + cf.last_day,
+    fields.map(f => f[1]).join(',')];
+  days.forEach(d => lines.push(fields.map(f => csvCell(d[f[0]])).join(',')));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = el('a', { href: url, download: 'sfweather-94122-current-nws-forecast.csv' });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+function wireExports() {
+  const csv = $('#export-csv');
+  if (csv) csv.addEventListener('click', exportCalendarCSV);
+  const cur = $('#export-current');
+  if (cur) cur.addEventListener('click', exportCurrentCSV);
+  const pr = $('#print-page');
+  if (pr) pr.addEventListener('click', () => window.print());
+}
+
 /* ------------------------------------------------------------------ boot */
 
 async function boot() {
   if (state.booted) return;
   state.booted = true;
   try {
-    const [run, calendar, nws, prov, quality, storms, landlord] = await Promise.all([
+    const [run, calendar, nws, prov, quality, storms, landlord, verify] = await Promise.all([
       loadJSON('run'), loadJSON('calendar'), loadJSON('nws'),
       loadJSON('provenance'), loadJSON('quality'),
       loadJSON('storms').catch(() => null),
-      loadJSON('landlord').catch(() => null)
+      loadJSON('landlord').catch(() => null),
+      loadJSON('verify').catch(() => null)
     ]);
-    Object.assign(state.data, { run, calendar, nws, prov, quality, storms, landlord });
+    Object.assign(state.data, { run, calendar, nws, prov, quality, storms, landlord, verify });
 
     const idx = MONTHS.findIndex(m => (calendar.days || []).some(d => d.date.startsWith(m.key) && d.tier === 'nws'));
     state.month = idx >= 0 ? MONTHS[idx].key : MONTHS[0].key;
@@ -877,14 +1146,16 @@ async function boot() {
     renderReality(calendar);
     renderLocation(run);
     renderSeason(calendar);
-    renderNow(nws);
+    renderNow(nws, calendar);
     renderCalendar(calendar);
     renderDuration(calendar);
     renderWind(calendar);
     renderStorms(storms);
     renderSources(prov);
+    renderVerify(verify, prov);
     renderQuality(quality);
     renderCaveats(calendar);
+    wireExports();
 
     $('#footer-meta').textContent =
       `Data fetched ${calendar.generated_utc || DASH} \u00b7 ` +
