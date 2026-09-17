@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T05:10:49Z",
+  "generated_utc": "2026-09-17T05:19:31Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset)",
@@ -49,203 +49,71 @@
       {
         "label": "6-10 Day Temperature Outlook",
         "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/610temp_latest.zip",
-        "attributes": [
-          {
-            "Fcst_Date": "20260916",
-            "Start_Date": "20260922",
-            "End_Date": "20260926",
-            "Prob": 40.0,
-            "Cat": "Above"
-          }
-        ],
-        "fields": [
-          "Fcst_Date",
-          "Start_Date",
-          "End_Date",
-          "Prob",
-          "Cat"
-        ],
+        "attributes": null,
+        "fields": null,
         "issuance_ym": null
       },
       {
         "label": "6-10 Day Precipitation Outlook",
         "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/610prcp_latest.zip",
-        "attributes": [
-          {
-            "Fcst_Date": "20260916",
-            "Start_Date": "20260922",
-            "End_Date": "20260926",
-            "Prob": 33.0,
-            "Cat": "Above"
-          }
-        ],
-        "fields": [
-          "Fcst_Date",
-          "Start_Date",
-          "End_Date",
-          "Prob",
-          "Cat"
-        ],
+        "attributes": null,
+        "fields": null,
         "issuance_ym": null
       },
       {
         "label": "8-14 Day Temperature Outlook",
         "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/814temp_latest.zip",
-        "attributes": [
-          {
-            "Fcst_Date": "20260916",
-            "Start_Date": "20260924",
-            "End_Date": "20260930",
-            "Prob": 33.0,
-            "Cat": "Above"
-          }
-        ],
-        "fields": [
-          "Fcst_Date",
-          "Start_Date",
-          "End_Date",
-          "Prob",
-          "Cat"
-        ],
+        "attributes": null,
+        "fields": null,
         "issuance_ym": null
       },
       {
         "label": "8-14 Day Precipitation Outlook",
         "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/814prcp_latest.zip",
-        "attributes": [
-          {
-            "Fcst_Date": "20260916",
-            "Start_Date": "20260924",
-            "End_Date": "20260930",
-            "Prob": 33.0,
-            "Cat": "Above"
-          }
-        ],
-        "fields": [
-          "Fcst_Date",
-          "Start_Date",
-          "End_Date",
-          "Prob",
-          "Cat"
-        ],
+        "attributes": null,
+        "fields": null,
         "issuance_ym": null
       },
       {
         "label": "Week 3-4 Temperature Outlook",
         "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/wk34temp_latest.zip",
-        "attributes": [
-          {
-            "Fcst_Date": "20260911",
-            "Start_Date": "20260926",
-            "End_Date": "20261009",
-            "Prob": 40.0,
-            "Cat": "Above"
-          }
-        ],
-        "fields": [
-          "Fcst_Date",
-          "Start_Date",
-          "End_Date",
-          "Prob",
-          "Cat"
-        ],
+        "attributes": null,
+        "fields": null,
         "issuance_ym": null
       },
       {
         "label": "Week 3-4 Precipitation Outlook",
         "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/wk34prcp_latest.zip",
-        "attributes": [
-          {
-            "Fcst_Date": "20260911",
-            "Start_Date": "20260926",
-            "End_Date": "20261009",
-            "Prob": 33.0,
-            "Cat": "EC"
-          }
-        ],
-        "fields": [
-          "Fcst_Date",
-          "Start_Date",
-          "End_Date",
-          "Prob",
-          "Cat"
-        ],
+        "attributes": null,
+        "fields": null,
         "issuance_ym": null
       },
       {
         "label": "Monthly & Seasonal Precipitation Outlook (issued 202608)",
         "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202608.zip",
-        "attributes": [
-          {
-            "Fcst_Date": "20260820",
-            "Valid_Seas": "JJA 2027",
-            "Prob": 33.0,
-            "Cat": "EC"
-          }
-        ],
-        "fields": [
-          "Fcst_Date",
-          "Valid_Seas",
-          "Prob",
-          "Cat"
-        ],
+        "attributes": null,
+        "fields": null,
         "issuance_ym": "202608"
       },
       {
         "label": "Monthly & Seasonal Temperature Outlook (issued 202608)",
         "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202608.zip",
-        "attributes": [
-          {
-            "Fcst_Date": "20260820",
-            "Valid_Seas": "JJA 2027",
-            "Prob": 40.0,
-            "Cat": "Above"
-          }
-        ],
-        "fields": [
-          "Fcst_Date",
-          "Valid_Seas",
-          "Prob",
-          "Cat"
-        ],
+        "attributes": null,
+        "fields": null,
         "issuance_ym": "202608"
       },
       {
         "label": "Latest Monthly Update - Precipitation",
         "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/monthlyupdate/monthupd_prcp_latest.zip",
-        "attributes": [
-          {
-            "Fcst_Date": "20260831",
-            "Valid_Seas": "Sep 2026",
-            "Prob": 33.0,
-            "Cat": "Above"
-          }
-        ],
-        "fields": [
-          "Fcst_Date",
-          "Valid_Seas",
-          "Prob",
-          "Cat"
-        ],
+        "attributes": null,
+        "fields": null,
         "issuance_ym": null
       },
       {
         "label": "Latest Monthly Update - Temperature",
         "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/monthlyupdate/monthupd_temp_latest.zip",
-        "attributes": [
-          {
-            "Fcst_Date": "20260831",
-            "Valid_Seas": "Sep 2026",
-            "Prob": 33.0,
-            "Cat": "EC"
-          }
-        ],
-        "fields": [
-          "Fcst_Date",
-          "Valid_Seas",
-          "Prob",
-          "Cat"
-        ],
+        "attributes": null,
+        "fields": null,
         "issuance_ym": null
       }
     ],
@@ -283,7 +151,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610temp.new.gif",
         "sha256": "9aafe69cc076d3d29ba8ba8df5859ba8058f1e9c233b85865ede278ba91df243",
         "bytes": 272877,
-        "retrieved_utc": "2026-09-17T05:08:46Z",
+        "retrieved_utc": "2026-09-17T05:18:47Z",
         "ok": true,
         "local_path": "assets/cpc/610day_temp.gif"
       },
@@ -296,7 +164,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610prcp.new.gif",
         "sha256": "b5bf46c20b8bea1507668ab845a586c9aa71557a0189c41b9b2778c265167cb2",
         "bytes": 285276,
-        "retrieved_utc": "2026-09-17T05:08:47Z",
+        "retrieved_utc": "2026-09-17T05:18:47Z",
         "ok": true,
         "local_path": "assets/cpc/610day_prcp.gif"
       },
@@ -309,7 +177,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814temp.new.gif",
         "sha256": "d79d47910f3995c892d37c5fe3322a2804890dc7e1c56b6782d85f622275f304",
         "bytes": 260587,
-        "retrieved_utc": "2026-09-17T05:08:47Z",
+        "retrieved_utc": "2026-09-17T05:18:48Z",
         "ok": true,
         "local_path": "assets/cpc/814day_temp.gif"
       },
@@ -322,9 +190,35 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814prcp.new.gif",
         "sha256": "7eff050a5bbc4f5d842965674aa616c979340e3118b3562fddaa9a7cdfea8e95",
         "bytes": 275928,
-        "retrieved_utc": "2026-09-17T05:08:47Z",
+        "retrieved_utc": "2026-09-17T05:18:48Z",
         "ok": true,
         "local_path": "assets/cpc/814day_prcp.gif"
+      },
+      "wk34_temp": {
+        "label": "Week 3-4 Temperature",
+        "slug": "wk34_temp",
+        "candidates": [
+          "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34temp.gif"
+        ],
+        "url": "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34temp.gif",
+        "sha256": "a4c93d39ceb6e9f1e023465a0cd4222a65f091d2a5ebd1fa1485aa639d028dde",
+        "bytes": 253449,
+        "retrieved_utc": "2026-09-17T05:18:48Z",
+        "ok": true,
+        "local_path": "assets/cpc/wk34_temp.gif"
+      },
+      "wk34_prcp": {
+        "label": "Week 3-4 Precipitation",
+        "slug": "wk34_prcp",
+        "candidates": [
+          "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34prcp.gif"
+        ],
+        "url": "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34prcp.gif",
+        "sha256": "9b1dc1e219d24101427b6923fa7eda68fbfc588e6381b957444d585890bf20d7",
+        "bytes": 271372,
+        "retrieved_utc": "2026-09-17T05:18:49Z",
+        "ok": true,
+        "local_path": "assets/cpc/wk34_prcp.gif"
       },
       "30day_temp": {
         "label": "30-Day (official updated) Temperature",
@@ -336,7 +230,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/30day/off15_temp.gif",
         "sha256": "40177cb325e4b902940c5c1fba1388abc17071f85645f5a04b1edf9e5a4a3bae",
         "bytes": 246338,
-        "retrieved_utc": "2026-09-17T05:09:47Z",
+        "retrieved_utc": "2026-09-17T05:18:49Z",
         "ok": true,
         "local_path": "assets/cpc/30day_temp.gif"
       },
@@ -350,7 +244,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/30day/off15_prcp.gif",
         "sha256": "4c138aa986dfe3a0933327f68c65ddfc63109d536ce2bb0480d3306a184d78f1",
         "bytes": 248509,
-        "retrieved_utc": "2026-09-17T05:09:47Z",
+        "retrieved_utc": "2026-09-17T05:18:49Z",
         "ok": true,
         "local_path": "assets/cpc/30day_prcp.gif"
       }
@@ -395,7 +289,7 @@
       }
     ],
     "table_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt",
-    "diagnostic_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/index.shtml"
+    "diagnostic_url": null
   },
   "season_summary": {
     "season_total_prcp_in": {

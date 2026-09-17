@@ -1,9 +1,9 @@
 {
-  "generated_utc": "2026-09-17T05:10:49Z",
+  "generated_utc": "2026-09-17T05:19:31Z",
   "counts": {
-    "total": 6,
-    "errors": 0,
-    "warnings": 5,
+    "total": 5,
+    "errors": 1,
+    "warnings": 3,
     "info": 1
   },
   "irregularities": [
@@ -28,35 +28,21 @@
     },
     {
       "severity": "warning",
-      "area": "cpc",
-      "message": "No CPC map image could be archived for: Week 3-4 Temperature",
+      "area": "enso",
+      "message": "A CPC ENSO page was discarded because it does not reference 2026; it is a stale shell page and quoting it would be misleading.",
       "evidence": {
-        "candidates": [
-          "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/wk34temp.new.gif",
-          "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/wk34temp.gif",
-          "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/wk34_temp_latest.gif"
-        ]
+        "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php",
+        "size": 17341
       }
     },
     {
-      "severity": "warning",
-      "area": "cpc",
-      "message": "No CPC map image could be archived for: Week 3-4 Precipitation",
+      "severity": "error",
+      "area": "climatology",
+      "message": "The GHCN-Daily station file parsed to zero usable rows; the rain climatology is unavailable.",
       "evidence": {
-        "candidates": [
-          "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/wk34prcp.new.gif",
-          "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/wk34prcp.gif",
-          "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/wk34_prcp_latest.gif"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "area": "cpc",
-      "message": "CPC discussion could not be retrieved: Week 3-4 Outlook Discussion",
-      "evidence": {
-        "url": "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/fxus05.html",
-        "status": 404
+        "station": "USW00023272",
+        "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
+        "bytes": 7488380
       }
     },
     {

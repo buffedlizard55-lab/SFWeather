@@ -1006,6 +1006,24 @@
     "oni_c": 0.98,
     "phase": "el_nino"
   },
-  "diagnostic_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/index.shtml",
-  "diagnostic_text": "Climate Prediction Center: ENSO Diagnostic Discussion \n www.weather.gov \n home \n Site Map \n News \n Organization \n Search \n Search by city or zip code. Press enter or select the go button to submit request\n Local forecast by\n\"City, St\" or Zip Code \n -->\r\n Search the CPC \r\n Expert Assessments \n ENSO Diagnostic\n Discussion \n Archive \n About Us \n Our Mission \n Who We Are \n Contact Us \n CPC Information \n CPC Web Team \n HOME >\n Expert Assessments >\n ENSO Diagnostic Discussion \n El Ni&ntilde;o/Southern Oscillation (ENSO) Diagnostic Discussion \n PDF: English Version \n Spanish Version (Click icon for Adobe PDF Reader) \n Word: English Version \n Spanish Version (Click icon for MS Word Viewer) \n HTML: English Version \n Spanish Version \n Dear stakeholders,\n NWS is working on improving approaches for communication of the NWS climate products. Under this project Climate Prediction Center (CPC) is currently gathering feedback on potential changes to the headlines used in their El Ni\u00f1o-Southern Oscillation (ENSO) Alert System using this online survey . Please complete this survey and send it to your partners &mdash; we need as large a sample of NWS stakeholders as possible. The survey will take 15 minutes at maximum of your time.\n Please make sure to provide your input by May 19, 2020.\n Thank you very much for your help!\n Take Survey \n-->\n NOAA/ \n National Weather Service \n NOAA Center for Weather and Climate Prediction \n Climate Prediction Center\n 5830 University Research Court \n Riverdale Park, MD 20737 \n Page Author: Climate Prediction Center Internet Team \n Page last modified: November 8, 2016\n Disclaimer \n Information Quality \n Credits \n Glossary \n Privacy Policy \n Freedom of Information Act (FOIA) \n About Us \n Career Opportunities"
+  "reference_links": [
+    {
+      "label": "CPC ENSO: Recent Evolution, Current Status and Predictions (PDF)",
+      "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/lanina/enso_evolution-status-fcsts-web.pdf"
+    }
+  ],
+  "discarded_enso_urls": [
+    {
+      "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/enso_advisory.shtml",
+      "reason": "fetch failed (status 404)"
+    },
+    {
+      "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php",
+      "reason": "stale - no mention of 2026"
+    },
+    {
+      "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/lanina/enso_evolution-status-fcsts-web.pdf",
+      "reason": "PDF - linked for manual review, text not parsed"
+    }
+  ]
 }
