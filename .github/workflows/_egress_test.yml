@@ -1,5 +1,8 @@
 name: egress-test
 on:
+  push:
+    paths:
+      - '.github/workflows/_egress_test.yml'
   workflow_dispatch:
 jobs:
   test:
