@@ -1,227 +1,179 @@
-# SFWeather — rainy-season outlook for San Francisco 94122
+# SFWeather — San Francisco 94122, Oct 2026 → Jan 2027
 
-A **source-verified, no-hallucination** rain, rain-duration, wind and storm outlook
-for San Francisco ZIP code **94122**, covering **1 October 2026 – 31 January 2027**,
-built only from free, public, official sources: **NOAA / National Weather Service,
-NCEI, the Climate Prediction Center and the U.S. Census Bureau**.
+A **source-verified** rainy-season outlook for ZIP **94122** (Sunset / Inner Sunset,
+San Francisco), built for the questions a landlord actually asks: *will it rain, for
+how many days in a row, how much, how hard will the wind blow, and will wind and rain
+arrive together?*
+
+Everything is produced by an automated nightly pipeline from **free, public,
+official** sources — NOAA / National Weather Service, NCEI, the Climate Prediction
+Center and the U.S. Census Bureau — and every published number is re-derived from its
+source file and re-checked before it is allowed onto the page.
 
 **Live site:** <https://buffedlizard55-lab.github.io/SFWeather/>
 
-Every number on the site is produced by the nightly pipeline, is re-checked
-against its source by an automated claim ledger, and carries the official URL,
-HTTP status, byte count, SHA-256 and retrieval time of the exact bytes it came
-from. **Nothing on the page is typed in by hand**, and no daily forecast is ever
-invented for a date beyond the official NWS horizon.
-
 ---
 
-## The honest headline (read this before anything else)
+## What does the honest answer look like?
 
-> **No organisation on Earth publishes a forecast for a specific day in January 2027.**
-> The NWS daily forecast reaches about 7 days. Beyond that, official products are
-> *probabilities for a period* — 6-10 days, 8-14 days, weeks 3-4, whole months and
-> 3-month seasons.
+**Nobody can tell you today whether it will rain on 14 January 2027.** No official
+product forecasts a specific day that far out. The NWS publishes a daily forecast that
+reaches about **7 days** — as of this run, 17–23 September 2026. Beyond that, the
+official products are *probabilities for a period* (6–10 days, 8–14 days, weeks 3–4,
+a month, a 3-month season), never a number for one named day.
 
-The site therefore has exactly two tiers, and every day is stamped with one:
+So the site does not invent one. Each of the 123 days from 1 Oct 2026 to 31 Jan 2027
+carries one of two honest badges:
 
-| Badge | Meaning |
+| Badge | What it means |
 | --- | --- |
-| **`NWS FORECAST`** | The day is inside the official NWS gridded forecast horizon. Every number is the actual NWS forecast. |
-| **`CLIMATOLOGY`** | The day is beyond it. Every number is the **1991-2020 observed record for that calendar date** at a named NOAA station. **Not a forecast.** |
+| `NWS FORECAST` | The day is inside the official NWS forecast horizon. High, low, humidity, wind, gusts, rain chance and rain amount are the actual NWS gridded forecast for this ZIP's grid cell. |
+| `CLIMATOLOGY` | The day is beyond the horizon. Every figure is the **observed 1991–2020 record for that calendar date** at a named NOAA station — how often it rained, how much, how windy — and is labelled as such. Not a forecast. |
 
-CPC outlooks are attached to the days they validly cover, but only as probability
-statements for the whole period — they are never converted into invented daily
-numbers.
-
----
-
-## What the site answers for a landlord
-
-**1. Current forecast (the only real forecast).** A "Today's real forecast" panel
-shows the official NWS daily window for 94122 — high/low, humidity, chance of
-rain, rain amount, max wind and max gust for every day in range, plus the raw
-human forecast text, the latest official observations, active warnings and the
-verbatim NWS Area Forecast Discussion.
-
-**2. Expected rain amounts** — 1991-2020 observed October, November, December and
-January totals from the San Francisco downtown gauge `USW00023272`, with mean,
-median, min, max and percentiles, and the same months from NOAA's *published*
-1991-2020 monthly normals as an independent cross-check.
-
-**3. Long rain duration ("days or weeks of straight rain")** — the share of the
-last 30 seasons that contained at least one run of ≥3, ≥5, ≥7 and ≥10 consecutive
-wet days inside 1 Oct – 31 Jan, the longest run in each season, and the
-distribution of season totals.
-
-**4. Wind, and wind together with rain** — from SFO ASOS `72494023234`: mean daily
-max sustained wind, mean daily max gust, days per season with rain *and*
-≥20 kt wind, days per season with ≥0.50 in *and* a ≥35 kt gust, and the strongest
-gust of the season. SFO is more exposed than the Sunset, so these are an
-**upper bound** for 94122 — stated on the site, not hidden.
-
-**5. Storm severity history** — NCEI Storm Events records for San Francisco
-County (FIPS 06075), with the standing caveat that it is a reported-events
-database, not a census.
-
-**6. Day-by-day scoreboard** — click any day from 1 Oct 2026 to 31 Jan 2027 for
-high/low, humidity, chance of rain, rain amount, max wind, max gust, the 1991-2020
-record for that date (how often it rained, wettest on record, strongest gust), and
-the CPC outlooks covering it. The whole scoreboard and the current forecast can be
-downloaded as CSV, or printed to PDF.
+CPC outlooks are attached to the days they validly cover, as *probabilities for the
+period*, and are never converted into daily numbers.
 
 ---
 
-## Where every number comes from
+## The landlord summary (all values from the current dataset)
 
-| Need | Official source | Endpoint |
-| --- | --- | --- |
-| Location of "94122" | U.S. Census Bureau | [2024 Gazetteer ZCTA file](https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip) |
-| Daily forecast (temp, humidity, wind, gust, rain chance, rain amount) | NOAA / NWS | [`api.weather.gov/points/37.7605,-122.4839`](https://api.weather.gov/points/37.7605,-122.4839) → [`gridpoints/MTR/82,105/forecast/hourly`](https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly) |
-| Forecaster narrative, warnings, observations | NOAA / NWS | [Area Forecast Discussion](https://api.weather.gov/products/types/AFD/locations/MTR), [active alerts](https://api.weather.gov/alerts/active?zone=CAZ006), [station observations](https://api.weather.gov/stations/SFOC1/observations/latest) |
-| Sub-seasonal outlooks (6-10 d, 8-14 d, weeks 3-4) | NOAA CPC | [GIS shapefiles](https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/) + [discussions](https://www.cpc.ncep.noaa.gov/products/predictions/610day/fxus06.html) |
-| Monthly & seasonal outlooks (OND, NDJ, DJF, JFM…) | NOAA CPC | [`seasprcp_YYYYMM.zip` / `seastemp_YYYYMM.zip`](https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasonal.php) |
-| ENSO state — **NOAA's published ONI product** | NOAA CPC | [`data/indices/oni.ascii.txt`](https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt) |
-| ENSO status + seasonal discussion (quoted verbatim) | NOAA CPC | [ENSO Diagnostic Discussion](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml), [90-day discussion](https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html) |
-| Daily rain & temperature history | NOAA NCEI | [GHCN-Daily `USW00023272`](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv) |
-| Daily wind & gust history | NOAA NCEI | [GSOD `72494023234`](https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/) |
-| Independent monthly normals cross-check | NOAA NCEI | [1991-2020 monthly normals `USW00023272`](https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv) |
-| Humidity on climatology days | NOAA NCEI | [1991-2020 hourly normals](https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv) — RH derived from the official hourly temperature and dew-point normals (Magnus formula) |
-| Storm severity history | NOAA NCEI | [Storm Events Database](https://www.ncdc.noaa.gov/stormevents/) |
-| Units & caveats | NOAA NCEI | [GSOD README](https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt) |
+**Typical rainy season, 1 Oct – 31 Jan, San Francisco downtown gauge `USW00023272`
+(1991–2020, n = 30 seasons)**
 
-**Commercial providers such as AccuWeather are deliberately excluded.** They are
-not open data: they need a paid key, their terms do not allow redistribution, and
-their numbers cannot be checked line by line against a public endpoint the way a
-NOAA file can. If you want them as a second opinion, read them at the source —
-this project will not republish numbers it cannot verify.
+| Question | Answer |
+| --- | --- |
+| How much rain in the season? | mean **12.79 in**, median **13.26 in**; wettest 22.82 in (1997–98), driest 1.71 in (2013–14); 10th–90th percentile 6.38–18.59 in |
+| How many wet days? | mean **34.5** days (range 7–55) |
+| Will we get a long wet spell? | **96.7%** of seasons had a run of ≥3 consecutive wet days, **80.0%** ≥5 days, **53.3%** ≥7 days, **23.3%** ≥10 days. The longest run averaged 7.3 days (max 17) |
+| Rain *and* strong wind together? | mean **11.1 days per season** with rain and ≥20 kt wind at SFO, **2.2 days** with ≥0.50 in and a ≥35 kt gust; strongest gust of the season averages 53.8 mph (max 70 mph) |
+| Does El Niño matter? | In this record, El Niño seasons averaged **14.23 in** (n=11), neutral 13.31 in (n=7), La Niña 11.16 in (n=12) — wetter on average, with huge spread |
 
----
+**Current ENSO state (NOAA's own product, not a re-derivation)**
 
-## Line-by-line verification (the point of this project)
+| | |
+| --- | --- |
+| Latest published ONI | **JJA 2026: +1.80 °C** — El Niño, *strong* |
+| Official Alert System Status | **El Niño Advisory** (CPC ENSO Diagnostic Discussion, issued 10 September 2026) |
+| CPC statement, verbatim | "El Niño is strengthening, with a greater than 90% chance of a very strong event during the Northern Hemisphere fall and winter 2026-27." |
+| CPC historic-event probability | "During the October-December 2026 season, there is a 75% chance of a historic event…" (verbatim, same page) |
+| Independent cross-check | The project's own 3-month mean from the raw Niño-3.4 table gives 0.98 °C for AMJ 2026 against NOAA's published 0.95 °C — a 0.03 °C difference, published on the site |
 
-`pipeline/verify_claims.py` re-reads the produced datasets every night and runs
-**20 automated checks over 17 recorded claims**: that the number shown is the number
-in the official file, that the file was really retrieved (HTTP status, byte count and
-SHA-256 of those exact bytes recorded), and that the project's rules were respected:
+**Today's actual forecast** (the only real day-by-day forecast that exists): a 7-day
+window from the NWS hourly grid, showing day/night values aggregated to local days —
+e.g. 17 Sep 2026: 65 °F / 60 °F, humidity 91% (86–96%), rain chance 0%, max wind 8 mph.
 
-* no day labelled an NWS forecast outside the official horizon;
-* no invented daily value beyond that horizon;
-* no humidity value presented as an observation when it is a derivation;
-* no NOAA **test** message shown as a real warning;
-* published means, medians, percentiles and streak percentages recomputed from the
-  same file and compared;
-* the project's GHCN-derived monthly rainfall means compared against NOAA's
-  published monthly normals for the same station;
-* every source URL printed on the site traced to a recorded official fetch;
-* every quoted official sentence decoded to plain text, exactly as a browser shows
-  it, with no HTML entity text left in it.
-
-The result is published as `data/verify.json`, `data/verify_report.txt` and the
-**Verification** section of the site. **A failing check stops the data being
-published** — the workflow then commits the diagnostics only, so the site keeps the
-last verified numbers rather than showing unverified ones.
-
-The mistakes found this way are kept in [`docs/VERIFICATION.md`](docs/VERIFICATION.md),
-not deleted. The third-session audit (17 Sep 2026), checking every headline number
-against the live product, found and fixed: **a stale ENSO value** (the site showed a
-locally derived +0.98 °C from May 2026 while NOAA's published ONI already stood at
-**+1.80 °C for JJA 2026**), **hard-coded quotes** from a superseded CPC issuance
-(69% where the live discussion says 75%), a NOAA **test** tsunami warning counted as
-a real alert, missing humidity on climatology days, and four defects in newly written
-code — including function deletion and HTML-entity corruption of every quote — that
-the ledger and the offline tests caught before they could ship.
-
-Two further layers run on every push:
-
-* `tests/test_parsers.py` — 52 offline assertions (standard library only, no network)
-  over the parsing and derivation code, including the ONI season convention and a
-  hand-computable end-to-end aggregation;
-* `npm test` — renders the page in jsdom against the committed data and fails if a
-  section is empty, the day dialog breaks or the CSV export throws.
+**Where the numbers come from** — every one: [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md),
+and on the site under *Verification*, with the URL, HTTP status, byte count, SHA-256 and
+retrieval time of the exact file.
 
 ---
 
-## How it is built
+## How "no hallucination" is enforced
+
+| Layer | What it does |
+| --- | --- |
+| `pipeline/verify_sources.py` | Fails the build if any host outside the official list is used. There is no path to a commercial or unofficial source. |
+| `pipeline/verify_claims.py` | Re-derives every headline number from the same file and checks the project's rules: no `NWS FORECAST` badge outside the official horizon, no invented daily value, no humidity presented as an observation when it is a derivation, no NOAA *test* message shown as a real alert, quotes are plain text with no HTML entities left in them, and every source URL printed on the site is traced to a recorded fetch. |
+| Workflow gate | `summary.failed > 0` → **the run publishes nothing**. It commits diagnostics only ("refresh NOT published") and the site keeps the last verified dataset. |
+| `data/provenance.json` | The full fetch log: every URL, status, size, SHA-256, timestamp. |
+| `data/verify.json` + `verify_report.txt` | The claim ledger as machine-readable JSON and as plain text. |
+| `tests/test_parsers.py` | 53 offline assertions (stdlib only, no network) on the parsing/derivation code — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, and an end-to-end aggregation over a synthetic file with hand-computable expected values. |
+| `tests/smoke.js` (`npm test`) | Renders the whole page in jsdom against the committed data and fails on an empty section, a broken day dialog or a broken CSV export. |
+
+**Every forecast day can be checked by hand:** open the day's dialog, follow the
+source link, and compare. The site's *Verification* section lists all 17 recorded
+claims (20 checks) with their evidence, and *Irregularities* lists anything the
+pipeline flagged rather than smoothed over.
+
+---
+
+## Sources (all free, all official, no API key)
+
+| What | Where |
+| --- | --- |
+| ZIP boundary / centroid | [U.S. Census Gazetteer 2024](https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip) → ZCTA 94122 internal point 37.760459, −122.483894 (cross-checked with the [Census geocoder](https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json)) |
+| Daily/hourly forecast | NWS [gridpoints MTR 82,105](https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly) and [human-readable version](https://forecast.weather.gov/MapClick.php?lat=37.760459&lon=-122.483894&unit=0&lg=english&FcstType=text&TextType=1) |
+| Alerts, observations, forecaster discussion | NWS [alerts for CAZ006](https://api.weather.gov/alerts/active?zone=CAZ006), [station observations](https://api.weather.gov/stations/SFOC1/observations/latest), [Area Forecast Discussion](https://api.weather.gov/products/types/AFD/locations/MTR) |
+| 6–10 day, 8–14 day, weeks 3–4, monthly, seasonal outlooks | CPC [GIS shapefiles](https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/) (the containing polygon is sampled at the 94122 point and its index, bounding box and raw DBF row are published) |
+| ENSO number | CPC **official ONI product** — [oni.ascii.txt](https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt), read directly |
+| ENSO status and seasonal thinking | [ENSO Diagnostic Discussion](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml), [8–14 day](https://www.cpc.ncep.noaa.gov/products/predictions/814day/), [weeks 3–4](https://www.cpc.ncep.noaa.gov/products/predictions/WK34/), [long-lead discussion](https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html), [30-day](https://www.cpc.ncep.noaa.gov/products/predictions/30day/) |
+| Rain and temperature history | NCEI [GHCN-Daily `USW00023272`](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv) (San Francisco downtown, 1921→present) |
+| Wind and gust history | NCEI [GSOD `72494023234`](https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/) (SFO) — read the [units README](https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt) |
+| Independent climatology cross-check | NCEI [1991–2020 monthly normals `USW00023272`](https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv) |
+| Humidity normals | NCEI [1991–2020 hourly normals `USW00023234`](https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv) — relative humidity is **derived** by the Magnus formula from the official hourly temperature and dew-point normals and labelled as a derivation |
+| Storm severity history | NCEI [Storm Events](https://www.ncdc.noaa.gov/stormevents/) for San Francisco County |
+
+### Why AccuWeather is not used
+
+The brief listed AccuWeather as an acceptable source. It is deliberately **excluded**
+here, and the exclusion is a documented deviation: it requires a paid API key, its
+terms do not allow redistributing its data, and — most importantly for this project —
+its output cannot be re-derived and checked line by line against a public file the way
+a NOAA product can. Including it would create numbers on the page that a reviewer can
+only *trust*, not *verify*. Anyone who wants it as a second opinion should read it at
+the source; this site will not republish what it cannot check.
+
+---
+
+## Caveats (full list: [docs/LIMITATIONS.md](docs/LIMITATIONS.md))
+
+* Climatology is **not a forecast** for a specific day — it is the observed
+  distribution for that date over 30 seasons.
+* Wind is measured at **SFO, ~10 mi away and more exposed** than the Sunset, so the
+  wind figures are an upper bound for 94122. Rain/temperature come from the downtown
+  gauge, ~1.5 mi away.
+* GSOD wind days are **UTC days** (≈16:00–16:00 Pacific) while GHCN rain days are
+  local days, so the joint wind-and-rain statistic pairs a local-day rain total with a
+  UTC-day wind figure.
+* CPC outlooks are **regional**. The site reports the polygon that actually contains
+  the 94122 point and publishes its geometry, so the reader can see whether the tilt
+  covers the coast or starts inland.
+* ENSO-stratified means rest on 7–12 seasons — indicative, not precise.
+* No downscaling, no bias correction: numbers are used exactly as published.
+
+---
+
+## Repository layout and how to run it
 
 ```
-.github/workflows/update-data.yml   nightly at 07:15 UTC (00:15 Pacific) and on push
-        │
-        ▼
-pipeline/main.py                    fetches every official source, records provenance
-pipeline/climo.py                   computes the 1991-2020 climatology, ONI, humidity normals
-pipeline/build_calendar.py          assembles data/calendar.json + the current forecast block
-pipeline/landlord_summary.py        builds data/landlord.json (landlord dashboard)
-pipeline/verify_sources.py          rejects any non-official host
-pipeline/verify_claims.py           re-derives every headline number; fails the build on error
-tests/test_parsers.py               52 offline assertions on the parsing/derivation code
-tests/smoke.js                      renders the page headlessly and checks it
-        │
-        ▼
-data/*.json + assets/cpc/*.gif      committed back to the repo (only when verification passes)
-        │
-        ▼
-index.html + assets/js/app.js       static GitHub Pages site, no server, no tracking
+pipeline/main.py            fetch every official source, record provenance, dump data/*.json
+pipeline/climo.py           parsing + climatology, ENSO helpers, humidity derivation
+pipeline/build_calendar.py  builds data/calendar.json (scoreboard + current forecast)
+pipeline/landlord_summary.py builds data/landlord.json (landlord dashboard)
+pipeline/verify_sources.py  rejects non-official hosts
+pipeline/verify_claims.py   re-derives every headline number; writes verify.json/report
+pipeline/lib_*.py           shared fetch/shapefile helpers
+assets/js/app.js            renders the data (invariant: it never invents a number)
+assets/css/style.css        styles
+index.html                  the page
+data/                       committed datasets + provenance + verification ledger
+docs/                       VERIFICATION.md (claims audit), DATA_SOURCES.md, LIMITATIONS.md, NEXT_SESSION.md
+tests/                      test_parsers.py (offline), smoke.js (jsdom render)
+.github/workflows/          update-data.yml (nightly), site-test.yml (on push)
 ```
 
-Because the datasets refresh nightly, days convert from `CLIMATOLOGY` to
-`NWS FORECAST` automatically as they come into range, and the ENSO/CPC statements
-update with each official issuance — nobody edits a number by hand.
-
-Run it yourself (standard library only):
+Run the whole thing locally (Python 3.11+, standard library only):
 
 ```bash
 python3 pipeline/main.py --outdir data
 python3 pipeline/build_calendar.py
 python3 pipeline/landlord_summary.py
 python3 pipeline/verify_claims.py
-python3 tests/test_parsers.py   # offline unit tests, no network needed
-npm install && npm test         # headless render of the page
-python3 -m http.server 8000     # then open http://localhost:8000
+python3 tests/test_parsers.py       # offline unit tests
+python3 -m http.server 8000         # open http://localhost:8000
 ```
+
+The nightly job runs at **07:15 UTC (00:15 Pacific)**, after the NWS 00Z cycle, and
+commits the refreshed datasets. A push to any branch also triggers it.
 
 ---
 
-## Limitations
+## Documentation
 
-Summarised here; the full list, with what it would take to fix each one, is in
-[`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) and
-[`docs/NEXT_SESSION.md`](docs/NEXT_SESSION.md).
-
-1. **No daily forecast exists beyond the NWS horizon** (~7 days). Days beyond it
-   show observed climatology, badged as such.
-2. **Two different stations, ~10 miles apart.** Rain/temperature from San Francisco
-   downtown `USW00023272`; wind from SFO `72494023234` (more exposed, so an upper
-   bound); humidity normals from SFO hourly normals. San Francisco microclimates
-   mean the Sunset differs from all of them.
-3. **GSOD days are UTC days** (00-24Z ≈ 16:00-16:00 Pacific) while GHCN rain days
-   are local days, so the joint wind-and-rain statistic mixes the two day
-   definitions. Documented and flagged.
-4. **Small samples.** Single-date percentages come from 30 seasons; one season moves
-   a date by ~3.3 points. ENSO-stratified samples are 7-12 seasons.
-5. **Coastal point-in-polygon.** CPC polygons occasionally miss the coastline; where
-   that happens the nearest polygon is used, flagged, and its bounding box is
-   published so you can check the map.
-6. **Storm Events is a reported-events database**, not a census of storms.
-7. **No bias correction or downscaling.** Numbers are used exactly as published.
-
----
-
-## Repository layout
-
-```
-index.html                     the site (landlord dashboard, current forecast, scoreboard, verification)
-assets/css/style.css
-assets/js/app.js               renders data/*.json; invents nothing
-assets/cpc/*.gif               archived copies of official CPC outlook maps
-data/*.json                    pipeline output (nightly) + verify.json claim ledger
-pipeline/                      fetch + analysis + verification code (stdlib only)
-docs/                          sources, methods, verification log, limitations, landlord guide
-.github/workflows/             nightly refresh and verification gate
-```
-
-## Disclaimer
-
-Independent hobby project. Not affiliated with or endorsed by NOAA, NWS, NCEI, CPC
-or the U.S. Census Bureau. **For life-safety decisions use
-[weather.gov](https://www.weather.gov) or [weather.gov/mtr](https://www.weather.gov/mtr)
-directly.**
+* [docs/VERIFICATION.md](docs/VERIFICATION.md) — the claim-by-claim audit, including
+  every bug this process has caught and how it was fixed.
+* [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) — every endpoint, with what it is used
+  for and the licence/attribution position.
+* [docs/LIMITATIONS.md](docs/LIMITATIONS.md) — what cannot be answered with official
+  data, and what it would take to fix each one.
+* [docs/NEXT_SESSION.md](docs/NEXT_SESSION.md) — handoff for the next working session.
