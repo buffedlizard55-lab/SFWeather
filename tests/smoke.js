@@ -105,6 +105,50 @@ setTimeout(() => {
     problems.push('CSV export threw: ' + e.message);
   }
 
+  // ---- content integrity: what the reader actually sees -------------------
+  // These are the display-level rules the project promises.  Each one guards a
+  // defect that reached the page at least once.
+  const body = doc.body.textContent;
+
+  // 1. Official prose must be decoded: no HTML entity text may be rendered.
+  const entity = body.match(/&[a-zA-Z]{2,10};|&#\d{1,5};/);
+  if (entity) problems.push('rendered page contains un-decoded HTML entity: ' + entity[0]);
+
+  // 2. The ENSO alert status must be shown in full, not truncated.
+  const enso = JSON.parse(fs.readFileSync(path.join(repo, 'data/enso.json'), 'utf8'));
+  const status = enso.diagnostic_status;
+  if (status && status.length > 4 && !text('#enso-body').includes(status)) {
+    problems.push('ENSO alert status not shown in full: expected "' + status + '"');
+  }
+
+  // 3. The displayed ONI must be the published ONI, not a typed-in number.
+  const latest = (enso.official_oni || {}).latest;
+  if (latest && latest.oni_c !== undefined) {
+    const shown = text('#enso-body');
+    if (!shown.includes(String(latest.oni_c))) {
+      problems.push('official ONI ' + latest.oni_c + ' is not shown in #enso-body');
+    }
+  }
+
+  // 4. Climatology days must show the humidity normal when the data has one.
+  const cal = JSON.parse(fs.readFileSync(path.join(repo, 'data/calendar.json'), 'utf8'));
+  const firstClimo = (cal.days || []).find(d => d.tier === 'climatology' && d.humidity_pct !== null);
+  if (firstClimo && !days[0].textContent.includes('RH')) {
+    problems.push('climatology day cell shows no humidity');
+  }
+
+  // 5. If the committed ledger has failures, the page must show them (a failed
+  //    run commits diagnostics only, and the failure has to be visible).
+  const ledger = JSON.parse(fs.readFileSync(path.join(repo, 'data/verify.json'), 'utf8'));
+  const failed = (ledger.summary || {}).failed || 0;
+  const vtext = text('#verify-body');
+  if (failed > 0) {
+    const id = (ledger.summary.failed_checks || [])[0];
+    if (id && !vtext.includes(id)) {
+      problems.push('ledger has ' + failed + ' failure(s) but the page does not show ' + id);
+    }
+  }
+
   // The verification ledger must be rendered with a verdict.
   if (!/checks passed|checks failed/.test(text('#verify-body'))) {
     problems.push('verification ledger did not render a verdict');
