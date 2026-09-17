@@ -20,7 +20,7 @@ falls entirely before 1 October.
 ### 2. Three stations, none of them in the Sunset
 | Quantity | Station | Distance | Note |
 | --- | --- | --- | --- |
-| Rain, temperature | `USW00023272` San Francisco downtown | ~1.5 mi | closest long daily precipitation record |
+| Rain, temperature | `USW00023272` San Francisco downtown | ~3.2 mi | closest long daily precipitation record |
 | Wind, gusts | `72494023234` KSFO | ~10 mi SE | most exposed; an **upper bound** for 94122 |
 | Humidity normals | `USW00023234` KSFO hourly normals | ~10 mi SE | the only hourly normals file available for the city |
 
@@ -157,9 +157,9 @@ daily maxima are 18.4 and 19.6 mph.
 * `npm test` renders the whole page headlessly (jsdom) and fails on empty sections,
   a broken day dialog or a broken CSV export. Runs as the `smoke` job of the `Tests`
   workflow.
-* `python3 tests/test_parsers.py` - 55 offline assertions on the parsing and
-  derivation code - runs as the `parsers` job of the same workflow, on every push
-  that touches `pipeline/**` or `tests/**`.
+* `python3 tests/test_parsers.py` runs offline assertions on the parsing, derivation,
+  and official-host allow-list code as the `parsers` job of the same workflow, on
+  every push that touches `pipeline/**` or `tests/**`.
 * The workflow commits data with `[skip ci]` so it cannot trigger itself.
 * The site is static; if `data/` is missing it shows an explicit error banner rather
   than rendering blanks.

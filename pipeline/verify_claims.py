@@ -123,12 +123,31 @@ def main() -> int:
     humidity_normals = load("humidity_normals.json")
     monthly_normals = load("monthly_normals.json")
 
-    entries = {e["url"]: e for e in prov.get("entries", [])}
+    # Keep every manifest row, including repeated fetches of the same URL.  A
+    # dict keyed only by URL silently collapsed the two 90-day discussion
+    # fetches in the 17 Sep run and made the ledger say "104 fetches" while the
+    # provenance page correctly showed 105.  URL lookups below use the latest
+    # successful row, but the integrity checks count the actual records.
+    manifest_entries = [e for e in (prov.get("entries") or [])
+                        if isinstance(e, dict) and e.get("url")]
+    entries_by_url = {}
+    for entry in manifest_entries:
+        entries_by_url.setdefault(entry["url"], []).append(entry)
+    unique_urls = set(entries_by_url)
     ledger = Ledger()
     gen = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
+    def source_entry(url):
+        records = entries_by_url.get(url) or []
+        # Prefer a successful record, then the last record in the manifest.  A
+        # failed retry must never hide a successful source fetch from a claim.
+        for entry in reversed(records):
+            if entry.get("ok"):
+                return entry
+        return records[-1] if records else {}
+
     def src(url, label):
-        e = entries.get(url) or {}
+        e = source_entry(url)
         return {
             "label": label,
             "url": url,
@@ -139,19 +158,37 @@ def main() -> int:
         }
 
     def fetch_ok(url):
-        e = entries.get(url)
-        return bool(e and e.get("ok"))
+        return any(e.get("ok") for e in entries_by_url.get(url, []))
+
+    def fetch_has_evidence(url):
+        return any(
+            e.get("ok") and isinstance(e.get("http_status"), int)
+            and 200 <= e["http_status"] < 300
+            and isinstance(e.get("bytes"), int) and e["bytes"] > 0
+            and bool(e.get("sha256"))
+            for e in entries_by_url.get(url, [])
+        )
 
     # ---------------------------------------------------------------- 0. meta
     ledger.check("provenance-present", "A provenance manifest exists with fetches",
-                 len(entries) > 0, f"{len(entries)} recorded fetches",
-                 evidence={"count": len(entries)})
+                 bool(manifest_entries), f"{len(manifest_entries)} recorded fetches "
+                 f"({len(unique_urls)} unique URLs)",
+                 evidence={"records": len(manifest_entries), "unique_urls": len(unique_urls)})
 
+    expected_records = (run.get("counts") or {}).get("manifest_entries")
+    ledger.check("provenance-record-count",
+                 "The provenance manifest count agrees with the pipeline run metadata",
+                 expected_records is None or expected_records == len(manifest_entries),
+                 f"manifest has {len(manifest_entries)} records; run.json says {expected_records}",
+                 evidence={"manifest_records": len(manifest_entries),
+                           "run_manifest_entries": expected_records})
+
+    hosts = [host_of(e.get("url")) for e in manifest_entries]
     ledger.check("hosts-official",
                  "Every recorded fetch is an official government host",
-                 all(host_of(u) in OFFICIAL_HOSTS for u in entries),
-                 "hosts: " + ", ".join(sorted({host_of(u) or "?" for u in entries})),
-                 evidence={"hosts": sorted({host_of(u) or "?" for u in entries}),
+                 bool(manifest_entries) and all(h in OFFICIAL_HOSTS for h in hosts),
+                 "hosts: " + ", ".join(sorted({h or "?" for h in hosts})),
+                 evidence={"hosts": sorted({h or "?" for h in hosts}),
                            "allowlist": list(OFFICIAL_HOSTS)})
 
     # ------------------------------------------------------- 1. location
@@ -478,12 +515,12 @@ def main() -> int:
     }
     untraceable, cited = [], []
     for u in sorted(refs):
-        if u in entries:
+        if u in unique_urls:
             continue
         if u in citation_only and host_of(u) in OFFICIAL_HOSTS and \
-                any(e.startswith(u) for e in entries):
+                any(e.startswith(u) for e in unique_urls):
             cited.append({"url": u, "note": citation_only[u],
-                          "files_fetched_under_it": sum(1 for e in entries if e.startswith(u))})
+                          "files_fetched_under_it": sum(1 for e in unique_urls if e.startswith(u))})
             continue
         untraceable.append(u)
     ledger.check("source-traceability",
@@ -555,6 +592,26 @@ def main() -> int:
                      f"README says {m.group(1)}, official ONI is {latest['oni_c']} "
                      f"({latest.get('label')})",
                      severity="warning")
+
+    # ------------------------------------------------ 13. claim source evidence
+    # A claim may be mathematically correct yet still be unsafe to publish if
+    # its cited file was not actually retrieved with enough evidence to review.
+    # Check every claim that has a URL, including claims added by future code.
+    claim_source_issues = []
+    for claim in ledger.claims:
+        url = (claim.get("source") or {}).get("url")
+        if url and not fetch_has_evidence(url):
+            claim_source_issues.append({
+                "claim": claim.get("id"),
+                "url": url,
+                "records": len(entries_by_url.get(url, [])),
+            })
+    ledger.check("claim-source-evidence",
+                 "Every recorded claim with a source URL has a successful fetch with HTTP, size and hash evidence",
+                 not claim_source_issues,
+                 ("0 claim source(s) lack fetch evidence" if not claim_source_issues else
+                  f"{len(claim_source_issues)} claim source(s) lack fetch evidence"),
+                 evidence=claim_source_issues[:10])
 
     # ------------------------------------------------------------- write out
     summary = ledger.summary()

@@ -140,8 +140,13 @@ setTimeout(() => {
   // 5. If the committed ledger has failures, the page must show them (a failed
   //    run commits diagnostics only, and the failure has to be visible).
   const ledger = JSON.parse(fs.readFileSync(path.join(repo, 'data/verify.json'), 'utf8'));
+  const quality = JSON.parse(fs.readFileSync(path.join(repo, 'data/quality_report.json'), 'utf8'));
   const failed = (ledger.summary || {}).failed || 0;
   const vtext = text('#verify-body');
+  const qualityErrors = (quality.counts || {}).errors || 0;
+  if ((failed || qualityErrors) && !doc.querySelector('#data-status .callout-error')) {
+    problems.push('data status does not surface a verification or quality error');
+  }
   if (failed > 0) {
     const id = (ledger.summary.failed_checks || [])[0];
     if (id && !vtext.includes(id)) {

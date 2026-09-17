@@ -42,10 +42,11 @@ keeps the last verified dataset. That is the designed behaviour, not an outage.
    are counted and displayed separately.
 5. **CPC records are auditable**: each sampled outlook carries the containing polygon
    index, its bounding box, vertex count and the raw DBF attribute row.
-6. **Verification ledger** (`pipeline/verify_claims.py`): 21 checks, 17 claims, each with
+6. **Verification ledger** (`pipeline/verify_claims.py`): 23 checks, 17 claims, each with
    URL, HTTP status, bytes, SHA-256, retrieval time, method and a cross-check.
-7. **Offline unit tests** (`tests/test_parsers.py`, 55 assertions, stdlib only) and a
-   **headless render test** (`npm test`, jsdom). Both run in the `Tests` workflow.
+7. **Offline unit tests** (`tests/test_parsers.py`, 89 assertions after the current
+   host-allow-list checks, stdlib only) and a **headless render test** (`npm test`,
+   jsdom). Both run in the `Tests` workflow.
 8. Bugs **14–22** found and fixed, with root causes and evidence, in
    [`docs/VERIFICATION.md`](VERIFICATION.md) — including a deleted function that broke
    the pipeline, HTML-entity corruption of every quote, and a banner reading
@@ -75,10 +76,10 @@ rendered as `64.980032379224%`; source links resolved by array position (so addi
 made "Open on weather.gov" point at an API URL); and README prose that disagreed with
 the data it described.
 
-**Tests: 55 → 85 offline assertions**, and 7 new render checks. Each new check was
+**Tests: 55 → 89 offline assertions**, and 7 new render checks. Each new check was
 verified to **fail on the old code** before being committed, so none of them is
-vacuous. Full suite is green: `85/85`, `npm test` passes, `verify_sources` 105 fetches
-across 5 official hosts, `verify_claims` 21/21.
+vacuous. Full suite is green: `89/89`, `npm test` passes, `verify_sources` 105 fetches
+across 5 exact official hosts, `verify_claims` 23/23.
 
 ---
 

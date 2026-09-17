@@ -212,16 +212,18 @@ reached on only some code paths would have been silent.
 
 ## How the ledger and the tests stand now
 
-* `pipeline/verify_claims.py`: **21 automated checks, 17 recorded claims**, each claim
+* `pipeline/verify_claims.py`: **23 automated checks, 17 recorded claims**, each claim
   carrying value, unit, method, official URL, HTTP status, bytes, SHA-256, retrieval
   time and - where one exists - an independent cross-check. Order: provenance-present,
-  hosts-official, centroid-verified, oni-official-read-directly, oni-official-present,
+  provenance-record-count, hosts-official, centroid-verified, oni-official-read-directly,
+  oni-official-present,
   nws-daily-aggregation, tier-honesty, calendar-completeness, calendar-fields,
   humidity-honesty, oni-cross-check, season-mean-arithmetic, distribution-ordering,
   month-mean-*, streak-arithmetic, normals-cross-check, cpc-dedup,
-  cpc-seasonal-present, alert-test-filter, source-traceability, quotes-plain-text.
-* `tests/test_parsers.py`: **85 offline assertions**, stdlib only. Added 17 Sep 2026:
-  the CPC category-explanation rule (bugs 23) and the gridpoint gust/QPF aggregation,
+  cpc-seasonal-present, alert-test-filter, source-traceability, quotes-plain-text,
+  claim-source-evidence.
+* `tests/test_parsers.py`: **89 offline assertions**, stdlib only. Added 17 Sep 2026:
+  the exact official-host allow-list, the CPC category-explanation rule (bugs 23) and the gridpoint gust/QPF aggregation,
   including the local-midnight accumulation split and the cross-check of derived gusts
   against the gusts NWS states in its own text forecast.
 * `npm test` (jsdom): renders the page against the committed data and fails on an
