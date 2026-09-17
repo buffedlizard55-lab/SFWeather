@@ -1,0 +1,52 @@
+name: Tests
+
+# The site is plain HTML/CSS/JS with no build step, so a broken page would not be
+# caught by the data pipeline.  This job renders the page headlessly against the
+# committed datasets and fails if any section is empty, the day dialog breaks, or
+# the CSV export throws.
+
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'assets/**'
+      - 'tests/**'
+      - 'pipeline/**'
+      - 'package.json'
+      - '.github/workflows/site-test.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'assets/**'
+      - 'tests/**'
+      - 'pipeline/**'
+      - 'package.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install test-only dependencies
+        run: npm install --no-audit --no-fund
+      - name: Render the site headlessly and check it
+        run: npm test
+  parsers:
+    # Offline: standard library only, no network, no third-party packages.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Parse and derive unit tests
+        run: python3 tests/test_parsers.py

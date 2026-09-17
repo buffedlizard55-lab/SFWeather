@@ -1,0 +1,11 @@
+{
+  "name": "sfweather-site-test",
+  "private": true,
+  "description": "Dev-only tooling for the SFWeather static site. The site itself has no dependencies and no build step.",
+  "scripts": {
+    "test": "node tests/smoke.js ."
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.0"
+  }
+}

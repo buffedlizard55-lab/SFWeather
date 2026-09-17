@@ -595,11 +595,16 @@ def monthly_normals_summary(text):
     site can always be traced to a named column.
     """
     header, rows = read_normals_csv(text)
-    prcp_cols = _col(header, r"MLY-PRCP-NORMAL")
-    temp_cols = _col(header, r"MLY-TAVG-NORMAL")
+    # Exact match only: a substring match also picks up ``meas_flag_MLY-PRCP-NORMAL``
+    # and ``years_MLY-PRCP-NORMAL``, which are not values.
+    prcp_cols = [c[0] for c in _exact_col(header, "MLY-PRCP-NORMAL")]
+    temp_cols = [c[0] for c in _exact_col(header, "MLY-TAVG-NORMAL")]
     out = {"precip_in": {}, "temp_f": {},
-           "layout": {"header": header[:60], "row_count": len(rows),
-                      "precip_columns": prcp_cols, "temp_columns": temp_cols}}
+           "layout": {"header": header[:120], "column_count": len(header),
+                      "row_count": len(rows),
+                      "precip_columns": prcp_cols, "temp_columns": temp_cols,
+                      "month_column": next((k for k in ("MONTH", "DATE", "MM")
+                                            if k in (rows[0] if rows else {})), None)}}
     for i, row in enumerate(rows):
         month = _month_of_row(row, header, i)
         if not month:
@@ -649,11 +654,14 @@ def hourly_normals_rh_inputs(text):
     header, rows = read_normals_csv(text)
     temp_cols = _exact_col(header, "HLY-TEMP-NORMAL")
     dew_cols = _exact_col(header, "HLY-DEWP-NORMAL")
-    info = {"header": header[:60], "row_count": len(rows),
+    first = rows[0] if rows else {}
+    info = {"header": header[:60], "column_count": len(header), "row_count": len(rows),
             "temp_columns": [c[0] for c in temp_cols],
             "dewpoint_columns": [c[0] for c in dew_cols],
-            "month_column": ("MONTH" in header) or ("DATE" in header),
-            "hour_column": "HOUR" in header}
+            "month_column": next((k for k in ("MONTH", "MM", "MO", "DATE") if k in first), None),
+            "day_column": next((k for k in ("DAY", "DD") if k in first), None),
+            "hour_column": next((k for k in ("HOUR", "TIME") if k in first), None),
+            "first_row": {k: first[k] for k in ("MONTH", "DAY", "HOUR", "DATE") if k in first}}
     if not temp_cols or not dew_cols:
         info["usable"] = False
         info["reason"] = ("no exact HLY-TEMP-NORMAL / HLY-DEWP-NORMAL columns in this "
@@ -728,3 +736,271 @@ def hourly_normals_rh_inputs(text):
     info["usable_rows"] = len(out)
     info["wide_layout"] = wide
     return out, info
+
+
+# ------------------------------------------------- rainy-season climatology
+
+def build_daily_climatology(ghcn, gsod_by_date, season_month_days, period):
+    """Per calendar-date statistics across Oct 1 - Jan 31.
+
+    ``season_month_days`` is an ordered list of ``(month, day)`` tuples.
+    ``period`` is ``(start_year, end_year)`` inclusive, applied to the season
+    *starting* year.
+    """
+    y0, y1 = period
+    ghcn_by_md = defaultdict(lambda: {"tmax": [], "tmin": [], "prcp": [], "years": [], "records": []})
+    gsod_by_md = defaultdict(lambda: {"wind": [], "maxwind": [], "gust": [], "prcp": [],
+                                      "gust_max_record": (None, None)})
+
+    for (month, day) in season_month_days:
+        mmdd = f"{month:02d}-{day:02d}"
+        for season_year in range(y0, y1 + 1):
+            # Season Oct <season_year> .. Jan <season_year+1>
+            year = season_year if month >= 10 else season_year + 1
+            iso = f"{year:04d}-{mmdd}"
+
+            rec = ghcn.get(iso)
+            if rec is not None:
+                g = ghcn_by_md[mmdd]
+                g["years"].append(year)
+                tmax = ghcn_to_f(rec.get("TMAX"))
+                tmin = ghcn_to_f(rec.get("TMIN"))
+                prcp = ghcn_to_inches(rec.get("PRCP"))
+                g["tmax"].append(tmax)
+                g["tmin"].append(tmin)
+                g["prcp"].append(prcp)
+                g["records"].append({"year": year, "prcp_in": _f(prcp, 3),
+                                     "tmax_f": _f(tmax, 1), "tmin_f": _f(tmin, 1)})
+
+            s = gsod_by_date.get(iso)
+            if s is not None:
+                d = gsod_by_md[mmdd]
+                d["wind"].append(s["wind_kt"])
+                d["maxwind"].append(s["max_wind_kt"])
+                d["gust"].append(s["gust_kt"])
+                d["prcp"].append(s["prcp_in"])
+                if s["gust_kt"] is not None:
+                    cur = d["gust_max_record"][0]
+                    if cur is None or s["gust_kt"] > cur:
+                        d["gust_max_record"] = (s["gust_kt"], iso)
+
+    daily = []
+    for (month, day) in season_month_days:
+        mmdd = f"{month:02d}-{day:02d}"
+        g = ghcn_by_md.get(mmdd, {"tmax": [], "tmin": [], "prcp": [], "years": [], "records": []})
+        d = gsod_by_md.get(mmdd, {"wind": [], "maxwind": [], "gust": [], "prcp": [],
+                                  "gust_max_record": (None, None)})
+
+        prcp = [p for p in g["prcp"] if p is not None]
+        n_p = len(prcp)
+        wet = [p for p in prcp if p >= 0.01]
+        n_gsod_prcp = len([p for p in d["prcp"] if p is not None])
+        n_gsod_wind = len([v for v in d["maxwind"] if v is not None])
+
+        # joint wind + rain pairs (only days where both are present)
+        pairs = [(p, w, gu) for p, w, gu in zip(d["prcp"], d["maxwind"], d["gust"])
+                 if p is not None and w is not None]
+        n_pairs = len(pairs)
+        windrain = sum(1 for p, w, _g in pairs if p >= 0.01 and w >= 20.0)
+        windrain_heavy = sum(1 for p, w, g2 in pairs
+                             if p >= 0.50 and (g2 is not None and g2 >= 35.0))
+
+        gusts = [v for v in d["gust"] if v is not None]
+        rec_gust, rec_gust_date = d["gust_max_record"]
+
+        top_wettest = sorted([r for r in g["records"] if r["prcp_in"] is not None],
+                             key=lambda r: -r["prcp_in"])[:3]
+
+        daily.append({
+            "mmdd": mmdd,
+            "month": month,
+            "day": day,
+            "n_years_precip": n_p,
+            "n_years_temp": len([v for v in g["tmax"] if v is not None]),
+            "normal_high_f": _f(statistics.fmean([v for v in g["tmax"] if v is not None]), 1)
+            if any(v is not None for v in g["tmax"]) else None,
+            "normal_low_f": _f(statistics.fmean([v for v in g["tmin"] if v is not None]), 1)
+            if any(v is not None for v in g["tmin"]) else None,
+            "record_high_f": _f(max([v for v in g["tmax"] if v is not None]), 1)
+            if any(v is not None for v in g["tmax"]) else None,
+            "record_low_f": _f(min([v for v in g["tmin"] if v is not None]), 1)
+            if any(v is not None for v in g["tmin"]) else None,
+            "p_rain_day_pct": pct(len(wet), n_p),
+            "p_rain_ge_025in_pct": pct(sum(1 for p in prcp if p >= 0.25), n_p),
+            "p_rain_ge_100in_pct": pct(sum(1 for p in prcp if p >= 1.00), n_p),
+            "mean_daily_prcp_in": _f(statistics.fmean(prcp), 3) if prcp else None,
+            "median_wet_day_prcp_in": _f(statistics.median(wet), 3) if wet else None,
+            "max_daily_prcp_in": _f(max(prcp), 3) if prcp else None,
+            "wettest_on_record": [{"year": r["year"], "prcp_in": r["prcp_in"]} for r in top_wettest],
+            # wind (SFO ASOS)
+            "n_years_wind": n_gsod_wind,
+            "normal_mean_wind_mph": _f(statistics.fmean([v for v in d["wind"] if v is not None]) * KT_TO_MPH, 1)
+            if any(v is not None for v in d["wind"]) else None,
+            "normal_max_sustained_mph": _f(statistics.fmean([v for v in d["maxwind"] if v is not None]) * KT_TO_MPH, 1)
+            if any(v is not None for v in d["maxwind"]) else None,
+            "normal_max_gust_mph": _f(statistics.fmean([v for v in gusts if v is not None]) * KT_TO_MPH, 1)
+            if gusts else None,
+            "max_gust_on_record_mph": _f(rec_gust * KT_TO_MPH, 1) if rec_gust is not None else None,
+            "max_gust_on_record_date": rec_gust_date,
+            "p_gust_ge_25kt_pct": pct(sum(1 for v in gusts if v >= 25), len(gusts)),
+            "p_gust_ge_35kt_pct": pct(sum(1 for v in gusts if v >= 35), len(gusts)),
+            "p_gust_ge_45kt_pct": pct(sum(1 for v in gusts if v >= 45), len(gusts)),
+            "n_years_joint": n_pairs,
+            "p_wind_and_rain_pct": pct(windrain, n_pairs),
+            "p_heavy_wind_and_rain_pct": pct(windrain_heavy, n_pairs),
+            "n_years_gsod_prcp": n_gsod_prcp,
+        })
+    return daily
+
+
+def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_series,
+                            oni_seasons=None):
+    """Year-by-year wet-season statistics plus their distribution.
+
+    A season is Oct 1 (year Y) through Jan 31 (year Y+1).
+    """
+    y0, y1 = period
+    seasons = []
+    for season_year in range(y0, y1 + 1):
+        dates = []
+        for (month, day) in season_month_days:
+            year = season_year if month >= 10 else season_year + 1
+            dates.append(f"{year:04d}-{month:02d}-{day:02d}")
+
+        prcp_series, missing = [], 0
+        for iso in dates:
+            rec = ghcn.get(iso)
+            if rec is None:
+                missing += 1
+                prcp_series.append(None)
+                continue
+            prcp_series.append(ghcn_to_inches(rec.get("PRCP")))
+
+        wet_flags = [1 if (p is not None and p >= 0.01) else 0 for p in prcp_series]
+
+        # consecutive wet-day runs
+        runs, cur = [], 0
+        for f in wet_flags:
+            if f:
+                cur += 1
+            else:
+                if cur:
+                    runs.append(cur)
+                cur = 0
+        if cur:
+            runs.append(cur)
+
+        monthly = {}
+        for month in (10, 11, 12, 1):
+            tot = 0.0
+            have = False
+            for iso in dates:
+                if int(iso[5:7]) != month:
+                    continue
+                rec = ghcn.get(iso)
+                if rec is None:
+                    continue
+                p = ghcn_to_inches(rec.get("PRCP"))
+                if p is not None:
+                    tot += p
+                    have = True
+            monthly[f"{month:02d}"] = _f(tot, 2) if have else None
+
+        total = sum(p for p in prcp_series if p is not None)
+        # wind + rain days for this season (SFO ASOS)
+        jr, heavy_jr, max_gust = 0, 0, None
+        for iso in dates:
+            s = gsod_by_date.get(iso)
+            if not s:
+                continue
+            p, w, g = s["prcp_in"], s["max_wind_kt"], s["gust_kt"]
+            if p is not None and w is not None and p >= 0.01 and w >= 20.0:
+                jr += 1
+            if p is not None and g is not None and p >= 0.50 and g >= 35.0:
+                heavy_jr += 1
+            if g is not None and (max_gust is None or g > max_gust):
+                max_gust = g
+
+        # ENSO phase: prefer NOAA's published season-labelled ONI (mean of the
+        # official OND / NDJ / DJF values covering this rainy season).  The
+        # locally derived monthly series is only a fallback.
+        oni = None
+        oni_source = None
+        if oni_seasons:
+            oni = season_mean_oni(oni_seasons, season_year)
+            if oni is not None:
+                oni_source = ("mean of official CPC ONI for OND %d, NDJ %d and "
+                              "DJF %d" % (season_year, season_year, season_year + 1))
+        if oni is None:
+            oni_key = (season_year, 11)
+            oni = oni_series.get(oni_key)
+            if oni is not None:
+                oni_source = "derived 3-month running mean centred on Nov %d" % season_year
+        seasons.append({
+            "season": f"{season_year}-{season_year + 1}",
+            "total_prcp_in": _f(total, 2),
+            "wet_days": sum(wet_flags),
+            "missing_days": missing,
+            "longest_wet_streak_days": max(runs) if runs else 0,
+            "n_wet_streaks": len(runs),
+            "streaks_ge_3": sum(1 for r in runs if r >= 3),
+            "streaks_ge_5": sum(1 for r in runs if r >= 5),
+            "streaks_ge_7": sum(1 for r in runs if r >= 7),
+            "streaks_ge_10": sum(1 for r in runs if r >= 10),
+            "monthly_prcp_in": monthly,
+            "wind_and_rain_days": jr,
+            "heavy_wind_and_rain_days": heavy_jr,
+            "max_gust_kt": _f(max_gust, 1) if max_gust is not None else None,
+            "max_gust_mph": _f(max_gust * KT_TO_MPH, 1) if max_gust is not None else None,
+            "oni_ond": _f(oni, 2),
+            "oni_source": oni_source,
+            "enso_phase": enso_phase(oni),
+        })
+
+    totals = [s["total_prcp_in"] for s in seasons if s["total_prcp_in"] is not None]
+    oct_tot = [s["monthly_prcp_in"]["10"] for s in seasons if s["monthly_prcp_in"].get("10") is not None]
+    nov_tot = [s["monthly_prcp_in"]["11"] for s in seasons if s["monthly_prcp_in"].get("11") is not None]
+    dec_tot = [s["monthly_prcp_in"]["12"] for s in seasons if s["monthly_prcp_in"].get("12") is not None]
+    jan_tot = [s["monthly_prcp_in"]["01"] for s in seasons if s["monthly_prcp_in"].get("01") is not None]
+
+    ranked = sorted([s for s in seasons if s["total_prcp_in"] is not None],
+                    key=lambda s: s["total_prcp_in"])
+
+    by_phase = defaultdict(list)
+    for s in seasons:
+        if s["total_prcp_in"] is not None:
+            by_phase[s["enso_phase"]].append(s["total_prcp_in"])
+
+    n_seasons = len(seasons)
+    return {
+        "seasons": seasons,
+        "distribution": {
+            "season_total_prcp_in": summarise(totals, 2),
+            "october_total_prcp_in": summarise(oct_tot, 2),
+            "november_total_prcp_in": summarise(nov_tot, 2),
+            "december_total_prcp_in": summarise(dec_tot, 2),
+            "january_total_prcp_in": summarise(jan_tot, 2),
+            "wet_days": summarise([s["wet_days"] for s in seasons], 1),
+            "longest_wet_streak_days": summarise([s["longest_wet_streak_days"] for s in seasons], 1),
+            "wind_and_rain_days": summarise([s["wind_and_rain_days"] for s in seasons], 1),
+            "heavy_wind_and_rain_days": summarise([s["heavy_wind_and_rain_days"] for s in seasons], 1),
+            "max_gust_mph": summarise([s["max_gust_mph"] for s in seasons], 1),
+        },
+        "probability_of_at_least_one_streak": {
+            "ge_3_days": {"seasons": sum(1 for s in seasons if s["streaks_ge_3"] >= 1),
+                          "pct": pct(sum(1 for s in seasons if s["streaks_ge_3"] >= 1), n_seasons)},
+            "ge_5_days": {"seasons": sum(1 for s in seasons if s["streaks_ge_5"] >= 1),
+                          "pct": pct(sum(1 for s in seasons if s["streaks_ge_5"] >= 1), n_seasons)},
+            "ge_7_days": {"seasons": sum(1 for s in seasons if s["streaks_ge_7"] >= 1),
+                          "pct": pct(sum(1 for s in seasons if s["streaks_ge_7"] >= 1), n_seasons)},
+            "ge_10_days": {"seasons": sum(1 for s in seasons if s["streaks_ge_10"] >= 1),
+                           "pct": pct(sum(1 for s in seasons if s["streaks_ge_10"] >= 1), n_seasons)},
+        },
+        "enso_stratified_season_total_prcp_in": {
+            phase: summarise(vals, 2) for phase, vals in sorted(by_phase.items())
+        },
+        "wettest_seasons": [{"season": s["season"], "total_prcp_in": s["total_prcp_in"]}
+                            for s in ranked[-5:]][::-1],
+        "driest_seasons": [{"season": s["season"], "total_prcp_in": s["total_prcp_in"]}
+                           for s in ranked[:5]],
+    }

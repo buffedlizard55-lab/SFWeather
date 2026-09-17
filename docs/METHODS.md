@@ -122,3 +122,61 @@ confirmed by the missing-value sentinel being `999.9` rather than `9999`.
   `data/quality_report.json` and shown on the site.
 * **No silent fallbacks.** Every fallback (nearest polygon, hard-coded centroid,
   fixed time-zone offset) raises a visible flag.
+
+---
+
+## 4. ENSO (updated 17 September 2026)
+
+The ENSO number on the site is **NOAA's published ONI product**
+(`data/indices/oni.ascii.txt`), read directly:
+
+* the file's seasons are written as three **month initials** (DJF, NDJ, …), so the
+  parser builds all 12 possible rotations to resolve ambiguous letters (J, M, A);
+* the year label follows CPC's convention, verified against the published file:
+  `NDJ 2015 = +2.59` covers Nov 2015 – Jan 2016, and `DJF 2016 = +2.50` covers
+  Dec 2015 – Feb 2016 (the 2015-16 El Niño peak);
+* the value shown is the last row of that file, byte-for-byte, with the file's
+  SHA-256 recorded.
+
+The project also computes its own 3-month running mean from the detrended monthly
+Niño 3.4 table. That derivation is **published as a cross-check**, not as the
+headline: if it disagrees with NOAA's published season for the same three months by
+more than 0.15 °C, the run raises an irregularity.
+
+ENSO stratification of the rainfall record uses the official seasons covering each
+rainy season — OND of year Y, NDJ of year Y and DJF of year Y+1 — averaged. This
+replaced an earlier version that used a single locally derived month.
+
+## 5. Humidity on climatology days
+
+NOAA publishes no relative-humidity normal. The pipeline therefore:
+
+1. downloads the official 1991-2020 **hourly normals** for the city
+   (`HLY-TEMP-NORMAL`, `HLY-DEWP-NORMAL`, and the file's own `month`/`day`/`hour`
+   columns — matched by exact name, because substring matching also picks up
+   `meas_flag_…` and `…-10PCTL` columns);
+2. converts °F → °C and computes relative humidity with the Magnus formula
+   (`17.625/243.04` constants) for every hour of every calendar date;
+3. averages the hours to give one value per calendar date, falling back to the
+   monthly mean only if the file has no day column.
+
+The site labels this everywhere as a **derivation from official normals**, names the
+station, and leaves the field empty when the file is unavailable. A value is never
+estimated or interpolated.
+
+## 6. Verification (why a number cannot silently be wrong)
+
+`pipeline/verify_claims.py` runs after the datasets are built and:
+
+* re-derives published aggregates from the same file (means, medians, percentiles,
+  streak percentages) and compares;
+* compares the project's GHCN-derived monthly rainfall means with NOAA's **published
+  monthly normals** for the same station and publishes the difference;
+* checks production rules — no `NWS FORECAST` tier outside the official horizon, no
+  humidity value presented as an observation, NOAA test messages counted separately
+  from real alerts, every source URL traced to a recorded fetch;
+* writes `data/verify.json` + `data/verify_report.txt`, and **exits non-zero on any
+  failure**.
+
+The workflow treats a non-zero exit as a hard stop: diagnostics are committed, the
+datasets are not, so the site keeps the last verified numbers.

@@ -65,9 +65,11 @@ so every shapefile in the archive is sampled.
 
 ### ENSO
 
-| Product | URL |
-| --- | --- |
-| Nino 3.4 monthly anomaly table (ERSSTv5) | <https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt> |
+| Product | URL | Used for |
+| --- | --- | --- |
+| **Official ONI product** (season-labelled 3-month means) | <https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt> | **The ENSO number shown on the site.** Read directly from NOAA's published product — not re-derived. |
+| **ENSO Diagnostic Discussion** | <https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml> | The Alert System Status (e.g. "El Nino Advisory"), the synopsis and the key sentences, all stored verbatim with the page SHA-256 |
+| Nino 3.4 monthly anomaly table (ERSSTv5) | <https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt> | Cross-check only: the project recomputes a 3-month mean and publishes any difference from the official ONI |
 | ENSO evolution / status / forecast (PDF) | <https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/lanina/enso_evolution-status-fcsts-web.pdf> |
 | Long-lead seasonal discussion (quoted on the site) | <https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html> |
 | Week 3-4 discussion (quoted on the site) | <https://www.cpc.ncep.noaa.gov/products/predictions/WK34/texts/week34fcst.txt> |
@@ -89,11 +91,22 @@ La Nina <= -0.5 C).
 | GSOD, `72494023234` (KSFO), 1991-2025 | <https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/> | daily mean wind, max sustained wind, max gust, precipitation |
 | Storm Events (SF County FIPS 06075) | <https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/> | recorded storm events, magnitudes, damage |
 | 1991-2020 Daily Climate Normals, `USW00023272` | <https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv> | cross-check on the computed normals |
+| **1991-2020 Monthly Climate Normals**, `USW00023272` | <https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv> | **Independent cross-check** on this project's GHCN-derived monthly rainfall means; the nightly job publishes the difference (largest 0.07 in on the first run) |
+| **1991-2020 Hourly Climate Normals**, `USW00023234` | <https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv> | **Source of the humidity normal** used on climatology days: relative humidity derived from the official hourly temperature and dew-point normals with the Magnus formula |
 | **GSOD README** | <https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt> | the authority for GSOD units and missing-value flags |
 
 Station `USW00023272` is **SAN FRANCISCO DOWNTOWN, CA US**, at
 37.7705 N, -122.4269 W, elevation 45.7 m - the closest long-record
 precipitation gauge with a continuous daily series.
+
+### Humidity — what is official and what is derived
+
+NOAA does not publish a relative-humidity normal. The `HLY-TEMP-NORMAL` and
+`HLY-DEWP-NORMAL` columns of the hourly normals file are official; the relative
+humidity shown on the site is computed from those two by the standard Magnus
+formula, per calendar date, and is labelled as a derivation everywhere it appears
+(the day dialog states the station and the method). Where the file is unavailable,
+the field is left empty — the pipeline never estimates a missing number.
 
 ## Explicitly excluded
 
