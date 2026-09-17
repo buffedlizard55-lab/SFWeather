@@ -237,8 +237,34 @@ def collect_cpc(cpc, default_year):
                     "Below": "Below normal" if rec["variable"] == "temp" else "Below median",
                     "A": "Above", "B": "Below", "N": "Near normal",
                 }.get(cat, cat)
+
+                issued = rec["fcst_date"]
+                if isinstance(issued, str) and len(issued) == 8 and issued.isdigit():
+                    issued = f"{issued[:4]}-{issued[4:6]}-{issued[6:8]}"
+                rec["issued"] = issued
                 out.append(rec)
-    return out
+
+    # Deduplicate.  Several archives legitimately describe the same valid
+    # period - seasprcp_202608.zip, seasprcp_202609.zip and
+    # monthupd_prcp_latest.zip can all carry an "Oct 2026" outlook.  Showing
+    # all of them makes a day look like it has a dozen outlooks when it has a
+    # handful, so keep only the most recent issuance for each
+    # (valid period, variable) pair and record which issuance was used.
+    best = {}
+    passthrough = []
+    for rec in out:
+        if rec.get("valid_season"):
+            key = ("season", rec["valid_season"], rec["variable"])
+        elif rec.get("start_date"):
+            key = ("range", rec["stem"], rec["start_date"], rec["end_date"])
+        else:
+            passthrough.append(rec)
+            continue
+        prev = best.get(key)
+        if prev is None or (rec.get("fcst_date") or "") >= (prev.get("fcst_date") or ""):
+            best[key] = rec
+    deduped = passthrough + list(best.values())
+    return deduped
 
 
 def main():

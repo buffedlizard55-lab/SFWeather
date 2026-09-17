@@ -227,13 +227,23 @@ function renderSeason(cal) {
   const seasonal = (cal.cpc.records || []).filter(r => r.kind === 'season' || r.kind === 'month');
   const wanted = ['SON 2026', 'OND 2026', 'NDJ 2026', 'DJF 2026'];
   const rows = [];
+  // Show which issuance each outlook came from: the same valid season is
+  // published monthly, and an older issuance can still be the newest official
+  // outlook for a period the latest release no longer covers.
+  const periodCell = (label, ...recs) => {
+    const issued = recs.filter(Boolean).map(r => r.issued).filter(Boolean).sort().pop();
+    return el('div', {}, [
+      el('strong', { text: label }),
+      issued ? el('span', { class: 'fine', text: ' issued ' + issued }) : null
+    ].filter(Boolean));
+  };
   wanted.forEach(w => {
     const prcp = seasonal.find(r => r.valid_season === w && r.variable === 'prcp');
     const temp = seasonal.find(r => r.valid_season === w && r.variable === 'temp');
     if (!prcp && !temp) return;
     const fmt = r => r ? `${r.category_label} (${r.prob}%)` + (r.used_nearest_polygon ? ' \u26a0' : '') : DASH;
     rows.push([
-      el('strong', { text: w }),
+      periodCell(w, prcp, temp),
       fmt(temp), fmt(prcp),
       link(prcp ? prcp.url : temp.url, 'CPC shapefile')
     ]);
@@ -241,8 +251,8 @@ function renderSeason(cal) {
   const other = seasonal.filter(r => !(wanted.includes(r.valid_season)));
   other.filter(r => r.variable === 'prcp').forEach(r => {
     const t = seasonal.find(x => x.valid_season === r.valid_season && x.variable === 'temp');
-    rows.push([el('strong', { text: r.valid_season + (r.kind === 'month' ? ' (month)' : '') }),
-      t ? `${t.category_label} (${t.prob}%)` : DASH,
+    rows.push([periodCell(r.valid_season + (r.kind === 'month' ? ' (month)' : ''), r, t),
+      t ? `${t.category_label} (${t.prob}%)` + (t.used_nearest_polygon ? ' \u26a0' : '') : DASH,
       `${r.category_label} (${r.prob}%)` + (r.used_nearest_polygon ? ' \u26a0' : ''),
       link(r.url, 'CPC shapefile')]);
   });
@@ -510,14 +520,18 @@ function openDay(d) {
 
   if (d.cpc && d.cpc.length) {
     body.append(el('h4', { text: 'Official CPC outlooks covering this day' }));
-    body.append(table([{ label: 'Period' }, { label: 'Variable' }, { label: 'Outlook' }, { label: 'Source' }],
+    body.append(table([{ label: 'Period' }, { label: 'Issued' }, { label: 'Variable' },
+      { label: 'Outlook' }, { label: 'Source' }],
       d.cpc.map(r => [
         r.valid_season || (r.start_date ? `${r.start_date} \u2192 ${r.end_date}` : DASH),
+        r.issued || DASH,
         r.variable === 'temp' ? 'Temperature' : r.variable === 'prcp' ? 'Precipitation' : DASH,
-        `${r.category_label} (${r.prob}%)`,
+        `${r.category_label} (${r.prob}%)` + (r.used_nearest_polygon ? ' \u26a0' : ''),
         linkShort(r.url, 40)
       ])));
-    body.append(el('p', { class: 'fine', text: 'These are probabilities for the whole period, not for this day.' }));
+    body.append(el('p', { class: 'fine', text:
+      'These are probabilities for the whole period, not for this day. Where an outlook is ' +
+      'available from more than one issuance date, the most recent is shown.' }));
   }
 
   body.append(el('h4', { text: 'Sources for this day' }));
