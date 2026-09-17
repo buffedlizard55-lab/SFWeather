@@ -6,7 +6,7 @@ name: Update NOAA data
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
     paths:
       - 'pipeline/**'
       - '.github/workflows/update-data.yml'
