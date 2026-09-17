@@ -42,9 +42,9 @@ keeps the last verified dataset. That is the designed behaviour, not an outage.
    are counted and displayed separately.
 5. **CPC records are auditable**: each sampled outlook carries the containing polygon
    index, its bounding box, vertex count and the raw DBF attribute row.
-6. **Verification ledger** (`pipeline/verify_claims.py`): 20 checks, 17 claims, each with
+6. **Verification ledger** (`pipeline/verify_claims.py`): 21 checks, 17 claims, each with
    URL, HTTP status, bytes, SHA-256, retrieval time, method and a cross-check.
-7. **Offline unit tests** (`tests/test_parsers.py`, 53 assertions, stdlib only) and a
+7. **Offline unit tests** (`tests/test_parsers.py`, 55 assertions, stdlib only) and a
    **headless render test** (`npm test`, jsdom). Both run in the `Tests` workflow.
 8. Bugs **14–22** found and fixed, with root causes and evidence, in
    [`docs/VERIFICATION.md`](VERIFICATION.md) — including a deleted function that broke

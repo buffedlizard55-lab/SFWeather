@@ -264,7 +264,12 @@ dialog form { padding: 0 22px 20px; }
 
 .empty { color: var(--ink-soft); font-style: italic; font-size: 14px; padding: 8px 0; }
 
-/* ---------------- landlord dashboard ---------------- */
+/* ---------------- freshness / landlord dashboard ---------------- */
+.data-status { margin: 0 0 18px; }
+.data-status .callout { margin: 0; display: grid; gap: 3px; }
+.data-status-detail { display: block; font-size: 13px; }
+.data-status-meta { display: block; color: var(--ink-soft); font-size: 12px; }
+
 .landlord-stat {
   background: linear-gradient(135deg, #ffffff 0%, #f8fbfe 100%);
   border-left-width: 4px;

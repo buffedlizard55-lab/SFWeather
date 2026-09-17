@@ -13,7 +13,7 @@ As a landlord in 94122 (Inner Sunset / Outer Sunset) you said you care most abou
 - **Simultaneous wind and rain** — the combo that damages property
 - **Severity of storms** — historical record
 
-The dashboard at <https://buffedlizard55-lab.github.io/SFWeather/> answers each of those with official data only.
+The dashboard at <https://buffedlizard55-lab.github.io/SFWeather/> answers each of those with official data only. The numerical snapshot documented below was generated on **17 September 2026 UTC**; use the dashboard's freshness banner, `data/provenance.json`, and the linked official endpoints for the latest refresh.
 
 ## The honest headline (no hallucinations)
 
@@ -64,16 +64,19 @@ From the **NOAA CPC GIS shapefiles** sampled at 37.7605, -122.4839:
 - Week 3-4 discussion: https://www.cpc.ncep.noaa.gov/products/predictions/WK34/texts/week34fcst.txt
 - 6-10 & 8-14 discussion: https://www.cpc.ncep.noaa.gov/products/predictions/610day/fxus06.html
 
-From **CPC long-lead seasonal outlook issued 20 Aug 2026** (quoted verbatim on site):
+From **CPC long-lead seasonal outlook issued 17 Sep 2026** (quoted verbatim on site):
 
-> “El Niño conditions are present … El Niño is strengthening, with a greater than 90 percent chance of a very strong event this fall and winter.”
-> “During the October-November-December (OND) 2026 season, there is a 69% chance of a historic event that would exceed the strength of previous El Niño events dating back to 1950.”
+> “El Niño conditions are present, as represented in current oceanic and atmospheric observations.”
+> “El Niño is strengthening, with a greater than 90 percent chance of a very strong event this fall and winter.”
+> “The OND 2026 Precipitation Outlook depicts enhanced probabilities of above normal precipitation amounts from the southern half of California east-northeastward across most of the Four Corners region…”
 
-Weekly Niño values at that issuance: +1.8°C in Niño-3.4, +2.5°C in Niño-3, +3.2°C in Niño-1+2. Source: CPC discussion.
+The separate **CPC ENSO Diagnostic Discussion issued 10 Sep 2026** says there is a **75% chance** of a historic October–December 2026 event. The older 69% value from the August issuance is not used as current evidence.
+
+Weekly Niño values in the 10 Sep diagnostic discussion: +1.8°C in Niño-3.4, +2.5°C in Niño-3, and +3.4°C in Niño-1+2. Source: CPC discussion.
 
 Week 3-4 discussion **11 Sep 2026**: “Relative SST anomalies in the equatorial Pacific are nearing +2.0°C, as the El Niño heads into strong territory.” Source: https://www.cpc.ncep.noaa.gov/products/predictions/WK34/
 
-**ONI** (Oceanic Niño Index, 3-month running mean of ERSSTv5 Niño 3.4 anomalies — table: https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/detrend.nino34.ascii.txt) rose from -0.54 in Dec 2025 to +0.98 in May 2026 (weak La Niña to El Niño within a year). Latest in data: 2026-05 ONI +0.98°C = el_nino.
+**ONI** (Oceanic Niño Index, the official season-labelled 3-month running mean of ERSSTv5 Niño 3.4 anomalies — product: https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt) is latest published as **JJA 2026: +1.80°C, El Niño, strong**. The project's raw monthly Niño 3.4 table is a cross-check only; it is not the headline ONI value.
 
 **Why this matters for 94122**: El Niño tilts California winter toward wetter. In 1991-2020 record (Oct-Jan totals):
 
@@ -146,8 +149,8 @@ From **NCEI Storm Events Database** for San Francisco County FIPS 06075: https:/
 For each day Oct 1 2026 – Jan 31 2027, the calendar shows:
 
 - **High / low** — max/min of hourly NWS temp if inside horizon, else 1991-2020 normal for that date
-- **Humidity** — mean of hourly NWS RH if forecast, else — (not climatologically derived)
-- **Chance of rain** — max hourly NWS POP if forecast, else share of 30 years it rained on that date
+- **Humidity** — mean of hourly NWS RH if forecast; otherwise a labelled derivation from NCEI 1991–2020 hourly temperature and dew-point normals (Magnus formula), when available
+- **Chance of rain** — maximum hourly NWS probability of precipitation (POP) if forecast, else share of 30 years it rained on that date
 - **Rain amount** — sum of hourly NWS QPF (mm→in) if forecast, else 30-year mean for that date
 - **Wind / gusts** — max hourly NWS wind/gust if forecast, else 1991-2020 normal daily max at SFO
 
@@ -169,7 +172,7 @@ Sources for climatology days:
 2. **Week-long rain plan** — 53.3% of seasons have ≥7-day wet streak, 23.3% have ≥10 days. Longest recorded 17 days. Tenant communication for extended wet periods, check for leaks.
 3. **Wind+rain combo** — 11.1 days/season average with rain + ≥20 kt sustained at SFO (upper bound). Heavy combo 2.2 days/season. Secure loose items, check trees, fences.
 4. **Gusts** — Season max gust mean 53.8 mph, record 70 mph at SFO. Sunset less, but use as upper bound for insurance/planning.
-5. **ENSO tilt** — Current El Niño (ONI +0.98°C May 2026) tilts toward wetter. CPC JFM 2027 favors above-median precip 50% probability (issued 2026-09-17). But spread remains wide: El Niño mean 14.23 in vs La Niña 11.16 in, but min/max overlap heavily.
+5. **ENSO tilt** — Current El Niño (official ONI +1.80°C for JJA 2026, strong) tilts toward wetter, but does not determine local rain. CPC JFM 2027 favors above-median precipitation at 50% probability (issued 2026-09-17). Spread remains wide: El Niño mean 14.23 in vs La Niña 11.16 in, with substantial min/max overlap.
 6. **No daily forecast beyond 7 days** — Don't trust any site showing specific rain amount for Jan 15 2027 today. Use climatology as planning baseline, and watch NWS 7-day as season approaches — dashboard auto-promotes days to real forecast nightly.
 7. **Use official sources for life-safety** — For warnings, use https://www.weather.gov/mtr and https://api.weather.gov/alerts/active?zone=CAZ006 directly.
 

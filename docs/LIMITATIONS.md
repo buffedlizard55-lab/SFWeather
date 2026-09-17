@@ -136,7 +136,7 @@ want a commercial second opinion you must read it at the source.
 * `npm test` renders the whole page headlessly (jsdom) and fails on empty sections,
   a broken day dialog or a broken CSV export. Runs as the `smoke` job of the `Tests`
   workflow.
-* `python3 tests/test_parsers.py` - 53 offline assertions on the parsing and
+* `python3 tests/test_parsers.py` - 55 offline assertions on the parsing and
   derivation code - runs as the `parsers` job of the same workflow, on every push
   that touches `pipeline/**` or `tests/**`.
 * The workflow commits data with `[skip ci]` so it cannot trigger itself.

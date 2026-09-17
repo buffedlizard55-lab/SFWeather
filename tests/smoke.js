@@ -52,7 +52,7 @@ try {
 }
 
 const REQUIRED_SECTIONS = [
-  '#landlord-stats', '#landlord-monthly', '#landlord-duration', '#landlord-windrain',
+  '#data-status', '#landlord-stats', '#landlord-monthly', '#landlord-duration', '#landlord-windrain',
   '#landlord-cpc', '#landlord-actions', '#tier-legend', '#tbl-location', '#tbl-stations',
   '#enso-body', '#cpc-season-table', '#monthly-table', '#enso-strat', '#discussions',
   '#now-current', '#nws-forecast', '#nws-obs', '#nws-alerts', '#calendar-grid',

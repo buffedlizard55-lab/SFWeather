@@ -173,7 +173,7 @@ What was done about it:
 
 1. **Restored verbatim** from `1bc8f23` and byte-compared against the original with a
    script before committing.
-2. **`tests/test_parsers.py` added** (53 assertions, standard library only, no
+2. **`tests/test_parsers.py` added** (55 assertions, standard library only, no
    network): the ONI season rotations and the NDJ/DJF year convention, exact-column
    matching in the NCEI normals files, the per-date humidity derivation against an
    independent formulation of the Magnus formula, quote integrity (entities, wrapped
@@ -196,7 +196,7 @@ reached on only some code paths would have been silent.
   humidity-honesty, oni-cross-check, season-mean-arithmetic, distribution-ordering,
   month-mean-*, streak-arithmetic, normals-cross-check, cpc-dedup,
   cpc-seasonal-present, alert-test-filter, source-traceability, quotes-plain-text.
-* `tests/test_parsers.py`: 53 offline assertions.
+* `tests/test_parsers.py`: 55 offline assertions.
 * `npm test` (jsdom): renders the page against the committed data and fails on an
   empty section, a broken day dialog or a broken CSV export.
 * Nightly gate: `summary.failed > 0` -> "refresh NOT published", diagnostics committed

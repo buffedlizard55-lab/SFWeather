@@ -35,10 +35,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install test-only dependencies
-        run: npm install --no-audit --no-fund
+      - name: Install test-only dependencies from the lockfile
+        run: npm ci --no-audit --no-fund
       - name: Render the site headlessly and check it
         run: npm test
+      - name: Verify committed source provenance
+        run: python3 pipeline/verify_sources.py
   parsers:
     # Offline: standard library only, no network, no third-party packages.
     runs-on: ubuntu-latest
