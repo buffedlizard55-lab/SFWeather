@@ -70,16 +70,18 @@ jobs:
           path: pipeline_run.log
           retention-days: 7
 
-      - name: Commit refreshed data
+      - name: Commit refreshed data and diagnostics
+        if: always()
         run: |
+          set +e
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A data assets/cpc pipeline_run.log
           if git diff --cached --quiet; then
-            echo "No data changes to commit."
-          else
-            git commit -m "data: refresh NOAA/NWS/NCEI/CPC sources [skip ci]
-
-            Automated refresh by .github/workflows/update-data.yml"
-            git push
+            echo "No changes to commit."
+            exit 0
           fi
+          git commit -m "data: refresh NOAA/NWS/NCEI/CPC sources [skip ci]
+
+          Automated refresh by .github/workflows/update-data.yml (run ${{ github.run_id }}, attempt ${{ github.run_attempt }})"
+          git push
