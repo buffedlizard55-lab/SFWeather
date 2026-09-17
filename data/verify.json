@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T21:52:57Z",
+  "generated_utc": "2026-09-17T22:59:53Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,8 +9,8 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 21,
-    "passed": 21,
+    "total": 23,
+    "passed": 23,
     "failed": 0,
     "warnings": 0,
     "failed_checks": [],
@@ -21,9 +21,20 @@
       "id": "provenance-present",
       "title": "A provenance manifest exists with fetches",
       "status": "pass",
-      "detail": "104 recorded fetches",
+      "detail": "105 recorded fetches (104 unique URLs)",
       "evidence": {
-        "count": 104
+        "records": 105,
+        "unique_urls": 104
+      }
+    },
+    {
+      "id": "provenance-record-count",
+      "title": "The provenance manifest count agrees with the pipeline run metadata",
+      "status": "pass",
+      "detail": "manifest has 105 records; run.json says 105",
+      "evidence": {
+        "manifest_records": 105,
+        "run_manifest_entries": 105
       }
     },
     {
@@ -237,6 +248,13 @@
       "evidence": {
         "examples": []
       }
+    },
+    {
+      "id": "claim-source-evidence",
+      "title": "Every recorded claim with a source URL has a successful fetch with HTTP, size and hash evidence",
+      "status": "pass",
+      "detail": "0 claim source(s) lack fetch evidence",
+      "evidence": []
     }
   ],
   "claims": [

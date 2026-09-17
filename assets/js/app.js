@@ -167,7 +167,7 @@ async function loadJSON(name) {
 
 /* --------------------------------------------------------------- freshness */
 
-function renderDataStatus(cal, quality, prov) {
+function renderDataStatus(cal, quality, prov, verify) {
   const box = $('#data-status');
   if (!box) return;
   const generated = Date.parse((cal || {}).generated_utc || '');
@@ -177,12 +177,19 @@ function renderDataStatus(cal, quality, prov) {
   const fetches = (prov && prov.entries) || [];
   const failed = fetches.filter(e => e && e.ok === false).length;
   const irregularities = (quality && quality.irregularities) || [];
+  const qualityErrors = Number((quality && quality.counts && quality.counts.errors) || 0);
+  const verifyFailed = Number((verify && verify.summary && verify.summary.failed) || 0);
   const timestamp = (cal || {}).generated_utc || DASH;
-  const classes = Number.isFinite(ageHours) && ageHours >= 0 && ageHours <= maxAgeHours
-    ? 'callout callout-ok' : 'callout callout-warn';
+  const dataIsFlagged = qualityErrors > 0 || verifyFailed > 0;
+  const fresh = Number.isFinite(ageHours) && ageHours >= 0 && ageHours <= maxAgeHours;
+  const classes = dataIsFlagged ? 'callout callout-error'
+    : fresh ? 'callout callout-ok' : 'callout callout-warn';
   let headline;
   let detail;
-  if (!Number.isFinite(ageHours)) {
+  if (dataIsFlagged) {
+    headline = 'Verification flags require review';
+    detail = `${qualityErrors} pipeline error${qualityErrors === 1 ? '' : 's'} and ${verifyFailed} failed claim check${verifyFailed === 1 ? '' : 's'} were recorded. This page keeps the last committed snapshot; use the official NWS links below before acting.`;
+  } else if (!Number.isFinite(ageHours)) {
     headline = 'Freshness could not be verified';
     detail = 'The dataset has no valid UTC generation timestamp. Use the official NWS links below for the current forecast.';
   } else if (ageHours < 0) {
@@ -195,7 +202,7 @@ function renderDataStatus(cal, quality, prov) {
     headline = `Official data snapshot is ${ageHours.toFixed(1)} hours old`;
     detail = `Fetched/build timestamp: ${timestamp} UTC. The nightly job is expected to refresh this page; for life-safety decisions use weather.gov directly.`;
   }
-  const summary = `${fetches.length} recorded source fetches · ${failed} failed fetch${failed === 1 ? '' : 'es'} · ${irregularities.length} flagged irregularit${irregularities.length === 1 ? 'y' : 'ies'}`;
+  const summary = `${fetches.length} recorded source fetches · ${failed} failed fetch${failed === 1 ? '' : 'es'} · ${irregularities.length} flagged irregularit${irregularities.length === 1 ? 'y' : 'ies'} · ${verifyFailed} failed claim check${verifyFailed === 1 ? '' : 's'}`;
   box.append(el('div', { class: classes }, [
     el('strong', { text: headline }),
     el('span', { class: 'data-status-detail', text: detail }),
@@ -1248,7 +1255,7 @@ async function boot() {
     const idx = MONTHS.findIndex(m => (calendar.days || []).some(d => d.date.startsWith(m.key) && d.tier === 'nws'));
     state.month = idx >= 0 ? MONTHS[idx].key : MONTHS[0].key;
 
-    renderDataStatus(calendar, quality, prov);
+    renderDataStatus(calendar, quality, prov, verify);
     if (landlord) renderLandlord(landlord, calendar);
     renderReality(calendar);
     renderLocation(run);

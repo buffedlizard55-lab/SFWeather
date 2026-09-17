@@ -16,15 +16,23 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).resolve().parent.parent
 
 # Hosts that this project has explicitly vetted as official, public and free.
-ALLOWED_SUFFIXES = (
-    ".noaa.gov",
-    ".weather.gov",
-    ".ncei.noaa.gov",
-    ".cpc.ncep.noaa.gov",
-    ".nws.noaa.gov",
-    "census.gov",
-    ".census.gov",
-)
+# Keep this list exact.  A broad suffix check such as ``endswith('census.gov')``
+# would also accept look-alike domains such as ``evilcensus.gov``; an official
+# hostname must be reviewed and added deliberately.
+ALLOWED_HOSTS = frozenset({
+    "api.weather.gov",
+    "www.weather.gov",
+    "forecast.weather.gov",
+    "api.nws.noaa.gov",
+    "www.nws.noaa.gov",
+    "www.cpc.ncep.noaa.gov",
+    "ftp.cpc.ncep.noaa.gov",
+    "www.ncei.noaa.gov",
+    "www.ncdc.noaa.gov",
+    "nomads.ncep.noaa.gov",
+    "www2.census.gov",
+    "geocoding.geo.census.gov",
+})
 
 # Hosts that are known-good but require a note in the docs.
 NOTED = {
@@ -33,10 +41,7 @@ NOTED = {
 
 
 def host_allowed(host: str) -> bool:
-    host = host.lower()
-    if host in NOTED:
-        return True
-    return any(host == sfx.lstrip(".") or host.endswith(sfx) for sfx in ALLOWED_SUFFIXES)
+    return host.lower().rstrip(".") in ALLOWED_HOSTS
 
 
 def main() -> int:
@@ -57,7 +62,7 @@ def main() -> int:
             malformed.append(("missing URL", e))
             continue
         parsed = urlparse(url)
-        h = parsed.netloc.lower()
+        h = (parsed.hostname or "").lower().rstrip(".")
         hosts[h] = hosts.get(h, 0) + 1
         if parsed.scheme != "https":
             malformed.append(("URL is not HTTPS", e))

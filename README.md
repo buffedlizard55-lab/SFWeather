@@ -82,12 +82,12 @@ retrieval time of the exact file.
 | Workflow gate | `summary.failed > 0` → **the run publishes nothing**. It commits diagnostics only ("refresh NOT published") and the site keeps the last verified dataset. |
 | `data/provenance.json` | The full fetch log: every URL, status, size, SHA-256, timestamp. |
 | `data/verify.json` + `verify_report.txt` | The claim ledger as machine-readable JSON and as plain text. |
-| `tests/test_parsers.py` | 85 offline assertions (stdlib only, no network) on the parsing/derivation code — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, an end-to-end aggregation over a synthetic file with hand-computable expected values, the rule that a CPC explanation must describe the category actually displayed, and the NWS gridpoint gust/QPF aggregation including the local-midnight accumulation split. |
+| `tests/test_parsers.py` | 89 offline assertions (stdlib only, no network) on the parsing/derivation code and exact official-host allow-list — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, an end-to-end aggregation over a synthetic file with hand-computable expected values, the rule that a CPC explanation must describe the category actually displayed, and the NWS gridpoint gust/QPF aggregation including the local-midnight accumulation split. |
 | `tests/smoke.js` (`npm test`) | Renders the whole page in jsdom against the committed data and fails on an empty section, a broken day dialog or CSV export, a truncated source label, a mislabelled source link, a CPC note that does not explain its own category, an unlabelled rain/temperature outlook, an unrounded humidity, or a forecast day missing its gust or rain amount. |
 
 **Every forecast day can be checked by hand:** open the day's dialog, follow the
 source link, and compare. The site's *Verification* section lists all 17 recorded
-claims (21 checks) with their evidence, and *Irregularities* lists anything the
+claims (23 checks) with their evidence, and *Irregularities* lists anything the
 pipeline flagged rather than smoothed over.
 
 ---
@@ -127,7 +127,7 @@ the source; this site will not republish what it cannot check.
   distribution for that date over 30 seasons.
 * Wind is measured at **SFO, ~10 mi away and more exposed** than the Sunset, so the
   wind figures are an upper bound for 94122. Rain/temperature come from the downtown
-  gauge, ~1.5 mi away.
+  gauge, ~3.2 mi away (great-circle distance from the Census internal point to the station coordinates in the NCEI file).
 * GSOD wind days are **UTC days** (≈16:00–16:00 Pacific) while GHCN rain days are
   local days, so the joint wind-and-rain statistic pairs a local-day rain total with a
   UTC-day wind figure.

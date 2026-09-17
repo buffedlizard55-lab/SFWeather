@@ -42,6 +42,7 @@ sys.path.insert(0, os.path.join(ROOT, "pipeline"))
 import climo  # noqa: E402
 import main as pipeline_main  # noqa: E402
 import build_calendar  # noqa: E402
+import verify_sources  # noqa: E402
 
 RESULTS = []
 
@@ -155,7 +156,21 @@ check("summer UTC timestamp uses daylight-saving Pacific time",
       str(build_calendar.local_date_from_iso(summer_stamp, "America/Los_Angeles")))
 
 # --------------------------------------------------------------------------- #
-# 2. official ONI parsing
+# 2. official-host allow-list
+# --------------------------------------------------------------------------- #
+
+section("official host allow-list")
+check("the NWS API host is explicitly allowed",
+      verify_sources.host_allowed("api.weather.gov"), "")
+check("the Census Gazetteer host is explicitly allowed",
+      verify_sources.host_allowed("www2.census.gov"), "")
+check("a look-alike Census domain is rejected",
+      not verify_sources.host_allowed("evilcensus.gov"), "")
+check("an unreviewed NOAA subdomain is rejected",
+      not verify_sources.host_allowed("weather-data.noaa.gov"), "")
+
+# --------------------------------------------------------------------------- #
+# 3. official ONI parsing
 # --------------------------------------------------------------------------- #
 
 section("official ONI (CPC oni.ascii.txt)")

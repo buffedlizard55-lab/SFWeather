@@ -1,10 +1,12 @@
 SFWeather verification ledger
-generated_utc: 2026-09-17T21:52:57Z
+generated_utc: 2026-09-17T22:59:53Z
 
-checks: 21 passed, 0 failed, 0 warning(s)  (of 21)
+checks: 23 passed, 0 failed, 0 warning(s)  (of 23)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
-        104 recorded fetches
+        105 recorded fetches (104 unique URLs)
+[PASS] provenance-record-count: The provenance manifest count agrees with the pipeline run metadata
+        manifest has 105 records; run.json says 105
 [PASS] hosts-official: Every recorded fetch is an official government host
         hosts: api.weather.gov, ftp.cpc.ncep.noaa.gov, www.cpc.ncep.noaa.gov, www.ncei.noaa.gov, www2.census.gov
 [PASS] centroid-verified: The 94122 coordinate came from the Census file, not by hand
@@ -45,6 +47,8 @@ checks: 21 passed, 0 failed, 0 warning(s)  (of 21)
         12 URL(s) traced, 1 landing page(s), 0 untraceable
 [PASS] quotes-plain-text: Every quoted official sentence is decoded plain text, exactly as a browser shows it (no HTML entities)
         0 quoted string(s) contain entity text
+[PASS] claim-source-evidence: Every recorded claim with a source URL has a successful fetch with HTTP, size and hash evidence
+        0 claim source(s) lack fetch evidence
 
 claims recorded: 17
 
