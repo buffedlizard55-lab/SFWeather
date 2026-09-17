@@ -1,0 +1,39 @@
+{
+  "generated_utc": "2026-09-17T14:16:54Z",
+  "counts": {
+    "total": 3,
+    "errors": 0,
+    "warnings": 2,
+    "info": 1
+  },
+  "irregularities": [
+    {
+      "severity": "info",
+      "area": "nws",
+      "message": "Some hourly forecast fields are null in the NWS gridded forecast for this grid cell.",
+      "evidence": {
+        "missing_counts": {
+          "qpf_mm": 156
+        },
+        "hours": 156
+      }
+    },
+    {
+      "severity": "warning",
+      "area": "nws",
+      "message": "No HWO products returned for office MTR.",
+      "evidence": {
+        "url": "https://api.weather.gov/products/types/HWO/locations/MTR"
+      }
+    },
+    {
+      "severity": "warning",
+      "area": "enso",
+      "message": "A CPC ENSO page was discarded because it does not reference 2026; it is a stale shell page and quoting it would be misleading.",
+      "evidence": {
+        "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php",
+        "size": 17341
+      }
+    }
+  ]
+}

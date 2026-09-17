@@ -1,0 +1,41 @@
+{
+  "generated_utc": "2026-09-17T14:16:54Z",
+  "pipeline_version": "1.0",
+  "target": {
+    "zip": "94122",
+    "label": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset)",
+    "fallback_lat": 37.7599,
+    "fallback_lon": -122.4849,
+    "centroid": {
+      "zip": "94122",
+      "lat": 37.760459,
+      "lon": -122.483894,
+      "land_area_sqmi": 3.257,
+      "water_area_sqmi": 0.032,
+      "source": "U.S. Census Bureau Gazetteer file (internal point / centroid)",
+      "verified": true,
+      "url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip",
+      "file_in_archive": "2024_Gaz_zcta_national.txt",
+      "gazetteer_year": "2024",
+      "column_names_used": {
+        "geoid": "GEOID",
+        "lat": "INTPTLAT",
+        "lon": "INTPTLONG"
+      }
+    }
+  },
+  "season": {
+    "start": "2026-10-01",
+    "end": "2027-01-31"
+  },
+  "normals_period": [
+    1991,
+    2020
+  ],
+  "counts": {
+    "manifest_entries": 100,
+    "successful_fetches": 98,
+    "failed_fetches": 2,
+    "irregularities": 3
+  }
+}
