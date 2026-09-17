@@ -124,16 +124,42 @@ jobs:
           mkdir -p data assets/cpc
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A data
-          git add -A assets/cpc || echo "no cpc assets to add"
+
+          # The claim ledger is only meaningful if a failure actually stops the
+          # data being published.  If any check failed, commit the diagnostics
+          # (so the failure is visible and reviewable) but DO NOT commit the
+          # datasets: the site then keeps the last verified numbers instead of
+          # publishing ones that could not be re-derived from their source.
+          VERDICT=$(python3 - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("data/verify.json")
+          if not p.exists():
+              print("missing")
+              raise SystemExit
+          d = json.loads(p.read_text())
+          s = d.get("summary", {})
+          print("fail" if s.get("failed") else "pass")
+          PY
+          )
+          echo "CLAIM_LEDGER_VERDICT=$VERDICT"
+
+          if [ "$VERDICT" = "pass" ]; then
+            git add -A data assets/cpc
+            MSG="data: refresh NOAA/NWS/NCEI/CPC sources [skip ci]"
+          else
+            git add -f data/pipeline.log data/run_diagnostics.txt data/quality_report.json \
+                      data/verify.json data/verify_report.txt data/summary.txt 2>/dev/null || true
+            MSG="chore(data): refresh NOT published - verification ledger did not pass [skip ci]"
+          fi
           git add -A pipeline_run.log || echo "no run log to add"
           git status --short | head -40
           if git diff --cached --quiet; then
             echo "NOTHING_TO_COMMIT"
           else
-            git commit -m "data: refresh NOAA/NWS/NCEI/CPC sources [skip ci]
+            git commit -m "$MSG
 
-          Automated refresh by .github/workflows/update-data.yml (run ${{ github.run_id }})"
+          Automated refresh by .github/workflows/update-data.yml (run ${{ github.run_id }})
+          Claim ledger verdict: $VERDICT"
             git push origin "HEAD:$BRANCH" || echo "PUSH_FAILED"
           fi
           set +x

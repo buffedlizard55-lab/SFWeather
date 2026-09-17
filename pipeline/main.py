@@ -247,7 +247,7 @@ def fetch_nws(lat, lon):
     record(res, note="Official NWS 7-day forecast (text + numeric per period)")
     if fc:
         nws["forecast_daily"] = {
-            "updated": fc["properties"].get("updated"),
+            "updated": fc["properties"].get("updated") or fc["properties"].get("updateTime"),
             "generated_at": fc["properties"].get("generatedAt"),
             "valid_times": fc["properties"].get("validTimes"),
             "elevation_m": fc["properties"].get("elevation", {}).get("value"),
@@ -292,7 +292,7 @@ def fetch_nws(lat, lon):
                 "short_forecast": p.get("shortForecast"),
             })
         nws["forecast_hourly"] = {
-            "updated": fh["properties"].get("updated"),
+            "updated": fh["properties"].get("updated") or fh["properties"].get("updateTime"),
             "generated_at": fh["properties"].get("generatedAt"),
             "elevation_m": fh["properties"].get("elevation", {}).get("value"),
             "periods": periods,
@@ -323,7 +323,7 @@ def fetch_nws(lat, lon):
             if key in gprops:
                 trimmed[key] = gprops[key]
         nws["gridpoint_raw"] = {
-            "updated": gprops.get("updated"),
+            "updated": gprops.get("updated") or gprops.get("updateTime"),
             "generated_at": gprops.get("generatedAt"),
             "elevation_m": (gprops.get("elevation") or {}).get("value"),
             "values": trimmed,
@@ -502,7 +502,10 @@ def _sample_one_bundle(bundle, lat, lon, label, zip_url):
         if not shapelib.bbox_contains(shape.bbox, lon, lat):
             continue
         if shapelib.point_in_polygon(lon, lat, shape.rings):
-            hits.append({"index": i, "attrs": rows[i] if i < len(rows) else None})
+            hits.append({"index": i, "attrs": rows[i] if i < len(rows) else None,
+                         "bbox": [round(v, 4) for v in shape.bbox],
+                         "rings": len(shape.rings),
+                         "vertices": sum(len(r) for r in shape.rings)})
 
     if not hits:
         best, bestd = None, None
@@ -517,7 +520,11 @@ def _sample_one_bundle(bundle, lat, lon, label, zip_url):
                 bestd, best = d, i
         if best is not None:
             used_nearest = True
-            hits.append({"index": best, "attrs": rows[best] if best < len(rows) else None})
+            shape = shapes[best]
+            hits.append({"index": best, "attrs": rows[best] if best < len(rows) else None,
+                         "bbox": [round(v, 4) for v in shape.bbox],
+                         "rings": len(shape.rings),
+                         "vertices": sum(len(r) for r in shape.rings)})
             note_irregularity("warning", "cpc",
                               f"CPC polygon miss: ({lon:.4f}, {lat:.4f}) fell in no polygon of "
                               f"{bundle['stem']} (common for coastal cells). Used the nearest "
@@ -950,7 +957,9 @@ def fetch_enso():
         entry["text"] = plain[:24000]
         # Keep the exact sentences that carry the numbers a reader will see.
         entry["key_sentences"] = extract_key_sentences(plain)
-        status = re.search(r"ENSO Alert System Status:\s*([A-Za-z ]{3,60})", plain)
+        # \w keeps accented letters ("El Niño Advisory"); the earlier [A-Za-z ]
+        # class silently truncated it to "El Ni".
+        status = re.search(r"ENSO Alert System Status:\s*([\w .\u2013-]{3,60})", plain)
         if status:
             entry["alert_status"] = re.sub(r"\s+", " ", status.group(1)).strip()
         syn = re.search(r"Synopsis:\s*(.{0,900}?)(?:El Ni|La Ni|$)", plain, re.S)
@@ -1119,6 +1128,7 @@ def fetch_humidity_normals():
                                "first_400_chars": text[:400]})
             continue
         month_rh = climo.humidity_normals_from_hourly(rows) if rows else {}
+        date_rh = climo.humidity_normals_by_date(rows) if rows else {}
         entry = {
             "station_id": sid,
             "station_name": name,
@@ -1129,6 +1139,8 @@ def fetch_humidity_normals():
             "method": ("mean of hourly relative humidity computed from the official hourly "
                        "temperature and dew-point normals with the Magnus formula"),
             "month_rh_pct": {str(k): v for k, v in month_rh.items()},
+            # Preferred: one value per calendar date, if the file has a day column.
+            "date_rh_pct": date_rh,
             "rows_used": len(rows),
             "layout": info,
         }

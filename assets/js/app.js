@@ -92,6 +92,13 @@ function table(headers, rows, opts = {}) {
   return opts.scroll === false ? tbl : el('div', { class: 'table-scroll' }, [tbl]);
 }
 
+/** A table cell that accepts a string, a number or an existing DOM node. */
+function kvCell(v) {
+  if (v === null || v === undefined) return el('td', { text: DASH });
+  if (v.nodeType) return el('td', {}, [v]);
+  return el('td', { text: String(v) });
+}
+
 function kvTable(pairs) {
   const rows = pairs.filter(p => p && p[1] !== undefined && p[1] !== null);
   return el('table', { class: 'kv' }, rows.map(([k, v]) =>
@@ -420,7 +427,10 @@ function renderSeason(cal) {
     rows.push([
       periodCell(w, prcp, temp),
       fmt(temp), fmt(prcp),
-      link(prcp ? prcp.url : temp.url, 'CPC shapefile')
+      el('div', {}, [link(prcp ? prcp.url : temp.url, 'CPC shapefile'),
+        (prcp && prcp.polygon_bbox_lon_lat) ? el('div', { class: 'fine',
+          text: 'polygon #' + prcp.polygon_index + ' bbox ' +
+            prcp.polygon_bbox_lon_lat.join(', ') }) : null].filter(Boolean))
     ]);
   });
   const other = seasonal.filter(r => !(wanted.includes(r.valid_season)));
@@ -733,7 +743,7 @@ function openDay(d) {
     ['Rain amount', d.rain_amount_in === null ? null : Number(d.rain_amount_in).toFixed(2) + ' in'],
     ['Max wind', d.wind_max_mph === null ? null : n(d.wind_max_mph, 0) + ' mph'],
     ['Max gust', d.gust_max_mph === null ? null : n(d.gust_max_mph, 0) + ' mph']
-  ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v === null ? DASH : v })]))));
+  ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), kvCell(v)]))));
 
   const c = d.climo || {};
   body.append(el('h4', { text: 'Observed record for this date (1991\u20132020)' }));
@@ -750,10 +760,15 @@ function openDay(d) {
       : `${n(c.max_gust_on_record_mph, 0)} mph (${c.max_gust_on_record_date || DASH})`],
     ['Rain + wind together', pct(c.p_wind_and_rain_pct, 0)],
     ['Heavy rain + strong gust', pct(c.p_heavy_wind_and_rain_pct, 0)]
-  ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v === null ? DASH : v })]))));
+  ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), kvCell(v)]))));
 
   if (d.cpc && d.cpc.length) {
     body.append(el('h4', { text: 'Official CPC outlooks covering this day' }));
+    body.append(el('p', { class: 'fine', text:
+      'Each row is a point-in-polygon sample of the official CPC shapefile at the 94122 ' +
+      'coordinate. Probability and category come straight from that polygon\u2019s DBF row; ' +
+      'the polygon index and bounding box are in the JSON record so it can be found on the ' +
+      'official map.' }));
     body.append(table([{ label: 'Period' }, { label: 'Issued' }, { label: 'Variable' },
       { label: 'Outlook' }, { label: 'Source' }],
       d.cpc.map(r => [
@@ -772,7 +787,11 @@ function openDay(d) {
   body.append(el('ul', {}, (d.sources || []).map(s =>
     el('li', { class: 'fine' }, [link(s.url, s.label)]))));
 
-  $('#day-dialog').showModal();
+  // showModal() is standard in every current browser; the fallback keeps the
+  // page usable (and testable headlessly) where it is not implemented.
+  const dlg = $('#day-dialog');
+  if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
+  else if (dlg) dlg.setAttribute('open', '');
 }
 
 /* ------------------------------------------------------ duration / wind */

@@ -413,8 +413,17 @@ def main() -> int:
                      source=src(r.get("url"), r.get("label")),
                      method=("point-in-polygon sample of the official CPC GIS shapefile at "
                              "37.760459, -122.483894 (attributes read from the DBF)"),
-                     verified=fetch_ok(r.get("url")),
-                     cross_check={"used_nearest_polygon": r.get("used_nearest_polygon")})
+                     verified=fetch_ok(r.get("url")) and r.get("raw_dbf_row") is not None,
+                     cross_check={
+                         "used_nearest_polygon": r.get("used_nearest_polygon"),
+                         "containing_polygon_index": r.get("polygon_index"),
+                         "containing_polygon_bbox_lon_lat": r.get("polygon_bbox_lon_lat"),
+                         "raw_dbf_attributes": r.get("raw_dbf_row"),
+                         "note": ("Category and probability are read straight from the official "
+                                  "shapefile's DBF row for the polygon that contains "
+                                  "37.760459,-122.483894; the bounding box is published so the "
+                                  "polygon can be identified on the official map."),
+                     })
 
     # ------------------------------------------------ 9. alerts test filter
     alerts = ((nws.get("active_alerts")) or {})

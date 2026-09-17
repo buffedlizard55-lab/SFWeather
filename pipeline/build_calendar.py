@@ -216,6 +216,15 @@ def collect_cpc(cpc, default_year):
                     "label": sf["label"],
                     "url": sf["url"],
                     "stem": stem,
+                    # Evidence for the point sample: which polygon of the official
+                    # shapefile contained 37.760459,-122.483894, its bounding box,
+                    # and the raw DBF attribute row it came from.  A reviewer can
+                    # check all of it against the published map.
+                    "polygon_index": hit.get("index"),
+                    "polygon_bbox_lon_lat": hit.get("bbox"),
+                    "polygon_rings": hit.get("rings"),
+                    "polygon_vertices": hit.get("vertices"),
+                    "raw_dbf_row": {k: v for k, v in (a or {}).items()},
                     "lead": lead,
                     "abbrev": abbrev,
                     "variable": var_from_stem,
@@ -276,6 +285,9 @@ def main():
     humidity_normals = load("humidity_normals.json")
     monthly_normals = load("monthly_normals.json")
     month_rh = {int(k): v for k, v in (humidity_normals.get("month_rh_pct") or {}).items()}
+    date_rh = humidity_normals.get("date_rh_pct") or {}
+    humidity_station = humidity_normals.get("station_id")
+    humidity_station_name = humidity_normals.get("station_name")
 
     daily_climo = {d["mmdd"]: d for d in climo.get("daily", [])}
     season_climo = climo.get("season", {})
@@ -285,7 +297,8 @@ def main():
     nws_days, tz_ok = daily_from_hourly(hourly)
     if not tz_ok:
         print("  WARNING: zoneinfo unavailable; used fixed -08:00 offset.")
-    nws_updated = (nws.get("forecast_hourly") or {}).get("updated")
+    _hourly_meta = nws.get("forecast_hourly") or {}
+    nws_updated = _hourly_meta.get("updated") or _hourly_meta.get("generated_at")
     hourly_url = (nws.get("forecast_hourly") or {}).get("source_url")
     daily_url = (nws.get("forecast_daily") or {}).get("source_url")
     human_url = (nws.get("forecast_daily") or {}).get("human_url")
@@ -362,11 +375,16 @@ def main():
             # available it is derived from them (Magnus formula) and the
             # derivation is stated on the site.  Where they are not, the field
             # stays empty - never estimated.
-            entry["humidity_pct"] = month_rh.get(d.month)
+            entry["humidity_pct"] = date_rh.get(mmdd)
+            basis_scope = "for this calendar date"
+            if entry["humidity_pct"] is None:
+                entry["humidity_pct"] = month_rh.get(d.month)
+                basis_scope = "for %s" % d.strftime("%B")
             if entry["humidity_pct"] is not None:
                 entry["humidity_basis"] = (
-                    "derived: mean of NCEI 1991-2020 hourly temperature and dew-point "
-                    "normals for %s, converted with the Magnus formula" % d.strftime("%B"))
+                    "derived: mean of NOAA NCEI 1991-2020 hourly temperature and dew-point "
+                    "normals %s at station %s, converted with the Magnus formula (%s)"
+                    % (basis_scope, humidity_station or "n/a", humidity_station_name or "n/a"))
             else:
                 entry["humidity_basis"] = "not available from official normals" 
             entry["wind_max_mph"] = c.get("normal_max_sustained_mph")
