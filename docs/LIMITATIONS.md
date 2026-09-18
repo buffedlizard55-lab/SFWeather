@@ -21,8 +21,13 @@ falls entirely before 1 October.
 | Quantity | Station | Distance | Note |
 | --- | --- | --- | --- |
 | Rain, temperature | `USW00023272` San Francisco downtown | ~3.2 mi | closest long daily precipitation record |
-| Wind, gusts | `72494023234` KSFO | ~10 mi SE | most exposed; an **upper bound** for 94122 |
-| Humidity normals | `USW00023234` KSFO hourly normals | ~10 mi SE | the only hourly normals file available for the city |
+| Wind, gusts | `72494023234` KSFO | **11.9 mi SE** | most exposed; an **upper bound** for 94122 |
+| Humidity normals | `USW00023234` KSFO hourly normals | 11.9 mi SE | the only hourly normals file available for the city |
+
+The wind/humidity distance is not typed in: it is the great-circle distance from the
+94122 centroid to the station coordinates the NWS returns, published as
+`climatology.meta.station_distance_mi.wind_ksfo` (it read "~10 miles" in prose until
+a line-by-line pass caught the drift — see bug 34 in `docs/VERIFICATION.md`).
 
 San Francisco microclimates are strong: the Sunset can be several degrees cooler and
 materially wetter or drier than downtown on the same day. The site names every
@@ -44,8 +49,27 @@ estimated.
 
 ### 5. Small samples
 Single-date percentages use 30 seasons. ENSO-stratified samples are 7-12 seasons.
-A single extra season moves a single-date percentage by ~3.3 points. These are
-indicative, not precise.
+A single extra season moves a single-date percentage by ~3.3 points, and the
+standard error of a 30-season count is about **±9 percentage points** near p = 40 %
+(sqrt(p(1-p)/30)). These are indicative, not precise.
+
+This has a visible consequence now that NOAA's own published per-date normals are
+shown beside this project's count: the two agree on average (mean difference under
+half a point over the 123 dates of this window, and under a degree on the
+temperature normals) but **25 of 123 dates differ by more than 10 points**, and one
+differs by 21. That is the sampling noise of a 30-season count plus NOAA's smoothing
+across dates, not a defect on either side — but a reader who wants a single best
+number for a date should prefer NOAA's published value, and a reader who wants to
+reproduce the arithmetic should use this project's count. The page states both and
+never averages them.
+
+### 5b. Some published normals are legitimately absent
+NOAA cannot compute a wet-day precipitation percentile for a calendar date with too
+few wet days in the 1991-2020 record, and writes its missing-value sentinel `-9999`
+in that cell instead (229 of 366 dates carry a real percentile; 110 of the 123
+scoreboard dates do). The site drops the sentinel and shows the row blank, with a
+line in the day dialog saying the date is normally too dry for NOAA to publish one.
+An earlier build published `-9999.00 in` as if it were a reading — bug 37.
 
 ### 6. CPC outlooks are regional, and coastal point-sampling can miss
 CPC's prose describes broad regions ("the southern half of California"), which is
@@ -104,6 +128,26 @@ raw gridpoint series at the same point.
 Cross-check available by hand: NWS's own text forecast for this run says "gusts as
 high as 18 mph" for Friday 18 Sep and "20 mph" for Saturday 19 Sep; the derived
 daily maxima are 18.4 and 19.6 mph.
+
+### 13. Two official answers can disagree on a single date
+Since this session the site publishes NOAA's own per-date daily normals beside this
+project's count of the same thing, with the difference shown rather than reconciled.
+On the 123 dates of this window the means agree to under half a point, but 25 dates
+differ by more than 10 points (worst 21.0). A reader must not read the smaller number
+as "the truth": NOAA's value is smoothed across dates and is the better single
+estimate; this project's is a raw 30-season count with a standard error near ±9
+points. Both are official-derived, both are shown, and the arithmetic of the gap is
+stated on the page. This is a limit of a 30-year record, not a defect to be fixed by
+choosing a winner. See `docs/METHODS.md` §9.
+
+### 14. The two halves of a "rain day" are different things
+The calendar's `rain 0.01"` on an NWS-forecast day is a **predicted accumulation for
+that day**. On a climatology day the same slot says `mean 0.01"` and is the
+**1991-2020 average total for that calendar date over 30 seasons** — a much weaker
+statement. The tile wording, the day dialog and the legend all keep the two apart,
+and the smoke test refuses a climatology tile that uses the word "rain" (bug 39).
+Readers comparing a September-looking tile with a January one should know they are
+reading two different quantities.
 
 ---
 

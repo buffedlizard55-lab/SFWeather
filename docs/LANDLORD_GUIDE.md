@@ -122,7 +122,7 @@ Source: same GHCN-Daily file.
 
 ### Wind, gusts, and wind+rain together
 
-Wind from **NCEI GSOD 72494023234 (KSFO)**, ~10 miles SE of 94122, more open/exposed than Sunset — so treat as **upper bound** for 94122. Units: knots in CSV, converted mph ×1.15078 per GSOD README: https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt (README is authority, also notes GSOD days are UTC 00-24Z ≈ 16:00-16:00 local, so joint stat is approximation).
+Wind from **NCEI GSOD 72494023234 (KSFO)**, 11.9 miles SE of 94122 (great-circle distance from the 94122 centroid, published as `climatology.meta.station_distance_mi.wind_ksfo` and recomputed every run), more open/exposed than Sunset — so treat as **upper bound** for 94122. Units: knots in CSV, converted mph ×1.15078 per GSOD README: https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt (README is authority, also notes GSOD days are UTC 00-24Z ≈ 16:00-16:00 local, so joint stat is approximation).
 
 - Average daily max sustained wind at SFO: **17.2 mph**; average daily max gust: **30.7 mph**
 - **11.1 days/season** with both rain (≥0.01 in) and sustained wind ≥20 kt (median 10, max 24)
@@ -208,7 +208,7 @@ If you want a second opinion from AccuWeather, you must read it directly — thi
 
 See `docs/LIMITATIONS.md` for full list. Key ones:
 
-- Two stations ~10 miles apart, microclimates
+- Two stations 11.9 miles apart, microclimates
 - GSOD days are UTC days, GHCN local days — joint wind+rain is approximation
 - Small samples: single-date percentages from 30 seasons, one season moves date by ~3.3 points
 - Storm Events is reported-events, not census

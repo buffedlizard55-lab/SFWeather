@@ -197,6 +197,28 @@ per-date 1991-2020 probabilities* (linearity of expectation). The method string 
 published next to the numbers on the site, because the figure is an expectation
 over the observed distribution, not a prediction for 2026-27.
 
+### Fourth review pass, 17 Sep 2026 (bugs 34-39) - published normals session
+
+This pass added the site's second, independent answer to the landlord's rain
+questions: NOAA NCEI's **published** 1991-2020 daily normals for the same station,
+shown date by date next to this project's own count. It also produced the sharpest
+defect of the session - and then produced a second defect in the guard written to
+catch the first one, which is the more useful thing to record.
+
+| # | Symptom | Root cause | Fix |
+| --- | --- | --- | --- |
+| 34 | The limitations prose said wind is measured "about 10 miles" from 94122 while the pipeline's own recorded great-circle distance is **11.9 mi** | The number was typed into the sentence; the pipeline had started computing it but the prose was never switched over | The caveat is now built from `climatology.meta.station_distance_mi.wind_ksfo` (computed from the station coordinates the NWS returns), so it prints 11.9. All static copies of "~10 miles" in `index.html`, `landlord_summary.py` and `docs/LANDLORD_GUIDE.md` updated to the published value |
+| 35 | The published-vs-derived comparison produced **no pairs at all** (silently), so the page's cross-check section was empty | `pipeline/build_calendar.py` had its own copy of the aggregation, keyed on `p_pcp_ge_001in_pct` / `_010in_` / `_100in_`. Those keys were also being read by the renderer. The official columns are `GE001HI` = >= **0.01** in, so the real keys are `..._0p01in_pct`, `..._0p25in_pct`, `..._1p00in_pct` - the duplicate aggregator had drifted from the parser and matched nothing | One implementation, in `climo.compare_daily_normals`, called by `build_calendar.py`. The renderer's labels are generated from the file's own `layout.thresholds_in` rather than typed, so a column and its label cannot drift apart again |
+| 36 | `AttributeError: 'dict' object has no attribute 'compare_daily_normals'` | `import climo` at module scope was **shadowed inside `main()`** by a local `climo = load("climatology.json")` - the same trap that had already bitten once | The module is imported as `climo_lib` in both `build_calendar.py` and `verify_claims.py`, with the reason in a comment |
+| 37 | **123 dates published `-9999.00 in` as a precipitation percentile.** The site would have shown NOAA's missing-value sentinel as a reading | NCEI writes `-9999` for a percentile it cannot compute (a calendar date too dry to have a wet-day percentile). `_DLY_MISSING` listed the positive GHCN/GSOD sentinels (``9999.9``, ``99999``, ...) and ``M`` only | The guard is now a literal list **plus a numeric floor**: any value <= -900 is a sentinel. New ledger check `official-daily-normals-no-sentinels` re-checks every published value against ranges stated from outside the data (a share of years is 0-100 %, a percentile cannot be negative, a normal temperature is -50..130 F) |
+| 38 | **The check written for bug 37 could not fire.** With `-9999` injected back into the dataset the ledger still passed it | The rule was written as `key.endswith("_pctl_in")`, but the published key is `pcp_50pctl_in` - there is **no underscore before `pctl`**, so the test matched nothing | The rule moved to `climo.implausible_normals_value()` and is unit-tested in `tests/test_parsers.py`. The failure was reproduced by injecting a sentinel into a scratch copy of the dataset and confirming the check flips to FAIL, before the fix was kept |
+| 39 | Every climatology day cell labelled its amount `rain 0.01"`, which reads as a **forecast** for a date 30 years of record cannot forecast | One template served both tiers; only the probability was worded per tier | A climatology tile now says `mean`, a forecast tile says `rain`, and `tests/smoke.js` fails if a climatology cell uses the word `rain` (verified to fail on the old wording before being committed) |
+
+Bug 37 is the one to keep in mind: it was invisible in every offline fixture, and
+only appeared when the **first real dataset produced by CI** was read line by line.
+Fixture data cannot prove a parser is right about a publisher's conventions - only
+the publisher's own file can.
+
 ## Release held back: the deleted-function incident
 
 Two consecutive runs published nothing, which is the gate behaving correctly:
@@ -240,7 +262,7 @@ reached on only some code paths would have been silent.
 
 ## How the ledger and the tests stand now
 
-* `pipeline/verify_claims.py`: **26 automated checks, 17 recorded claims**, each claim
+* `pipeline/verify_claims.py`: **32 automated checks, 18 recorded claims**, each claim
   carrying value, unit, method, official URL, HTTP status, bytes, SHA-256, retrieval
   time and - where one exists - an independent cross-check. Order: provenance-present,
   provenance-record-count, hosts-official, centroid-verified, oni-official-read-directly,
@@ -250,22 +272,31 @@ reached on only some code paths would have been silent.
   month-mean-*, streak-arithmetic, cost-drivers-structure,
   cost-driver-expected-days-arithmetic, raw-phase-tokens, normals-cross-check,
   cpc-dedup, cpc-seasonal-present, alert-test-filter, source-traceability,
-  quotes-plain-text, claim-source-evidence.
-* `tests/test_parsers.py`: **121 offline assertions**, stdlib only. Added 17 Sep 2026:
+  quotes-plain-text, claim-source-evidence, official-daily-normals-present,
+  official-daily-normals-no-sentinels, official-daily-normals-traceable,
+  official-daily-normals-cross-check, official-daily-normals-expected-days,
+  phase-label-present.
+* `tests/test_parsers.py`: **167 offline assertions**, stdlib only. Added 17 Sep 2026:
   the exact official-host allow-list, the CPC category-explanation rule (bug 23) and the gridpoint gust/QPF aggregation,
   including the local-midnight accumulation split and the cross-check of derived gusts
   against the gusts NWS states in its own text forecast. Added in the third pass:
   the expected-days summation (both record shapes), the Storm Events damage parsing
   (`0.00K` = no recorded damage, `""` = unknown), the ENSO phase/ONI display
   formatting, and the cost-driver builder's evidence rules on synthetic inputs and
-  on the committed landlord.json.
+  on the committed landlord.json. Added in the fourth pass: a 366-date NCEI-shaped
+  daily-normals fixture with hand-computable values (per-threshold semantics,
+  monotonicity, blank != zero, an unknown layout degrading to ``usable: false``,
+  the comparison's signs and its >10-point flag rule), the sentinel rules
+  (**-9999** and the numeric floor, keyed on the real ``pcp_50pctl_in`` shape) and
+  the published-vs-derived blocks on the committed scoreboard.
 * `npm test` (jsdom): renders the page against the committed data and fails on an
   empty section, a broken day dialog, a broken CSV export, a truncated source label,
   the broken reality-check sentence, a CPC note that does not explain its own category,
   an unlabelled rain/temperature outlook, an unrounded humidity, a mislabelled source
   link, a forecast day missing its gust or rain amount, a cost-driver card without
   evidence or a source, a raw ENSO phase token on the landlord dashboard, or a
-  `NaN`/`undefined` rendered anywhere in the main sections.
+  `NaN`/`undefined` rendered anywhere in the main sections, or a climatology day
+  tile that labels a 30-year mean as `rain`.
 * Nightly gate: `summary.failed > 0` -> "refresh NOT published", diagnostics committed
   only. The site then keeps the last verified dataset.
 

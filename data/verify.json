@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T00:23:08Z",
+  "generated_utc": "2026-09-18T03:05:04Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,8 +9,8 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 26,
-    "passed": 26,
+    "total": 32,
+    "passed": 32,
     "failed": 0,
     "warnings": 0,
     "failed_checks": [],
@@ -89,14 +89,14 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-18T00:22:06Z"
+        "retrieved_utc": "2026-09-18T03:04:27Z"
       }
     },
     {
       "id": "nws-daily-aggregation",
       "title": "The published daily high and max wind are the max of the NWS hourly grid",
       "status": "pass",
-      "detail": "2026-09-17: high 64 vs hourly max 64; wind 8.0 vs hourly max 8.0",
+      "detail": "2026-09-17: high 61 vs hourly max 61; wind 8.0 vs hourly max 8.0",
       "evidence": null
     },
     {
@@ -200,6 +200,36 @@
       }
     },
     {
+      "id": "raw-phase-tokens-dataset",
+      "title": "No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)",
+      "status": "pass",
+      "detail": "0 raw tokens across 14315 scanned string(s)",
+      "evidence": []
+    },
+    {
+      "id": "phase-label-present",
+      "title": "Every ENSO phase value a renderer can reach ships with a reader-facing label (no underscore token, correct capitalisation)",
+      "status": "pass",
+      "detail": "3 label(s) published",
+      "evidence": {
+        "labels": [
+          {
+            "path": "landlord.json executive_summary.current_enso.phase_label",
+            "value": "El Ni\u00f1o"
+          },
+          {
+            "path": "calendar.json enso.latest_official.phase_label",
+            "value": "El Ni\u00f1o"
+          },
+          {
+            "path": "calendar.json enso.official.latest.phase_label",
+            "value": "El Ni\u00f1o"
+          }
+        ],
+        "problems": []
+      }
+    },
+    {
       "id": "raw-phase-tokens",
       "title": "No raw ENSO data token (el_nino / la_nina) appears in any reader-facing executive-summary string",
       "status": "pass",
@@ -237,6 +267,212 @@
           "difference_in": 0.07
         }
       ]
+    },
+    {
+      "id": "official-daily-normals-present",
+      "title": "NOAA's published per-date daily normals were fetched and parsed",
+      "status": "pass",
+      "detail": "366 calendar date(s) parsed from the official file",
+      "evidence": {
+        "url": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv",
+        "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
+        "dates_parsed": 366,
+        "columns": {
+          "normal_high_f": "DLY-TMAX-NORMAL",
+          "normal_low_f": "DLY-TMIN-NORMAL",
+          "p_pcp_ge_0p01in_pct": "DLY-PRCP-PCTALL-GE001HI",
+          "p_pcp_ge_0p10in_pct": "DLY-PRCP-PCTALL-GE010HI",
+          "p_pcp_ge_0p25in_pct": "DLY-PRCP-PCTALL-GE025HI",
+          "p_pcp_ge_0p50in_pct": "DLY-PRCP-PCTALL-GE050HI",
+          "p_pcp_ge_1p00in_pct": "DLY-PRCP-PCTALL-GE100HI",
+          "p_pcp_ge_2p00in_pct": "DLY-PRCP-PCTALL-GE200HI",
+          "p_pcp_ge_4p00in_pct": "DLY-PRCP-PCTALL-GE400HI",
+          "p_pcp_ge_6p00in_pct": "DLY-PRCP-PCTALL-GE600HI",
+          "pcp_25pctl_in": "DLY-PRCP-25PCTL",
+          "pcp_50pctl_in": "DLY-PRCP-50PCTL",
+          "pcp_75pctl_in": "DLY-PRCP-75PCTL"
+        }
+      }
+    },
+    {
+      "id": "official-daily-normals-no-sentinels",
+      "title": "No missing-value sentinel (NCEI writes -9999 for an uncomputable percentile) is published as if it were a reading",
+      "status": "pass",
+      "detail": "all values read from the file are inside their physical range (366 date(s) checked)",
+      "evidence": {
+        "examples": [],
+        "url": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv",
+        "ranges": {
+          "*_pct": "0-100 %",
+          "*_pctl_in": ">= 0 in",
+          "*_f": "-50..130 F"
+        }
+      }
+    },
+    {
+      "id": "official-daily-normals-traceable",
+      "title": "Every published normal shown on a day is the value in the NOAA file (re-read from the same bytes), and every season date carries one",
+      "status": "pass",
+      "detail": "1683 published value(s) re-checked across 123 of 123 date(s); 0 date(s) without a published block, 0 mismatch(es)",
+      "evidence": {
+        "dates_without_a_published_block": [],
+        "mismatches": []
+      }
+    },
+    {
+      "id": "official-daily-normals-cross-check",
+      "title": "The site publishes both NOAA's own per-date rain probabilities and this project's derived ones, with the difference stated",
+      "status": "pass",
+      "detail": "normal high: mean -0.556 deg_f, largest |diff| 3.9 on 2026-10-13; normal low: mean -0.252 deg_f, largest |diff| 1.6 on 2026-10-25; rain >= 0.25 in: mean -0.056 pct_points, largest |diff| 13.0 on 2027-01-13; rain >= 1.00 in: mean 0.054 pct_points, largest |diff| 9.1 on 2026-12-28; rain day >= 0.01 in: mean -0.388 pct_points, largest |diff| 21.0 on 2027-01-23; 25 date(s) differ by more than 10 points",
+      "evidence": {
+        "pairs": {
+          "rain day >= 0.01 in": {
+            "n": 123,
+            "unit": "pct_points",
+            "mean_difference": -0.388,
+            "largest_absolute_difference": 21.0,
+            "largest_difference_date": "2027-01-23",
+            "largest_difference_published": 35.7,
+            "largest_difference_derived": 56.7,
+            "within_1_unit": 11,
+            "within_3_units": 35
+          },
+          "rain >= 0.25 in": {
+            "n": 123,
+            "unit": "pct_points",
+            "mean_difference": -0.056,
+            "largest_absolute_difference": 13.0,
+            "largest_difference_date": "2027-01-13",
+            "largest_difference_published": 16.3,
+            "largest_difference_derived": 3.3,
+            "within_1_unit": 31,
+            "within_3_units": 59
+          },
+          "rain >= 1.00 in": {
+            "n": 123,
+            "unit": "pct_points",
+            "mean_difference": 0.054,
+            "largest_absolute_difference": 9.1,
+            "largest_difference_date": "2026-12-28",
+            "largest_difference_published": 4.2,
+            "largest_difference_derived": 13.3,
+            "within_1_unit": 55,
+            "within_3_units": 94
+          },
+          "normal high": {
+            "n": 123,
+            "unit": "deg_f",
+            "mean_difference": -0.556,
+            "largest_absolute_difference": 3.9,
+            "largest_difference_date": "2026-10-13",
+            "largest_difference_published": 70.4,
+            "largest_difference_derived": 74.3,
+            "within_1_unit": 77,
+            "within_3_units": 122
+          },
+          "normal low": {
+            "n": 123,
+            "unit": "deg_f",
+            "mean_difference": -0.252,
+            "largest_absolute_difference": 1.6,
+            "largest_difference_date": "2026-10-25",
+            "largest_difference_published": 53.7,
+            "largest_difference_derived": 55.3,
+            "within_1_unit": 112,
+            "within_3_units": 123
+          }
+        },
+        "largest": {
+          "rain day >= 0.01 in": 21.0,
+          "rain >= 0.25 in": 13.0,
+          "rain >= 1.00 in": 9.1,
+          "normal high": 3.9,
+          "normal low": 1.6
+        },
+        "flagged_sample": [
+          {
+            "mmdd": "01-23",
+            "quantity": "rain day >= 0.01 in",
+            "published": 35.7,
+            "derived": 56.7,
+            "difference": -21.0,
+            "date": "2027-01-23"
+          },
+          {
+            "mmdd": "12-06",
+            "quantity": "rain day >= 0.01 in",
+            "published": 35.4,
+            "derived": 53.3,
+            "difference": -17.9,
+            "date": "2026-12-06"
+          },
+          {
+            "mmdd": "12-24",
+            "quantity": "rain day >= 0.01 in",
+            "published": 36.8,
+            "derived": 20.0,
+            "difference": 16.8,
+            "date": "2026-12-24"
+          },
+          {
+            "mmdd": "12-13",
+            "quantity": "rain day >= 0.01 in",
+            "published": 36.8,
+            "derived": 53.3,
+            "difference": -16.5,
+            "date": "2026-12-13"
+          },
+          {
+            "mmdd": "01-21",
+            "quantity": "rain day >= 0.01 in",
+            "published": 35.7,
+            "derived": 50.0,
+            "difference": -14.3,
+            "date": "2027-01-21"
+          },
+          {
+            "mmdd": "01-09",
+            "quantity": "rain day >= 0.01 in",
+            "published": 36.2,
+            "derived": 50.0,
+            "difference": -13.8,
+            "date": "2027-01-09"
+          },
+          {
+            "mmdd": "12-16",
+            "quantity": "rain day >= 0.01 in",
+            "published": 36.9,
+            "derived": 23.3,
+            "difference": 13.6,
+            "date": "2026-12-16"
+          },
+          {
+            "mmdd": "12-23",
+            "quantity": "rain day >= 0.01 in",
+            "published": 36.8,
+            "derived": 23.3,
+            "difference": 13.5,
+            "date": "2026-12-23"
+          },
+          {
+            "mmdd": "01-13",
+            "quantity": "rain >= 0.25 in",
+            "published": 16.3,
+            "derived": 3.3,
+            "difference": 13.0,
+            "date": "2027-01-13"
+          },
+          {
+            "mmdd": "12-14",
+            "quantity": "rain >= 0.25 in",
+            "published": 17.8,
+            "derived": 30.0,
+            "difference": -12.2,
+            "date": "2026-12-14"
+          }
+        ],
+        "published_source": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv"
+      }
     },
     {
       "id": "cpc-dedup",
@@ -309,7 +545,7 @@
         "http_status": 200,
         "bytes": 1013803,
         "sha256": "7b85c04a131672f58b38a950eb82855d5fd4054f0bd9bc3f69aa28897a714e3d",
-        "retrieved_utc": "2026-09-18T00:19:35Z",
+        "retrieved_utc": "2026-09-18T03:03:41Z",
         "host": "www2.census.gov"
       },
       "verified": true,
@@ -336,7 +572,7 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-18T00:22:06Z",
+        "retrieved_utc": "2026-09-18T03:04:27Z",
         "host": "www.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -363,9 +599,9 @@
         "label": "NWS hourly gridded forecast",
         "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
         "http_status": 200,
-        "bytes": 162398,
-        "sha256": "68249a565f57957d626b6c22aa60979d6ac1ac87904df8694601a57471319911",
-        "retrieved_utc": "2026-09-18T00:19:35Z",
+        "bytes": 162410,
+        "sha256": "fe25527f0bba6b396de9e2f8c304b406f6ed12851588e349dc5d9bc3e96cb47c",
+        "retrieved_utc": "2026-09-18T03:03:42Z",
         "host": "api.weather.gov"
       },
       "verified": true
@@ -407,7 +643,7 @@
         "http_status": 200,
         "bytes": 6423708,
         "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
-        "retrieved_utc": "2026-09-18T00:22:37Z",
+        "retrieved_utc": "2026-09-18T03:04:44Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true
@@ -424,7 +660,7 @@
         "http_status": 200,
         "bytes": 7488380,
         "sha256": "647b301aec57b8ad38287b2353e2a1cdcaeee8f06df205d4983db2fd9feeae19",
-        "retrieved_utc": "2026-09-18T00:22:11Z",
+        "retrieved_utc": "2026-09-18T03:04:29Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -449,7 +685,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T00:22:26Z",
+        "retrieved_utc": "2026-09-18T03:04:34Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -474,7 +710,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T00:22:26Z",
+        "retrieved_utc": "2026-09-18T03:04:34Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -499,7 +735,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T00:22:26Z",
+        "retrieved_utc": "2026-09-18T03:04:34Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -524,12 +760,43 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T00:22:26Z",
+        "retrieved_utc": "2026-09-18T03:04:34Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
       "cross_check": {
         "difference_in": 0.07
+      }
+    },
+    {
+      "id": "official-daily-normals-expected-days",
+      "statement": "Expected heavy-rain days per season, computed from NOAA's own published per-date probabilities",
+      "value": {
+        "ge_025in_days": 14.9,
+        "ge_100in_days": 3.26,
+        "ge_010in_days": 34.01,
+        "ge_050in_days": 8.39,
+        "days_covered": 123,
+        "method": "Sum of NOAA's own published per-date probabilities (DLY-PRCP-PCTALL-GE***HI) over the 123 dates of the window - the same linearity-of-expectation arithmetic as expected_days, but using the official published probabilities instead of this project's own count."
+      },
+      "unit": "days per season",
+      "method": "sum of the published per-date probabilities DLY-PRCP-PCTALL-GE025HI / GE100HI over the 123 dates of Oct 1 2026 - Jan 31 2027 (linearity of expectation)",
+      "source": {
+        "label": "NOAA NCEI 1991-2020 daily climate normals (DLY-PRCP-PCTALL-GE***HI)",
+        "url": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv",
+        "http_status": 200,
+        "bytes": 462174,
+        "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
+        "retrieved_utc": "2026-09-18T03:04:34Z",
+        "host": "www.ncei.noaa.gov"
+      },
+      "verified": true,
+      "cross_check": {
+        "derived_expected_days": {
+          "ge_025in_days": 14.97,
+          "ge_100in_days": 3.19,
+          "method": "Sum of each calendar date's 1991-2020 observed probability over the 123-day window (linearity of expectation): the expected number of days per season meeting the test, not a prediction for 2026-27."
+        }
       }
     },
     {
@@ -548,7 +815,7 @@
         "http_status": 200,
         "bytes": 3607956,
         "sha256": "6e1955b1e38868c38685acd83a0ef92df9bcc52a3acaec11a583e759c46414dc",
-        "retrieved_utc": "2026-09-18T00:21:46Z",
+        "retrieved_utc": "2026-09-18T03:04:24Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -586,7 +853,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T00:20:32Z",
+        "retrieved_utc": "2026-09-18T03:03:58Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -624,7 +891,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T00:20:32Z",
+        "retrieved_utc": "2026-09-18T03:03:58Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -662,7 +929,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T00:20:32Z",
+        "retrieved_utc": "2026-09-18T03:03:58Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -700,7 +967,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T00:20:32Z",
+        "retrieved_utc": "2026-09-18T03:03:58Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -738,7 +1005,7 @@
         "http_status": 200,
         "bytes": 3621792,
         "sha256": "6119ef340649ba4ba21072ef910e1579b7ed01251708cb81531082ab6627ab2f",
-        "retrieved_utc": "2026-09-18T00:21:48Z",
+        "retrieved_utc": "2026-09-18T03:04:25Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,

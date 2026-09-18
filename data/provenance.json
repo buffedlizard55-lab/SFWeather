@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T00:23:08Z",
+  "generated_utc": "2026-09-18T03:05:04Z",
   "note": "Every value in this repository comes from one of the URLs below.",
   "entries": [
     {
@@ -9,8 +9,8 @@
       "bytes": 1013803,
       "sha256": "7b85c04a131672f58b38a950eb82855d5fd4054f0bd9bc3f69aa28897a714e3d",
       "content_type": "application/zip",
-      "retrieved_utc": "2026-09-18T00:19:35Z",
-      "elapsed_s": 0.237,
+      "retrieved_utc": "2026-09-18T03:03:41Z",
+      "elapsed_s": 0.136,
       "note": "U.S. Census Bureau 2024 Gazetteer - ZCTA5 centroids (source of the 94122 lat/lon)"
     },
     {
@@ -20,30 +20,30 @@
       "bytes": 3935,
       "sha256": "ce145c30ce9f0d5841cc6a7fa5948c62ff88aaf216edf2fc209098d14492a3d2",
       "content_type": "application/geo+json",
-      "retrieved_utc": "2026-09-18T00:19:35Z",
-      "elapsed_s": 0.132,
+      "retrieved_utc": "2026-09-18T03:03:41Z",
+      "elapsed_s": 0.159,
       "note": "NWS point metadata -> forecast grid, zone, county, radar"
     },
     {
       "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast",
       "http_status": 200,
       "ok": true,
-      "bytes": 12870,
-      "sha256": "5ed651bc884cde6e5ba133d7308e5d1eb520d9f2e9e09b04923b1ffa6b648ff3",
+      "bytes": 12888,
+      "sha256": "1d2c2d943a364159669f6020523bb00e0aa04ad3293c62064951d5e9aa90018b",
       "content_type": "application/geo+json",
-      "retrieved_utc": "2026-09-18T00:19:35Z",
-      "elapsed_s": 0.221,
+      "retrieved_utc": "2026-09-18T03:03:41Z",
+      "elapsed_s": 0.042,
       "note": "Official NWS 7-day forecast (text + numeric per period)"
     },
     {
       "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
       "http_status": 200,
       "ok": true,
-      "bytes": 162398,
-      "sha256": "68249a565f57957d626b6c22aa60979d6ac1ac87904df8694601a57471319911",
+      "bytes": 162410,
+      "sha256": "fe25527f0bba6b396de9e2f8c304b406f6ed12851588e349dc5d9bc3e96cb47c",
       "content_type": "application/geo+json",
-      "retrieved_utc": "2026-09-18T00:19:35Z",
-      "elapsed_s": 0.347,
+      "retrieved_utc": "2026-09-18T03:03:42Z",
+      "elapsed_s": 0.06,
       "note": "Official NWS hourly gridded forecast (temp, dewpoint, RH, wind, gust, POP, QPF)"
     },
     {
@@ -53,8 +53,8 @@
       "bytes": 180227,
       "sha256": "150dcebeffc1e90465cd14a589bce26fae0a18e048737b7654b023ae4b14ef73",
       "content_type": "application/geo+json",
-      "retrieved_utc": "2026-09-18T00:19:36Z",
-      "elapsed_s": 0.336,
+      "retrieved_utc": "2026-09-18T03:03:42Z",
+      "elapsed_s": 0.074,
       "note": "NWS raw gridpoint element values (authoritative gridded fields)"
     },
     {
@@ -64,8 +64,8 @@
       "bytes": 74450,
       "sha256": "9a7c8bef74adb5f997cbcf33548762d19e5eea7fe82dce548cf9dcdf026b1f60",
       "content_type": "application/geo+json",
-      "retrieved_utc": "2026-09-18T00:19:36Z",
-      "elapsed_s": 0.12,
+      "retrieved_utc": "2026-09-18T03:03:42Z",
+      "elapsed_s": 0.056,
       "note": "NWS observation stations for the grid cell"
     },
     {
@@ -73,10 +73,10 @@
       "http_status": 200,
       "ok": true,
       "bytes": 4053,
-      "sha256": "f13e92c23684bfd26dfa19aef1aedcd79c085e91daf7e11a2b15efc61fea7df9",
+      "sha256": "01e062d9319f73aad5d6e0e5cd98a2a1b0e7d269acb4b335fd236f4239c9e208",
       "content_type": "application/geo+json",
-      "retrieved_utc": "2026-09-18T00:19:36Z",
-      "elapsed_s": 0.239,
+      "retrieved_utc": "2026-09-18T03:03:42Z",
+      "elapsed_s": 0.079,
       "note": "Latest official observation from station SFOC1"
     },
     {
@@ -84,43 +84,43 @@
       "http_status": 200,
       "ok": true,
       "bytes": 4040,
-      "sha256": "c53bd76bc908503d3032352fb563a39c648d3ea244c48ca61a5e087c4e9946e6",
+      "sha256": "9157eaa073158ee28b6c2f641fd5a6bc45a4770cc871cc8afb4d8d5b85a691f5",
       "content_type": "application/geo+json",
-      "retrieved_utc": "2026-09-18T00:19:36Z",
-      "elapsed_s": 0.177,
+      "retrieved_utc": "2026-09-18T03:03:42Z",
+      "elapsed_s": 0.077,
       "note": "Latest official observation from station D7094"
     },
     {
       "url": "https://api.weather.gov/stations/KSFO/observations/latest",
       "http_status": 200,
       "ok": true,
-      "bytes": 4339,
-      "sha256": "d840bc9f53eec816475b19d29185b80cea9355111cf085352ba29a766a9abc45",
+      "bytes": 4338,
+      "sha256": "90d6699310da3d76f52f4ee5d50958b1e4679473ec17fb2da7ab6ef4304622e8",
       "content_type": "application/geo+json",
-      "retrieved_utc": "2026-09-18T00:19:36Z",
-      "elapsed_s": 0.1,
+      "retrieved_utc": "2026-09-18T03:03:42Z",
+      "elapsed_s": 0.157,
       "note": "Latest official observation from station KSFO"
     },
     {
       "url": "https://api.weather.gov/stations/MDEC1/observations/latest",
       "http_status": 200,
       "ok": true,
-      "bytes": 4034,
-      "sha256": "be5c65f630e08741840d8314d3e0f535cb2abf7cc6f9b2973805a9b968a5ffd2",
+      "bytes": 4033,
+      "sha256": "13e2e47dc019ac4b7de97b54528f7e2004d4f9ee8c09014441666a3a64b4bc47",
       "content_type": "application/geo+json",
-      "retrieved_utc": "2026-09-18T00:19:37Z",
-      "elapsed_s": 0.186,
+      "retrieved_utc": "2026-09-18T03:03:42Z",
+      "elapsed_s": 0.123,
       "note": "Latest official observation from station MDEC1"
     },
     {
       "url": "https://api.weather.gov/stations/OAMC1/observations/latest",
       "http_status": 404,
       "ok": false,
-      "bytes": 225,
-      "sha256": "d0f8a1677f193574e48f106734b0addb48579a113afa5fbb4f469b85c297980c",
+      "bytes": 223,
+      "sha256": "1fc5c5b503b81fbcde910760395049d17396e18bf87541d6da89d6bcdc9ed336",
       "content_type": null,
-      "retrieved_utc": "2026-09-18T00:19:46Z",
-      "elapsed_s": 0.069,
+      "retrieved_utc": "2026-09-18T03:03:51Z",
+      "elapsed_s": 0.083,
       "error": "HTTP 404 Not Found",
       "note": "Latest official observation from station OAMC1"
     },
@@ -128,11 +128,11 @@
       "url": "https://api.weather.gov/stations/D3169/observations/latest",
       "http_status": 200,
       "ok": true,
-      "bytes": 4034,
-      "sha256": "f3b32e551e282773a24b0ed1f25516b076fd798ca67ee8c6cd7eaaf2987aea30",
+      "bytes": 4042,
+      "sha256": "e11c65501a357f4ebff7306e44d3fc7fb9beb07b2c40d9968f266b9e1b4f1472",
       "content_type": "application/geo+json",
-      "retrieved_utc": "2026-09-18T00:19:46Z",
-      "elapsed_s": 0.083,
+      "retrieved_utc": "2026-09-18T03:03:51Z",
+      "elapsed_s": 0.097,
       "note": "Latest official observation from station D3169"
     },
     {
@@ -140,32 +140,32 @@
       "http_status": 200,
       "ok": true,
       "bytes": 238,
-      "sha256": "371b61cdc66ee0b59ec06ab77aec839da560949101fd434962e26708b94c68ae",
+      "sha256": "7273e86410ed81f9bb6c7883979917f1986c3773c6c05c2fae49ff674698230c",
       "content_type": "application/geo+json",
-      "retrieved_utc": "2026-09-18T00:19:46Z",
-      "elapsed_s": 0.286,
+      "retrieved_utc": "2026-09-18T03:03:52Z",
+      "elapsed_s": 0.09,
       "note": "Active NWS alerts/warnings for zone CAZ006"
     },
     {
       "url": "https://api.weather.gov/products/types/AFD/locations/MTR",
       "http_status": 200,
       "ok": true,
-      "bytes": 22588,
-      "sha256": "4e8322b456a49d237ab8a1272247b3e4187681ecfe097088d9fb676c5a5dd209",
+      "bytes": 22982,
+      "sha256": "6668eb3384d7da21cc79b213527301b67dfa300bf988ca77dd8d21c7039df4b2",
       "content_type": "application/ld+json",
-      "retrieved_utc": "2026-09-18T00:19:46Z",
-      "elapsed_s": 0.175,
+      "retrieved_utc": "2026-09-18T03:03:52Z",
+      "elapsed_s": 0.096,
       "note": "NWS AFD (Area Forecast Discussion) product list for MTR"
     },
     {
-      "url": "https://api.weather.gov/products/2ed56265-e8b0-47dc-bbeb-bd6a948b2ea5",
+      "url": "https://api.weather.gov/products/38b36296-a7a0-471c-a845-33410d7ee472",
       "http_status": 200,
       "ok": true,
-      "bytes": 5271,
-      "sha256": "683337f1ad138637be9e7fab49d962cfe0969f66d77a297e45d35cd88ba97c59",
+      "bytes": 5938,
+      "sha256": "c785d4c7781e902a275b8d91a4d231cfac0ba24acd788e26a03830811bfddbfe",
       "content_type": "application/ld+json",
-      "retrieved_utc": "2026-09-18T00:19:47Z",
-      "elapsed_s": 0.26,
+      "retrieved_utc": "2026-09-18T03:03:52Z",
+      "elapsed_s": 0.087,
       "note": "NWS AFD (Area Forecast Discussion) full text"
     },
     {
@@ -175,8 +175,8 @@
       "bytes": 71,
       "sha256": "626005b1dc3947255e87d9c3c59357835ff66514e67f6b5c5b057f981ea1a80d",
       "content_type": "application/ld+json",
-      "retrieved_utc": "2026-09-18T00:19:47Z",
-      "elapsed_s": 0.21,
+      "retrieved_utc": "2026-09-18T03:03:52Z",
+      "elapsed_s": 0.109,
       "note": "NWS HWO (Hazardous Weather Outlook) product list for MTR"
     },
     {
@@ -186,8 +186,8 @@
       "bytes": 3354059,
       "sha256": "d1d3f8ed0e328c0e73a120fce95fb1f2f3a206e0394016f305371ccc208fc33f",
       "content_type": "application/zip",
-      "retrieved_utc": "2026-09-18T00:19:49Z",
-      "elapsed_s": 1.855,
+      "retrieved_utc": "2026-09-18T03:03:52Z",
+      "elapsed_s": 0.416,
       "note": "CPC outlook shapefile archive: 6-10 Day Temperature Outlook"
     },
     {
@@ -197,8 +197,8 @@
       "bytes": 3346516,
       "sha256": "a0106679e6323bb1739e05e69f4243dc89460568b7fbb589c78199576eddd86a",
       "content_type": "application/zip",
-      "retrieved_utc": "2026-09-18T00:19:51Z",
-      "elapsed_s": 1.883,
+      "retrieved_utc": "2026-09-18T03:03:53Z",
+      "elapsed_s": 0.319,
       "note": "CPC outlook shapefile archive: 6-10 Day Precipitation Outlook"
     },
     {
@@ -208,8 +208,8 @@
       "bytes": 3345734,
       "sha256": "077b880227b1c8acc61168046d58ee44c12651ae67f8bbd6b268f3c088a2d9ef",
       "content_type": "application/zip",
-      "retrieved_utc": "2026-09-18T00:19:53Z",
-      "elapsed_s": 1.846,
+      "retrieved_utc": "2026-09-18T03:03:53Z",
+      "elapsed_s": 0.325,
       "note": "CPC outlook shapefile archive: 8-14 Day Temperature Outlook"
     },
     {
@@ -219,8 +219,8 @@
       "bytes": 3342756,
       "sha256": "579d5e02bff440f881fc7db85e145fdf476663d860155fb34329d4b53894d3ce",
       "content_type": "application/zip",
-      "retrieved_utc": "2026-09-18T00:19:55Z",
-      "elapsed_s": 1.846,
+      "retrieved_utc": "2026-09-18T03:03:54Z",
+      "elapsed_s": 0.328,
       "note": "CPC outlook shapefile archive: 8-14 Day Precipitation Outlook"
     },
     {
@@ -230,8 +230,8 @@
       "bytes": 3346367,
       "sha256": "ea1ea2e16541678d75b9542e8a5b0db7847f213f850da07dafd8405786f23d3f",
       "content_type": "application/zip",
-      "retrieved_utc": "2026-09-18T00:19:57Z",
-      "elapsed_s": 1.864,
+      "retrieved_utc": "2026-09-18T03:03:54Z",
+      "elapsed_s": 0.32,
       "note": "CPC outlook shapefile archive: Week 3-4 Temperature Outlook"
     },
     {
@@ -241,8 +241,8 @@
       "bytes": 3345454,
       "sha256": "29a498dd597a57d6c01f4f3c5422e6cb9cf74e809dc0cdefab08d27397a0343b",
       "content_type": "application/zip",
-      "retrieved_utc": "2026-09-18T00:20:10Z",
-      "elapsed_s": 13.068,
+      "retrieved_utc": "2026-09-18T03:03:54Z",
+      "elapsed_s": 0.417,
       "note": "CPC outlook shapefile archive: Week 3-4 Precipitation Outlook"
     },
     {
@@ -252,8 +252,8 @@
       "bytes": 50749068,
       "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
       "content_type": "application/zip",
-      "retrieved_utc": "2026-09-18T00:20:32Z",
-      "elapsed_s": 22.124,
+      "retrieved_utc": "2026-09-18T03:03:58Z",
+      "elapsed_s": 3.575,
       "note": "CPC outlook shapefile archive: Monthly & Seasonal Precipitation Outlook (issued 202609)"
     },
     {
@@ -263,8 +263,8 @@
       "bytes": 50604270,
       "sha256": "8b4d80e3dee6929943cae5d9e0df212f00705b60eeec7824ec420f41a78431aa",
       "content_type": "application/zip",
-      "retrieved_utc": "2026-09-18T00:20:56Z",
-      "elapsed_s": 22.478,
+      "retrieved_utc": "2026-09-18T03:04:03Z",
+      "elapsed_s": 3.476,
       "note": "CPC outlook shapefile archive: Monthly & Seasonal Temperature Outlook (issued 202609)"
     },
     {
@@ -274,8 +274,8 @@
       "bytes": 50773794,
       "sha256": "3bce78d9aa12546a55f9f7f00c12153ae34ba47690657cc5d099c38d62b426cb",
       "content_type": "application/zip",
-      "retrieved_utc": "2026-09-18T00:21:19Z",
-      "elapsed_s": 21.868,
+      "retrieved_utc": "2026-09-18T03:04:12Z",
+      "elapsed_s": 7.878,
       "note": "CPC outlook shapefile archive: Monthly & Seasonal Precipitation Outlook (issued 202608)"
     },
     {
@@ -285,8 +285,8 @@
       "bytes": 50584091,
       "sha256": "b18f3c2bbd27fe04970719b635245d403cde6d493b7e340bdd3a19e7804f04a4",
       "content_type": "application/zip",
-      "retrieved_utc": "2026-09-18T00:21:42Z",
-      "elapsed_s": 21.916,
+      "retrieved_utc": "2026-09-18T03:04:23Z",
+      "elapsed_s": 8.759,
       "note": "CPC outlook shapefile archive: Monthly & Seasonal Temperature Outlook (issued 202608)"
     },
     {
@@ -296,8 +296,8 @@
       "bytes": 3607956,
       "sha256": "6e1955b1e38868c38685acd83a0ef92df9bcc52a3acaec11a583e759c46414dc",
       "content_type": "application/zip",
-      "retrieved_utc": "2026-09-18T00:21:46Z",
-      "elapsed_s": 1.896,
+      "retrieved_utc": "2026-09-18T03:04:24Z",
+      "elapsed_s": 0.347,
       "note": "CPC outlook shapefile archive: Latest Monthly Update - Precipitation"
     },
     {
@@ -307,8 +307,8 @@
       "bytes": 3621792,
       "sha256": "6119ef340649ba4ba21072ef910e1579b7ed01251708cb81531082ab6627ab2f",
       "content_type": "application/zip",
-      "retrieved_utc": "2026-09-18T00:21:48Z",
-      "elapsed_s": 1.952,
+      "retrieved_utc": "2026-09-18T03:04:25Z",
+      "elapsed_s": 0.346,
       "note": "CPC outlook shapefile archive: Latest Monthly Update - Temperature"
     },
     {
@@ -318,8 +318,8 @@
       "bytes": 291177,
       "sha256": "876e9e267f98959f9d63e1b5e38bd362490181ab29690221a1e975edf70d06bc",
       "content_type": "image/gif",
-      "retrieved_utc": "2026-09-18T00:21:48Z",
-      "elapsed_s": 0.679,
+      "retrieved_utc": "2026-09-18T03:04:25Z",
+      "elapsed_s": 0.21,
       "note": "CPC official outlook map (candidate): 6-10 Day Temperature"
     },
     {
@@ -329,8 +329,8 @@
       "bytes": 286477,
       "sha256": "55b9587968fb1bb6532f30d46c6c3992e0a2b3da31d50161310aa52fd43dad3a",
       "content_type": "image/gif",
-      "retrieved_utc": "2026-09-18T00:21:49Z",
-      "elapsed_s": 0.553,
+      "retrieved_utc": "2026-09-18T03:04:25Z",
+      "elapsed_s": 0.117,
       "note": "CPC official outlook map (candidate): 6-10 Day Precipitation"
     },
     {
@@ -340,8 +340,8 @@
       "bytes": 278056,
       "sha256": "f131aec5179d26058459f9579f999fa7d6d1179e229c0508f05d7a84860d333f",
       "content_type": "image/gif",
-      "retrieved_utc": "2026-09-18T00:21:50Z",
-      "elapsed_s": 0.624,
+      "retrieved_utc": "2026-09-18T03:04:25Z",
+      "elapsed_s": 0.117,
       "note": "CPC official outlook map (candidate): 8-14 Day Temperature"
     },
     {
@@ -351,8 +351,8 @@
       "bytes": 281181,
       "sha256": "9829fe79dd6876f0311f3d9b4e5530eb63542cd7487d5b5d16f59e61f5183b64",
       "content_type": "image/gif",
-      "retrieved_utc": "2026-09-18T00:21:50Z",
-      "elapsed_s": 0.603,
+      "retrieved_utc": "2026-09-18T03:04:26Z",
+      "elapsed_s": 0.204,
       "note": "CPC official outlook map (candidate): 8-14 Day Precipitation"
     },
     {
@@ -362,8 +362,8 @@
       "bytes": 253449,
       "sha256": "a4c93d39ceb6e9f1e023465a0cd4222a65f091d2a5ebd1fa1485aa639d028dde",
       "content_type": "image/gif",
-      "retrieved_utc": "2026-09-18T00:21:51Z",
-      "elapsed_s": 0.545,
+      "retrieved_utc": "2026-09-18T03:04:26Z",
+      "elapsed_s": 0.1,
       "note": "CPC official outlook map (candidate): Week 3-4 Temperature"
     },
     {
@@ -373,8 +373,8 @@
       "bytes": 271372,
       "sha256": "9b1dc1e219d24101427b6923fa7eda68fbfc588e6381b957444d585890bf20d7",
       "content_type": "image/gif",
-      "retrieved_utc": "2026-09-18T00:21:51Z",
-      "elapsed_s": 0.475,
+      "retrieved_utc": "2026-09-18T03:04:26Z",
+      "elapsed_s": 0.115,
       "note": "CPC official outlook map (candidate): Week 3-4 Precipitation"
     },
     {
@@ -384,8 +384,8 @@
       "bytes": 246338,
       "sha256": "40177cb325e4b902940c5c1fba1388abc17071f85645f5a04b1edf9e5a4a3bae",
       "content_type": "image/gif",
-      "retrieved_utc": "2026-09-18T00:21:52Z",
-      "elapsed_s": 0.533,
+      "retrieved_utc": "2026-09-18T03:04:26Z",
+      "elapsed_s": 0.115,
       "note": "CPC official outlook map (candidate): 30-Day (official updated) Temperature"
     },
     {
@@ -395,8 +395,8 @@
       "bytes": 248509,
       "sha256": "4c138aa986dfe3a0933327f68c65ddfc63109d536ce2bb0480d3306a184d78f1",
       "content_type": "image/gif",
-      "retrieved_utc": "2026-09-18T00:21:52Z",
-      "elapsed_s": 0.479,
+      "retrieved_utc": "2026-09-18T03:04:26Z",
+      "elapsed_s": 0.121,
       "note": "CPC official outlook map (candidate): 30-Day (official updated) Precipitation"
     },
     {
@@ -406,8 +406,8 @@
       "bytes": 30571,
       "sha256": "70d0927cab072581ca67ebf3999202fdebf5f3cfde0a9b3393f30de491d3260e",
       "content_type": "text/html; charset=utf-8",
-      "retrieved_utc": "2026-09-18T00:21:53Z",
-      "elapsed_s": 0.39,
+      "retrieved_utc": "2026-09-18T03:04:26Z",
+      "elapsed_s": 0.094,
       "note": "CPC outlook discussion: 6-10 & 8-14 Day Prognostic Discussion"
     },
     {
@@ -417,8 +417,8 @@
       "bytes": 32159,
       "sha256": "c6307e499e46cf2c0047f87de6a3169ed484923b62755f5e4350d786589ea781",
       "content_type": "text/html; charset=utf-8",
-      "retrieved_utc": "2026-09-18T00:21:53Z",
-      "elapsed_s": 0.299,
+      "retrieved_utc": "2026-09-18T03:04:26Z",
+      "elapsed_s": 0.178,
       "note": "CPC outlook discussion: 30-Day Outlook Discussion"
     },
     {
@@ -428,8 +428,8 @@
       "bytes": 32159,
       "sha256": "c6307e499e46cf2c0047f87de6a3169ed484923b62755f5e4350d786589ea781",
       "content_type": "text/html; charset=utf-8",
-      "retrieved_utc": "2026-09-18T00:21:53Z",
-      "elapsed_s": 0.298,
+      "retrieved_utc": "2026-09-18T03:04:26Z",
+      "elapsed_s": 0.089,
       "note": "CPC outlook discussion: 90-Day (3-month) Outlook Discussion"
     },
     {
@@ -439,8 +439,8 @@
       "bytes": 4233,
       "sha256": "32b4af7663f3143779becd0f41f95d8993ac30fe3e95fdbb9c34043eff42b873",
       "content_type": "text/plain; charset=utf-8",
-      "retrieved_utc": "2026-09-18T00:21:54Z",
-      "elapsed_s": 0.245,
+      "retrieved_utc": "2026-09-18T03:04:26Z",
+      "elapsed_s": 0.091,
       "note": "CPC outlook discussion: Week 3-4 Outlook Discussion"
     },
     {
@@ -450,8 +450,8 @@
       "bytes": 16664,
       "sha256": "7ba76f324110e0d874401e6a611d9271bcb44055f17f5eb8dbf178c615b79568",
       "content_type": "text/html; charset=UTF-8",
-      "retrieved_utc": "2026-09-18T00:21:54Z",
-      "elapsed_s": 0.339,
+      "retrieved_utc": "2026-09-18T03:04:27Z",
+      "elapsed_s": 0.071,
       "note": "CPC landing page (valid period metadata): 610day"
     },
     {
@@ -461,8 +461,8 @@
       "bytes": 16249,
       "sha256": "1127fb25c92351621f2d9d861a5c8cb4142c7866bb092e7f491bdf0f41da7ccc",
       "content_type": "text/html; charset=UTF-8",
-      "retrieved_utc": "2026-09-18T00:21:54Z",
-      "elapsed_s": 0.261,
+      "retrieved_utc": "2026-09-18T03:04:27Z",
+      "elapsed_s": 0.063,
       "note": "CPC landing page (valid period metadata): 814day"
     },
     {
@@ -472,8 +472,8 @@
       "bytes": 11777,
       "sha256": "dda64852f6b606dc143c6b2a7c1ac84fe6745e1f28fc2209a11c67868a19ddd6",
       "content_type": "text/html; charset=UTF-8",
-      "retrieved_utc": "2026-09-18T00:21:54Z",
-      "elapsed_s": 0.264,
+      "retrieved_utc": "2026-09-18T03:04:27Z",
+      "elapsed_s": 0.299,
       "note": "CPC landing page (valid period metadata): 30day"
     },
     {
@@ -483,8 +483,8 @@
       "bytes": 30237,
       "sha256": "a81c6f638d97a7251b54cb0c84e0fddbc7f0f12a092a372133258347771c931f",
       "content_type": "text/html; charset=UTF-8",
-      "retrieved_utc": "2026-09-18T00:22:06Z",
-      "elapsed_s": 11.514,
+      "retrieved_utc": "2026-09-18T03:04:27Z",
+      "elapsed_s": 0.07,
       "note": "CPC landing page (valid period metadata): 90day"
     },
     {
@@ -494,8 +494,8 @@
       "bytes": 23000,
       "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
       "content_type": "text/plain; charset=utf-8",
-      "retrieved_utc": "2026-09-18T00:22:06Z",
-      "elapsed_s": 0.3,
+      "retrieved_utc": "2026-09-18T03:04:27Z",
+      "elapsed_s": 0.18,
       "note": "CPC official Oceanic Nino Index (ONI) product, season-labelled"
     },
     {
@@ -505,8 +505,8 @@
       "bytes": 30328,
       "sha256": "be3b8c966b63b9c4527171b92ad425e9582914a14a4d62520ed3dc7a3ef35006",
       "content_type": "text/plain; charset=utf-8",
-      "retrieved_utc": "2026-09-18T00:22:07Z",
-      "elapsed_s": 0.299,
+      "retrieved_utc": "2026-09-18T03:04:27Z",
+      "elapsed_s": 0.177,
       "note": "CPC Nino 3.4 (ERSSTv5, detrended) monthly anomaly table"
     },
     {
@@ -516,8 +516,8 @@
       "bytes": 13506,
       "sha256": "eacaf2fa573069c599ad95006be54a1f363384d2fea7b6ef25abdc8c654af575",
       "content_type": "text/html; charset=utf-8",
-      "retrieved_utc": "2026-09-18T00:22:07Z",
-      "elapsed_s": 0.249,
+      "retrieved_utc": "2026-09-18T03:04:27Z",
+      "elapsed_s": 0.06,
       "note": "CPC ENSO / long-lead source candidate: CPC ENSO Diagnostic Discussion (monthly status + Alert System Status)"
     },
     {
@@ -527,8 +527,8 @@
       "bytes": 32159,
       "sha256": "c6307e499e46cf2c0047f87de6a3169ed484923b62755f5e4350d786589ea781",
       "content_type": "text/html; charset=utf-8",
-      "retrieved_utc": "2026-09-18T00:22:07Z",
-      "elapsed_s": 0.379,
+      "retrieved_utc": "2026-09-18T03:04:27Z",
+      "elapsed_s": 0.068,
       "note": "CPC ENSO / long-lead source candidate: CPC long-lead (monthly/seasonal) outlook discussion"
     },
     {
@@ -538,8 +538,8 @@
       "bytes": 4917504,
       "sha256": "fc19a18911f840de97b32cd141f5ae13c58c9157cf5c0376b9e7a27bc9ec768d",
       "content_type": "application/pdf",
-      "retrieved_utc": "2026-09-18T00:22:10Z",
-      "elapsed_s": 2.495,
+      "retrieved_utc": "2026-09-18T03:04:28Z",
+      "elapsed_s": 0.41,
       "note": "CPC ENSO / long-lead source candidate: CPC ENSO evolution / status / forecast (PDF)"
     },
     {
@@ -549,8 +549,8 @@
       "bytes": 17341,
       "sha256": "7e9cef7ebf78acaede6847bc2134751811b0807d263f43bc11023f0b6d0a6815",
       "content_type": "text/html; charset=UTF-8",
-      "retrieved_utc": "2026-09-18T00:22:10Z",
-      "elapsed_s": 0.303,
+      "retrieved_utc": "2026-09-18T03:04:28Z",
+      "elapsed_s": 0.092,
       "note": "CPC ENSO / long-lead source candidate: CPC ONI_v5 page (interactive; not machine-readable)"
     },
     {
@@ -560,8 +560,8 @@
       "bytes": 7488380,
       "sha256": "647b301aec57b8ad38287b2353e2a1cdcaeee8f06df205d4983db2fd9feeae19",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:11Z",
-      "elapsed_s": 1.287,
+      "retrieved_utc": "2026-09-18T03:04:29Z",
+      "elapsed_s": 0.555,
       "note": "NCEI GHCN-Daily station file: USW00023272 (SAN FRANCISCO DOWNTOWN, CA US)"
     },
     {
@@ -571,8 +571,8 @@
       "bytes": 11288,
       "sha256": "25a784a4cba0eab5f070137c57c4b4bd113982e054c77812b2d22e96c5818bc1",
       "content_type": "text/plain",
-      "retrieved_utc": "2026-09-18T00:22:12Z",
-      "elapsed_s": 0.235,
+      "retrieved_utc": "2026-09-18T03:04:29Z",
+      "elapsed_s": 0.099,
       "note": "NCEI GSOD README - authoritative element units and missing-value flags"
     },
     {
@@ -582,8 +582,8 @@
       "bytes": 93019,
       "sha256": "e2cd3cedd337bf72b42daded5ecc45a95371d1231f1d962607c12685be603f12",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:12Z",
-      "elapsed_s": 0.381,
+      "retrieved_utc": "2026-09-18T03:04:29Z",
+      "elapsed_s": 0.136,
       "note": "NCEI GSOD 1991: 72494023234"
     },
     {
@@ -593,8 +593,8 @@
       "bytes": 93273,
       "sha256": "2335e722134c9acdf97d6751520ae79d2694bfe8d9b2e368ed1436e2c6a13ad8",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:12Z",
-      "elapsed_s": 0.374,
+      "retrieved_utc": "2026-09-18T03:04:29Z",
+      "elapsed_s": 0.142,
       "note": "NCEI GSOD 1992: 72494023234"
     },
     {
@@ -604,8 +604,8 @@
       "bytes": 93019,
       "sha256": "7ee8abac06f38d9ade6acdb984374efad58dc31399b182d1cd9a3b63ec99df25",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:13Z",
-      "elapsed_s": 0.377,
+      "retrieved_utc": "2026-09-18T03:04:29Z",
+      "elapsed_s": 0.139,
       "note": "NCEI GSOD 1993: 72494023234"
     },
     {
@@ -615,8 +615,8 @@
       "bytes": 93019,
       "sha256": "156c35e0c5fb6f442046d955f63f4c90fd9207941b32678fdf14355159bbf51d",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:13Z",
-      "elapsed_s": 0.376,
+      "retrieved_utc": "2026-09-18T03:04:29Z",
+      "elapsed_s": 0.141,
       "note": "NCEI GSOD 1994: 72494023234"
     },
     {
@@ -626,8 +626,8 @@
       "bytes": 93019,
       "sha256": "e0b89b325ca08c8d86eef4108c8b03369ec706829cd4094ddc383e642f18c526",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:14Z",
-      "elapsed_s": 0.37,
+      "retrieved_utc": "2026-09-18T03:04:30Z",
+      "elapsed_s": 0.144,
       "note": "NCEI GSOD 1995: 72494023234"
     },
     {
@@ -637,8 +637,8 @@
       "bytes": 93273,
       "sha256": "8f2f37c499a6a50d98ac2a9f0aedc8f88ee2f68c16b35a221b018ad0077c100e",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:14Z",
-      "elapsed_s": 0.367,
+      "retrieved_utc": "2026-09-18T03:04:30Z",
+      "elapsed_s": 0.142,
       "note": "NCEI GSOD 1996: 72494023234"
     },
     {
@@ -648,8 +648,8 @@
       "bytes": 93019,
       "sha256": "b363dc030b264e58f52e04df2c87ecf1b478ebc5f1ccf677afbacd902e6584e7",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:14Z",
-      "elapsed_s": 0.377,
+      "retrieved_utc": "2026-09-18T03:04:30Z",
+      "elapsed_s": 0.133,
       "note": "NCEI GSOD 1997: 72494023234"
     },
     {
@@ -659,8 +659,8 @@
       "bytes": 93019,
       "sha256": "e5dbeda235ae0cb2233659c5a68c2dabec299f64f81323ba83b386563536a274",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:15Z",
-      "elapsed_s": 0.381,
+      "retrieved_utc": "2026-09-18T03:04:30Z",
+      "elapsed_s": 0.136,
       "note": "NCEI GSOD 1998: 72494023234"
     },
     {
@@ -670,8 +670,8 @@
       "bytes": 93019,
       "sha256": "fc2d1bb7bd60629b4a4b60ced9cb6063db44eb3836189de1c0a6563bd946a71c",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:15Z",
-      "elapsed_s": 0.373,
+      "retrieved_utc": "2026-09-18T03:04:30Z",
+      "elapsed_s": 0.14,
       "note": "NCEI GSOD 1999: 72494023234"
     },
     {
@@ -681,8 +681,8 @@
       "bytes": 93273,
       "sha256": "735e1c735ec05acce72414c0711de0bd6a1790d5f74eedf6faf3b081e5b87b6f",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:15Z",
-      "elapsed_s": 0.367,
+      "retrieved_utc": "2026-09-18T03:04:30Z",
+      "elapsed_s": 0.135,
       "note": "NCEI GSOD 2000: 72494023234"
     },
     {
@@ -692,8 +692,8 @@
       "bytes": 93019,
       "sha256": "161cbc57c3377ef512e5f0c4741a6deda7f4d7e4f619fea58e30ad996566ab39",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:16Z",
-      "elapsed_s": 0.375,
+      "retrieved_utc": "2026-09-18T03:04:30Z",
+      "elapsed_s": 0.141,
       "note": "NCEI GSOD 2001: 72494023234"
     },
     {
@@ -703,8 +703,8 @@
       "bytes": 93019,
       "sha256": "118c89a88f3be9ff3f0fd46d191946dba64fc7f8e3ee1483ef78f5da2e5a14c9",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:16Z",
-      "elapsed_s": 0.363,
+      "retrieved_utc": "2026-09-18T03:04:31Z",
+      "elapsed_s": 0.134,
       "note": "NCEI GSOD 2002: 72494023234"
     },
     {
@@ -714,8 +714,8 @@
       "bytes": 93019,
       "sha256": "5aebabf3c6a9f692adf86c0f46fac49dd7e4885d6cc12bc2ad5561e766ddde16",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:17Z",
-      "elapsed_s": 0.368,
+      "retrieved_utc": "2026-09-18T03:04:31Z",
+      "elapsed_s": 0.139,
       "note": "NCEI GSOD 2003: 72494023234"
     },
     {
@@ -725,8 +725,8 @@
       "bytes": 93273,
       "sha256": "ee2528e12acbfe3426c16c5dd7839fb316f2c1618150fa4bca79758f3db235a2",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:17Z",
-      "elapsed_s": 0.378,
+      "retrieved_utc": "2026-09-18T03:04:31Z",
+      "elapsed_s": 0.138,
       "note": "NCEI GSOD 2004: 72494023234"
     },
     {
@@ -736,8 +736,8 @@
       "bytes": 93019,
       "sha256": "350a105f7aebd9a80235ef31b8b6870aaf48610554439fc001e65d4dcdb7a02b",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:17Z",
-      "elapsed_s": 0.361,
+      "retrieved_utc": "2026-09-18T03:04:31Z",
+      "elapsed_s": 0.138,
       "note": "NCEI GSOD 2005: 72494023234"
     },
     {
@@ -747,8 +747,8 @@
       "bytes": 93019,
       "sha256": "f7d0b24ef428271ae86b90de3f3f60ba00209a1c82d0a3a51c1816b40b28fddf",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:18Z",
-      "elapsed_s": 0.404,
+      "retrieved_utc": "2026-09-18T03:04:31Z",
+      "elapsed_s": 0.143,
       "note": "NCEI GSOD 2006: 72494023234"
     },
     {
@@ -758,8 +758,8 @@
       "bytes": 93019,
       "sha256": "83444623c71bc0911a119b05882d81c6a9be8f40929cb5e4a399b1ff33d78886",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:18Z",
-      "elapsed_s": 0.376,
+      "retrieved_utc": "2026-09-18T03:04:31Z",
+      "elapsed_s": 0.133,
       "note": "NCEI GSOD 2007: 72494023234"
     },
     {
@@ -769,8 +769,8 @@
       "bytes": 93273,
       "sha256": "3a2ef90f74f43b70fa98c297f4ab3c086a847e4771dad24cb728d3b2d8090e2e",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:18Z",
-      "elapsed_s": 0.366,
+      "retrieved_utc": "2026-09-18T03:04:31Z",
+      "elapsed_s": 0.143,
       "note": "NCEI GSOD 2008: 72494023234"
     },
     {
@@ -780,8 +780,8 @@
       "bytes": 93019,
       "sha256": "9afdf17019cce9f12cca647e98c2c3cb6b6642391232e845435b06c38691a824",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:19Z",
-      "elapsed_s": 0.385,
+      "retrieved_utc": "2026-09-18T03:04:32Z",
+      "elapsed_s": 0.14,
       "note": "NCEI GSOD 2009: 72494023234"
     },
     {
@@ -791,8 +791,8 @@
       "bytes": 93019,
       "sha256": "1642329974d078734751893a183870b0ee17454f21ea0ebf3f66f2b0713cdd44",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:19Z",
-      "elapsed_s": 0.372,
+      "retrieved_utc": "2026-09-18T03:04:32Z",
+      "elapsed_s": 0.142,
       "note": "NCEI GSOD 2010: 72494023234"
     },
     {
@@ -802,8 +802,8 @@
       "bytes": 93019,
       "sha256": "3003e0e7b202d4d0c39594e568f51f9038cb9be36c02bbd2961bdf704bc5cf35",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:20Z",
-      "elapsed_s": 0.374,
+      "retrieved_utc": "2026-09-18T03:04:32Z",
+      "elapsed_s": 0.142,
       "note": "NCEI GSOD 2011: 72494023234"
     },
     {
@@ -813,8 +813,8 @@
       "bytes": 93273,
       "sha256": "02dfa593cf95d964ab766d12e28e1bfe73267cd316eb52920df2af1355f4d192",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:20Z",
-      "elapsed_s": 0.373,
+      "retrieved_utc": "2026-09-18T03:04:32Z",
+      "elapsed_s": 0.139,
       "note": "NCEI GSOD 2012: 72494023234"
     },
     {
@@ -824,8 +824,8 @@
       "bytes": 93019,
       "sha256": "5cd7eef07e198364a4bacaa6a5d43f5540fb508a8de5529d261725263468fd70",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:20Z",
-      "elapsed_s": 0.372,
+      "retrieved_utc": "2026-09-18T03:04:32Z",
+      "elapsed_s": 0.136,
       "note": "NCEI GSOD 2013: 72494023234"
     },
     {
@@ -835,8 +835,8 @@
       "bytes": 93019,
       "sha256": "76883931536ff08930485f69d7680fe2c97ce3132c783869fb294ec06c670de4",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:21Z",
-      "elapsed_s": 0.373,
+      "retrieved_utc": "2026-09-18T03:04:32Z",
+      "elapsed_s": 0.152,
       "note": "NCEI GSOD 2014: 72494023234"
     },
     {
@@ -846,8 +846,8 @@
       "bytes": 93019,
       "sha256": "ea7552780d78ba0bb9702b9ac221633cb3aa84e8ba03e27817fe905873479e8b",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:21Z",
-      "elapsed_s": 0.371,
+      "retrieved_utc": "2026-09-18T03:04:32Z",
+      "elapsed_s": 0.139,
       "note": "NCEI GSOD 2015: 72494023234"
     },
     {
@@ -857,8 +857,8 @@
       "bytes": 93273,
       "sha256": "2547ee2c14295f46c744f1ec7269ed608b538441449418ba970e9a46982176d4",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:21Z",
-      "elapsed_s": 0.363,
+      "retrieved_utc": "2026-09-18T03:04:33Z",
+      "elapsed_s": 0.143,
       "note": "NCEI GSOD 2016: 72494023234"
     },
     {
@@ -868,8 +868,8 @@
       "bytes": 93019,
       "sha256": "26d9f7e2928af68dd4d39eb43dbf9ceb71a1c3373c4b587bd5958f57014c5739",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:22Z",
-      "elapsed_s": 0.379,
+      "retrieved_utc": "2026-09-18T03:04:33Z",
+      "elapsed_s": 0.14,
       "note": "NCEI GSOD 2017: 72494023234"
     },
     {
@@ -879,8 +879,8 @@
       "bytes": 93019,
       "sha256": "68970963d4f5848937d3ca69c9cff36438e3722ff9fd73b31164d2c0b1d2fb6e",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:22Z",
-      "elapsed_s": 0.364,
+      "retrieved_utc": "2026-09-18T03:04:33Z",
+      "elapsed_s": 0.144,
       "note": "NCEI GSOD 2018: 72494023234"
     },
     {
@@ -890,8 +890,8 @@
       "bytes": 93019,
       "sha256": "2d14421b9ae9400e065deb000bad9a5b7b5b0d5eb91102c9994f2a5ba2661a82",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:23Z",
-      "elapsed_s": 0.38,
+      "retrieved_utc": "2026-09-18T03:04:33Z",
+      "elapsed_s": 0.136,
       "note": "NCEI GSOD 2019: 72494023234"
     },
     {
@@ -901,8 +901,8 @@
       "bytes": 93273,
       "sha256": "7fbed7ca64e1fe47a260e2b4f00082f6117e1600a18c11b66b56134b8267c302",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:23Z",
-      "elapsed_s": 0.362,
+      "retrieved_utc": "2026-09-18T03:04:33Z",
+      "elapsed_s": 0.14,
       "note": "NCEI GSOD 2020: 72494023234"
     },
     {
@@ -912,8 +912,8 @@
       "bytes": 93019,
       "sha256": "2156f1f83edeba1d0065942d8c5d66099c6ae34cf96c5c62accefd42cc9f31a7",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:23Z",
-      "elapsed_s": 0.361,
+      "retrieved_utc": "2026-09-18T03:04:33Z",
+      "elapsed_s": 0.146,
       "note": "NCEI GSOD 2021: 72494023234"
     },
     {
@@ -923,8 +923,8 @@
       "bytes": 93019,
       "sha256": "3540bdcd300e3a76acd2ffcc2a872ba1dffef8061aeec19cdeda95ea7f429db3",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:24Z",
-      "elapsed_s": 0.377,
+      "retrieved_utc": "2026-09-18T03:04:33Z",
+      "elapsed_s": 0.159,
       "note": "NCEI GSOD 2022: 72494023234"
     },
     {
@@ -934,8 +934,8 @@
       "bytes": 93019,
       "sha256": "8df2119251dc2de36482420b527de487ebc9691fade33ff939b56a75335c6bc5",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:24Z",
-      "elapsed_s": 0.404,
+      "retrieved_utc": "2026-09-18T03:04:34Z",
+      "elapsed_s": 0.141,
       "note": "NCEI GSOD 2023: 72494023234"
     },
     {
@@ -945,8 +945,8 @@
       "bytes": 93273,
       "sha256": "9bca300f631950c78a4c18f9bf18674c99e8f0d2d98c67a71057a5d347191a6b",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:24Z",
-      "elapsed_s": 0.372,
+      "retrieved_utc": "2026-09-18T03:04:34Z",
+      "elapsed_s": 0.133,
       "note": "NCEI GSOD 2024: 72494023234"
     },
     {
@@ -956,8 +956,8 @@
       "bytes": 61015,
       "sha256": "b356855e941d16578233038af9dbd9f6d4f5c370132530653089bc54adb526ac",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:25Z",
-      "elapsed_s": 0.371,
+      "retrieved_utc": "2026-09-18T03:04:34Z",
+      "elapsed_s": 0.14,
       "note": "NCEI GSOD 2025: 72494023234"
     },
     {
@@ -967,8 +967,8 @@
       "bytes": 462174,
       "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:26Z",
-      "elapsed_s": 0.651,
+      "retrieved_utc": "2026-09-18T03:04:34Z",
+      "elapsed_s": 0.246,
       "note": "NCEI 1991-2020 Daily Climate Normals: USW00023272"
     },
     {
@@ -978,8 +978,8 @@
       "bytes": 31536,
       "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:26Z",
-      "elapsed_s": 0.305,
+      "retrieved_utc": "2026-09-18T03:04:34Z",
+      "elapsed_s": 0.122,
       "note": "NCEI 1991-2020 Monthly Climate Normals: USW00023272"
     },
     {
@@ -989,8 +989,8 @@
       "bytes": 196,
       "sha256": "80c3fe2ae1062abf56456f52518bd670f9ec3917b7f85e152b347ac6b6faf880",
       "content_type": null,
-      "retrieved_utc": "2026-09-18T00:22:36Z",
-      "elapsed_s": 0.232,
+      "retrieved_utc": "2026-09-18T03:04:44Z",
+      "elapsed_s": 0.096,
       "error": "HTTP 404 Not Found",
       "note": "NCEI 1991-2020 Hourly Climate Normals: USW00023272"
     },
@@ -1001,8 +1001,8 @@
       "bytes": 6423708,
       "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
       "content_type": "text/csv",
-      "retrieved_utc": "2026-09-18T00:22:37Z",
-      "elapsed_s": 1.257,
+      "retrieved_utc": "2026-09-18T03:04:44Z",
+      "elapsed_s": 0.412,
       "note": "NCEI 1991-2020 Hourly Climate Normals: USW00023234"
     },
     {
@@ -1012,8 +1012,8 @@
       "bytes": 53138,
       "sha256": "70319dcccbd3fdfd199bf899154e05a6fd47b2b1dee7f44847211f4411d0eda6",
       "content_type": "text/html; charset=UTF-8",
-      "retrieved_utc": "2026-09-18T00:22:38Z",
-      "elapsed_s": 0.461,
+      "retrieved_utc": "2026-09-18T03:04:45Z",
+      "elapsed_s": 0.212,
       "note": "NCEI Storm Events CSV directory listing"
     },
     {
@@ -1023,8 +1023,8 @@
       "bytes": 5861580,
       "sha256": "4ed138328c1a6af4d8d18cdd5dbb423816b03a5c9f62c53bc8fc3d1c4e3527cc",
       "content_type": "application/gzip",
-      "retrieved_utc": "2026-09-18T00:22:39Z",
-      "elapsed_s": 1.123,
+      "retrieved_utc": "2026-09-18T03:04:45Z",
+      "elapsed_s": 0.408,
       "note": "NCEI Storm Events details file 2026"
     },
     {
@@ -1034,8 +1034,8 @@
       "bytes": 12585209,
       "sha256": "d9b46b4c6aae554723cadbb9691f3d5258371c02e530ba815d6fe41e4550149f",
       "content_type": "application/gzip",
-      "retrieved_utc": "2026-09-18T00:22:40Z",
-      "elapsed_s": 1.4,
+      "retrieved_utc": "2026-09-18T03:04:46Z",
+      "elapsed_s": 0.461,
       "note": "NCEI Storm Events details file 2025"
     },
     {
@@ -1045,8 +1045,8 @@
       "bytes": 12693243,
       "sha256": "2070b83eccab041b36360ab73645b9a249c3eefc5b92b5b3fc0cbba4d9fcc09c",
       "content_type": "application/gzip",
-      "retrieved_utc": "2026-09-18T00:22:43Z",
-      "elapsed_s": 1.308,
+      "retrieved_utc": "2026-09-18T03:04:48Z",
+      "elapsed_s": 0.46,
       "note": "NCEI Storm Events details file 2024"
     },
     {
@@ -1056,8 +1056,8 @@
       "bytes": 12888092,
       "sha256": "713784bed40d9e5a95b1d6240a654f865f3ef97703713105c7b35437270da134",
       "content_type": "application/gzip",
-      "retrieved_utc": "2026-09-18T00:22:45Z",
-      "elapsed_s": 1.405,
+      "retrieved_utc": "2026-09-18T03:04:49Z",
+      "elapsed_s": 0.446,
       "note": "NCEI Storm Events details file 2023"
     },
     {
@@ -1067,8 +1067,8 @@
       "bytes": 11817849,
       "sha256": "7d6b79d0049a6edec96b061738289daddba90be26fc9afe7b0a6fd617f21452e",
       "content_type": "application/gzip",
-      "retrieved_utc": "2026-09-18T00:22:47Z",
-      "elapsed_s": 1.307,
+      "retrieved_utc": "2026-09-18T03:04:51Z",
+      "elapsed_s": 0.459,
       "note": "NCEI Storm Events details file 2022"
     },
     {
@@ -1078,8 +1078,8 @@
       "bytes": 10563953,
       "sha256": "60c1daf96dbe8eafd48c80df5b70df51a0125ab95d467ee7009a646761d57715",
       "content_type": "application/gzip",
-      "retrieved_utc": "2026-09-18T00:22:50Z",
-      "elapsed_s": 1.372,
+      "retrieved_utc": "2026-09-18T03:04:53Z",
+      "elapsed_s": 0.426,
       "note": "NCEI Storm Events details file 2021"
     },
     {
@@ -1089,8 +1089,8 @@
       "bytes": 10444606,
       "sha256": "895c56fd46991c4d9a135d67558dc4b447a02a2314efac0ace645135b98f9c9d",
       "content_type": "application/gzip",
-      "retrieved_utc": "2026-09-18T00:22:52Z",
-      "elapsed_s": 1.307,
+      "retrieved_utc": "2026-09-18T03:04:54Z",
+      "elapsed_s": 0.419,
       "note": "NCEI Storm Events details file 2020"
     },
     {
@@ -1100,8 +1100,8 @@
       "bytes": 11602648,
       "sha256": "f5043ecc776818b0feffdf1e0fcbaf63329db0635eab1057c7b8ba00ef332e3b",
       "content_type": "application/gzip",
-      "retrieved_utc": "2026-09-18T00:22:54Z",
-      "elapsed_s": 1.381,
+      "retrieved_utc": "2026-09-18T03:04:56Z",
+      "elapsed_s": 0.493,
       "note": "NCEI Storm Events details file 2019"
     },
     {
@@ -1111,8 +1111,8 @@
       "bytes": 9585982,
       "sha256": "19702480f50cd2a8dacce5e57891feba156afb87b1ea5cbb4eaeda69d2b964a4",
       "content_type": "application/gzip",
-      "retrieved_utc": "2026-09-18T00:22:56Z",
-      "elapsed_s": 1.255,
+      "retrieved_utc": "2026-09-18T03:04:57Z",
+      "elapsed_s": 0.45,
       "note": "NCEI Storm Events details file 2018"
     },
     {
@@ -1122,8 +1122,8 @@
       "bytes": 9340854,
       "sha256": "bd3ca72b71544222cba8aa2b29eb3f0efe050d3330a0c408e208befb66881750",
       "content_type": "application/gzip",
-      "retrieved_utc": "2026-09-18T00:22:59Z",
-      "elapsed_s": 1.423,
+      "retrieved_utc": "2026-09-18T03:04:59Z",
+      "elapsed_s": 0.424,
       "note": "NCEI Storm Events details file 2017"
     },
     {
@@ -1133,8 +1133,8 @@
       "bytes": 9065715,
       "sha256": "d8e1389897df3557e74ba36820357f6962a7c0ca922595400fe74d883f7a5036",
       "content_type": "application/gzip",
-      "retrieved_utc": "2026-09-18T00:23:02Z",
-      "elapsed_s": 3.202,
+      "retrieved_utc": "2026-09-18T03:05:00Z",
+      "elapsed_s": 0.416,
       "note": "NCEI Storm Events details file 2016"
     },
     {
@@ -1144,8 +1144,8 @@
       "bytes": 10041550,
       "sha256": "c4a5a24b8c69ad2b6b867790ce298f5b642a60516c9fce5550a8d2f67cd7bf2e",
       "content_type": "application/gzip",
-      "retrieved_utc": "2026-09-18T00:23:05Z",
-      "elapsed_s": 1.333,
+      "retrieved_utc": "2026-09-18T03:05:01Z",
+      "elapsed_s": 0.456,
       "note": "NCEI Storm Events details file 2015"
     },
     {
@@ -1155,8 +1155,8 @@
       "bytes": 11084754,
       "sha256": "410b457b1b9628cfd63292848a626482a88714c8bd8c45d56a0469f9de05d078",
       "content_type": "application/gzip",
-      "retrieved_utc": "2026-09-18T00:23:07Z",
-      "elapsed_s": 1.384,
+      "retrieved_utc": "2026-09-18T03:05:03Z",
+      "elapsed_s": 0.448,
       "note": "NCEI Storm Events details file 2014"
     }
   ]

@@ -158,6 +158,20 @@ function bars(items, opts = {}) {
   }));
 }
 
+/** The inch threshold a published DLY-PRCP-PCTALL-GE###HI column means.
+ *
+ * The digits are HUNDREDTHS of an inch (GE001HI = ">= 0.01 in"), which the
+ * pipeline established from the file itself and publishes as
+ * layout.thresholds_in - so the label is read from the data rather than typed
+ * here, and a mislabelled column is impossible by construction.
+ */
+function publishedThresholds(key) {
+  const cal = state.data.calendar || {};
+  const thr = (((cal.daily_normals_official || {}).layout || {}).thresholds_in) || {};
+  const v = thr[key];
+  return (typeof v === 'number') ? v : null;
+}
+
 function rainClass(p) {
   if (p === null || p === undefined) return 'd0';
   if (p < 10) return 'd0';
@@ -528,10 +542,23 @@ function renderSeason(cal) {
   const box = $('#enso-body');
   if (!box) return;
 
+  // Phase and strength are machine tokens ("el_nino", "very_strong").  The
+  // pipeline publishes a reader-facing label next to each; fall back to the
+  // shared mappers so a token can never be printed raw, and never by
+  // character substitution - which is what produced "el nino" here while the
+  // executive summary correctly printed "El Niño" from the same value.
+  const strengthLabel = s => {
+    const m = { very_strong: 'very strong', strong: 'strong', moderate: 'moderate',
+                weak: 'weak', neutral: 'neutral' };
+    if (s === null || s === undefined || s === '') return '';
+    return m[s] || String(s).replace(/_/g, ' ');
+  };
   const facts = [
     ['ENSO state (official ONI)', official.label
-      ? `${official.label} \u2192 ${official.oni_c > 0 ? '+' : ''}${official.oni_c}\u00b0C ` +
-        `(${(official.phase || '').replace('_', ' ')}, ${(official.strength || '').replace('_', ' ')})`
+      ? `${official.label} \u2192 ` +
+        `${official.oni_c_fmt || ((official.oni_c > 0 ? '+' : '') + official.oni_c + '\u00b0C')} = ` +
+        `${official.phase_label || phaseLabel(official.phase)}, ` +
+        `${official.strength_label || strengthLabel(official.strength)}`
       : null],
     ['CPC Alert System Status', enso.diagnostic_status || null],
     ['Official ONI definition', 'ONI = 3-month running mean of ERSSTv5 Ni\u00f1o 3.4 ' +
@@ -609,18 +636,35 @@ function renderSeason(cal) {
             prcp.polygon_bbox_lon_lat.join(', ') }) : null].filter(Boolean))
     ]);
   });
-  const other = seasonal.filter(r => !(wanted.includes(r.valid_season)));
-  other.filter(r => r.variable === 'prcp').forEach(r => {
-    const t = seasonal.find(x => x.valid_season === r.valid_season && x.variable === 'temp');
-    rows.push([periodCell(r.valid_season + (r.kind === 'month' ? ' (month)' : ''), r, t),
-      t ? `${t.category_label} (${t.prob}%)` + (t.used_nearest_polygon ? ' \u26a0' : '') : DASH,
-      `${r.category_label} (${r.prob}%)` + (r.used_nearest_polygon ? ' \u26a0' : ''),
-      link(r.url, 'CPC shapefile')]);
-  });
+  $('#cpc-season-table').append(el('h4', { text: 'Outlooks whose period overlaps 1 Oct 2026 \u2013 31 Jan 2027' }));
   $('#cpc-season-table').append(table(
     [{ label: 'Period' }, { label: 'Temperature' }, { label: 'Precipitation' }, { label: 'Source' }],
     rows,
     { empty: 'No CPC long-lead outlook could be sampled for this location.' }));
+  // Everything else CPC published was also sampled, but its period does NOT
+  // reach into this window, so it belongs in its own clearly-labelled table.  It
+  // used to be appended to the table above, under a caption claiming those were
+  // the only outlooks that cover Oct 2026 - Jan 2027, which they were not.
+  const other = seasonal.filter(r => !(wanted.includes(r.valid_season)));
+  if (other.length) {
+    const orows = other.filter(r => r.variable === 'prcp').map(r => {
+      const t = seasonal.find(x => x.valid_season === r.valid_season && x.variable === 'temp');
+      return [periodCell(r.valid_season + (r.kind === 'month' ? ' (month)' : ''), r, t),
+        t ? `${t.category_label} (${t.prob}%)` + (t.used_nearest_polygon ? ' \u26a0' : '') : DASH,
+        `${r.category_label} (${r.prob}%)` + (r.used_nearest_polygon ? ' \u26a0' : ''),
+        link(r.url, 'CPC shapefile')];
+    });
+    if (orows.length) {
+      $('#cpc-season-table').append(el('h4', { text: 'Other CPC periods sampled at this point (outside the Oct 2026 \u2013 Jan 2027 window)' }));
+      $('#cpc-season-table').append(el('p', { class: 'fine', text:
+        'Shown for completeness and to prove the sampler read the whole archive. ' +
+        'These periods do not cover the season this site is about, so nothing here ' +
+        'is used anywhere else on the page.' }));
+      $('#cpc-season-table').append(table(
+        [{ label: 'Period' }, { label: 'Temperature' }, { label: 'Precipitation' }, { label: 'Source' }],
+        orows));
+    }
+  }
   const anyNearest = seasonal.some(r => r.used_nearest_polygon);
   if (anyNearest) {
     $('#cpc-season-table').append(el('p', { class: 'fine', html:
@@ -680,8 +724,10 @@ function renderSeason(cal) {
 
   /* ENSO stratification ------------------------------------------------- */
   const strat = cal.enso_stratified || {};
+  // Label from the record the pipeline publishes; the previous hard-coded
+  // ternary left "neutral" lower-case beside "El Niño" / "La Niña".
   const srows = Object.entries(strat).map(([phase, d]) => [
-    phase === 'el_nino' ? 'El Ni\u00f1o' : phase === 'la_nina' ? 'La Ni\u00f1a' : phase,
+    d.phase_label || phaseLabel(phase),
     d.n, n(d.mean, 2), n(d.median, 2),
     d.min === undefined ? null : `${Number(d.min).toFixed(2)} \u2013 ${Number(d.max).toFixed(2)}`
   ]);
@@ -714,13 +760,24 @@ function renderNow(nws, cal) {
         `days from the hourly grid. Horizon: ${cf.first_day} to ${cf.last_day} ` +
         `(${cf.horizon_days} days). This window is updated by the nightly job; it is the only ` +
         'part of this site that is a forecast rather than a climatology.' }));
+      // The first and last day of the horizon are partial: the grid starts and
+      // ends mid-day, so their "high" is the high of the hours covered, not of
+      // the calendar day.  The hour count is published for exactly this reason
+      // and used to be dropped on the floor, which made a partial day look like
+      // it disagreed with NWS's own day-level forecast.
+      const partial = d => (d.hours_covered !== null && d.hours_covered !== undefined
+        && d.hours_covered < 24);
       cfBox.append(table(
-        [{ label: 'Day' }, { label: 'High / low', num: true }, { label: 'Humidity (mean)', num: true },
+        [{ label: 'Day' }, { label: 'Grid hours', num: true }, { label: 'High / low', num: true },
+         { label: 'Humidity (mean)', num: true },
          { label: 'Rain chance (max hourly POP)', num: true }, { label: 'Rain amount (NWS QPF)', num: true },
          { label: 'Wind max', num: true }, { label: 'Gust max', num: true }],
         cfDays.map(d => [
           el('div', {}, [el('strong', { text: d.date }), el('br'),
             el('span', { class: 'fine', text: d.weekday || '' })]),
+          partial(d)
+            ? el('span', { class: 'pill pill-warn', text: `${d.hours_covered} of 24 (partial day)` })
+            : el('span', { class: 'fine', text: `${d.hours_covered === null || d.hours_covered === undefined ? DASH : d.hours_covered} of 24` }),
           `${n(d.high_f, 0)}\u00b0F / ${n(d.low_f, 0)}\u00b0F`,
           d.humidity_pct === null ? null : pct(d.humidity_pct, 0) +
             (d.humidity_min_pct !== null && d.humidity_max_pct !== null
@@ -734,6 +791,15 @@ function renderNow(nws, cal) {
         cfBox.append(el('p', { class: 'fine', text:
           'Note: these days fall before 1 October 2026, so they are outside the Oct 2026 \u2013 ' +
           'Jan 2027 scoreboard. They are shown because they are the current official forecast.' }));
+      }
+      const nPartial = cfDays.filter(partial).length;
+      if (nPartial) {
+        cfBox.append(el('p', { class: 'fine', text:
+          `${nPartial} of these ${cfDays.length} days cover only part of the calendar day, ` +
+          'because the NWS hourly grid begins and ends mid-day. On a partial day the high ' +
+          'and low are the extremes of the hours covered, so they can differ from NWS\u2019s ' +
+          'own day-level forecast for the same date \u2014 that is a coverage difference, not a ' +
+          'disagreement. The \u201cGrid hours\u201d column shows exactly how much of each day is covered.' }));
       }
       cfBox.append(el('p', { class: 'fine' }, [
         'Issued ', document.createTextNode(cf.forecast_updated || DASH), ' \u00b7 ',
@@ -773,18 +839,33 @@ function renderNow(nws, cal) {
     $('#nws-forecast').append(el('p', { class: 'empty', text: 'NWS forecast unavailable in this run.' }));
   }
 
-  const obs = (nws.stations || []).filter(s => s.observation);
+  // The NWS station feed returns whatever stations NWS associates with this
+  // point, which for 94122 includes sites 11-14 miles away and personal weather
+  // stations relayed through MADIS.  A reader cannot judge "latest conditions in
+  // 94122" without the distance, so it is shown, and the list is ordered by it.
+  const obs = (nws.stations || []).filter(s => s.observation && s.observation.timestamp)
+    .slice()
+    .sort((a, b) => (a.distance_m || 1e12) - (b.distance_m || 1e12));
   if (obs.length) {
+    $('#nws-obs').append(el('p', { class: 'fine', text:
+      'These are the stations the NWS feed associates with this point, nearest first. ' +
+      'Only the closest is inside the ZIP code; the rest are 4\u201315 miles away and, in San ' +
+      'Francisco\u2019s microclimates, can read several degrees apart from the Sunset. ' +
+      'Distances are the great-circle distance from the ZIP centroid.' }));
     $('#nws-obs').append(table(
-      [{ label: 'Station' }, { label: 'Observed' }, { label: 'Temp' }, { label: 'RH' },
-       { label: 'Wind' }, { label: 'Gust' }],
+      [{ label: 'Station' }, { label: 'Distance', num: true }, { label: 'Observed' }, { label: 'Temp' },
+       { label: 'RH' }, { label: 'Wind' }, { label: 'Gust' }],
       obs.map(s => {
         const o = s.observation;
         const c2f = c => c === null || c === undefined ? null : (c * 9 / 5 + 32).toFixed(0) + '\u00b0F';
         const kmh2mph = v => v === null || v === undefined ? null : (v * 0.621371).toFixed(0) + ' mph';
+        const mi = (s.distance_m === null || s.distance_m === undefined)
+          ? null : (s.distance_m / 1609.344).toFixed(1) + ' mi';
         return [
           el('div', {}, [el('strong', { text: s.station_id }), el('br'),
             el('span', { class: 'fine', text: s.name || '' })]),
+          mi === null ? null
+            : el('span', { class: Number.parseFloat(mi) < 1 ? '' : 'fine', text: mi }),
           el('span', { class: 'fine', text: (o.timestamp || DASH).replace('T', ' ').replace('+00:00', 'Z') }),
           c2f(o.temperature_c),
           // The NWS observation is a computed RH with ~14 significant figures.
@@ -883,6 +964,57 @@ function renderCalendar(cal) {
     for (let i = 0; i < firstDow; i++) grid.append(el('div', { class: 'day blank' }));
 
     days.forEach(d => grid.append(dayCell(d)));
+
+    // Keep the "jump to a date" control honest about what this month contains.
+    if (days.length) state.monthSpan = { first: days[0].date, last: days[days.length - 1].date };
+  }
+
+  /* "Jump to a date" ------------------------------------------------------
+   * The brief asks to be able to look up one given day between Oct 2026 and
+   * Jan 2027; scanning 123 cells for a single date is not usable, so a date
+   * picker switches to the right month, opens that day, and marks the cell.
+   * An out-of-range or unpublished date says so rather than failing quietly. */
+  const findInput = $('#day-find');
+  const findBtn = $('#day-find-go');
+  const findHelp = $('#day-find-help');
+  const allDays = cal.days || [];
+  if (allDays.length) {
+    if (findInput) {
+      findInput.min = allDays[0].date;
+      findInput.max = allDays[allDays.length - 1].date;
+    }
+    if (findHelp) {
+      findHelp.textContent = `Between ${allDays[0].date} and ` +
+        `${allDays[allDays.length - 1].date} \u2014 or click any day.`;
+    }
+  }
+  const jump = () => {
+    if (!findInput) return;
+    const v = findInput.value;
+    if (!v) { if (findHelp) findHelp.textContent = 'Pick a date first.'; return; }
+    const hit = allDays.find(d => d.date === v);
+    if (!hit) {
+      const lo = allDays.length ? allDays[0].date : null;
+      const hi = allDays.length ? allDays[allDays.length - 1].date : null;
+      if (findHelp) {
+        findHelp.textContent = (lo && hi && v >= lo && v <= hi)
+          ? `${v} is inside the window but is not in this snapshot \u2014 reload, or use the official links below.`
+          : `${v} is outside the scoreboard window (${lo} to ${hi}).`;
+      }
+      return;
+    }
+    state.month = v.slice(0, 7);
+    $$('#month-tabs button').forEach(b =>
+      b.setAttribute('aria-selected', String(b.dataset.key === state.month)));
+    drawMonth();
+    const cell = $$('#calendar-grid .day:not(.blank)').find(c => c.dataset.date === v);
+    if (cell) { cell.classList.add('found'); if (cell.focus) cell.focus(); }
+    openDay(hit);
+  };
+  if (findBtn) findBtn.addEventListener('click', jump);
+  if (findInput) {
+    findInput.addEventListener('change', jump);
+    findInput.addEventListener('keydown', e => { if (e.key === 'Enter') jump(); });
   }
 }
 
@@ -891,6 +1023,12 @@ function dayCell(d) {
   return el('button', {
     class: `day ${rainClass(d.rain_chance_pct)} ${isForecast ? 'is-forecast' : ''}`,
     type: 'button',
+    'data-date': d.date,
+    'aria-label': `${d.date}: high ${n(d.high_f, 0)}F, low ${n(d.low_f, 0)}F, ` +
+      `rain chance ${pct(d.rain_chance_pct, 0)}, rain amount ` +
+      `${d.rain_amount_in === null ? 'not published' : Number(d.rain_amount_in).toFixed(2) + ' in'}, ` +
+      `wind ${n(d.wind_max_mph, 0)} mph, gust ${n(d.gust_max_mph, 0)} mph, ` +
+      `${isForecast ? 'official NWS forecast' : '1991-2020 climatology (not a forecast)'}`,
     onclick: () => openDay(d)
   }, [
     el('div', { class: 'day-top' }, [
@@ -900,7 +1038,13 @@ function dayCell(d) {
     el('div', { class: 'day-temp', text: `${n(d.high_f, 0)}\u00b0 / ${n(d.low_f, 0)}\u00b0` }),
     el('div', { class: 'day-rain', text: pct(d.rain_chance_pct, 0) }),
     el('div', { class: 'day-meta' }, [
-      el('span', { text: d.rain_amount_in === null ? 'rain \u2014' : 'rain ' + Number(d.rain_amount_in).toFixed(2) + '"' }),
+      // On a forecast day this is the official QPF for that day; on a
+      // climatology day it is the 1991-2020 *mean daily total* for that calendar
+      // date.  Labelled differently on purpose: a reader must never read a
+      // 30-year mean as "0.01 in is going to fall on this day".
+      el('span', { text: d.rain_amount_in === null
+        ? (isForecast ? 'rain \u2014' : 'mean \u2014')
+        : (isForecast ? 'rain ' : 'mean ') + Number(d.rain_amount_in).toFixed(2) + '"' }),
       el('span', { text: `wind ${n(d.wind_max_mph, 0)} / gust ${n(d.gust_max_mph, 0)}` }),
       el('span', { text: d.humidity_pct === null ? 'RH \u2014' : 'RH ' + n(d.humidity_pct, 0) + '%' })
     ])
@@ -956,6 +1100,90 @@ function openDay(d) {
     ['Rain + wind together', pct(c.p_wind_and_rain_pct, 0)],
     ['Heavy rain + strong gust', pct(c.p_heavy_wind_and_rain_pct, 0)]
   ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), kvCell(v)]))));
+
+  // ---- NOAA's own published normals for this date, next to this project's ----
+  const off = d.official_normal;
+  if (off) {
+    body.append(el('h4', { text: 'NOAA\u2019s published normals for this date (official)' }));
+    // The threshold each GE###HI column means is published with the data
+    // (layout.thresholds_in) rather than re-typed here, so the label and the
+    // number can never drift apart.  The digits are hundredths of an inch:
+    // GE001HI is ">= 0.01 in".
+    const ge = (key) => {
+      const t = publishedThresholds(key);
+      return t === null ? '>= ' + key : '>= ' + t.toFixed(2) + ' in';
+    };
+    body.append(el('p', { class: 'fine', text:
+      'Read column-for-column from NOAA NCEI\u2019s 1991-2020 daily normals for this station. ' +
+      'The \u201cthis project\u201d column is the site\u2019s own count over the same 30 seasons of ' +
+      'GHCN-Daily. Both are shown and the difference is stated \u2014 the two are never averaged ' +
+      'into one number. NOAA smooths its published values across neighbouring dates while ' +
+      'this project\u2019s are raw counts in 3.33-point steps, so a few points of difference ' +
+      'is expected; a large one would be a problem and is flagged.' }));
+    const pubRows = [
+      ['Normal high (DLY-TMAX-NORMAL)', off.normal_high_f, 'normal high', '\u00b0F'],
+      ['Normal low (DLY-TMIN-NORMAL)', off.normal_low_f, 'normal low', '\u00b0F'],
+      [ge('p_pcp_ge_0p01in_pct') + ' (PCTALL-GE001HI)', off.p_pcp_ge_0p01in_pct,
+        'share of years with >= 0.01 in', '%'],
+      [ge('p_pcp_ge_0p10in_pct') + ' (PCTALL-GE010HI)', off.p_pcp_ge_0p10in_pct, null, '%'],
+      [ge('p_pcp_ge_0p25in_pct') + ' (PCTALL-GE025HI)', off.p_pcp_ge_0p25in_pct,
+        'share of years with >= 0.25 in', '%'],
+      [ge('p_pcp_ge_0p50in_pct') + ' (PCTALL-GE050HI)', off.p_pcp_ge_0p50in_pct, null, '%'],
+      [ge('p_pcp_ge_1p00in_pct') + ' (PCTALL-GE100HI)', off.p_pcp_ge_1p00in_pct,
+        'share of years with >= 1.00 in', '%'],
+      [ge('p_pcp_ge_2p00in_pct') + ' (PCTALL-GE200HI)', off.p_pcp_ge_2p00in_pct, null, '%'],
+      [ge('p_pcp_ge_4p00in_pct') + ' (PCTALL-GE400HI)', off.p_pcp_ge_4p00in_pct, null, '%'],
+      [ge('p_pcp_ge_6p00in_pct') + ' (PCTALL-GE600HI)', off.p_pcp_ge_6p00in_pct, null, '%'],
+      ['Precipitation 25th pctile, wet days (DLY-PRCP-25PCTL)', off.pcp_25pctl_in, null, 'in'],
+      ['Precipitation 50th pctile, wet days (DLY-PRCP-50PCTL)', off.pcp_50pctl_in, null, 'in'],
+      ['Precipitation 75th pctile, wet days (DLY-PRCP-75PCTL)', off.pcp_75pctl_in, null, 'in']
+    ];
+    // The comparison block already carries the matched pairs, so look the
+    // derived value up by its label rather than re-deriving the pairing here.
+    const cmp = off.derived_comparison || [];
+    const byLabel = {};
+    cmp.forEach(r => { byLabel[r.quantity] = r; });
+    const rows = pubRows.map(([label, val, cmpLabel, unit]) => {
+      const match = cmpLabel ? byLabel[cmpLabel] : null;
+      return [
+        el('span', { text: label }),
+        val === null || val === undefined ? DASH
+          : (unit === 'in' ? Number(val).toFixed(2) : Number(val).toFixed(1)) + ' ' + unit,
+        match ? (unit === 'in' ? Number(match.derived).toFixed(2)
+                               : Number(match.derived).toFixed(1)) + ' ' + unit : DASH,
+        match ? el('span', { class: Math.abs(match.difference) > 3 ? 'pill pill-warn' : 'fine',
+          text: (match.difference > 0 ? '+' : '') + match.difference.toFixed(1) + ' ' + unit }) : DASH
+      ];
+    });
+    body.append(table(
+      [{ label: 'Published quantity (NOAA column)' }, { label: 'NOAA published', num: true },
+       { label: 'This project', num: true }, { label: 'Difference', num: true }],
+      rows));
+    // NCEI cannot compute a wet-day percentile for a calendar date with too few
+    // wet days in the 30-year record, and writes its missing-value sentinel
+    // (-9999) in that cell.  The parser drops those, so the row is blank rather
+    // than a number; say why, so a reader does not read the blank as an omission
+    // on this project's side.  It is real information: this date is normally dry.
+    const pctlBlank = ['pcp_25pctl_in', 'pcp_50pctl_in', 'pcp_75pctl_in']
+      .filter(k => off[k] === null || off[k] === undefined).length;
+    if (pctlBlank) {
+      body.append(el('p', { class: 'fine', text:
+        pctlBlank === 3
+          ? 'NOAA publishes no wet-day precipitation percentile for this date: in the '
+            + '1991-2020 record it does not rain often enough here to compute one. The '
+            + 'three percentile rows are therefore blank. That is a property of the '
+            + 'date, not missing data on this page.'
+          : 'Some wet-day precipitation percentiles are blank because NOAA does not '
+            + 'publish them for this date.' }));
+    }
+    const pubCols = off.published_columns || {};
+    body.append(el('p', { class: 'fine' }, [
+      'Source: ',
+      link(off.source_url, 'NCEI 1991-2020 daily normals for ' + (off.station_id || 'this station')),
+      document.createTextNode(' \u00b7 13 element columns read, including ' +
+        (Object.keys(pubCols).length || 0) + ' traced to named columns.')
+    ]));
+  }
 
   if (d.cpc && d.cpc.length) {
     body.append(el('h4', { text: 'Official CPC outlooks covering this day' }));
@@ -1075,23 +1303,56 @@ function renderStorms(s) {
       rows.map(([k, v]) => [k, v])));
   }
 
-  const money = v => {
-    if (!v) return null;
-    const str = String(v).toUpperCase();
-    if (str.endsWith('K')) return '$' + (parseFloat(str) * 1000).toLocaleString();
-    if (str.endsWith('M')) return '$' + (parseFloat(str) * 1000000).toLocaleString();
-    if (str.endsWith('B')) return '$' + (parseFloat(str) * 1000000000).toLocaleString();
-    return str;
+  // NCEI writes damage as a number plus a magnitude suffix (K / M / B).  The old
+  // version parsed the number but ignored the suffix when *sorting*, so "0.01K"
+  // and "1.00M" ranked against each other as 0.01 vs 1.00 - i.e. $10 outranked
+  // $1,000,000.  Parse to real dollars, once, and sort on that.
+  const damageUsd = v => {
+    if (v === null || v === undefined || v === '') return null;
+    const str = String(v).trim().toUpperCase();
+    const num = parseFloat(str);
+    if (!Number.isFinite(num)) return null;
+    if (str.endsWith('B')) return num * 1e9;
+    if (str.endsWith('M')) return num * 1e6;
+    if (str.endsWith('K')) return num * 1e3;
+    return num;
   };
-  const top = (s.events || []).slice()
-    .sort((a, b) => (parseFloat(String(b.damage_property || 0)) || 0) - (parseFloat(String(a.damage_property || 0)) || 0))
-    .slice(0, 20);
+  const money = v => {
+    const usd = damageUsd(v);
+    if (usd === null) return null;
+    return usd.toLocaleString(undefined, { style: 'currency', currency: 'USD',
+      maximumFractionDigits: usd < 100 ? 2 : 0 });
+  };
+  // The magnitude column carries a NCEI magnitude code.  EG is "estimated gust"
+  // (mph) and MG is "measured gust"; printing the bare code read as a unit.
+  const MAGNITUDE = { EG: 'mph (estimated gust)', MG: 'mph (measured gust)',
+                      ES: 'mph (estimated sustained)', MS: 'mph (measured sustained)' };
+  const magnitude = e => {
+    if (e.magnitude === null || e.magnitude === undefined || e.magnitude === '') return DASH;
+    const code = String(e.magnitude_type || '').toUpperCase();
+    const label = MAGNITUDE[code];
+    return label ? `${e.magnitude} ${label}` : `${e.magnitude} ${code}`.trim();
+  };
+  const events = (s.events || []).slice()
+    .sort((a, b) => (damageUsd(b.damage_property) || 0) - (damageUsd(a.damage_property) || 0)
+      || String(b.begin_date || '').localeCompare(String(a.begin_date || '')));
+  const withDamage = events.filter(e => (damageUsd(e.damage_property) || 0) > 0);
+  const top = (withDamage.length ? withDamage : events).slice(0, 20);
+  $('#storm-table').append(el('p', { class: 'fine', text:
+    withDamage.length
+      ? `Showing the ${top.length} record(s) carrying a non-zero property-damage figure, ` +
+        `largest first. Every value NCEI holds for this county is a token amount - ` +
+        `real flood losses are not itemised in this database, so this table shows how ` +
+        `events were *reported*, never a dollar total. See LIMITATIONS.md.`
+      : 'No event record for this county carries a non-zero property-damage figure, so ' +
+        'the most recent events are shown instead. NCEI damage fields for this county ' +
+        'are mostly zero placeholders - they are not a measure of real loss.' }));
   $('#storm-table').append(table(
-    [{ label: 'Date' }, { label: 'Type' }, { label: 'Magnitude' }, { label: 'Property damage', num: true }],
+    [{ label: 'Date' }, { label: 'Type' }, { label: 'Magnitude' }, { label: 'Property damage (as recorded)', num: true }],
     top.map(e => [
       (e.begin_date || DASH).replace('T', ' '),
       e.event_type || DASH,
-      e.magnitude ? `${e.magnitude} ${e.magnitude_type || ''}`.trim() : DASH,
+      magnitude(e),
       money(e.damage_property) || DASH
     ]), { empty: 'No storm events on record for this county in the fetched years.' }));
 }
@@ -1127,6 +1388,102 @@ function renderSources(prov) {
   $('#src-filter').addEventListener('input', render);
   $('#src-failed').addEventListener('change', render);
   render();
+}
+
+/** Published-vs-derived daily normals: two official-source answers, both shown.
+ *
+ * This is the section that lets a reader check the site's per-date rain
+ * probabilities against NOAA's own published ones without leaving the page.
+ */
+function renderPublishedNormals(cal) {
+  const box = $('#published-normals');
+  if (!box) return;
+  const meta = cal.daily_normals_official;
+  const cmp = cal.daily_normals_comparison;
+  const landlord = (state.data.landlord || {}).official_daily_normals;
+  if (!meta || !meta.url) {
+    box.append(el('p', { class: 'empty', text:
+      'NOAA\u2019s published per-date daily normals were not available in this snapshot, ' +
+      'so this cross-check cannot be shown. Every other climatology figure on the page is ' +
+      'still re-derived from the GHCN-Daily record and is labelled as such.' }));
+    return;
+  }
+  box.append(el('p', { class: 'fine', text:
+    'Two independent official answers to the same question, published side by side rather ' +
+    'than merged: NOAA\u2019s own smoothed 1991-2020 daily normals for this station, and this ' +
+    'project\u2019s raw count over the 30 seasons of GHCN-Daily. Both are traceable, and the ' +
+    'difference between them is shown. No reconciliation, no averaging.' }));
+  box.append(kvTable([
+    ['Published source', link(meta.url, meta.url ? meta.url.replace(/^https?:\/\//, '') : DASH)],
+    ['Station', meta.station_id ? `${meta.station_id} \u2014 ${meta.station_name || ''}`.trim() : DASH],
+    ['Calendar dates parsed', meta.dates_parsed === undefined ? DASH
+      : `${meta.dates_parsed} (a full year file is 366)`],
+    ['SHA-256 of the fetched file', meta.sha256 || DASH],
+    ['Retrieved', meta.retrieved_utc || DASH]
+  ]));
+
+  if (!cmp || !cmp.pairs) {
+    box.append(el('p', { class: 'empty', text: 'The comparison block was not produced in this snapshot.' }));
+    return;
+  }
+  const ctx = ['(DLY-PRCP-PCTALL-GE001HI)', '(DLY-PRCP-PCTALL-GE025HI)',
+               '(DLY-PRCP-PCTALL-GE100HI)', '(DLY-TMAX-NORMAL)', '(DLY-TMIN-NORMAL)'];
+  const rows = Object.entries(cmp.pairs).map(([label, b], i) => {
+    if (!b || !b.n) return [label, DASH, DASH, DASH, DASH];
+    const unit = b.unit === 'pct_points' ? ' pts' : ' \u00b0F';
+    const dp = b.unit === 'pct_points' ? 1 : 1;
+    const nAgree = b.within_3_units;
+    return [
+      el('div', {}, [el('strong', { text: label }), el('br'),
+        el('span', { class: 'src-url', text: ctx[i] || '' })]),
+      b.n,
+      (b.mean_difference > 0 ? '+' : '') + Number(b.mean_difference).toFixed(dp) + unit,
+      `${(b.largest_difference_published).toFixed(dp)}${unit} vs ` +
+        `${(b.largest_difference_derived).toFixed(dp)}${unit} on ${b.largest_difference_date}`,
+      `${nAgree} of ${b.n} within 3` + (b.unit === 'pct_points' ? ' pts' : ' \u00b0F')
+    ];
+  });
+  box.append(table(
+    [{ label: 'Quantity (published column)' }, { label: 'Dates compared', num: true },
+     { label: 'Mean difference', num: true }, { label: 'Largest difference', num: true },
+     { label: 'Agreement', num: true }], rows));
+
+  const flagged = cmp.flagged || [];
+  if (flagged.length) {
+    box.append(el('p', { class: 'fine', text:
+      `${flagged.length} date(s) differ by more than 10 percentage points. Both values are ` +
+      'shown for each of them in the day dialog \u2014 neither is treated as the right one. ' +
+      'A gap that size is expected on a single date, and is not evidence that either side ' +
+      'is wrong: this project counts 30 seasons, so a probability near 40% carries a ' +
+      'sampling standard error of about \u00b19 percentage points on its own, before ' +
+      'NOAA\u2019s smoothing across dates is considered. What the comparison tests is the ' +
+      'average, and the average agrees.' }));
+    box.append(table(
+      [{ label: 'Date' }, { label: 'Quantity' }, { label: 'NOAA published', num: true },
+       { label: 'This project', num: true }, { label: 'Difference', num: true }],
+      flagged.slice(0, 12).map(r => [r.date, r.quantity, r.published, r.derived, r.difference])));
+  }
+
+  const pe = landlord && landlord.published_expected_days;
+  if (pe) {
+    box.append(el('h4', { text: 'Expected heavy-rain days per season \u2014 both methods' }));
+    const derived = ((state.data.landlord || {}).executive_summary || {}).expected_days || {};
+    box.append(table(
+      [{ label: 'Quantity' }, { label: 'From NOAA\u2019s published probabilities', num: true },
+       { label: 'From this project\u2019s own count', num: true }, { label: 'Difference', num: true }],
+      [['Days \u2265 0.25 in per season', pe.ge_025in_days, derived.ge_025in_days],
+       ['Days \u2265 1.00 in per season', pe.ge_100in_days, derived.ge_100in_days],
+       ['Days \u2265 0.01 in per season', pe.ge_010in_days, null]]
+        .filter(r => r[1] !== null && r[1] !== undefined)
+        .map(r => [r[0], r[1], r[2] === null || r[2] === undefined ? 'not derived' : r[2],
+          (r[2] === null || r[2] === undefined) ? DASH
+            : ((r[1] - r[2] > 0 ? '+' : '') + Number(r[1] - r[2]).toFixed(2))])));
+    box.append(el('p', { class: 'fine', text: pe.method || '' }));
+  } else {
+    box.append(el('p', { class: 'empty', text:
+      'The published-probability expected-day counts were not produced in this snapshot.' }));
+  }
+  if (cmp.note) box.append(el('p', { class: 'fine', text: cmp.note }));
 }
 
 function renderQuality(q) {
@@ -1208,13 +1565,28 @@ function renderVerify(verify, prov) {
      { label: 'Retrieved / SHA-256' }, { label: 'Method' }],
     (verify.claims || []).map(c => {
       const src = c.source || {};
-      const v = typeof c.value === 'object' && c.value !== null
-        ? Object.entries(c.value).map(([k, val]) => `${k}: ${val}`).join(' \u00b7 ')
-        : String(c.value);
+      // A claim value can be a scalar or a record.  Two rules apply either way:
+      // a machine ENSO token is rendered as its label, and a unit is only
+      // appended to a scalar - appending "deg C" after a record of mixed fields
+      // ("season: JJA 2026 · oni_c: 1.8 · phase: … · strength: strong deg C")
+      // reads as though the last field carried the unit, which it does not.
+      const isRecord = typeof c.value === 'object' && c.value !== null;
+      const fmtVal = (k, val) => {
+        if (/_phase$|^phase$/.test(k) && typeof val === 'string') return phaseLabel(val);
+        if (/^strength$/.test(k) && typeof val === 'string') {
+          return { very_strong: 'very strong', strong: 'strong', moderate: 'moderate',
+                   weak: 'weak', neutral: 'neutral' }[val] || String(val).replace(/_/g, ' ');
+        }
+        return val;
+      };
+      const v = isRecord
+        ? Object.entries(c.value).map(([k, val]) => `${k}: ${fmtVal(k, val)}`).join(' \u00b7 ')
+        : String(fmtVal('', c.value));
       return [
         el('div', {}, [el('strong', { text: c.id }), el('br'),
           el('span', { class: 'fine', text: c.statement || '' })]),
-        el('span', { text: v + (c.unit ? ' ' + c.unit : '') }),
+        el('span', {}, [document.createTextNode(v),
+          (!isRecord && c.unit) ? document.createTextNode(' ' + c.unit) : null].filter(Boolean)),
         el('div', {}, [link(src.url, src.label || src.url),
           src.host ? el('div', { class: 'fine', text: src.host }) : null].filter(Boolean)),
         el('div', { class: 'fine' }, [
@@ -1340,6 +1712,7 @@ async function boot() {
     renderStorms(storms);
     renderSources(prov);
     renderVerify(verify, prov);
+    renderPublishedNormals(calendar);
     renderQuality(quality);
     renderCaveats(calendar);
     wireExports();

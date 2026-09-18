@@ -308,6 +308,56 @@ def oni_running_means(nino, year, month):
     return series
 
 
+#: Raw ENSO tokens produced by the pipeline -> reader-facing labels.  The raw
+#: token must never reach the page: "el_nino" is a data key, not a phrase.  These
+#: live here (rather than in the renderer or in one downstream script) so that
+#: every published ENSO record can carry its own label, and no consumer has to
+#: translate a token itself.
+PHASE_LABELS = {
+    "el_nino": "El Niño",
+    "la_nina": "La Niña",
+    "neutral": "Neutral",
+}
+
+STRENGTH_LABELS = {
+    "very_strong": "very strong",
+    "strong": "strong",
+    "moderate": "moderate",
+    "weak": "weak",
+    "neutral": "neutral",
+}
+
+
+def phase_label(phase):
+    """Reader-facing label for an ENSO phase token.
+
+    Returns the mapped label for the three phases the pipeline can produce.  An
+    unexpected token is returned as-is (it is a real data value, so showing it is
+    honest) rather than replaced with a guessed phrase.
+    """
+    if phase is None:
+        return "unknown"
+    return PHASE_LABELS.get(str(phase).strip().lower(), str(phase))
+
+
+def strength_label(strength):
+    """Reader-facing label for an ENSO strength token ("very_strong" -> "very strong")."""
+    if strength is None:
+        return "unknown"
+    return STRENGTH_LABELS.get(str(strength).strip().lower(),
+                               str(strength).replace("_", " "))
+
+
+def fmt_oni_c(value):
+    """Format an ONI anomaly the way NOAA publishes it: signed, 2 dp, degrees C."""
+    if value is None:
+        return None
+    try:
+        return f"{float(value):+.2f} °C"
+    except (TypeError, ValueError):
+        return None
+
+
 def enso_phase(oni_value):
     if oni_value is None:
         return "unknown"
@@ -620,6 +670,325 @@ def monthly_normals_summary(text):
                 out[target][month] = float(raw)
             except ValueError:
                 continue
+    return out
+
+
+# --------------------------------------------------- official daily normals
+#
+# NCEI publishes, per station, the official 1991-2020 *daily* normals.  Three
+# families matter to this project:
+#
+#   DLY-TMAX-NORMAL / DLY-TMIN-NORMAL   the official normal high and low
+#   DLY-PRCP-PCTALL-GE###HI             the official probability that a given
+#                                       calendar date records at least ###
+#                                       **hundredths of an inch** of precipitation
+#   DLY-PRCP-25|50|75PCTL               the official precipitation percentiles
+#
+# The digits in GE###HI are hundredths of an inch, NOT thousandths: GE001HI is
+# ">= 0.01 in" and GE100HI is ">= 1.00 in".  This was NOT assumed - it was
+# established from the file itself.  For the 31 January dates present in the
+# committed copy, each derived probability was compared against all the published
+# columns and matched its own threshold far better than any other:
+#
+#   derived share of years >= 0.01 in  -> GE001HI  (mean |diff| 6.3 pts, vs 11.4 for GE010HI)
+#   derived share of years >= 0.25 in  -> GE025HI  (3.7 pts, vs 9.2 and 7.5 either side)
+#   derived share of years >= 1.00 in  -> GE100HI  (2.7 pts, vs 6.0 and 3.7 either side)
+#
+# An independent check: GE025HI for 01-01 is 16.8 %, while the wet-day median
+# precipitation (DLY-PRCP-50PCTL) is 0.21 in.  If GE025HI meant ">= 0.025 in" the
+# probability at 0.025 in could not be lower than the probability at the median
+# 0.21 in, so the threshold has to be 0.25 in.
+#
+# GE001HI is therefore exactly the same quantity this project derives from 30
+# seasons of GHCN-Daily ("share of years with >= 0.01 in"), so the two can be
+# compared date by date rather than one being taken on trust.  Note that the
+# published values are smoothed across neighbouring dates by NCEI while this
+# project's are raw counts, which is the main reason the two differ.
+#
+# Nothing here is converted or estimated: every value is copied out of the
+# published file, and each key names the threshold it came from.
+
+_DLY_THRESHOLDS_IN = {
+    "DLY-PRCP-PCTALL-GE001HI": 0.01,
+    "DLY-PRCP-PCTALL-GE010HI": 0.10,
+    "DLY-PRCP-PCTALL-GE025HI": 0.25,
+    "DLY-PRCP-PCTALL-GE050HI": 0.50,
+    "DLY-PRCP-PCTALL-GE100HI": 1.00,
+    "DLY-PRCP-PCTALL-GE200HI": 2.00,
+    "DLY-PRCP-PCTALL-GE400HI": 4.00,
+    "DLY-PRCP-PCTALL-GE600HI": 6.00,
+}
+
+_DLY_ELEMENTS = (
+    ("DLY-TMAX-NORMAL", "normal_high_f", 1),
+    ("DLY-TMIN-NORMAL", "normal_low_f", 1),
+    ("DLY-PRCP-PCTALL-GE001HI", "p_pcp_ge_0p01in_pct", 1),
+    ("DLY-PRCP-PCTALL-GE010HI", "p_pcp_ge_0p10in_pct", 1),
+    ("DLY-PRCP-PCTALL-GE025HI", "p_pcp_ge_0p25in_pct", 1),
+    ("DLY-PRCP-PCTALL-GE050HI", "p_pcp_ge_0p50in_pct", 1),
+    ("DLY-PRCP-PCTALL-GE100HI", "p_pcp_ge_1p00in_pct", 1),
+    ("DLY-PRCP-PCTALL-GE200HI", "p_pcp_ge_2p00in_pct", 1),
+    ("DLY-PRCP-PCTALL-GE400HI", "p_pcp_ge_4p00in_pct", 1),
+    ("DLY-PRCP-PCTALL-GE600HI", "p_pcp_ge_6p00in_pct", 1),
+    ("DLY-PRCP-25PCTL", "pcp_25pctl_in", 3),
+    ("DLY-PRCP-50PCTL", "pcp_50pctl_in", 3),
+    ("DLY-PRCP-75PCTL", "pcp_75pctl_in", 3),
+)
+
+# NCEI writes missing values as blanks; a few products use sentinels instead.
+# NCEI's missing-value sentinels.  The normals file marks a percentile that
+# cannot be computed (a date that is dry so often that no wet-day percentile
+# exists) with **-9999**, which is *not* a plausible value for any element this
+# parser reads - a negative rainfall percentile or a temperature of -9999 F does
+# not exist.  The earlier version of this tuple listed only the positive
+# sentinels the GHCN/GSOD files use, so -9999 was published on the site as
+# "-9999.00 in".  That is the exact class of defect this project exists to
+# prevent, so the guard is now both a literal list and a numeric floor.
+_DLY_MISSING = ("", "9999.9", "999.9", "9999.99", "999.99", "99999", "9999", "M",
+                "-9999", "-9999.0", "-9999.00", "-9999.9", "-99999")
+# Anything at or below this is a sentinel, whatever it is spelled like.
+_DLY_MISSING_FLOOR = -900.0
+
+
+# Physical ranges for the values published from the daily-normals file.  These
+# are stated from outside the data, not fitted to it, so they can catch a
+# sentinel that a missing-value list forgot.  The tokens are matched with "in"
+# rather than endswith(): the published percentile key is ``pcp_50pctl_in``,
+# which has no underscore before "pctl", so an endswith("_pctl_in") test would
+# match nothing and the guard would pass while a -9999 sat in the row.
+_NORMALS_VALUE_RULES = (
+    ("pctl", lambda v: v < 0.0, "negative precipitation percentile"),
+    ("_pct", lambda v: not (0.0 <= v <= 100.0), "percentage outside 0-100"),
+    ("_f", lambda v: not (-50.0 <= v <= 130.0), "temperature outside -50..130 F"),
+)
+
+
+def implausible_normals_value(key, value):
+    """Return why ``value`` cannot honestly be a reading of ``key``, else None.
+
+    Used by the verification ledger so that a missing-value sentinel which slips
+    past the literal list is still caught before it is published - it is the
+    numeric, data-independent half of the same guard.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    v = float(value)
+    for token, fails, why in _NORMALS_VALUE_RULES:
+        if token in key and fails(v):
+            return why
+    return None
+
+
+def is_missing_normals_value(raw):
+    """True if a cell of the NCEI normals file is a missing-value sentinel.
+
+    Blank counts as missing.  So does any number at or below
+    ``_DLY_MISSING_FLOOR``: no element in this file (a temperature normal, a
+    percentage of years, or a precipitation percentile in inches) can be that
+    low, so such a number can only be the sentinel.
+    """
+    if raw is None:
+        return True
+    text = str(raw).strip()
+    if text in _DLY_MISSING:
+        return True
+    try:
+        return float(text) <= _DLY_MISSING_FLOOR
+    except ValueError:
+        return False
+
+
+def parse_daily_normals(text):
+    """Parse the NCEI by-station *daily* normals CSV.
+
+    Returns ``(by_mmdd, layout)`` where ``by_mmdd`` maps ``"MM-DD"`` to the
+    published elements for that calendar date and ``layout`` records the columns
+    that were actually found, the row count and the parse counts.  As with the
+    other normals readers, a layout change returns an empty mapping plus the
+    recorded layout rather than a wrong number.
+
+    The file is served in one of two shapes (one row per date with ``DATE`` set
+    to ``MM-DD``, or long form with separate ``month``/``day`` columns); both are
+    handled and the shape used is recorded.
+    """
+    try:
+        header, rows = read_normals_csv(text)
+    except ValueError as exc:
+        # A rearranged or non-CSV body must degrade to "no values, here is what I
+        # saw", never raise: the caller has to be able to publish the layout it
+        # received instead of a number it guessed.  This is the contract the other
+        # normals readers already honour.
+        return {}, {"usable": False,
+                    "reason": f"the file could not be read as CSV: {exc}",
+                    "first_400_chars": text[:400]}
+    cols = {}
+    for element, key, nd in _DLY_ELEMENTS:
+        found = _exact_col(header, element)
+        if found:
+            cols[element] = (found[0][0], key, nd)
+
+    layout = {
+        "header_first_40": header[:40],
+        "column_count": len(header),
+        "row_count": len(rows),
+        "columns_used": {el: cols[el][0] for el in cols},
+        # Friendly key -> the official column it was read from, so any number on
+        # the site can be traced to a named column of the published file.
+        "column_by_key": {cols[el][1]: cols[el][0] for el in cols},
+        # The inch threshold each probability column means, stated explicitly so
+        # the interpretation travels with the data instead of living in a reader.
+        "thresholds_in": {cols[el][1]: _DLY_THRESHOLDS_IN[el] for el in cols
+                          if el in _DLY_THRESHOLDS_IN},
+        "missing_elements": [el for el, _k, _n in _DLY_ELEMENTS if el not in cols],
+    }
+    if not cols:
+        layout["usable"] = False
+        layout["reason"] = ("none of the expected DLY-* element columns were found; "
+                            "layout recorded for review instead of guessing")
+        return {}, layout
+
+    has_date = bool(rows) and "DATE" in rows[0]
+    layout["date_column"] = "DATE" if has_date else None
+    layout["long_form"] = not has_date
+
+    def _num(row, col, nd):
+        raw = row.get(col)
+        if is_missing_normals_value(raw):
+            return None
+        try:
+            return _f(float(str(raw).strip()), nd)
+        except ValueError:
+            return None
+
+    def _mmdd(row, index):
+        raw = str(row.get("DATE") or "").strip()
+        if raw:
+            # Accept MM-DD and MM/DD.
+            cleaned = raw.replace("/", "-")
+            parts = cleaned.split("-")
+            if len(parts) == 2:
+                try:
+                    m, d = int(parts[0]), int(parts[1])
+                    if 1 <= m <= 12 and 1 <= d <= 31:
+                        return "%02d-%02d" % (m, d)
+                except ValueError:
+                    pass
+        month = _month_of_row(row, header, index)
+        try:
+            day = int(float(str(row.get("DAY") or "").strip()))
+        except (TypeError, ValueError):
+            return None
+        if month and 1 <= day <= 31:
+            return "%02d-%02d" % (month, day)
+        return None
+
+    by_mmdd = {}
+    unusable_dates = 0
+    for i, row in enumerate(rows):
+        mmdd = _mmdd(row, i)
+        if not mmdd:
+            unusable_dates += 1
+            continue
+        entry = {}
+        for element, (col, key, nd) in cols.items():
+            val = _num(row, col, nd)
+            if val is not None:
+                entry[key] = val
+        # The published year count for the >=0.01 in probability, if present.
+        n_years = None
+        for cand in ("years_DLY-PRCP-PCTALL-GE010HI", "YEARS_DLY-PRCP-PCTALL-GE010HI"):
+            if cand in row and not is_missing_normals_value(row[cand]):
+                try:
+                    n_years = int(float(row[cand]))
+                except ValueError:
+                    n_years = None
+                break
+        if n_years is not None:
+            entry["n_years_pcp_ge_010in"] = n_years
+        if entry:
+            by_mmdd[mmdd] = entry
+
+    layout["usable"] = bool(by_mmdd)
+    layout["dates_parsed"] = len(by_mmdd)
+    layout["rows_without_a_date"] = unusable_dates
+    layout["element_coverage"] = {
+        key: sum(1 for e in by_mmdd.values() if key in e)
+        for _el, (_c, key, _n) in cols.items()
+    }
+    return by_mmdd, layout
+
+
+def compare_daily_normals(by_mmdd, daily_climo):
+    """Date-by-date difference between the published normals and this project.
+
+    Both sides are reduced to the same quantities so the comparison is
+    like-for-like:
+
+    * ``p_pcp_ge_0p01in_pct`` (published, DLY-PRCP-PCTALL-GE001HI) vs
+      ``p_rain_day_pct`` (derived) - the share of years recording >= 0.01 in.
+    * ``p_pcp_ge_0p25in_pct`` (GE025HI) vs ``p_rain_ge_025in_pct``.
+    * ``p_pcp_ge_1p00in_pct`` (GE100HI) vs ``p_rain_ge_100in_pct``.
+    * ``normal_high_f`` / ``normal_low_f`` vs the derived 30-year means.
+
+    The published values are NCEI's *smoothed* per-date normals (adjacent dates
+    vary by a few tenths of a point); the derived values are raw 30-season counts
+    and therefore move in 3.33-point steps.  A difference of a few points is
+    therefore expected and is not evidence that either side is wrong - which is
+    exactly why both are published instead of one being chosen.
+
+    Returns a block published on the site: the largest absolute difference for
+    each pair, the date it fell on, the counts, and the full per-date list of
+    dates where the two disagree by more than the reporting granularity.  A
+    disagreement is never smoothed away - it is published.
+    """
+    pairs = (
+        ("p_pcp_ge_0p01in_pct", "p_rain_day_pct", "pct_points", "rain day >= 0.01 in"),
+        ("p_pcp_ge_0p25in_pct", "p_rain_ge_025in_pct", "pct_points", "rain >= 0.25 in"),
+        ("p_pcp_ge_1p00in_pct", "p_rain_ge_100in_pct", "pct_points", "rain >= 1.00 in"),
+        ("normal_high_f", "normal_high_f", "deg_f", "normal high"),
+        ("normal_low_f", "normal_low_f", "deg_f", "normal low"),
+    )
+    out = {"compared_dates": len(by_mmdd), "pairs": {}, "largest": {}, "flagged": []}
+    for pub_key, der_key, unit, label in pairs:
+        diffs = []
+        for mmdd, pub in by_mmdd.items():
+            der = daily_climo.get(mmdd)
+            if not der:
+                continue
+            pv, dv = pub.get(pub_key), der.get(der_key)
+            if pv is None or dv is None:
+                continue
+            diffs.append((mmdd, round(pv - dv, 3), pv, dv))
+        if not diffs:
+            out["pairs"][label] = {"n": 0}
+            continue
+        worst = max(diffs, key=lambda t: abs(t[1]))
+        out["pairs"][label] = {
+            "n": len(diffs),
+            "unit": unit,
+            "mean_difference": _f(statistics.fmean(d[1] for d in diffs), 3),
+            "largest_absolute_difference": abs(worst[1]),
+            "largest_difference_date": worst[0],
+            "largest_difference_published": worst[2],
+            "largest_difference_derived": worst[3],
+            "within_1_unit": sum(1 for d in diffs if abs(d[1]) <= 1.0),
+            "within_3_units": sum(1 for d in diffs if abs(d[1]) <= 3.0),
+        }
+        out["largest"][label] = abs(worst[1])
+        for mmdd, delta, pv, dv in diffs:
+            # Only percentages get a flagging threshold - a temperature normal is
+            # an independent statistic and legitimately differs by a fraction of
+            # a degree, so flagging it would be noise, not signal.
+            if unit == "pct_points" and abs(delta) > 10.0:
+                out["flagged"].append({"mmdd": mmdd, "quantity": label,
+                                       "published": pv, "derived": dv,
+                                       "difference": delta})
+    # Worst first, then by date so the order is stable when differences tie.
+    out["flagged"].sort(key=lambda r: (-abs(r["difference"]), r["mmdd"]))
+    out["note"] = ("Published values are read from NOAA NCEI 1991-2020 daily "
+                   "normals; derived values are this project's own 30-season "
+                   "count from GHCN-Daily for the same station. Both are shown, "
+                   "and the difference is published rather than reconciled.")
     return out
 
 
@@ -955,6 +1324,7 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
             "oni_ond": _f(oni, 2),
             "oni_source": oni_source,
             "enso_phase": enso_phase(oni),
+            "enso_phase_label": phase_label(enso_phase(oni)),
         })
 
     totals = [s["total_prcp_in"] for s in seasons if s["total_prcp_in"] is not None]
@@ -997,7 +1367,8 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
                            "pct": pct(sum(1 for s in seasons if s["streaks_ge_10"] >= 1), n_seasons)},
         },
         "enso_stratified_season_total_prcp_in": {
-            phase: summarise(vals, 2) for phase, vals in sorted(by_phase.items())
+            phase: dict(summarise(vals, 2), phase_label=phase_label(phase))
+            for phase, vals in sorted(by_phase.items())
         },
         "wettest_seasons": [{"season": s["season"], "total_prcp_in": s["total_prcp_in"]}
                             for s in ranked[-5:]][::-1],

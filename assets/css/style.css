@@ -153,6 +153,15 @@ table.kv td { font-weight: 600; }
 }
 .month-tabs button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 .cal-legend { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--ink-soft); flex-wrap: wrap; }
+.cal-find { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; }
+.cal-find label { color: var(--ink-soft); }
+.cal-find input[type="date"] {
+  font: inherit; font-size: 13px; padding: 5px 7px;
+  border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink);
+}
+.cal-find input[type="date"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* The cell a "jump to a date" lookup landed on. */
+.day.found { outline: 3px solid var(--accent); outline-offset: 1px; }
 .sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; margin-right: 4px; vertical-align: -2px; border: 1px solid rgba(0,0,0,.08); }
 .sw-0 { background: #f2f6fa; }
 .sw-1 { background: #cfe6f7; }
