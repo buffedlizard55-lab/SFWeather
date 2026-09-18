@@ -50,7 +50,14 @@ guard can fail). GitHub Pages serves `main` from the repository root; the
 5. **Falsification harnesses committed and wired into CI**:
    `tests/falsify_guards.py` (15 ledger cases) and `tests/falsify_smoke.py`
    (8 render cases). Two of my own new render guards were caught by them on the
-   first run (bug 47).
+   first run (bug 47), and after the data refresh the ledger harness caught
+   *itself*: two cases had quietly become no-ops because the refreshed dataset
+   really did carry the evidence they were supposed to remove (bug 48). Both now
+   mutate by removal and raise `AssertionError` if the target is absent, so a
+   future refresh fails the harness loudly rather than weakening it.
+
+   **Keep that property when adding cases:** a falsification case must assert
+   that its mutation actually changed something.
 
 ### Known state to expect on the next run
 

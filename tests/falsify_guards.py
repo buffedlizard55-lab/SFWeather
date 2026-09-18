@@ -95,14 +95,22 @@ def with_geo(mutate=None, provenance=True, irregularity=False):
         cal = load("calendar.json")
         cal["target"] = run["target"]
         dump(tmp / "calendar.json", cal)
+        # The committed provenance.json now contains the real geocoder entry, so
+        # "no recorded fetch" has to mean *stripped*, not merely *not added* --
+        # otherwise the case silently stops testing the guard.
+        prov = load("provenance.json")
+        before = len(prov.get("entries") or [])
+        prov["entries"] = [e for e in (prov.get("entries") or [])
+                           if "geocoding.geo.census.gov" not in str(e.get("url") or "")]
+        if not provenance and len(prov["entries"]) == before:
+            raise AssertionError("fixture expected a real geocoder entry to strip")
         if provenance:
-            prov = load("provenance.json")
             prov["entries"].append({
                 "url": GEO_URL, "http_status": 200, "ok": True, "bytes": 4242,
                 "sha256": "0" * 64, "content_type": "application/json",
                 "retrieved_utc": "2026-09-18T17:42:11Z", "elapsed_s": 0.2,
                 "note": "fixture: Census geocoder reverse lookup"})
-            dump(tmp / "provenance.json", prov)
+        dump(tmp / "provenance.json", prov)
         if irregularity:
             q = load("quality_report.json")
             q["irregularities"].append(
@@ -142,6 +150,17 @@ def _c4(tmp):
 def _c5(tmp):
     for f in DATA.glob("*.json"):
         shutil.copy2(f, tmp / f.name)
+    # Strip the geography that the refreshed dataset really carries, so this case
+    # exercises the honest-degradation branch rather than passing via the
+    # evidence branch by accident.
+    run = load("run.json")
+    had = (run.get("target", {}).get("centroid", {}) or {}).pop("census_geographies", None)
+    if had is None:
+        raise AssertionError("fixture expected the dataset to carry census_geographies")
+    dump(tmp / "run.json", run)
+    cal = load("calendar.json")
+    cal["target"] = run["target"]
+    dump(tmp / "calendar.json", cal)
     q = load("quality_report.json")
     q["irregularities"].append({"severity": "warning", "area": "geography",
                                 "message": "fixture: lookup failed", "evidence": {}})
