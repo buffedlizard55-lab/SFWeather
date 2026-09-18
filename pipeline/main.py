@@ -155,7 +155,8 @@ def fetch_zip_centroid():
     import zipfile, io, csv
     with zipfile.ZipFile(io.BytesIO(res.body)) as zf:
         name = next((n for n in zf.namelist() if n.lower().endswith(".txt")), zf.namelist()[0])
-        raw = zf.read(name).decode("utf-8-sig", "replace")
+        raw, _enc = fetchlib.decode_text(zf.read(name))
+        raw = raw.lstrip("\ufeff")  # the file may carry a UTF-8 BOM
 
     # The Census Gazetteer files are tab-delimited with CRLF endings, so header
     # names and values must be stripped (the last column otherwise arrives as
@@ -1336,7 +1337,20 @@ def fetch_storm_events(years):
             note_irregularity("warning", "storm_events",
                               f"Could not decompress Storm Events file {fname}: {exc}", {})
             continue
-        reader = _csv.DictReader(_io.StringIO(raw.decode("utf-8", "replace")))
+        # NCEI's Storm Events CSVs are not reliably UTF-8.  Decoding them with
+        # errors="replace" (as this pipeline used to) turned every CP1252 byte
+        # into U+FFFD, so quotes such as 5.46" arrived in the dataset as
+        # "5.46\ufffd\ufffd\ufffd".  Try UTF-8 strictly first and fall back to the
+        # publisher's legacy encoding, recording which one was used.
+        raw_text, raw_encoding = fetchlib.decode_text(raw)
+        if raw_encoding != "utf-8":
+            note_irregularity(
+                "warning", "storm_events",
+                f"Storm Events file {fname} is not valid UTF-8; decoded as "
+                f"{raw_encoding} so the published characters (curly quotes, degree "
+                "signs) survive instead of becoming replacement characters.",
+                {"file": fname, "encoding_used": raw_encoding})
+        reader = _csv.DictReader(_io.StringIO(raw_text))
         for row in reader:
             cz = (row.get("CZ_FIPS") or "").strip()
             cz_name = (row.get("CZ_NAME") or "").strip()

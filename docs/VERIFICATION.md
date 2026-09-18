@@ -313,3 +313,30 @@ reached on only some code paths would have been silent.
    `data/provenance.json` lists every fetch of the run (~104 on the last run).
 5. Anything the pipeline could not resolve cleanly is listed on the site as an
    **irregularity** rather than being dropped.
+
+## Bugs found in the 18 Sep 2026 session (pass 5)
+
+These were found by auditing the rendering and the verification layer rather
+than the fetching layer — the theme of this pass is *guards that cannot fail*.
+
+| # | Symptom | Root cause | Fix |
+| --- | --- | --- | --- |
+| 40 | The new `no-replacement-characters` ledger check was written and immediately failed on the committed data | It was right: `storm_events.json` carried `5.46\ufffd\ufffd\ufffd in` in the 31 Dec 2022 narrative. NCEI's Storm Events CSVs are CP1252 and were being decoded with `errors="replace"` | `lib_fetch.decode_text()` tries strict UTF-8 first and falls back to the publisher's legacy encoding, recording which was used as an irregularity. The check now stays in the ledger so an encoding regression cannot be committed again |
+| 41 | `bottom-line-numbers-traceable` passed when a quoted figure was deliberately corrupted from 12.79 in to 19.42 in | The candidate set included `f"{v:.0f}"` and the test was a plain substring search, so 12.79 "matched" the **13** inside an unrelated 13.26 | Candidates are now matched as standalone numbers with `(?<![\d.])…(?![\d.])`. The same defect was in the U+FFFD sweep, which used `json.dumps` without `ensure_ascii=False` and so searched for a character that was always escaped |
+| 42 | `no-replacement-characters` still passed after the `ensure_ascii` fix, and the mutation harness reported every broken fixture as "pass" | The verifier had crashed (a function removed by an earlier edit was still being called), so the harness was reading the **previous** run's `verify.json` — a stale all-pass file | The harness deletes `verify.json` from each fixture and now raises if the verifier did not write a new one |
+| 43 | A blanked-out figure in the executive summary simply **disappeared** from the page, leaving the answer looking complete | `renderBottomLine` filtered out any number row whose value was null | Rows are kept and render as an em dash; a smoke guard compares the rendered row count against the data, so a vanished row is now a test failure |
+| 44 | The smoke guards for "CPC baseline is labelled" and "severity counters are rendered" never fired on any mutation | Both derived their expectation from the very field under test (the baseline flag; a non-null mean), so removing the flag also removed the reason to check it | The CPC guard now derives the expectation from CPC's raw `Cat`/`Prob` fields; the wind guard keys on the *presence* of the counter and asserts the em-dash behaviour for a null mean, plus an `app.js` mutation that removes the row entirely |
+| 45 | A stale `days_covered` key would have read as `undefined` and printed "0 day(s)" with no test catching it | `nws_window.days_covered` was renamed to `scoreboard_days_in_horizon` but nothing pinned the rename | A smoke guard fails if the old key is present without the new one; a ledger check fails if *either* file publishes a bare `days_covered` again |
+| 46 | `Days ≥ 0.01 in per season` read **"not derived"** in the expected-days table although the wet-day count was already published | Two names for one quantity (`wet_days.mean` and a missing `ge_010in_days`), and the table only looked for one of them | The row now reads the published wet-day mean; `published_expected` was renamed from `days_covered` to `dates_compared` so the two meanings cannot collide again |
+| 47 | The day dialog's CPC table printed `Above median (33%)` with no baseline caveat, although both CPC tables on the same page flagged it | The dialog had its own copy of the category formatting | The dialog now uses the same `cpcCategoryCell()` helper as the other two tables |
+
+### What the new guards found by themselves
+
+Writing the guards first and then trying to defeat them is what produced bugs 41,
+43, 44 and 45. Each guard was falsified by mutating a fixture copy of `data/`
+(or of `app.js`) and confirming the test **fails**; a guard that could not be
+made to fail was treated as a bug in the guard, not as evidence of correctness.
+`severity-counters-arithmetic` is the one guard still in its deferred branch: the
+committed datasets predate the severity counters, so it reports "not yet
+produced" and will start comparing real values on the next pipeline run.
+

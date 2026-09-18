@@ -427,3 +427,51 @@ dialog form { padding: 0 22px 20px; }
 @media print {
   .cost-driver { break-inside: avoid; }
 }
+
+/* ---------------- bottom line: the six questions, in order ---------------- */
+.bottom-line { display: grid; gap: 12px; margin-top: 12px; }
+.bl-item {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fff;
+}
+.bl-item h4 { margin: 0 0 6px 0; font-size: 15px; }
+.bl-item .bl-n { color: var(--accent); font-weight: 700; }
+.bl-answer { margin: 0 0 8px 0; font-size: 14.5px; line-height: 1.55; }
+.bl-numbers { margin: 0 0 8px 0; }
+.bl-numbers th { width: 46%; font-size: 12.5px; }
+.bl-numbers td { font-size: 13px; }
+.bl-basis { margin-top: 6px; }
+.bl-conf { color: var(--ink-soft); }
+.bl-source { margin-top: 6px; }
+/* An answer whose source link is missing is withheld, not shown unsourced. */
+.bl-item-unsourced { border-left-color: var(--error-line); background: var(--error-bg); }
+.bl-warn { color: var(--error-line); font-weight: 600; }
+
+/* official outlook strip - kept visually separate from the observed record */
+.official-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+.off-cell {
+  background: var(--accent-soft);
+  border: 1px solid #c3ddf7;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.off-label { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #175d9c; font-weight: 700; }
+.off-value { font-size: 17px; font-weight: 700; margin: 2px 0 4px; }
+.off-sub { font-size: 12.5px; color: var(--ink-soft); line-height: 1.45; }
+
+@media (max-width: 620px) {
+  .official-strip { grid-template-columns: 1fr; }
+}
+@media print {
+  .bl-item, .off-cell { break-inside: avoid; }
+}

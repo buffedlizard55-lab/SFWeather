@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-18T03:15:25Z
+generated_utc: 2026-09-18T03:52:01Z
 
-checks: 32 passed, 0 failed, 0 warning(s)  (of 32)
+checks: 38 passed, 1 failed, 0 warning(s)  (of 39)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         105 recorded fetches (104 unique URLs)
@@ -40,7 +40,7 @@ checks: 32 passed, 0 failed, 0 warning(s)  (of 32)
 [PASS] cost-driver-expected-days-arithmetic: The published expected heavy-rain day counts equal the sum of the per-date 1991-2020 probabilities in the committed climatology table
         ge_025in_days: published 14.97 vs recomputed 14.97 over 123 season dates; ge_100in_days: published 3.19 vs recomputed 3.19 over 123 season dates
 [PASS] raw-phase-tokens-dataset: No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)
-        0 raw tokens across 14315 scanned string(s)
+        0 raw tokens across 14576 scanned string(s)
 [PASS] phase-label-present: Every ENSO phase value a renderer can reach ships with a reader-facing label (no underscore token, correct capitalisation)
         3 label(s) published
 [PASS] raw-phase-tokens: No raw ENSO data token (el_nino / la_nina) appears in any reader-facing executive-summary string
@@ -65,6 +65,20 @@ checks: 32 passed, 0 failed, 0 warning(s)  (of 32)
         15 URL(s) traced, 1 landing page(s), 0 untraceable
 [PASS] quotes-plain-text: Every quoted official sentence is decoded plain text, exactly as a browser shows it (no HTML entities)
         0 quoted string(s) contain entity text
+[PASS] bottom-line-structure: Every answer in the executive bottom line carries a basis, supporting numbers and an official source link, numbered in order
+        6 answer(s); all structural rules hold
+[PASS] bottom-line-numbers-traceable: Every figure the executive bottom line quotes exists in the dataset it claims to read
+        all quoted figures found in the source datasets
+[PASS] severity-counters-arithmetic: Every published severity counter equals the arithmetic summary of the per-season values
+        no severity counters in this dataset yet (the fetching run produces them)
+[PASS] threshold-table-recomputable: Every NOAA column in the counted-vs-published threshold table equals the sum of the published per-date probabilities
+        4 threshold(s) recomputed from the daily published values
+[PASS] no-ambiguous-days-covered: No dataset publishes a bare 'days_covered' that means something different in each file
+        0 ambiguous keys
+[PASS] cpc-baseline-honesty: No CPC polygon whose probability sits on the 33.3% three-way baseline is presented as a tilt
+        38 CPC record(s) checked, 0 unflagged baseline values
+[FAIL] no-replacement-characters: No published text carries a Unicode replacement character (a silent encoding failure)
+        1 dataset(s) carry U+FFFD
 [PASS] claim-source-evidence: Every recorded claim with a source URL has a successful fetch with HTTP, size and hash evidence
         0 claim source(s) lack fetch evidence
 
@@ -126,7 +140,7 @@ claims recorded: 18
     method: project mean from GHCN-Daily vs NOAA's published monthly normal
     cross-check: {"difference_in": 0.07}
 - official-daily-normals-expected-days: Expected heavy-rain days per season, computed from NOAA's own published per-date probabilities
-    value: {"ge_025in_days": 14.9, "ge_100in_days": 3.26, "ge_010in_days": 34.01, "ge_050in_days": 8.39, "days_covered": 123, "method": "Sum of NOAA's own published per-date probabilities (DLY-PRCP-PCTALL-GE***HI) over the 123 dates of the window - the same linearity-of-expectation arithmetic as expected_days, but using the official published probabilities instead of this project's own count."} days per season
+    value: {"ge_001in_days": 34.01, "ge_010in_days": 22.73, "ge_025in_days": 14.9, "ge_050in_days": 8.39, "ge_100in_days": 3.26, "ge_200in_days": 0.51, "ge_400in_days": 0.02, "ge_600in_days": 0.0, "dates_compared": 123, "method": "Sum of NOAA's own published per-date probabilities (DLY-PRCP-PCTALL-GE***HI) over the 123 dates of the window - the same linearity-of-expectation arithmetic as expected_days, but using the official published probabilities instead of this project's own count."} days per season
     source: NOAA NCEI 1991-2020 daily climate normals (DLY-PRCP-PCTALL-GE***HI) <https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv>
             http 200, 462174 bytes, sha256 687a062dde097c2d..., retrieved 2026-09-18T03:14:56Z
     method: sum of the published per-date probabilities DLY-PRCP-PCTALL-GE025HI / GE100HI over the 123 dates of Oct 1 2026 - Jan 31 2027 (linearity of expectation)

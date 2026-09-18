@@ -54,6 +54,7 @@ try {
 const REQUIRED_SECTIONS = [
   '#data-status', '#landlord-stats', '#landlord-cost-drivers', '#landlord-monthly',
   '#landlord-duration', '#landlord-windrain',
+  '#landlord-bottom-line', '#landlord-official',
   '#landlord-cpc', '#landlord-actions', '#tier-legend', '#tbl-location', '#tbl-stations',
   '#enso-body', '#cpc-season-table', '#monthly-table', '#enso-strat', '#discussions',
   '#now-current', '#nws-forecast', '#nws-obs', '#nws-alerts', '#calendar-grid',
@@ -95,6 +96,136 @@ setTimeout(() => {
     } else if (!t.includes('rain ')) {
       problems.push('forecast day cell does not label its amount "rain": ' + t);
     }
+  }
+
+
+  // `landlordJson` is already declared further down for the cost-driver
+  // check, so this reader of the same file gets its own name.
+  const landlordLeadJson = JSON.parse(fs.readFileSync(path.join(repo, 'data/landlord.json'), 'utf8'));
+
+  // 15. The executive bottom line is the block the page leads with.  Every
+  //     answer must render its question, its text, its numbers, its basis and
+  //     at least one official source link - an unsourced answer is withheld in
+  //     the renderer, so finding one here means the withholding failed.
+  const blItems = Array.from(doc.querySelectorAll('#landlord-bottom-line .bl-item'));
+  if (blItems.length < 6) {
+    problems.push('executive bottom line rendered ' + blItems.length + ' answer(s), expected 6');
+  }
+  blItems.forEach((it, i) => {
+    const t = it.textContent.replace(/\s+/g, ' ').trim();
+    const tag = 'bottom line #' + (i + 1);
+    if (!/\d\./.test(t)) problems.push(tag + ' has no numbered question');
+    if (t.includes('withheld')) problems.push(tag + ' rendered an answer with no source link');
+    if (!it.querySelector('.bl-basis')) problems.push(tag + ' does not state its basis');
+    const links = Array.from(it.querySelectorAll('.bl-source a'));
+    if (!links.length) problems.push(tag + ' has no source link');
+    links.forEach(a => {
+      const href = a.getAttribute('href') || '';
+      if (!/^https:\/\/[^/]*\.gov\//.test(href.replace(/^https:\/\/(www\.)?/, 'https://'))) {
+        problems.push(tag + ' links to a non-official host: ' + href);
+      }
+    });
+    const numbers = it.querySelectorAll('.bl-numbers tr');
+    if (!numbers.length) problems.push(tag + ' has no supporting numbers');
+    // The renderer must not silently drop a row whose value is missing: the
+    // rendered row count has to match the data, so a blanked figure shows up
+    // as an em dash below rather than vanishing.
+    const srcItem = (((landlordLeadJson.executive_summary || {}).bottom_line) || [])[i] || {};
+    const expectedRows = ((srcItem.numbers) || []).filter(x => x && x.label).length;
+    if (expectedRows && numbers.length !== expectedRows) {
+      problems.push(tag + ' rendered ' + numbers.length + ' number row(s) but the data has ' +
+        expectedRows + ' - a missing value must render as an em dash, not vanish');
+    }
+    numbers.forEach(tr => {
+      const v = tr.querySelector('td');
+      const txt = v ? v.textContent.trim() : '';
+      if (!txt || txt === '—' || txt === 'undefined' || txt === 'null') {
+        problems.push(tag + ' has an empty number cell: ' + tr.textContent);
+      }
+    });
+  });
+  // The official-outlook strip must be visibly separate from the observed
+  // record and must carry the ENSO state and the CPC tilt count.
+  const officialText = text('#landlord-official');
+  if (!/Official ENSO state/.test(officialText)) {
+    problems.push('#landlord-official does not name the official ENSO state');
+  }
+  if (!/baseline/.test(officialText)) {
+    problems.push('#landlord-official does not mention the CPC climatological baseline');
+  }
+  if (/undefined|null|NaN/.test(officialText)) {
+    problems.push('#landlord-official leaks a data token: ' + officialText.slice(0, 200));
+  }
+
+  // 16. A CPC record sitting on the 33% three-way baseline must be labelled in
+  //     both CPC tables, so the same value cannot read as a tilt in one place
+  //     and as no-tilt in another.  The expectation is derived from CPC's own
+  //     Cat/Prob fields rather than from the flag under test - otherwise
+  //     deleting the flag would also delete the reason to look for it and the
+  //     guard could never fire (which is exactly what the first draft did).
+  const calJson = JSON.parse(fs.readFileSync(path.join(repo, 'data/calendar.json'), 'utf8'));
+  const cpcRecords = (calJson.cpc && calJson.cpc.records) || [];
+  const isDirectional = c => ['ABOVE', 'BELOW', 'A', 'B'].includes(String(c || '').toUpperCase());
+  const atBaseline = r => {
+    const prob = Number(r && r.prob);
+    return Number.isFinite(prob) && Math.abs(prob - (100 / 3)) < 0.5;
+  };
+  const shouldBeLabelled = cpcRecords.filter(r => r && isDirectional(r.category) && atBaseline(r));
+  if (shouldBeLabelled.length) {
+    ['#landlord-cpc', '#cpc-season-table'].forEach(sel => {
+      if (!/at the 33% baseline/.test(text(sel))) {
+        problems.push(sel + ' does not label a CPC record that sits on the 33% baseline (' +
+          shouldBeLabelled.length + ' record(s) qualify from the raw Cat/Prob fields)');
+      }
+    });
+  }
+  cpcRecords.filter(r => r && r.probability_at_climatological_baseline).forEach(r => {
+    if (!(isDirectional(r.category) && atBaseline(r))) {
+      problems.push('CPC record flagged as at-baseline but its raw fields are Cat=' +
+        r.category + ' Prob=' + r.prob);
+    }
+  });
+
+  // 17. Severity counters are published once the fetching run has produced
+  //     them.  The check keys on the PRESENCE of the field, not on a non-null
+  //     mean, so a null mean is caught instead of skipping the guard.
+  const sev = (calJson.season_summary || {});
+  const windText = text('#wind-table');
+  const windRows = Array.from(doc.querySelectorAll('#wind-table tr'));
+  [['wind_days_ge_30kt', '30'], ['gust_days_ge_40kt', '40'], ['gust_days_ge_50kt', '50']]
+    .forEach(([k, kt]) => {
+      if (!(k in sev)) return;
+      if (!windText.includes('\u2265 ' + kt + ' kt')) {
+        problems.push('#wind-table does not render the ' + k + ' severity counter');
+        return;
+      }
+      const row = windRows.find(tr => tr.textContent.includes('\u2265 ' + kt + ' kt'));
+      const cell = row && row.querySelector('td') ? row.querySelector('td').textContent.trim() : '';
+      if (sev[k] && sev[k].mean !== null && sev[k].mean !== undefined) {
+        if (!/mean [\d.]+/.test(cell)) {
+          problems.push('#wind-table shows no mean for ' + k + ': "' + cell + '"');
+        }
+      } else if (cell !== '\u2014') {
+        problems.push('#wind-table prints "' + cell + '" for ' + k +
+          ', which has no mean in the data (expected an em dash)');
+      }
+    });
+  if (/undefined|null|NaN/.test(windText)) {
+    problems.push('#wind-table leaks a data token: ' + windText.slice(0, 200));
+  }
+  if (/undefined|null|NaN/.test(text('#storm-summary'))) {
+    problems.push('#storm-summary leaks a data token: ' + text('#storm-summary').slice(0, 200));
+  }
+
+  // 18. The renaming of nws_window.days_covered must not have been half-done:
+  //     a stale reader silently reads undefined and prints "0 day(s)".
+  const win = calJson.nws_window || {};
+  if (win.days_covered !== undefined && win.scoreboard_days_in_horizon === undefined) {
+    problems.push('nws_window still uses the old days_covered key');
+  }
+  const rcCount = text('#rc-count');
+  if (/undefined|null|NaN/.test(rcCount)) {
+    problems.push('#rc-count leaks a data token: ' + rcCount.slice(0, 200));
   }
 
   // Day dialog must open and must not leak "[object HTMLSpanElement]".
@@ -212,8 +343,8 @@ setTimeout(() => {
   if (/range\.\s+carry a real/i.test(rcText)) {
     problems.push('#rc-count contains the broken fragment "...range. carry a real..."');
   }
-  if (!calWin.days_covered && /carry a real NWS forecast/.test(rcText)) {
-    problems.push('#rc-count says days carry a real NWS forecast but days_covered is 0');
+  if (!calWin.scoreboard_days_in_horizon && /carry a real NWS forecast/.test(rcText)) {
+    problems.push('#rc-count says days carry a real NWS forecast but scoreboard_days_in_horizon is 0');
   }
 
   // 8. A CPC explanation must describe the category it is attached to.

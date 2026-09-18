@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T03:15:25Z",
+  "generated_utc": "2026-09-18T03:52:01Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,11 +9,13 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 32,
-    "passed": 32,
-    "failed": 0,
+    "total": 39,
+    "passed": 38,
+    "failed": 1,
     "warnings": 0,
-    "failed_checks": [],
+    "failed_checks": [
+      "no-replacement-characters"
+    ],
     "warning_checks": []
   },
   "checks": [
@@ -203,7 +205,7 @@
       "id": "raw-phase-tokens-dataset",
       "title": "No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)",
       "status": "pass",
-      "detail": "0 raw tokens across 14315 scanned string(s)",
+      "detail": "0 raw tokens across 14576 scanned string(s)",
       "evidence": []
     },
     {
@@ -521,6 +523,60 @@
       }
     },
     {
+      "id": "bottom-line-structure",
+      "title": "Every answer in the executive bottom line carries a basis, supporting numbers and an official source link, numbered in order",
+      "status": "pass",
+      "detail": "6 answer(s); all structural rules hold",
+      "evidence": []
+    },
+    {
+      "id": "bottom-line-numbers-traceable",
+      "title": "Every figure the executive bottom line quotes exists in the dataset it claims to read",
+      "status": "pass",
+      "detail": "all quoted figures found in the source datasets",
+      "evidence": []
+    },
+    {
+      "id": "severity-counters-arithmetic",
+      "title": "Every published severity counter equals the arithmetic summary of the per-season values",
+      "status": "pass",
+      "detail": "no severity counters in this dataset yet (the fetching run produces them)",
+      "evidence": null
+    },
+    {
+      "id": "threshold-table-recomputable",
+      "title": "Every NOAA column in the counted-vs-published threshold table equals the sum of the published per-date probabilities",
+      "status": "pass",
+      "detail": "4 threshold(s) recomputed from the daily published values",
+      "evidence": []
+    },
+    {
+      "id": "no-ambiguous-days-covered",
+      "title": "No dataset publishes a bare 'days_covered' that means something different in each file",
+      "status": "pass",
+      "detail": "0 ambiguous keys",
+      "evidence": null
+    },
+    {
+      "id": "cpc-baseline-honesty",
+      "title": "No CPC polygon whose probability sits on the 33.3% three-way baseline is presented as a tilt",
+      "status": "pass",
+      "detail": "38 CPC record(s) checked, 0 unflagged baseline values",
+      "evidence": []
+    },
+    {
+      "id": "no-replacement-characters",
+      "title": "No published text carries a Unicode replacement character (a silent encoding failure)",
+      "status": "fail",
+      "detail": "1 dataset(s) carry U+FFFD",
+      "evidence": [
+        {
+          "dataset": "storm_events",
+          "context": "0\", \"event_narrative\": \"San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. This makes it the seco"
+        }
+      ]
+    },
+    {
       "id": "claim-source-evidence",
       "title": "Every recorded claim with a source URL has a successful fetch with HTTP, size and hash evidence",
       "status": "pass",
@@ -772,11 +828,15 @@
       "id": "official-daily-normals-expected-days",
       "statement": "Expected heavy-rain days per season, computed from NOAA's own published per-date probabilities",
       "value": {
+        "ge_001in_days": 34.01,
+        "ge_010in_days": 22.73,
         "ge_025in_days": 14.9,
-        "ge_100in_days": 3.26,
-        "ge_010in_days": 34.01,
         "ge_050in_days": 8.39,
-        "days_covered": 123,
+        "ge_100in_days": 3.26,
+        "ge_200in_days": 0.51,
+        "ge_400in_days": 0.02,
+        "ge_600in_days": 0.0,
+        "dates_compared": 123,
         "method": "Sum of NOAA's own published per-date probabilities (DLY-PRCP-PCTALL-GE***HI) over the 123 dates of the window - the same linearity-of-expectation arithmetic as expected_days, but using the official published probabilities instead of this project's own count."
       },
       "unit": "days per season",

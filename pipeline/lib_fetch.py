@@ -30,6 +30,32 @@ DEFAULT_TIMEOUT = 120
 _RETRIES = 3
 
 
+# Encodings to try, in order, for publishers whose CSV exports are not
+# consistently UTF-8.  NCEI's Storm Events detail files are the known case:
+# curly quotes and degree signs appear as single CP1252 bytes.
+CSV_ENCODINGS = ("utf-8", "cp1252", "latin-1")
+
+
+def decode_text(body, encodings=CSV_ENCODINGS):
+    """Decode a publisher's text body, preferring strict UTF-8.
+
+    Returns ``(text, encoding_used)``.  Decoding with ``errors="replace"``
+    straight away - which this pipeline used to do - silently turns every
+    non-UTF-8 byte into U+FFFD and commits the corrupted text to the dataset.
+    Trying UTF-8 strictly first, then the publisher's legacy encoding, keeps
+    the published characters intact; the caller records which encoding was
+    used so the substitution is never hidden.
+    """
+    if body is None:
+        return "", "none"
+    for enc in encodings:
+        try:
+            return body.decode(enc), enc
+        except (UnicodeDecodeError, LookupError):
+            continue
+    return body.decode(encodings[-1], "replace"), encodings[-1] + "+replace"
+
+
 class FetchResult:
     """Outcome of one HTTP GET."""
 

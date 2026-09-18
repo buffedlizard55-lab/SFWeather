@@ -218,6 +218,398 @@
       "ge_100in_days": 3.19,
       "method": "Sum of each calendar date's 1991-2020 observed probability over the 123-day window (linearity of expectation): the expected number of days per season meeting the test, not a prediction for 2026-27."
     },
+    "bottom_line": [
+      {
+        "n": 1,
+        "key": "rain_amount",
+        "question": "How much rain should I expect over the season?",
+        "answer": "Plan on about 12.79 in for Oct 1 \u2013 Jan 31. The median season is 13.26 in; the record range across 30 seasons is 1.71\u201322.82 in, and the driest 10% of seasons were at or below 6.38 in while the wettest 10% were at or above 18.59 in. Budget off the mean, hold reserves against the p90.",
+        "numbers": [
+          {
+            "label": "Season total, mean",
+            "value": "12.79 in"
+          },
+          {
+            "label": "Season total, median",
+            "value": "13.26 in"
+          },
+          {
+            "label": "p10 \u2013 p90",
+            "value": "6.38 \u2013 18.59 in"
+          },
+          {
+            "label": "Wettest / driest",
+            "value": "22.82 in / 1.71 in"
+          }
+        ],
+        "basis": "1991\u20132020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown)",
+        "confidence": "n = 30 seasons",
+        "sources": [
+          {
+            "label": "NCEI GHCN-Daily USW00023272",
+            "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+          }
+        ]
+      },
+      {
+        "n": 2,
+        "key": "rain_duration",
+        "question": "Will it rain for days or weeks straight?",
+        "answer": "A long wet spell is the normal case, not the exception: 96.7% of seasons had a run of 3+ consecutive wet days, 80.0% had 5+ days, 53.3% had 7+ days and 23.3% had 10+ days. The longest run averages 7.3 days and has reached 17.0 days. A week-long spell is roughly a coin flip \u2014 worth pre-emptive gutter, roof-drain and tenant-communication plans.",
+        "numbers": [
+          {
+            "label": "Any 3+ day wet run",
+            "value": "96.7% of seasons"
+          },
+          {
+            "label": "Any 5+ day wet run",
+            "value": "80.0% of seasons"
+          },
+          {
+            "label": "Any 7+ day wet run",
+            "value": "53.3% of seasons"
+          },
+          {
+            "label": "Any 10+ day wet run",
+            "value": "23.3% of seasons"
+          },
+          {
+            "label": "Longest run",
+            "value": "mean 7.3 d \u00b7 max 17.0 d"
+          }
+        ],
+        "basis": "1991\u20132020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown) \u2014 wet day = \u2265 0.01 in of liquid precipitation, run counted inside Oct 1 \u2013 Jan 31",
+        "confidence": "n = 30 seasons",
+        "sources": [
+          {
+            "label": "NCEI GHCN-Daily USW00023272",
+            "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+          }
+        ]
+      },
+      {
+        "n": 3,
+        "key": "heavy_rain_days",
+        "question": "How many hard-rain days will there be?",
+        "answer": "Expect about 14.97 days with \u2265 0.25 in and about 3.19 days with \u2265 1.00 in per season. Those are the days that overwhelm area drains, garage thresholds and ground-floor entryways. The counts are sums of the per-date observed probabilities, so they are an expectation over the 30-season record, and NOAA's own published per-date probabilities give almost the same answer (14.9 and 3.26 days) \u2014 two independent methods, same station, same threshold.",
+        "numbers": [
+          {
+            "label": "Days \u2265 0.25 in per season",
+            "value": "14.97 (expected)"
+          },
+          {
+            "label": "Days \u2265 1.00 in per season",
+            "value": "3.19 (expected)"
+          },
+          {
+            "label": "Same, NOAA's own published probabilities",
+            "value": "14.9 / 3.26 days"
+          },
+          {
+            "label": "Wettest single day on record in the window",
+            "value": "not derived this run"
+          },
+          {
+            "label": "Days \u2265 0.50 in per season",
+            "value": "8.39 NOAA published"
+          },
+          {
+            "label": "Days \u2265 1.00 in per season",
+            "value": "3.26 NOAA published"
+          },
+          {
+            "label": "Days \u2265 2.00 in per season",
+            "value": "0.51 NOAA published"
+          },
+          {
+            "label": "Days \u2265 4.00 in per season",
+            "value": "0.02 NOAA published"
+          }
+        ],
+        "basis": "1991\u20132020 observed record \u2014 an expectation over those 30 seasons, not a prediction for 2026-27",
+        "confidence": "linearity of expectation over 123 dates",
+        "sources": [
+          {
+            "label": "NCEI GHCN-Daily USW00023272",
+            "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+          },
+          {
+            "label": "NCEI 1991\u20132020 daily normals (NOAA's own probabilities)",
+            "url": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv"
+          }
+        ]
+      },
+      {
+        "n": 4,
+        "key": "wind",
+        "question": "How windy will it get?",
+        "answer": "The strongest gust of the season averages 53.8 mph at SFO and has reached 70.0 mph in this record. Wind is measured at SFO, which is 11.9 mi away and more exposed than the Sunset, so treat these as an upper bound for the ZIP. The strongest gusts are a tree-limb, fence and loose-material risk with the shortest warning.",
+        "numbers": [
+          {
+            "label": "Season max gust, mean",
+            "value": "53.8 mph"
+          },
+          {
+            "label": "Season max gust, record",
+            "value": "70.0 mph"
+          },
+          {
+            "label": "Days with sustained wind \u2265 30 kt",
+            "value": "not derived this run"
+          },
+          {
+            "label": "Days with a gust \u2265 50 kt",
+            "value": "not derived this run"
+          }
+        ],
+        "basis": "1991\u20132020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away)",
+        "confidence": "n = 30 seasons; upper bound for 94122",
+        "sources": [
+          {
+            "label": "NCEI GSOD 72494023234 (KSFO)",
+            "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+          },
+          {
+            "label": "GSOD units README",
+            "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt"
+          }
+        ]
+      },
+      {
+        "n": 5,
+        "key": "wind_and_rain",
+        "question": "Will wind and rain hit at the same time?",
+        "answer": "Yes \u2014 on about 11.1 days a season at SFO (\u2265 0.01 in of rain and sustained wind \u2265 20 kt), and on about 2.2 heavy days (\u2265 0.50 in and a gust \u2265 35 kt). Those are the days water is driven sideways under shingles, laps and window seals, and the days fences fail. The SFO wind figure is an upper bound; the rain figure is the downtown gauge.",
+        "numbers": [
+          {
+            "label": "Wind+rain days per season",
+            "value": "mean 11.1 \u00b7 max 24.0"
+          },
+          {
+            "label": "Heavy wind+rain days per season",
+            "value": "mean 2.2 \u00b7 max 8.0"
+          }
+        ],
+        "basis": "1991\u20132020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown); 1991\u20132020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away)",
+        "confidence": "GSOD days are 00\u201324Z (about 16:00\u201316:00 local), so the joint statistic pairs a local-day rain total with a UTC-day wind figure \u2014 stated, not corrected",
+        "sources": [
+          {
+            "label": "NCEI GSOD 72494023234 (KSFO)",
+            "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+          },
+          {
+            "label": "NCEI GHCN-Daily USW00023272",
+            "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+          }
+        ]
+      },
+      {
+        "n": 6,
+        "key": "storm_severity",
+        "question": "How severe have the storms actually been here?",
+        "answer": "NOAA's Storm Events Database holds 119 records for San Francisco County over 2014\u20132026, of which 98 are flood-type. Its damage column is not usable as a cost estimate \u2014 every non-zero value NCEI holds for this county is a token amount (12 of 119 records carry one) \u2014 so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. No named warning category (Advisory / Warning / High Wind) is applied: those criteria are written per forecast zone and this project does not restate them.",
+        "numbers": [
+          {
+            "label": "Storm Events records, SF County",
+            "value": "119 (2014\u20132026)"
+          },
+          {
+            "label": "Flood-type records",
+            "value": "98"
+          },
+          {
+            "label": "Records with a non-zero damage figure",
+            "value": "12 of 119 \u2014 no dollar total published"
+          }
+        ],
+        "basis": "NOAA NCEI Storm Events Database, reported events only \u2014 under-reporting is likely",
+        "confidence": "counts derived from the station record; no dollar estimate is made",
+        "sources": [
+          {
+            "label": "NCEI Storm Events Database",
+            "url": "https://www.ncdc.noaa.gov/stormevents/"
+          },
+          {
+            "label": "NCEI Storm Events CSV files",
+            "url": "https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/"
+          },
+          {
+            "label": "NCEI GSOD 72494023234 (KSFO wind)",
+            "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+          }
+        ]
+      }
+    ],
+    "bottom_line_note": "Each answer states the basis it rests on. Anything labelled 1991\u20132020 observed record is an observation or an expectation over those 30 seasons; anything under 'Official outlook' is an official probability for a whole period. No row is a forecast for a named day \u2014 no official product issues one more than about a week ahead.",
+    "official_outlook": {
+      "enso": {
+        "state": "El Ni\u00f1o (+1.80 \u00b0C, JJA 2026)",
+        "alert_status": "El Ni\u00f1o Advisory",
+        "source_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml"
+      },
+      "cpc_tilt": {
+        "periods_covering_this_season": 6,
+        "periods_with_a_tilt": 2,
+        "periods_at_climatological_baseline": 4,
+        "highest_probability": {
+          "period": "JFM 2027",
+          "issued": "2026-09-17",
+          "category_label": "Above median",
+          "category_raw": "Above",
+          "probability_pct": 50.0,
+          "at_baseline": false,
+          "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+        },
+        "rows": [
+          {
+            "period": "DJF 2026-2027",
+            "issued": "2026-09-17",
+            "variable": "prcp",
+            "category_label": "Above median",
+            "category_raw": "Above",
+            "probability_pct": 40.0
+          },
+          {
+            "period": "JFM 2027",
+            "issued": "2026-09-17",
+            "variable": "prcp",
+            "category_label": "Above median",
+            "category_raw": "Above",
+            "probability_pct": 50.0
+          },
+          {
+            "period": "NDJ 2026-2027",
+            "issued": "2026-09-17",
+            "variable": "prcp",
+            "category_label": "Above median",
+            "category_raw": "Above",
+            "probability_pct": 33.0
+          },
+          {
+            "period": "OND 2026",
+            "issued": "2026-09-17",
+            "variable": "prcp",
+            "category_label": "Equal chances",
+            "category_raw": "EC",
+            "probability_pct": 33.0
+          },
+          {
+            "period": "Oct 2026",
+            "issued": "2026-09-17",
+            "variable": "prcp",
+            "category_label": "Equal chances",
+            "category_raw": "EC",
+            "probability_pct": 33.0
+          },
+          {
+            "period": "SON 2026",
+            "issued": "2026-08-20",
+            "variable": "prcp",
+            "category_label": "Equal chances",
+            "category_raw": "EC",
+            "probability_pct": 33.0
+          }
+        ],
+        "baseline_pct": 33.3,
+        "method": "Counted from the CPC long-lead polygons this project sampled at the 94122 point. CPC publishes whole percentages, so a probability that rounds to 33% is counted as sitting on the climatological baseline (100/3 = 33.3%) and is not reported as a tilt, even when CPC's category field says Above/Below.",
+        "source_url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/"
+      },
+      "daily_forecast": {
+        "days_in_this_scoreboard_with_a_real_forecast": 0,
+        "official_horizon_ends": "2026-09-24"
+      },
+      "enso_conditioned_record": {
+        "phase": "el_nino",
+        "phase_label": "El Ni\u00f1o",
+        "seasons_in_phase": 11,
+        "mean_in": 14.23,
+        "median_in": 13.56,
+        "min_in": 7.27,
+        "max_in": 22.82,
+        "how_to_read": "Mean Oct 1 \u2013 Jan 31 precipitation over the seasons in the 1991-2020 record whose published CPC ONI placed them in this same phase. This is a conditional average of what happened, NOT a forecast for 2026-27, and the spread inside the phase is as informative as the mean.",
+        "contrast": [
+          {
+            "phase": "neutral",
+            "phase_label": "Neutral",
+            "seasons": 7,
+            "mean_in": 13.31
+          },
+          {
+            "phase": "la_nina",
+            "phase_label": "La Ni\u00f1a",
+            "seasons": 12,
+            "mean_in": 11.16
+          }
+        ],
+        "source_url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+        "phase_source_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml"
+      }
+    },
+    "severity": {
+      "record_daily_prcp_in": null,
+      "record_gust": null,
+      "record_sustained_wind": null,
+      "record_days_ge_1in": null,
+      "record_days_gust_ge_40kt": null,
+      "record_severe_wind_and_rain_days": null,
+      "threshold_comparison": [
+        {
+          "threshold_in": 0.5,
+          "project_mean_days": null,
+          "project_max_days": null,
+          "noaa_expected_days": 8.39,
+          "project_method": "mean of the 30 seasons' counts of days at or above this threshold, from the station's daily precipitation file",
+          "noaa_method": "sum of NOAA's own published per-date percent-of-years value (DLY-PRCP-PCTALL-GE***HI) over the 123 dates"
+        },
+        {
+          "threshold_in": 1.0,
+          "project_mean_days": null,
+          "project_max_days": null,
+          "noaa_expected_days": 3.26,
+          "project_method": "mean of the 30 seasons' counts of days at or above this threshold, from the station's daily precipitation file",
+          "noaa_method": "sum of NOAA's own published per-date percent-of-years value (DLY-PRCP-PCTALL-GE***HI) over the 123 dates"
+        },
+        {
+          "threshold_in": 2.0,
+          "project_mean_days": null,
+          "project_max_days": null,
+          "noaa_expected_days": 0.51,
+          "project_method": "mean of the 30 seasons' counts of days at or above this threshold, from the station's daily precipitation file",
+          "noaa_method": "sum of NOAA's own published per-date percent-of-years value (DLY-PRCP-PCTALL-GE***HI) over the 123 dates"
+        },
+        {
+          "threshold_in": 4.0,
+          "project_mean_days": null,
+          "project_max_days": null,
+          "noaa_expected_days": 0.02,
+          "project_method": "mean of the 30 seasons' counts of days at or above this threshold, from the station's daily precipitation file",
+          "noaa_method": "sum of NOAA's own published per-date percent-of-years value (DLY-PRCP-PCTALL-GE***HI) over the 123 dates"
+        }
+      ],
+      "published_expected": {
+        "ge_001in_days": 34.01,
+        "ge_010in_days": 22.73,
+        "ge_025in_days": 14.9,
+        "ge_050in_days": 8.39,
+        "ge_100in_days": 3.26,
+        "ge_200in_days": 0.51,
+        "ge_400in_days": 0.02,
+        "ge_600in_days": 0.0,
+        "dates_compared": 123,
+        "method": "Sum of NOAA's own published per-date probabilities (DLY-PRCP-PCTALL-GE***HI) over the 123 dates of the window - the same linearity-of-expectation arithmetic as expected_days, but using the official published probabilities instead of this project's own count."
+      },
+      "sources": [
+        {
+          "label": "NCEI GHCN-Daily USW00023272",
+          "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+        },
+        {
+          "label": "NCEI GSOD 72494023234 (KSFO)",
+          "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+        }
+      ],
+      "thresholds_note": "Every counter is 'days per season at or above this plain threshold' in the units published by NCEI. No named warning category (Advisory/Warning) is applied, because those criteria are written per forecast zone and this project does not restate them."
+    },
     "cost_drivers": [
       {
         "driver": "Prolonged wet spells \u2014 roof, gutters & drainage",
@@ -612,6 +1004,7 @@
       "fcst_date": "20260917",
       "used_nearest_polygon": false,
       "category_label": "Above median",
+      "probability_at_climatological_baseline": false,
       "issued": "2026-09-17"
     },
     {
@@ -646,6 +1039,8 @@
       "fcst_date": "20260917",
       "used_nearest_polygon": false,
       "category_label": "Above normal",
+      "probability_at_climatological_baseline": true,
+      "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
       "issued": "2026-09-17"
     },
     {
@@ -684,6 +1079,7 @@
       "fcst_date": "20260917",
       "used_nearest_polygon": false,
       "category_label": "Above median",
+      "probability_at_climatological_baseline": false,
       "issued": "2026-09-17"
     },
     {
@@ -722,6 +1118,7 @@
       "fcst_date": "20260917",
       "used_nearest_polygon": false,
       "category_label": "Equal chances",
+      "probability_at_climatological_baseline": false,
       "issued": "2026-09-17"
     },
     {
@@ -756,6 +1153,8 @@
       "fcst_date": "20260917",
       "used_nearest_polygon": false,
       "category_label": "Above median",
+      "probability_at_climatological_baseline": true,
+      "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
       "issued": "2026-09-17"
     },
     {
@@ -790,6 +1189,8 @@
       "fcst_date": "20260917",
       "used_nearest_polygon": false,
       "category_label": "Above normal",
+      "probability_at_climatological_baseline": true,
+      "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
       "issued": "2026-09-17"
     },
     {
@@ -828,6 +1229,7 @@
       "fcst_date": "20260917",
       "used_nearest_polygon": false,
       "category_label": "Equal chances",
+      "probability_at_climatological_baseline": false,
       "issued": "2026-09-17"
     },
     {
@@ -866,6 +1268,8 @@
       "fcst_date": "20260917",
       "used_nearest_polygon": false,
       "category_label": "Above normal",
+      "probability_at_climatological_baseline": true,
+      "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
       "issued": "2026-09-17"
     },
     {
@@ -902,6 +1306,7 @@
       "fcst_date": "20260917",
       "used_nearest_polygon": false,
       "category_label": "Equal chances",
+      "probability_at_climatological_baseline": false,
       "issued": "2026-09-17"
     },
     {
@@ -938,6 +1343,7 @@
       "fcst_date": "20260917",
       "used_nearest_polygon": false,
       "category_label": "Above normal",
+      "probability_at_climatological_baseline": false,
       "issued": "2026-09-17"
     },
     {
@@ -976,6 +1382,7 @@
       "fcst_date": "20260820",
       "used_nearest_polygon": false,
       "category_label": "Equal chances",
+      "probability_at_climatological_baseline": false,
       "issued": "2026-08-20"
     },
     {
@@ -1014,6 +1421,7 @@
       "fcst_date": "20260820",
       "used_nearest_polygon": false,
       "category_label": "Above normal",
+      "probability_at_climatological_baseline": false,
       "issued": "2026-08-20"
     }
   ],
@@ -1276,8 +1684,8 @@
     {
       "category": "Official CPC outlook",
       "priority": "medium",
-      "title": "CPC DJF 2026-2027: Above normal (33.0%) - temp",
-      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For temperature, 'Above normal' means CPC favours an above-normal average temperature for the whole 3-month period.",
+      "title": "CPC DJF 2026-2027: Above normal (33.0%) - temp - at the climatological baseline",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For temperature, 'Above normal' means CPC favours an above-normal average temperature for the whole 3-month period. Note: CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
       "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
       "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
     },
@@ -1300,16 +1708,16 @@
     {
       "category": "Official CPC outlook",
       "priority": "medium",
-      "title": "CPC NDJ 2026-2027: Above median (33.0%) - prcp",
-      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above median with 33.0% probability. For precipitation, 'Above median' means CPC favours an above-median total for the whole 3-month period.",
+      "title": "CPC NDJ 2026-2027: Above median (33.0%) - prcp - at the climatological baseline",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above median with 33.0% probability. For precipitation, 'Above median' means CPC favours an above-median total for the whole 3-month period. Note: CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
       "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip",
       "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
     },
     {
       "category": "Official CPC outlook",
       "priority": "medium",
-      "title": "CPC NDJ 2026-2027: Above normal (33.0%) - temp",
-      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For temperature, 'Above normal' means CPC favours an above-normal average temperature for the whole 3-month period.",
+      "title": "CPC NDJ 2026-2027: Above normal (33.0%) - temp - at the climatological baseline",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For temperature, 'Above normal' means CPC favours an above-normal average temperature for the whole 3-month period. Note: CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
       "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
       "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
     },
@@ -1324,8 +1732,8 @@
     {
       "category": "Official CPC outlook",
       "priority": "medium",
-      "title": "CPC OND 2026: Above normal (33.0%) - temp",
-      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For temperature, 'Above normal' means CPC favours an above-normal average temperature for the whole 3-month period.",
+      "title": "CPC OND 2026: Above normal (33.0%) - temp - at the climatological baseline",
+      "detail": "Issued 2026-09-17, forecast date 20260917. This is a probability for the whole 3-month period, not a daily forecast. Category: Above normal with 33.0% probability. For temperature, 'Above normal' means CPC favours an above-normal average temperature for the whole 3-month period. Note: CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
       "source": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip",
       "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
     }
@@ -1643,11 +2051,15 @@
       "flag_threshold_pct_points": 10.0
     },
     "published_expected_days": {
+      "ge_001in_days": 34.01,
+      "ge_010in_days": 22.73,
       "ge_025in_days": 14.9,
-      "ge_100in_days": 3.26,
-      "ge_010in_days": 34.01,
       "ge_050in_days": 8.39,
-      "days_covered": 123,
+      "ge_100in_days": 3.26,
+      "ge_200in_days": 0.51,
+      "ge_400in_days": 0.02,
+      "ge_600in_days": 0.0,
+      "dates_compared": 123,
       "method": "Sum of NOAA's own published per-date probabilities (DLY-PRCP-PCTALL-GE***HI) over the 123 dates of the window - the same linearity-of-expectation arithmetic as expected_days, but using the official published probabilities instead of this project's own count."
     }
   },
