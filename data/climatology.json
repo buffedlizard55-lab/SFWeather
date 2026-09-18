@@ -6441,7 +6441,7 @@
     },
     "caveats": [
       "GSOD (wind) days are UTC days (0000Z-2359Z), i.e. roughly 16:00-16:00 local time in San Francisco, whereas GHCN-Daily (rain) days are local days. The joint wind-and-rain statistics therefore pair a local-day rain total with a UTC-day wind figure for the same calendar date. This is an approximation and is stated rather than hidden.",
-      "Wind data come from the SFO ASOS (KSFO), about 12 miles south-east of 94122 (great-circle distance from the ZIP centroid to the station, computed from the station coordinates the NWS returns). Exposure at SFO is more open than in the Sunset, so wind speeds there are typically higher than at the ZIP code itself.",
+      "Wind data come from the SFO ASOS (KSFO), 11.9 miles south-east of 94122 (great-circle distance from the ZIP centroid to the station, computed from the station coordinates the NWS returns). Exposure at SFO is more open than in the Sunset, so wind speeds there are typically higher than at the ZIP code itself.",
       "GSOD 'MAX'/'MIN' are the reported daily extremes, which per NCEI are not always the true calendar-day extremes.",
       "Percentages for a single calendar date are computed from 30 seasons (1991-2020). One season adds or subtracts about 3.3 percentage points, so treat single-date percentages as indicative, not precise."
     ],
