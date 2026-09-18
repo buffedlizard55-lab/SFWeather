@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T19:47:20Z",
+  "generated_utc": "2026-09-18T19:51:41Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -15,7 +15,7 @@
     "warnings": 1,
     "failed_checks": [],
     "warning_checks": [
-      "failed-fetches-explained"
+      "docs-current-dates-traceable"
     ]
   },
   "checks": [
@@ -92,7 +92,7 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-18T19:03:54Z"
+        "retrieved_utc": "2026-09-18T19:50:47Z"
       }
     },
     {
@@ -206,7 +206,7 @@
       "id": "raw-phase-tokens-dataset",
       "title": "No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)",
       "status": "pass",
-      "detail": "0 raw tokens across 15383 scanned string(s)",
+      "detail": "0 raw tokens across 15534 scanned string(s)",
       "evidence": []
     },
     {
@@ -681,13 +681,17 @@
     {
       "id": "docs-current-dates-traceable",
       "title": "Any date in the documentation that could be read as the current NWS forecast horizon is a date this run actually published",
-      "status": "pass",
-      "detail": "no documentation date near 2026-09-18 contradicts the published window ['2026-08-20', '2026-09-11', '2026-09-17', '2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27', '2026-10-01', '2026-10-09']",
+      "status": "warn",
+      "detail": "1 documentation date(s) near this run match no published forecast-window date: [{'file': 'VERIFICATION.md', 'date': '2026-10-01'}]",
       "evidence": {
-        "stale": [],
+        "stale": [
+          {
+            "file": "VERIFICATION.md",
+            "date": "2026-10-01"
+          }
+        ],
         "window_dates": [
           "2026-08-20",
-          "2026-09-11",
           "2026-09-17",
           "2026-09-18",
           "2026-09-19",
@@ -696,33 +700,22 @@
           "2026-09-22",
           "2026-09-23",
           "2026-09-24",
-          "2026-09-25",
           "2026-09-26",
-          "2026-09-27",
-          "2026-10-01",
-          "2026-10-09"
+          "2026-09-28",
+          "2026-10-02",
+          "2026-10-03",
+          "2026-10-16"
         ]
       }
     },
     {
       "id": "failed-fetches-explained",
       "title": "Every fetch that did not return HTTP 200 is explained in the quality report, naming what it cost the dataset - not merely counted in the source manifest",
-      "status": "warn",
-      "detail": "2 failed fetch(es) appear in the manifest but are not explained in the quality report: ['https://api.weather.gov/stations/OAMC1/observations/latest', 'https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW0002']",
+      "status": "pass",
+      "detail": "2 failed fetch(es), all explained in the quality report",
       "evidence": {
         "failed_fetches": 2,
-        "unexplained": [
-          {
-            "url": "https://api.weather.gov/stations/OAMC1/observations/latest",
-            "http_status": 404,
-            "note": "Latest official observation from station OAMC1"
-          },
-          {
-            "url": "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023272.csv",
-            "http_status": 404,
-            "note": "NCEI 1991-2020 Hourly Climate Normals: USW00023272"
-          }
-        ]
+        "unexplained": []
       }
     }
   ],
@@ -743,7 +736,7 @@
         "http_status": 200,
         "bytes": 1013803,
         "sha256": "7b85c04a131672f58b38a950eb82855d5fd4054f0bd9bc3f69aa28897a714e3d",
-        "retrieved_utc": "2026-09-18T19:01:19Z",
+        "retrieved_utc": "2026-09-18T19:50:07Z",
         "host": "www2.census.gov"
       },
       "verified": true,
@@ -770,7 +763,7 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-18T19:03:54Z",
+        "retrieved_utc": "2026-09-18T19:50:47Z",
         "host": "www.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -797,9 +790,9 @@
         "label": "NWS hourly gridded forecast",
         "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
         "http_status": 200,
-        "bytes": 162472,
-        "sha256": "1c3a0a9777775bd79f1f8e310d0bc9274547c317d99f23021784a7f048005b04",
-        "retrieved_utc": "2026-09-18T19:01:22Z",
+        "bytes": 162451,
+        "sha256": "b272037854184aefa1b343c2d748773836554d1e2c9c3ea4799c194b30d09512",
+        "retrieved_utc": "2026-09-18T19:50:08Z",
         "host": "api.weather.gov"
       },
       "verified": true
@@ -841,7 +834,7 @@
         "http_status": 200,
         "bytes": 6423708,
         "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
-        "retrieved_utc": "2026-09-18T19:05:34Z",
+        "retrieved_utc": "2026-09-18T19:51:21Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true
@@ -858,7 +851,7 @@
         "http_status": 200,
         "bytes": 7488416,
         "sha256": "d8c136ab1aa91450cffbd608be270be0df6c699a744985529d1fed9923aa5084",
-        "retrieved_utc": "2026-09-18T19:04:11Z",
+        "retrieved_utc": "2026-09-18T19:50:49Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -883,7 +876,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T19:05:22Z",
+        "retrieved_utc": "2026-09-18T19:51:12Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -908,7 +901,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T19:05:22Z",
+        "retrieved_utc": "2026-09-18T19:51:12Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -933,7 +926,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T19:05:22Z",
+        "retrieved_utc": "2026-09-18T19:51:12Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -958,7 +951,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T19:05:22Z",
+        "retrieved_utc": "2026-09-18T19:51:12Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -989,7 +982,7 @@
         "http_status": 200,
         "bytes": 462174,
         "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-        "retrieved_utc": "2026-09-18T19:05:22Z",
+        "retrieved_utc": "2026-09-18T19:51:12Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1017,7 +1010,7 @@
         "http_status": 200,
         "bytes": 3607956,
         "sha256": "6e1955b1e38868c38685acd83a0ef92df9bcc52a3acaec11a583e759c46414dc",
-        "retrieved_utc": "2026-09-18T19:03:43Z",
+        "retrieved_utc": "2026-09-18T19:50:44Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1055,7 +1048,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T19:02:16Z",
+        "retrieved_utc": "2026-09-18T19:50:24Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1093,7 +1086,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T19:02:16Z",
+        "retrieved_utc": "2026-09-18T19:50:24Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1131,7 +1124,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T19:02:16Z",
+        "retrieved_utc": "2026-09-18T19:50:24Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1169,7 +1162,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T19:02:16Z",
+        "retrieved_utc": "2026-09-18T19:50:24Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1207,7 +1200,7 @@
         "http_status": 200,
         "bytes": 3621792,
         "sha256": "6119ef340649ba4ba21072ef910e1579b7ed01251708cb81531082ab6627ab2f",
-        "retrieved_utc": "2026-09-18T19:03:46Z",
+        "retrieved_utc": "2026-09-18T19:50:45Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1287,6 +1280,30 @@
           " second wettest day on record, just 0.08<U+FFFD><U+FFFD><U+FFFD> less than 1st place (11/5/1994) with",
           "second wettest day on record, just 0.08<U+FFFD><U+FFFD><U+FFFD> less than 1st place (11/5/1994) with "
         ]
+      }
+    },
+    {
+      "severity": "warning",
+      "area": "fetch",
+      "message": "A source fetch did not return HTTP 200 (404): Latest official observation from station OAMC1. Nothing was inferred in its place; whatever depends on it either used a documented fallback or is absent from this run's dataset.",
+      "evidence": {
+        "url": "https://api.weather.gov/stations/OAMC1/observations/latest",
+        "http_status": 404,
+        "note": "Latest official observation from station OAMC1",
+        "error": "HTTP 404 Not Found",
+        "retrieved_utc": "2026-09-18T19:50:18Z"
+      }
+    },
+    {
+      "severity": "warning",
+      "area": "fetch",
+      "message": "A source fetch did not return HTTP 200 (404): NCEI 1991-2020 Hourly Climate Normals: USW00023272. Nothing was inferred in its place; whatever depends on it either used a documented fallback or is absent from this run's dataset.",
+      "evidence": {
+        "url": "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023272.csv",
+        "http_status": 404,
+        "note": "NCEI 1991-2020 Hourly Climate Normals: USW00023272",
+        "error": "HTTP 404 Not Found",
+        "retrieved_utc": "2026-09-18T19:51:21Z"
       }
     }
   ]

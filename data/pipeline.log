@@ -17,3 +17,5 @@ SFWeather pipeline - 2026-09-18
     [info] nws: Some hourly forecast fields are null in the NWS gridded forecast for this grid cell.
     [warning] nws: No HWO products returned for office MTR.
     [info] storm_events: NCEI's Storm Events file lost 12 character(s) before this project fetched it (U+FFFD is already present in the published file). Those characters were removed from the narrative text and are not guesse
+    [warning] fetch: A source fetch did not return HTTP 200 (404): Latest official observation from station OAMC1. Nothing was inferred in its place; whatever depends on it either used a documented fallback or is absent f
+    [warning] fetch: A source fetch did not return HTTP 200 (404): NCEI 1991-2020 Hourly Climate Normals: USW00023272. Nothing was inferred in its place; whatever depends on it either used a documented fallback or is abse
