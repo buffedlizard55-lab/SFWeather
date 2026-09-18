@@ -1488,8 +1488,8 @@ def main():
                 # returns for KSFO in the station feed, not typed in: the prose
                 # previously said "about 10 miles" while the project's own recorded
                 # value was 11.9 miles.
-                f"Wind data come from the SFO ASOS (KSFO), about "
-                f"{ksfo_distance_mi:.0f} miles south-east of 94122 (great-circle "
+                f"Wind data come from the SFO ASOS (KSFO), {ksfo_distance_mi:.1f} "
+                f"miles south-east of 94122 (great-circle "
                 f"distance from the ZIP centroid to the station, computed from the "
                 f"station coordinates the NWS returns). Exposure at SFO is more open "
                 f"than in the Sunset, so wind speeds there are typically higher than at "

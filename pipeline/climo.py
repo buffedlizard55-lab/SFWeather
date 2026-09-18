@@ -736,7 +736,66 @@ _DLY_ELEMENTS = (
 )
 
 # NCEI writes missing values as blanks; a few products use sentinels instead.
-_DLY_MISSING = ("", "9999.9", "999.9", "9999.99", "999.99", "99999", "9999", "M")
+# NCEI's missing-value sentinels.  The normals file marks a percentile that
+# cannot be computed (a date that is dry so often that no wet-day percentile
+# exists) with **-9999**, which is *not* a plausible value for any element this
+# parser reads - a negative rainfall percentile or a temperature of -9999 F does
+# not exist.  The earlier version of this tuple listed only the positive
+# sentinels the GHCN/GSOD files use, so -9999 was published on the site as
+# "-9999.00 in".  That is the exact class of defect this project exists to
+# prevent, so the guard is now both a literal list and a numeric floor.
+_DLY_MISSING = ("", "9999.9", "999.9", "9999.99", "999.99", "99999", "9999", "M",
+                "-9999", "-9999.0", "-9999.00", "-9999.9", "-99999")
+# Anything at or below this is a sentinel, whatever it is spelled like.
+_DLY_MISSING_FLOOR = -900.0
+
+
+# Physical ranges for the values published from the daily-normals file.  These
+# are stated from outside the data, not fitted to it, so they can catch a
+# sentinel that a missing-value list forgot.  The tokens are matched with "in"
+# rather than endswith(): the published percentile key is ``pcp_50pctl_in``,
+# which has no underscore before "pctl", so an endswith("_pctl_in") test would
+# match nothing and the guard would pass while a -9999 sat in the row.
+_NORMALS_VALUE_RULES = (
+    ("pctl", lambda v: v < 0.0, "negative precipitation percentile"),
+    ("_pct", lambda v: not (0.0 <= v <= 100.0), "percentage outside 0-100"),
+    ("_f", lambda v: not (-50.0 <= v <= 130.0), "temperature outside -50..130 F"),
+)
+
+
+def implausible_normals_value(key, value):
+    """Return why ``value`` cannot honestly be a reading of ``key``, else None.
+
+    Used by the verification ledger so that a missing-value sentinel which slips
+    past the literal list is still caught before it is published - it is the
+    numeric, data-independent half of the same guard.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    v = float(value)
+    for token, fails, why in _NORMALS_VALUE_RULES:
+        if token in key and fails(v):
+            return why
+    return None
+
+
+def is_missing_normals_value(raw):
+    """True if a cell of the NCEI normals file is a missing-value sentinel.
+
+    Blank counts as missing.  So does any number at or below
+    ``_DLY_MISSING_FLOOR``: no element in this file (a temperature normal, a
+    percentage of years, or a precipitation percentile in inches) can be that
+    low, so such a number can only be the sentinel.
+    """
+    if raw is None:
+        return True
+    text = str(raw).strip()
+    if text in _DLY_MISSING:
+        return True
+    try:
+        return float(text) <= _DLY_MISSING_FLOOR
+    except ValueError:
+        return False
 
 
 def parse_daily_normals(text):
@@ -794,13 +853,10 @@ def parse_daily_normals(text):
 
     def _num(row, col, nd):
         raw = row.get(col)
-        if raw is None:
-            return None
-        raw = str(raw).strip()
-        if raw in _DLY_MISSING:
+        if is_missing_normals_value(raw):
             return None
         try:
-            return _f(float(raw), nd)
+            return _f(float(str(raw).strip()), nd)
         except ValueError:
             return None
 
@@ -841,7 +897,7 @@ def parse_daily_normals(text):
         # The published year count for the >=0.01 in probability, if present.
         n_years = None
         for cand in ("years_DLY-PRCP-PCTALL-GE010HI", "YEARS_DLY-PRCP-PCTALL-GE010HI"):
-            if cand in row and str(row[cand]).strip() not in _DLY_MISSING:
+            if cand in row and not is_missing_normals_value(row[cand]):
                 try:
                     n_years = int(float(row[cand]))
                 except ValueError:

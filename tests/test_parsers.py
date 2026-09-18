@@ -925,6 +925,53 @@ check("daily normals: temperature pairs are never flagged (a different statistic
 check("daily normals: the comparison names no date it did not compare",
       _cmp["compared_dates"] == 366 and _cmp["pairs"]["normal high"]["n"] == 1, "")
 
+# ---- NCEI missing-value sentinels -------------------------------------------
+# A real NCEI file writes -9999 for a percentile that cannot be computed (a
+# calendar date so dry that no wet-day percentile exists).  That value reached
+# the published page as "-9999.00 in" before this guard existed, so it is pinned
+# here rather than left to a reviewer's eye.
+for _raw, _want in (("-9999", True), ("-9999.00", True), ("  -9999 ", True),
+                    ("", True), ("M", True), ("9999.9", True),
+                    ("0.21", False), ("-0.5", False), ("70.6", False),
+                    ("0", False)):
+    check("normals sentinel: %r treated as missing == %s" % (_raw, _want),
+          climo.is_missing_normals_value(_raw) is _want,
+          "got %s" % climo.is_missing_normals_value(_raw))
+
+_sentinel_csv = (
+    "STATION,DATE,DLY-TMAX-NORMAL,DLY-TMIN-NORMAL,DLY-PRCP-25PCTL,"
+    "DLY-PRCP-50PCTL,DLY-PRCP-75PCTL,DLY-PRCP-PCTALL-GE001HI,"
+    "DLY-PRCP-PCTALL-GE025HI,DLY-PRCP-PCTALL-GE100HI\r\n"
+    "USW00023272,01-01,57.1,46.2,-9999,-9999,-9999,36.8,16.8,4.3\r\n")
+_sby, _slay = climo.parse_daily_normals(_sentinel_csv)
+check("normals sentinel: -9999 percentiles are dropped, not published",
+      _sby["01-01"].get("pcp_25pctl_in") is None
+      and _sby["01-01"].get("pcp_50pctl_in") is None
+      and _sby["01-01"].get("pcp_75pctl_in") is None
+      and _sby["01-01"].get("p_pcp_ge_0p01in_pct") == 36.8,
+      json.dumps(_sby["01-01"]))
+check("normals sentinel: no surviving value is below zero (a sentinel would be)",
+      all(float(v) >= 0 for v in _sby["01-01"].values()),
+      json.dumps(_sby["01-01"]))
+# A guard that cannot fire is worse than no guard: the ledger's range rule was
+# first written with endswith("_pctl_in"), which matches nothing because the
+# published key is ``pcp_50pctl_in``.  Pinned here so it cannot regress.
+for _k, _v, _want in (("pcp_50pctl_in", -9999.0, "negative precipitation percentile"),
+                      ("pcp_75pctl_in", -1.0, "negative precipitation percentile"),
+                      ("p_pcp_ge_0p01in_pct", 36.8, None),
+                      ("p_pcp_ge_0p01in_pct", 120.0, "percentage outside 0-100"),
+                      ("p_pcp_ge_0p01in_pct", -0.1, "percentage outside 0-100"),
+                      ("normal_high_f", 70.6, None),
+                      ("normal_high_f", -9999.0, "temperature outside -50..130 F"),
+                      ("n_years_pcp_ge_010in", 30, None)):
+    check("normals range rule: %s = %s" % (_k, _v),
+          climo.implausible_normals_value(_k, _v) == _want,
+          "got %r" % (climo.implausible_normals_value(_k, _v),))
+
+check("normals sentinel: dropping the percentiles does not drop the date",
+      _slay.get("dates_parsed") == 1, json.dumps(_slay.get("element_coverage")))
+
+
 # --------------------------------------------------------------------------- #
 print("\n== published-vs-derived values on the committed scoreboard")
 

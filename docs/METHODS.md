@@ -125,7 +125,7 @@ confirmed by the missing-value sentinel being `999.9` rather than `9999`.
 
 ---
 
-## 4. ENSO (updated 17 September 2026)
+## 7. ENSO (updated 17 September 2026)
 
 The ENSO number on the site is **NOAA's published ONI product**
 (`data/indices/oni.ascii.txt`), read directly:
@@ -147,7 +147,7 @@ ENSO stratification of the rainfall record uses the official seasons covering ea
 rainy season — OND of year Y, NDJ of year Y and DJF of year Y+1 — averaged. This
 replaced an earlier version that used a single locally derived month.
 
-## 5. Humidity on climatology days
+## 8. Humidity on climatology days
 
 NOAA publishes no relative-humidity normal. The pipeline therefore:
 
@@ -164,7 +164,59 @@ The site labels this everywhere as a **derivation from official normals**, names
 station, and leaves the field empty when the file is unavailable. A value is never
 estimated or interpolated.
 
-## 6. Verification (why a number cannot silently be wrong)
+## 9. Two official answers: NOAA's published daily normals vs this project's count
+
+The 1991-2020 U.S. Climate Normals **daily** product
+(`https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv`)
+publishes, for every calendar date at this station, NOAA's own probability that the
+date records at least a threshold amount of precipitation. That is the same
+quantity section 3 counts from GHCN-Daily, so the two are shown side by side and
+the difference is published — never averaged, never reconciled.
+
+**The threshold each column means is read out of the column name, not assumed.**
+The `GE###HI` columns encode hundredths of an inch (`GE001HI` = ">= 0.01 in",
+`GE600HI` = ">= 6.00 in"); the parser stores the mapping it used in
+`layout.thresholds_in` and the page builds its labels from that stored mapping, so
+a label and a number cannot drift apart.
+
+Three independent checks established the hundredths reading before anything was
+published:
+
+| Derived here | Best-matching column | Mean absolute difference | Against the neighbouring columns |
+| --- | --- | --- | --- |
+| share of years >= 0.01 in | `GE001HI` | 6.3 points | 11.4 against `GE010HI` |
+| share of years >= 0.25 in | `GE025HI` | 3.7 points | 9.2 / 7.5 against the columns either side |
+| share of years >= 1.00 in | `GE100HI` | 2.7 points | 6.0 / 3.7 against the columns either side |
+
+The threshold sequence for 01-01 is also monotone and physically consistent
+(36.8, 25.3, 16.8, 10.3, 4.3, 0.6, 0.0, 0.0 %), and the published 50th percentile
+(0.21 in) is far above 0.025 in, so the 16.8 % column cannot mean ">= 0.025 in".
+
+### Why the two never agree exactly
+
+1. **NOAA smooths across dates.** The published normals are a fitted/smoothed
+   product, so a date's value is influenced by its neighbours. This project's
+   count is the raw share of 30 seasons, which can only move in steps of
+   1/30 = 3.33 points. A few points of difference is therefore expected.
+2. **Published percentiles are conditional on a wet day.** `DLY-PRCP-50PCTL` for
+   01-01 is 0.21 in, while an unconditional 50th percentile cannot exceed
+   ~0.025 in when only 36.8 % of years are wet. `landlord_summary.py`'s median
+   wet-day amount is computed the same conditional way, so the two are
+   comparable; the page labels the rows "wet days" for that reason.
+
+A disagreement larger than **10 percentage points** on any date is listed on the
+page under "Two official answers"; larger than **15 points** fails the build
+(`official-daily-normals-cross-check`).
+
+### What is stored
+
+Only the parsed per-date values and the column layout are committed
+(`data/daily_normals.json`), not the ~1 MB CSV. An earlier version of the
+pipeline committed the raw text truncated to 200,000 characters, which cut the
+file off at 04 June and left the entire Oct-Jan window absent; the parser now
+requires all 366 dates and raises an irregularity if any are missing.
+
+## 10. Verification (why a number cannot silently be wrong)
 
 `pipeline/verify_claims.py` runs after the datasets are built and:
 

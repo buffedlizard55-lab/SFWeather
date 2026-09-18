@@ -1038,7 +1038,13 @@ function dayCell(d) {
     el('div', { class: 'day-temp', text: `${n(d.high_f, 0)}\u00b0 / ${n(d.low_f, 0)}\u00b0` }),
     el('div', { class: 'day-rain', text: pct(d.rain_chance_pct, 0) }),
     el('div', { class: 'day-meta' }, [
-      el('span', { text: d.rain_amount_in === null ? 'rain \u2014' : 'rain ' + Number(d.rain_amount_in).toFixed(2) + '"' }),
+      // On a forecast day this is the official QPF for that day; on a
+      // climatology day it is the 1991-2020 *mean daily total* for that calendar
+      // date.  Labelled differently on purpose: a reader must never read a
+      // 30-year mean as "0.01 in is going to fall on this day".
+      el('span', { text: d.rain_amount_in === null
+        ? (isForecast ? 'rain \u2014' : 'mean \u2014')
+        : (isForecast ? 'rain ' : 'mean ') + Number(d.rain_amount_in).toFixed(2) + '"' }),
       el('span', { text: `wind ${n(d.wind_max_mph, 0)} / gust ${n(d.gust_max_mph, 0)}` }),
       el('span', { text: d.humidity_pct === null ? 'RH \u2014' : 'RH ' + n(d.humidity_pct, 0) + '%' })
     ])

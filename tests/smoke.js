@@ -81,9 +81,20 @@ setTimeout(() => {
   if (!days.length) problems.push('no calendar day cells rendered');
   else {
     const t = days[0].textContent;
-    ['rain', 'wind', 'gust', 'RH'].forEach(k => {
+    ['wind', 'gust', 'RH'].forEach(k => {
       if (!t.includes(k)) problems.push('day cell is missing "' + k + '": ' + t);
     });
+    // A climatology day must label its amount "mean", never "rain": the number
+    // is a 30-year average, and reading it as a forecast for that date would be
+    // exactly the confusion this site exists to prevent.
+    const isClimo = days[0].classList.contains('day') &&
+      !days[0].className.includes('is-forecast');
+    if (isClimo) {
+      if (!t.includes('mean ')) problems.push('climatology day cell does not label its amount "mean": ' + t);
+      if (t.includes('rain ')) problems.push('climatology day cell labels a 30-year mean as "rain": ' + t);
+    } else if (!t.includes('rain ')) {
+      problems.push('forecast day cell does not label its amount "rain": ' + t);
+    }
   }
 
   // Day dialog must open and must not leak "[object HTMLSpanElement]".

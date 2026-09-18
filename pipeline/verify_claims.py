@@ -30,6 +30,12 @@ from pathlib import Path
 
 from build_calendar import local_date_from_iso
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+# Aliased: main() has a local `climo` (the loaded climatology.json) that
+# would otherwise shadow the module - the same trap already hit
+# build_calendar.py.
+import climo as climo_lib  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 
@@ -631,6 +637,41 @@ def main() -> int:
                       "sha256": daily_normals.get("sha256"),
                       "dates_parsed": n_dates,
                       "columns": (daily_normals.get("layout") or {}).get("column_by_key")})
+
+        # (a2) A sentinel must never be published as a value.  NCEI writes -9999
+        # for a percentile it could not compute, and the first release of this
+        # feature rendered that as "-9999.00 in" on 123 dates.  The ranges below
+        # are physical, not fitted to the data: a share of years is 0-100 %, a
+        # precipitation percentile cannot be negative, and a temperature normal
+        # for San Francisco must sit inside a range any inhabited place satisfies.
+        sentinels = []
+        for mmdd, row in pub_by_mmdd.items():
+            for key, value in row.items():
+                if not isinstance(value, (int, float)):
+                    continue
+                # The rule lives in climo so the offline tests can pin it
+                # (tests/test_parsers.py) rather than leaving a guard that only
+                # ever runs on CI.  Written after a first version of this check
+                # silently matched nothing and passed with a -9999 in the row.
+                bad = climo_lib.implausible_normals_value(key, value)
+                if bad:
+                    sentinels.append({"mmdd": mmdd, "key": key, "value": value,
+                                      "why": bad})
+        ledger.check(
+            "official-daily-normals-no-sentinels",
+            "No missing-value sentinel (NCEI writes -9999 for an uncomputable "
+            "percentile) is published as if it were a reading",
+            not sentinels,
+            (f"{len(sentinels)} sentinel/impossible value(s) among the published "
+             f"per-date normals"
+             if sentinels else
+             f"all values read from the file are inside their physical range "
+             f"({len(pub_by_mmdd)} date(s) checked)"),
+            evidence={"examples": sentinels[:10],
+                      "url": daily_normals.get("url"),
+                      "ranges": {"*_pct": "0-100 %",
+                                 "*_pctl_in": ">= 0 in",
+                                 "*_f": "-50..130 F"}})
 
         # (b) every date in the season window must carry the published block, and
         # the values must equal the file's own values (re-read, not restated).
