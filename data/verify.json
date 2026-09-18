@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T03:58:15Z",
+  "generated_utc": "2026-09-18T04:02:31Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -91,14 +91,14 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-18T03:14:51Z"
+        "retrieved_utc": "2026-09-18T04:01:30Z"
       }
     },
     {
       "id": "nws-daily-aggregation",
       "title": "The published daily high and max wind are the max of the NWS hourly grid",
       "status": "pass",
-      "detail": "2026-09-17: high 61 vs hourly max 61; wind 8.0 vs hourly max 8.0",
+      "detail": "2026-09-17: high 60 vs hourly max 60; wind 7.0 vs hourly max 7.0",
       "evidence": null
     },
     {
@@ -205,7 +205,7 @@
       "id": "raw-phase-tokens-dataset",
       "title": "No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)",
       "status": "pass",
-      "detail": "0 raw tokens across 14576 scanned string(s)",
+      "detail": "0 raw tokens across 14596 scanned string(s)",
       "evidence": []
     },
     {
@@ -540,8 +540,8 @@
       "id": "severity-counters-arithmetic",
       "title": "Every published severity counter equals the arithmetic summary of the per-season values",
       "status": "pass",
-      "detail": "no severity counters in this dataset yet (the fetching run produces them)",
-      "evidence": null
+      "detail": "9 counter(s) recomputed from season_by_year",
+      "evidence": []
     },
     {
       "id": "threshold-table-recomputable",
@@ -572,7 +572,7 @@
       "evidence": [
         {
           "dataset": "storm_events",
-          "context": "0\", \"event_narrative\": \"San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. This makes it the seco"
+          "context": "utf-8\"}], \"contexts\": [\"San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. Th\", \"San Francisco Do"
         }
       ]
     },
@@ -580,7 +580,7 @@
       "id": "publisher-text-loss-disclosed",
       "title": "Any character removed from a publisher's text is counted, located, attributed and reported",
       "status": "pass",
-      "detail": "nothing was removed from any publisher's text this run",
+      "detail": "12 character(s) removed and disclosed",
       "evidence": []
     },
     {
@@ -608,7 +608,7 @@
         "http_status": 200,
         "bytes": 1013803,
         "sha256": "7b85c04a131672f58b38a950eb82855d5fd4054f0bd9bc3f69aa28897a714e3d",
-        "retrieved_utc": "2026-09-18T03:14:09Z",
+        "retrieved_utc": "2026-09-18T03:59:28Z",
         "host": "www2.census.gov"
       },
       "verified": true,
@@ -635,7 +635,7 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-18T03:14:51Z",
+        "retrieved_utc": "2026-09-18T04:01:30Z",
         "host": "www.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -662,9 +662,9 @@
         "label": "NWS hourly gridded forecast",
         "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
         "http_status": 200,
-        "bytes": 162410,
-        "sha256": "fe25527f0bba6b396de9e2f8c304b406f6ed12851588e349dc5d9bc3e96cb47c",
-        "retrieved_utc": "2026-09-18T03:14:09Z",
+        "bytes": 162424,
+        "sha256": "458a62ff0d3218b7c1995452e6ecdae9db147386c4d73a1c6d6d0d0b3e0b1b64",
+        "retrieved_utc": "2026-09-18T03:59:29Z",
         "host": "api.weather.gov"
       },
       "verified": true
@@ -706,7 +706,7 @@
         "http_status": 200,
         "bytes": 6423708,
         "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
-        "retrieved_utc": "2026-09-18T03:15:06Z",
+        "retrieved_utc": "2026-09-18T04:02:05Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true
@@ -723,7 +723,7 @@
         "http_status": 200,
         "bytes": 7488380,
         "sha256": "647b301aec57b8ad38287b2353e2a1cdcaeee8f06df205d4983db2fd9feeae19",
-        "retrieved_utc": "2026-09-18T03:14:52Z",
+        "retrieved_utc": "2026-09-18T04:01:42Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -748,7 +748,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T03:14:57Z",
+        "retrieved_utc": "2026-09-18T04:01:54Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -773,7 +773,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T03:14:57Z",
+        "retrieved_utc": "2026-09-18T04:01:54Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -798,7 +798,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T03:14:57Z",
+        "retrieved_utc": "2026-09-18T04:01:54Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -823,7 +823,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T03:14:57Z",
+        "retrieved_utc": "2026-09-18T04:01:54Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -854,7 +854,7 @@
         "http_status": 200,
         "bytes": 462174,
         "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-        "retrieved_utc": "2026-09-18T03:14:56Z",
+        "retrieved_utc": "2026-09-18T04:01:54Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -882,7 +882,7 @@
         "http_status": 200,
         "bytes": 3607956,
         "sha256": "6e1955b1e38868c38685acd83a0ef92df9bcc52a3acaec11a583e759c46414dc",
-        "retrieved_utc": "2026-09-18T03:14:48Z",
+        "retrieved_utc": "2026-09-18T04:01:22Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -920,7 +920,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T03:14:24Z",
+        "retrieved_utc": "2026-09-18T04:00:12Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -958,7 +958,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T03:14:24Z",
+        "retrieved_utc": "2026-09-18T04:00:12Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -996,7 +996,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T03:14:24Z",
+        "retrieved_utc": "2026-09-18T04:00:12Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1034,7 +1034,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T03:14:24Z",
+        "retrieved_utc": "2026-09-18T04:00:12Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1072,7 +1072,7 @@
         "http_status": 200,
         "bytes": 3621792,
         "sha256": "6119ef340649ba4ba21072ef910e1579b7ed01251708cb81531082ab6627ab2f",
-        "retrieved_utc": "2026-09-18T03:14:48Z",
+        "retrieved_utc": "2026-09-18T04:01:24Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1126,6 +1126,32 @@
       "message": "No HWO products returned for office MTR.",
       "evidence": {
         "url": "https://api.weather.gov/products/types/HWO/locations/MTR"
+      }
+    },
+    {
+      "severity": "info",
+      "area": "storm_events",
+      "message": "NCEI's Storm Events file lost 12 character(s) before this project fetched it (U+FFFD is already present in the published file). Those characters were removed from the narrative text and are not guessed at; the count, the fields and the surrounding text are published in data/storm_events.json under text_integrity.",
+      "evidence": {
+        "characters_removed": 12,
+        "fields_affected": [
+          {
+            "event_id": "1079727",
+            "field": "event_narrative",
+            "removed": 12,
+            "file": "StormEvents_details-ftp_v1.0_d2022_c20260625.csv.gz",
+            "encoding_used": "utf-8"
+          }
+        ],
+        "encoding_fallback_used": false,
+        "files_with_an_encoding_fallback": [],
+        "contexts": [
+          "San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. Th",
+          "San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. Thi",
+          "San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. This",
+          " second wettest day on record, just 0.08\ufffd\ufffd\ufffd less than 1st place (11/5/1994) with",
+          "second wettest day on record, just 0.08\ufffd\ufffd\ufffd less than 1st place (11/5/1994) with "
+        ]
       }
     }
   ]
