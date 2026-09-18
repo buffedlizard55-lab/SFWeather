@@ -49,6 +49,62 @@ which the row disappears.  Everything else passes.
    `docs/LANDLORD_GUIDE.md` points at the site card instead of restating numbers,
    `docs/METHODS.md` §18–20 and `docs/LIMITATIONS.md` cover the new statistic and
    its limits.
+### Session 7b (18 Sep 2026) — the review passes: degradation honesty and explained failures
+
+Session 7 above already carries the Area Forecast Discussion scan, the Census
+reverse geocode and the per-field basis. This branch adds what the three review
+passes found *on top of* that work — six defects, three of them in the guards
+themselves.
+
+1. **`tests/degrade_smoke.py` (10 cases).** Seven degraded dataset states must
+   render honestly: AFD block absent, scan not run, scan found nothing, Census
+   lookup absent, Census names all null, Census partial, a scoreboard day all
+   null. Plus three cases that break the renderer on purpose, because a
+   degradation check that only ever runs against a correct renderer cannot fail.
+   Those three immediately found item 2.
+2. **The Location card silently deleted a Census row** whenever the Census
+   returned no name for it — `kvTable` drops a null value, so a lookup that
+   returned only a county rendered as though the subdivision had never been asked
+   about. Each row now prints "not reported by the Census for this point".
+   Hiding a gap is the opposite of flagging it.
+3. **Render guard 24** (Location card honesty): with no geography in the dataset
+   the card must say it was not retrieved and must not name a district; with one
+   it must print the name, its GEOID, the geocoder link, the `naming_note` and the
+   geography types actually returned. Guard 19 now branches on `scanned`, so an
+   honest "not scanned this run: <reason>" is not reported as a defect.
+4. **Guard 16 was scanning four hard-coded sections** for `NaN`/`undefined` and
+   omitted `#now` and `#location` — the two the newest cards live in. It now walks
+   every `<section id>`, and rejects a cell whose entire content is a bare
+   `null`/`undefined`/`NaN` (the word "null" still appears legitimately inside an
+   irregularity message, so the check is on the shape of the leak).
+5. **Real fetch failures are explained, not just counted.** Complements the fetch
+   accounting above: `expected_absences` are labelled and justified there, and
+   `main.flag_failed_fetches()` writes one irregularity per *remaining* failure
+   into `quality_report.json`, naming the source and stating that nothing was
+   inferred in its place. Ledger check `failed-fetches-explained` (warning) stays
+   loud until each is explained. It deliberately skips `expected_absent` entries —
+   re-flagging a not-yet-published annual file would only add noise, and noise is
+   how a real outage gets ignored.
+6. **Three defects in the new guards, all found by running the harnesses:**
+   `docs-current-dates-traceable` did not know the scoreboard's own 123 dates, so
+   it flagged the season's first day as drift; `failed-fetches-explained` accepted
+   a match on a URL's last path segment, and since two NWS observation URLs both
+   end in `latest`, one station's explanation silently covered another's failure;
+   and the same date check could not tell a date *asserted about the world* from
+   one *quoted as a literal*, so documenting the harness's own fixture date read
+   as drift. Code spans are now stripped before the scan, matching is on the URL
+   or the fetch note only, and the vocabulary includes every published date.
+
+**Standing rule these produced:** a falsification case must assert that its
+mutation actually changed something. Two cases silently became no-ops after a data
+refresh because the real evidence was already present — a mutation test that
+cannot mutate is worse than no test, since it reports confidence it does not have.
+
+**Pass 3** re-checked all eight original requirements against the live dataset and
+is recorded as a table at the end of `docs/VERIFICATION.md`, including what it did
+not establish (the page is verified structurally, not aesthetically; the AFD scan
+proves only that NWS wrote a sentence, never anything about 94122 on a named day).
+
 
 ### Known state to expect on the next run
 
@@ -356,7 +412,7 @@ used (`humidity_basis`, `gust_basis`, `rain_amount_basis`) and the dialog shows 
 on **both** tiers, so all 123 scoreboard days and all current-forecast days name the
 station, the variable, the season count and the unit conversion behind every one of
 the six headline fields. At HEAD, `temp_basis`, `wind_basis` and `gust_basis` were
-empty on all 123 climatology days while the days published values — that was bug 43.
+empty on all 123 climatology days while the days published values — that was bug 55.
 Enforced by ledger check `day-field-basis-complete` (fails the run) and render
 guard 20 (fails the page), both falsified.
 

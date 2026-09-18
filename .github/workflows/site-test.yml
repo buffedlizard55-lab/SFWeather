@@ -45,6 +45,8 @@ jobs:
         run: npm test
       - name: Falsify the render guards (a guard that cannot fail is decoration)
         run: python3 tests/falsify_smoke.py
+      - name: Render every degraded dataset state honestly
+        run: python3 tests/degrade_smoke.py
       - name: Verify committed source provenance
         run: python3 pipeline/verify_sources.py
   parsers:

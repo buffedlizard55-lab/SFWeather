@@ -260,6 +260,76 @@ def _b2(tmp):
     return tmp
 
 
+def _provenance_case(mutate_prov, mutate_quality=None):
+    """Build a fixture with a controlled provenance manifest / quality report.
+
+    run.json's counts are recomputed from the mutated manifest so the fixture
+    does not trip the unrelated provenance-record-count check and obscure the
+    verdict this case is actually about.
+    """
+    def build(tmp):
+        for f in DATA.glob("*.json"):
+            shutil.copy2(f, tmp / f.name)
+        prov = load("provenance.json")
+        mutate_prov(prov)
+        dump(tmp / "provenance.json", prov)
+        entries = prov.get("entries") or []
+        failed = sum(1 for e in entries
+                     if e.get("ok") is False or (e.get("http_status") or 200) != 200)
+        run = load("run.json")
+        run.setdefault("counts", {})
+        run["counts"]["manifest_entries"] = len(entries)
+        run["counts"]["successful_fetches"] = len(entries) - failed
+        run["counts"]["failed_fetches"] = failed
+        dump(tmp / "run.json", run)
+        if mutate_quality:
+            q = load("quality_report.json")
+            mutate_quality(q)
+            dump(tmp / "quality_report.json", q)
+        return tmp
+    return build
+
+
+@case("a failed fetch that is explained in the quality report", "pass",
+      "failed-fetches-explained")
+def _f1(tmp):
+    def prov(p):
+        p["entries"] = [e for e in p["entries"] if e.get("ok") is not False]
+        p["entries"].append({"url": "https://api.weather.gov/stations/ZZZ9/observations/latest",
+                             "http_status": 404, "ok": False, "bytes": 0, "sha256": None,
+                             "note": "Latest official observation from station ZZZ9",
+                             "retrieved_utc": "2026-09-18T18:00:00Z"})
+    def qual(q):
+        q["irregularities"].append({
+            "severity": "warning", "area": "fetch",
+            "message": "A source fetch did not return HTTP 200 (404): Latest official "
+                       "observation from station ZZZ9. Nothing was inferred in its place.",
+            "evidence": {"url": "https://api.weather.gov/stations/ZZZ9/observations/latest",
+                         "http_status": 404}})
+    return _provenance_case(prov, qual)(tmp)
+
+
+@case("a failed fetch left unexplained in the quality report", "warn",
+      "failed-fetches-explained")
+def _f2(tmp):
+    def prov(p):
+        p["entries"] = [e for e in p["entries"] if e.get("ok") is not False]
+        p["entries"].append({"url": "https://api.weather.gov/stations/ZZZ9/observations/latest",
+                             "http_status": 404, "ok": False, "bytes": 0, "sha256": None,
+                             "note": "Latest official observation from station ZZZ9",
+                             "retrieved_utc": "2026-09-18T18:00:00Z"})
+    return _provenance_case(prov)(tmp)
+
+
+@case("no fetch failed at all", "pass", "failed-fetches-explained")
+def _f3(tmp):
+    def prov(p):
+        p["entries"] = [e for e in p["entries"] if e.get("ok") is not False]
+        for e in p["entries"]:
+            e["http_status"] = 200
+    return _provenance_case(prov)(tmp)
+
+
 def _repo_copy_with(mutate_readme=None, mutate_data=None):
     """Copy the repository so documentation checks can be falsified too."""
     def build(tmp):
@@ -295,6 +365,18 @@ def _d2(tmp):
     def mutate(path):
         s = path.read_text()
         path.write_text(s + "\n\nThe NWS horizon currently ends 2026-09-29.\n")
+    return _repo_copy_with(mutate_readme=mutate)(tmp)
+
+
+@case("README quotes a horizon date inside a code span (a fixture literal, not a claim)",
+      "pass", "docs-current-dates-traceable")
+def _d3(tmp):
+    # The falsification harnesses have to name dates no run publishes; writing
+    # that down must not read as documentation drift.  Prose dates still warn
+    # (case _d2) - the difference is the code span, not the date.
+    def mutate(path):
+        s = path.read_text()
+        path.write_text(s + "\n\nThe harness uses `2026-09-29` as its stale-horizon fixture.\n")
     return _repo_copy_with(mutate_readme=mutate)(tmp)
 
 

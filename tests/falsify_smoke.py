@@ -55,7 +55,15 @@ def _baseline(repo):
     return repo
 
 
-@case("AFD block removed from the dataset")
+# Removing the block is a DATASET failure, and the claim ledger owns it:
+# tests/falsify_guards.py case "AFD block deleted entirely" fails the build.
+# The page's own contract is narrower - it must say the scan is absent rather
+# than render a card that looks populated - so this case expects a clean render
+# and tests/degrade_smoke.py case 1 is where that is asserted in detail.
+# Guard 19 was changed to branch on `scanned` precisely so that an honest
+# degradation is not reported as a defect; this expectation moved with it.
+@case("AFD block removed from the dataset (ledger's job; page must degrade honestly)",
+      expect_fail=False)
 def _c1(repo):
     patch_calendar(repo, lambda cal: cal.pop("afd_language", None))
     return repo

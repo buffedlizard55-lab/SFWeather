@@ -1700,6 +1700,16 @@ def main() -> int:
             window_dates.add(v)
     for day in ((cal.get("current_forecast") or {}).get("days") or []):
         window_dates.add(str(day.get("date"))[:10])
+    # So are the scoreboard's own 123 dates.  Documentation that says the season
+    # runs "2026-10-01 -> 2027-01-31" is quoting dates this dataset publishes;
+    # treating them as unverifiable produced a false positive on the first CI run
+    # that carried the pass-3 table.  What this check is for is a date presented
+    # as *today's forecast horizon* that the run never published - and those sit
+    # just past the horizon, inside neither the window nor the season.
+    for day in (cal.get("days") or []):
+        v = str(day.get("date") or "")[:10]
+        if len(v) == 10:
+            window_dates.add(v)
     if run_date:
         window_dates.add(run_date.isoformat())
     # CPC issuance dates belong in the vocabulary too: documentation that says an
@@ -1725,6 +1735,15 @@ def main() -> int:
             doc_files += [(p.name, p.read_text(encoding="utf-8"))
                           for p in sorted(docs_dir.glob("*.md"))]
         for name, text in doc_files:
+            # A date inside a code span is a literal quoted from a fixture, an
+            # identifier or a filename - not a claim about the world.  The
+            # falsification harnesses necessarily name dates that no run
+            # publishes (`2026-09-29` is the "stale horizon" fixture), and
+            # documenting that must not read as drift.  Stripping code spans
+            # keeps prose honest without making the check unable to talk about
+            # its own tests.  The falsification case appends bare prose, so it
+            # still warns for the right reason.
+            text = _re_docs.sub(r"`[^`\n]*`", " ", text)
             for m in _re_docs.finditer(r"\b(\d{4}-\d{2}-\d{2})\b", text):
                 try:
                     when = dt.date.fromisoformat(m.group(1))
@@ -1740,13 +1759,70 @@ def main() -> int:
         "Any date in the documentation that could be read as the current NWS "
         "forecast horizon is a date this run actually published",
         not stale_dates,
-        (f"{len(stale_dates)} documentation date(s) near this run match no published "
-         f"forecast-window date: {stale_dates[:6]}")
+        (f"{len(stale_dates)} documentation date(s) near this run match no date this "
+         f"dataset publishes: {stale_dates[:6]}")
         if stale_dates else
-        f"no documentation date near {run_date.isoformat() if run_date else 'this run'} "
-        f"contradicts the published window {sorted(window_dates)}",
+        (f"no documentation date near "
+         f"{run_date.isoformat() if run_date else 'this run'} is absent from the "
+         f"{len(window_dates)} date(s) this dataset publishes (forecast window, "
+         f"scoreboard days, CPC issuances, run date)"),
         severity="warning",
-        evidence={"stale": stale_dates[:10], "window_dates": sorted(window_dates)})
+        evidence={"stale": stale_dates[:10],
+                  "published_date_count": len(window_dates),
+                  "published_dates_sample": sorted(window_dates)[:12]})
+
+    # ------------------------------- 16. failed fetches are explained, not just counted
+    # The site already discloses a failed fetch twice over: the status banner
+    # counts them and the Sources table has a "failed only" filter with the HTTP
+    # status badge on each row.  What it cannot do is explain the consequence,
+    # because that is a judgement the pipeline makes when it falls back.  So a
+    # failure must also appear in the quality report, where the fallback is
+    # named.  This is a warning: a 404 on one nearby station or one alternative
+    # normals file is a documented fallback, not a reason to stop publishing -
+    # and a failure serious enough to break the build has already raised an
+    # error of its own at the step that depended on it.
+    # Expected absences are excluded: main.EXPECTED_ABSENCE_RULES names them,
+    # `expected-absences-justified` re-checks each label against its own URL, and
+    # `fetch-failures-flagged` warns about everything else.  Re-flagging a
+    # not-yet-published annual file here would only add noise - and noise is how
+    # a real outage gets ignored.  What this check adds on top of those two is
+    # the *consequence*: a real failure has to be explained in the quality
+    # report, where main.flag_failed_fetches() writes what the dataset did
+    # without it, rather than only counted on the status line.
+    failed_fetches = [e for e in (prov.get("entries") or [])
+                      if isinstance(e, dict) and not e.get("expected_absent") and
+                      (e.get("ok") is False or (e.get("http_status") or 200) != 200)]
+    irr_text = json.dumps(quality.get("irregularities") or [], default=str).lower()
+    unexplained = []
+    for e in failed_fetches:
+        url = str(e.get("url") or "")
+        # Match on the URL or on the fetch note - both of which
+        # main.flag_failed_fetches() writes into the irregularity it records.
+        # An earlier version also accepted the URL's last path segment, on the
+        # theory that a station id or filename is distinctive.  It is not: two
+        # NWS observation URLs both end in "latest", so one station's explanation
+        # silently covered another's failure and the check reported a failure as
+        # explained.  tests/falsify_guards.py caught it.  A heuristic needle that
+        # can match the wrong irregularity is worse than a strict one.
+        needles = [n for n in (url, str(e.get("note") or "")) if n.strip()]
+        if not any(n.lower() in irr_text for n in needles):
+            unexplained.append({"url": url, "http_status": e.get("http_status"),
+                                "note": e.get("note")})
+    ledger.check(
+        "failed-fetches-explained",
+        "Every fetch that did not return HTTP 200 is explained in the quality "
+        "report, naming what it cost the dataset - not merely counted in the "
+        "source manifest",
+        not unexplained,
+        (f"{len(unexplained)} failed fetch(es) appear in the manifest but are not "
+         f"explained in the quality report: "
+         f"{[u['url'][:70] for u in unexplained]}") if unexplained else
+        (f"{len(failed_fetches)} real failure(s), all explained in the quality report"
+         if failed_fetches else
+         "no unexplained fetch failure this run (expected absences are labelled and "
+         "justified separately)"),
+        severity="warning",
+        evidence={"failed_fetches": len(failed_fetches), "unexplained": unexplained})
 
     # ------------------------------------ 12d. hour-by-hour wind+rain statistics
     # The landlord's key question is whether rain and wind happen *at the same
