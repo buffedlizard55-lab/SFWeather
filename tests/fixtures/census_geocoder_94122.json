@@ -1,0 +1,131 @@
+{
+  "result": {
+    "input": {
+      "address": {},
+      "location": {
+        "x": -122.483894,
+        "y": 37.760459
+      },
+      "benchmark": {
+        "isDefault": true,
+        "benchmarkDescription": "Public Address Ranges - Current Benchmark",
+        "id": "4",
+        "benchmarkName": "Public_AR_Current"
+      },
+      "vintage": {
+        "isDefault": true,
+        "id": "4",
+        "vintageName": "Current_Current",
+        "vintageDescription": "Current Vintage - Current Benchmark"
+      }
+    },
+    "geographies": {
+      "2020 Census Blocks": [
+        {
+          "SUFFIX": "",
+          "GEOID": "060750326013006",
+          "CENTLAT": "+37.7604592",
+          "BLOCK": "3006",
+          "AREAWATER": "0",
+          "STATE": "06",
+          "BASENAME": "3006",
+          "LSADC": "BK",
+          "FUNCSTAT": "S",
+          "INTPTLAT": "+37.7604592",
+          "NAME": "Block 3006",
+          "TRACT": "032601",
+          "CENTLON": "-122.4838940",
+          "BLKGRP": "3",
+          "AREALAND": "19669",
+          "INTPTLON": "-122.4838940",
+          "MTFCC": "G5040",
+          "LWBLKTYP": "L",
+          "UR": "U",
+          "COUNTY": "075"
+        }
+      ],
+      "States": [
+        {
+          "GEOID": "06",
+          "STATE": "06",
+          "BASENAME": "California",
+          "NAME": "California",
+          "STUSAB": "CA",
+          "LSADC": "00",
+          "MTFCC": "G4000"
+        }
+      ],
+      "Counties": [
+        {
+          "GEOID": "06075",
+          "STATE": "06",
+          "BASENAME": "San Francisco",
+          "NAME": "San Francisco County",
+          "COUNTY": "075",
+          "LSADC": "06",
+          "MTFCC": "G4020"
+        }
+      ],
+      "County Subdivisions": [
+        {
+          "COUSUB": "93267",
+          "GEOID": "0607593267",
+          "STATE": "06",
+          "BASENAME": "Sunset",
+          "NAME": "Sunset CCD",
+          "LSADC": "22",
+          "FUNCSTAT": "S",
+          "COUSUBCC": "Z5",
+          "MTFCC": "G4040",
+          "COUNTY": "075"
+        }
+      ],
+      "Incorporated Places": [
+        {
+          "GEOID": "0667000",
+          "STATE": "06",
+          "BASENAME": "San Francisco",
+          "NAME": "San Francisco city",
+          "PLACE": "67000",
+          "LSADC": "25",
+          "FUNCSTAT": "A",
+          "MTFCC": "G4110"
+        }
+      ],
+      "Census Tracts": [
+        {
+          "GEOID": "06075032601",
+          "STATE": "06",
+          "BASENAME": "326.01",
+          "NAME": "Census Tract 326.01",
+          "TRACT": "032601",
+          "LSADC": "CT",
+          "MTFCC": "G5020",
+          "COUNTY": "075"
+        }
+      ],
+      "119th Congressional Districts": [
+        {
+          "GEOID": "0611",
+          "STATE": "06",
+          "BASENAME": "11",
+          "NAME": "Congressional District 11",
+          "CD119": "11",
+          "CDSESSN": "119",
+          "LSADC": "C2",
+          "MTFCC": "G5200"
+        }
+      ],
+      "Urban Areas": [
+        {
+          "GEOID": "78904",
+          "BASENAME": "San Francisco--Oakland",
+          "NAME": "San Francisco--Oakland, CA Urban Area",
+          "UA": "78904",
+          "LSADC": "67",
+          "MTFCC": "G3500"
+        }
+      ]
+    }
+  }
+}

@@ -1304,6 +1304,296 @@ def main() -> int:
                   f"{len(claim_source_issues)} claim source(s) lack fetch evidence"),
                  evidence=claim_source_issues[:10])
 
+    # --------------------------------- 12. official geography evidence (Census)
+    # The site says which part of San Francisco the single forecast point is in.
+    # That statement must come from the Census, be traceable to a recorded fetch,
+    # and be internally consistent: Census GEOIDs nest (county -> county
+    # subdivision / tract -> block), so a mismatched GEOID means the wrong
+    # record was read.  When the lookup did not happen, the run must have said
+    # so in the quality report - a silent hole is a failure.
+    census_geo = centroid.get("census_geographies") or {}
+    if census_geo:
+        geo_url = census_geo.get("url")
+        co = str(census_geo.get("county_geoid") or "")
+        nesting = []
+        for key in ("county_subdivision_geoid", "census_tract_geoid",
+                    "census_block_geoid"):
+            v = str(census_geo.get(key) or "")
+            if co and v and not v.startswith(co):
+                nesting.append(f"{key} {v} does not start with county GEOID {co}")
+        tr = str(census_geo.get("census_tract_geoid") or "")
+        bl = str(census_geo.get("census_block_geoid") or "")
+        if tr and bl and not bl.startswith(tr):
+            nesting.append(f"block GEOID {bl} does not start with tract GEOID {tr}")
+        ok = (bool(geo_url) and fetch_has_evidence(geo_url)
+              and host_of(geo_url or "") in OFFICIAL_HOSTS
+              and any(census_geo.get(k) for k in
+                      ("county_subdivision", "county", "census_tract"))
+              and not nesting)
+        named = [census_geo.get(k) for k in
+                 ("county_subdivision", "county", "census_tract") if census_geo.get(k)]
+        ledger.check(
+            "census-geographies-traceable",
+            "The named geography of the forecast point came from the Census "
+            "geocoder, is traceable to a recorded fetch, and its GEOIDs nest",
+            ok,
+            (f"named by the Census: {', '.join(str(x) for x in named)}; nesting issues: "
+             f"{nesting or 'none'}") if ok else
+            (f"geography evidence present but unusable: url={geo_url} "
+             f"evidence={fetch_has_evidence(geo_url) if geo_url else False} "
+             f"nesting={nesting or 'ok'} named={named or 'nothing'}"),
+            evidence={"county_subdivision": census_geo.get("county_subdivision"),
+                      "geoids": {k: census_geo.get(k) for k in
+                                 ("county_geoid", "county_subdivision_geoid",
+                                  "census_tract_geoid", "census_block_geoid")},
+                      "nesting_issues": nesting,
+                      "url": geo_url})
+    else:
+        flagged = [i for i in (quality.get("irregularities") or [])
+                   if i.get("area") == "geography"]
+        ledger.check(
+            "census-geographies-traceable",
+            "Either the Census geography evidence is published, or its absence "
+            "is flagged in the quality report",
+            bool(flagged),
+            ("no census_geographies in the dataset and no geography irregularity "
+             "recorded - the site would name a district with no evidence")
+            if not flagged else
+            f"absent and flagged: {flagged[0].get('message', '')[:120]}",
+            evidence={"geography_irregularities": len(flagged)})
+
+    # ------------------------------------ 13. NWS discussion language scan (AFD)
+    # The AFD card publishes quotations of NWS's own discussion.  Three rules
+    # are enforced: every quoted sentence must be a whitespace-collapsed
+    # substring of the fetched product text; the scan state must agree with
+    # whether text was fetched; and no quotation may carry a date or a weather
+    # value, because a flag is a quotation and never a number.
+    afd_lang = cal.get("afd_language") or {}
+    afd_product = ((nws.get("products") or {}).get("AFD") or {})
+    afd_text = afd_product.get("text") or ""
+    if not afd_lang:
+        ledger.check("afd-language-verbatim",
+                     "The Area Forecast Discussion scan is present in the dataset",
+                     False, "calendar.json has no afd_language block",
+                     evidence={})
+    else:
+        collapsed = climo_lib.collapse_ws(afd_text)
+        offenders = []
+        count_problems = []
+        for cat in afd_lang.get("categories") or []:
+            sents = cat.get("sentences") or []
+            for s in sents:
+                sent = s.get("sentence") or ""
+                if not sent:
+                    offenders.append({"category": cat.get("id"), "problem": "empty sentence"})
+                elif sent not in collapsed:
+                    offenders.append({"category": cat.get("id"),
+                                      "problem": "not a substring of the fetched text",
+                                      "sentence": sent[:120]})
+            if (cat.get("sentence_count") or 0) < len(sents):
+                count_problems.append(
+                    f"{cat.get('id')}: count {cat.get('sentence_count')} < "
+                    f"{len(sents)} published sentences")
+        state_ok = (bool(afd_lang.get("scanned")) == bool(afd_text))
+        if not afd_lang.get("scanned") and not (afd_lang.get("reason") or "").strip():
+            state_ok = False
+        excluded_ok = set(afd_lang.get("sections_excluded_this_run") or []) <= \
+            set(afd_lang.get("excluded_sections") or [])
+        src_url = afd_lang.get("source_url")
+        src_ok = (not afd_text) or (bool(src_url) and fetch_has_evidence(src_url))
+        ledger.check(
+            "afd-language-verbatim",
+            "Every quoted AFD sentence is verbatim in the fetched product text, "
+            "the counts are not smaller than the published lists, and the scan "
+            "state agrees with the fetched text",
+            not offenders and not count_problems and state_ok and excluded_ok and src_ok,
+            (f"{sum(len(c.get('sentences') or []) for c in afd_lang.get('categories') or [])} "
+             f"quoted sentence(s) all found verbatim in {len(afd_text)} fetched characters")
+            if not (offenders or count_problems) else
+            f"{len(offenders)} non-verbatim sentence(s); {len(count_problems)} count problem(s)",
+            evidence={"offenders": offenders[:5], "count_problems": count_problems[:5],
+                      "scanned": afd_lang.get("scanned"),
+                      "afd_text_chars": len(afd_text),
+                      "excluded_within_declared": excluded_ok,
+                      "source_traced": src_ok})
+
+        # quotations only: no date, no value, no probability anywhere in the block
+        forbidden_keys = {"date", "day", "value", "amount_in", "inches",
+                          "probability", "forecast_amount", "pop_pct"}
+        hits = []
+
+        def scan_keys(obj, path=""):
+            if isinstance(obj, dict):
+                for k, v in obj.items():
+                    if str(k).lower() in forbidden_keys:
+                        hits.append(f"{path}.{k}")
+                    scan_keys(v, f"{path}.{k}")
+            elif isinstance(obj, list):
+                for i, v in enumerate(obj):
+                    scan_keys(v, f"{path}[{i}]")
+
+        scan_keys(afd_lang)
+        sent_keys = set()
+        for cat in afd_lang.get("categories") or []:
+            for s in cat.get("sentences") or []:
+                sent_keys.update((s or {}).keys())
+        allowed_sent_keys = {"section", "sentence", "matched_patterns"}
+        ledger.check(
+            "afd-language-quotations-only",
+            "The AFD scan publishes quotations only: no date, no amount and no "
+            "probability is attached to any quoted sentence",
+            not hits and sent_keys <= allowed_sent_keys,
+            (f"sentence keys {sorted(sent_keys)}; forbidden keys found: {hits or 'none'}"),
+            evidence={"sentence_keys": sorted(sent_keys),
+                      "allowed_sentence_keys": sorted(allowed_sent_keys),
+                      "forbidden_key_hits": hits[:10]})
+
+    # ------------------------------------------- 14. per-field basis on every day
+    # A published value with no stated basis is the first step towards a number
+    # nobody can check.  Every one of the six fields the brief asks for - and
+    # the temperature that accompanies them - must name the basis it used on
+    # both the scoreboard days and the current-forecast days.
+    BASIS_PAIRS = (("high_f", "temp_basis"), ("low_f", "temp_basis"),
+                   ("humidity_pct", "humidity_basis"),
+                   ("rain_chance_pct", "rain_chance_basis"),
+                   ("rain_amount_in", "rain_amount_basis"),
+                   ("wind_max_mph", "wind_basis"),
+                   ("gust_max_mph", "gust_basis"))
+    basis_missing = []
+    day_sets = (("scoreboard", cal.get("days") or []),
+                ("current_forecast", ((cal.get("current_forecast") or {}).get("days") or [])))
+    for label, rows in day_sets:
+        for day in rows:
+            for value_key, basis_key in BASIS_PAIRS:
+                if day.get(value_key) is not None and not str(day.get(basis_key) or "").strip():
+                    basis_missing.append({"set": label, "date": day.get("date"),
+                                          "field": value_key, "missing": basis_key})
+    ledger.check(
+        "day-field-basis-complete",
+        "Every published value on every day names the basis it was computed from "
+        "(temperature, humidity, rain chance, rain amount, wind, gusts)",
+        not basis_missing,
+        f"{len(basis_missing)} value(s) published without a basis"
+        if basis_missing else
+        f"all values on {len(cal.get('days') or [])} scoreboard day(s) and "
+        f"{len((cal.get('current_forecast') or {}).get('days') or [])} current-forecast "
+        "day(s) carry a basis",
+        evidence={"missing": basis_missing[:10], "missing_total": len(basis_missing)})
+
+    # ------------------------------------------------- 15. documentation drift
+    # Prose is the one place a number can survive a data refresh untouched.  Two
+    # checks, both warnings: documentation must never block the nightly data
+    # publication (that would leave the site showing older numbers because a
+    # sentence in a Markdown file went stale), but drift must still be visible
+    # in the published ledger rather than discovered by a reader.
+    import re as _re_docs
+
+    readme_path = ROOT / "README.md"
+    readme = readme_path.read_text(encoding="utf-8") if readme_path.exists() else ""
+
+    def numbers_published(obj, out):
+        if isinstance(obj, dict):
+            for v in obj.values():
+                numbers_published(v, out)
+        elif isinstance(obj, list):
+            for v in obj:
+                numbers_published(v, out)
+        elif isinstance(obj, bool):
+            return
+        elif isinstance(obj, (int, float)):
+            out.add(float(obj))
+        return out
+
+    published_numbers = numbers_published(landlord, set())
+    # Thresholds and unit factors are written into prose on purpose; they are not
+    # dataset figures and must not be reported as drift.
+    doc_allowlist = {0.01, 0.10, 0.25, 0.50, 1.00, 2.00, 4.00, 6.00, 1.15078,
+                     33.3, 3.33, 0.5, 9.0}
+    block = _re_docs.search(
+        r"\*\*Typical rainy season(?P<body>.*?)\*\*Current ENSO state",
+        readme, _re_docs.S)
+    doc_numbers = []
+    if block:
+        for m in _re_docs.finditer(r"(?<![\d.])\d+\.\d+(?![\d.])", block.group("body")):
+            value = float(m.group(0))
+            if value in doc_allowlist:
+                continue
+            decimals = len(m.group(0).split(".")[1])
+            if not any(abs(round(v, decimals) - value) < 1e-9 for v in published_numbers):
+                doc_numbers.append(m.group(0))
+    ledger.check(
+        "readme-figures-traceable",
+        "Every figure in the README's rainy-season table is a number the dataset "
+        "actually publishes (at the precision written)",
+        not doc_numbers,
+        (f"{len(doc_numbers)} README figure(s) match no published value: {doc_numbers[:8]}")
+        if doc_numbers else
+        "all README table figures matched a published value",
+        severity="warning",
+        evidence={"unmatched": doc_numbers,
+                  "block_found": bool(block),
+                  "published_number_count": len(published_numbers),
+                  "allowlist": sorted(doc_allowlist)})
+
+    run_date = dt.datetime.strptime(
+        (run.get("generated_utc") or "")[:10], "%Y-%m-%d").date() \
+        if (run.get("generated_utc") or "")[:4].isdigit() else None
+    window_dates = set()
+    win = cal.get("nws_window") or {}
+    for key in ("first_day", "last_day", "forecast_updated"):
+        v = str(win.get(key) or "")[:10]
+        if len(v) == 10:
+            window_dates.add(v)
+    for day in ((cal.get("current_forecast") or {}).get("days") or []):
+        window_dates.add(str(day.get("date"))[:10])
+    if run_date:
+        window_dates.add(run_date.isoformat())
+    # CPC issuance dates belong in the vocabulary too: documentation that says an
+    # outlook was "issued 2026-09-17" is making a claim the dataset can confirm
+    # or refute, and it is not a claim about the NWS forecast horizon.
+    def add_cpc_dates(rows):
+        for r in rows or []:
+            if not isinstance(r, dict):
+                continue
+            for key in ("issued", "fcst_date", "start_date", "end_date"):
+                v = str(r.get(key) or "")
+                if len(v) == 10 and v[4] == "-":
+                    window_dates.add(v)
+                elif len(v) == 8 and v.isdigit():
+                    window_dates.add(f"{v[:4]}-{v[4:6]}-{v[6:]}")
+    add_cpc_dates((landlord.get("cpc_outlooks_relevant") or []))
+    add_cpc_dates(((cal.get("cpc") or {}).get("records") or []))
+    stale_dates = []
+    if run_date:
+        doc_files = [("README.md", readme)]
+        docs_dir = ROOT / "docs"
+        if docs_dir.exists():
+            doc_files += [(p.name, p.read_text(encoding="utf-8"))
+                          for p in sorted(docs_dir.glob("*.md"))]
+        for name, text in doc_files:
+            for m in _re_docs.finditer(r"\b(\d{4}-\d{2}-\d{2})\b", text):
+                try:
+                    when = dt.date.fromisoformat(m.group(1))
+                except ValueError:
+                    continue
+                # Only dates near this run can be "the current horizon"; a date
+                # in the scoreboard window or in the past is prose about the
+                # season or about history, not a claim about today's forecast.
+                if abs((when - run_date).days) <= 30 and m.group(1) not in window_dates:
+                    stale_dates.append({"file": name, "date": m.group(1)})
+    ledger.check(
+        "docs-current-dates-traceable",
+        "Any date in the documentation that could be read as the current NWS "
+        "forecast horizon is a date this run actually published",
+        not stale_dates,
+        (f"{len(stale_dates)} documentation date(s) near this run match no published "
+         f"forecast-window date: {stale_dates[:6]}")
+        if stale_dates else
+        f"no documentation date near {run_date.isoformat() if run_date else 'this run'} "
+        f"contradicts the published window {sorted(window_dates)}",
+        severity="warning",
+        evidence={"stale": stale_dates[:10], "window_dates": sorted(window_dates)})
+
     # ------------------------------------------------------------- write out
     summary = ledger.summary()
     payload = {

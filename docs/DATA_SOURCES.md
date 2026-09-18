@@ -19,6 +19,30 @@ The coordinate is downloaded and matched in the build; it is not typed in. If th
 download fails the pipeline falls back to a hard-coded value **and raises a
 data-quality error**, so a stale coordinate can never pass silently.
 
+### Reverse geocode &mdash; what the Census says that point is
+
+The site calls the forecast point the Sunset District. That is a *naming* claim,
+so it is read from the Census rather than written by hand.
+
+| | |
+| --- | --- |
+| Product | Census Geocoder &mdash; reverse lookup by coordinate |
+| URL | <https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json> |
+| Used for | Which official Census geographies contain the published centroid |
+| Result | County subdivision **Sunset CCD** (GEOID `0607593267`), **San Francisco County** (`06075`), place **San Francisco city**, Census tract **326.01** (`06075032601`), block GEOID `060750326013006`, Congressional District 11, urban area San Francisco&ndash;Oakland |
+| Browser check | <https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=&benchmark=Public_AR_Current> &mdash; or paste the URL above into a browser |
+| Offline fixture | `tests/fixtures/census_geocoder_94122.json` (real response, trimmed; provenance in `tests/fixtures/README.md`) |
+
+The pipeline publishes the lookup URL, its SHA-256, the geography types the
+Census actually returned, and a `naming_note` stating that "Sunset CCD" is the
+Census county subdivision containing the centroid &mdash; not a city-defined
+neighbourhood boundary. The GEOIDs must nest (county &rarr; subdivision/tract
+&rarr; block) or the claim ledger fails the run.
+
+Note: the Census street-level endpoint
+(`/geocoder/locations/coordinates`) returns **404** for this coordinate, so no
+matched street address is published; the geographies endpoint is the evidence.
+
 ## 2. NOAA / National Weather Service &mdash; everything inside 7 days
 
 Base: <https://api.weather.gov> (the official NWS public API).
@@ -31,7 +55,7 @@ Base: <https://api.weather.gov> (the official NWS public API).
 | Raw gridpoint | `/gridpoints/MTR/82,105` | the underlying gridded element arrays |
 | Observations | `/stations/{id}/observations/latest` | current conditions from official stations |
 | Active alerts | `/alerts/active?zone=CAZ006` | warnings, watches, advisories in force |
-| Area Forecast Discussion | `/products/types/AFD/locations/MTR` | the forecasters' own reasoning, verbatim |
+| Area Forecast Discussion | `/products/types/AFD/locations/MTR` | the forecasters' own reasoning, verbatim; scanned for storm language (see `docs/METHODS.md`) |
 
 Human-readable equivalents:
 <https://forecast.weather.gov/MapClick.php?lat=37.7605&lon=-122.4839> and

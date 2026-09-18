@@ -505,6 +505,94 @@ setTimeout(() => {
     }
   });
 
+  // 19. The NWS Area Forecast Discussion card must render the scan the ledger
+  //     verified: the sentence count it claims, a quote block for every
+  //     published sentence, the scope caveat, and a link to the product.
+  //     A card that silently renders nothing would hide the only qualitative
+  //     storm language the site publishes.
+  {
+    const calJson = JSON.parse(fs.readFileSync(path.join(repo, 'data/calendar.json'), 'utf8'));
+    const afd = calJson.afd_language || null;
+    const card = doc.querySelector('#afd-language');
+    if (!afd) {
+      problems.push('calendar.json has no afd_language block');
+    } else if (!card) {
+      problems.push('#afd-language card missing from the page');
+    } else {
+      const t = card.textContent;
+      const nSentences = (afd.categories || []).reduce((n, c) => n + (c.sentences || []).length, 0);
+      if (t.length < 200) problems.push('AFD card rendered almost nothing: ' + t.slice(0, 120));
+      if (/\bundefined\b|\bNaN\b/.test(t)) problems.push('AFD card renders undefined/NaN');
+      if (!String(afd.sentences_scanned).length || !t.includes(String(afd.sentences_scanned))) {
+        problems.push('AFD card does not state how many sentences were scanned (' +
+          afd.sentences_scanned + ')');
+      }
+      if (!card.querySelector('a[href^="https://"]')) {
+        problems.push('AFD card has no link to the NWS product it quotes');
+      }
+      // Every published sentence must appear on the page, inside a quote block.
+      const quotes = Array.from(card.querySelectorAll('.quote')).map(q => q.textContent.trim());
+      const missing = (afd.categories || [])
+        .flatMap(c => (c.sentences || []).map(s => s.sentence))
+        .filter(s => !quotes.some(q => q.includes(s.trim())));
+      if (missing.length) {
+        problems.push('AFD card omits ' + missing.length + ' of ' + nSentences +
+          ' published sentences: ' + missing[0].slice(0, 90));
+      }
+      if (!quotes.length && nSentences) {
+        problems.push('AFD card published no quote blocks although ' + nSentences + ' sentences exist');
+      }
+      // The caveats are published in the data as strings; the card must render
+      // each of them, not merely mention the word "scope".  A renderer that
+      // read the wrong key would otherwise look correct.
+      ['scope_caveat', 'usage_note', 'verbatim_rule'].forEach(k => {
+        const want = (afd[k] || '').trim();
+        if (want.length < 20) {
+          problems.push('afd_language.' + k + ' is missing or too short in the data');
+        } else if (!t.includes(want.slice(0, 60))) {
+          problems.push('AFD card does not render afd_language.' + k + ': ' + want.slice(0, 70));
+        }
+      });
+      // The scan is qualitative by contract: a date or a rainfall amount
+      // attached to a quotation would be an invention rendered as NWS's words.
+      const invented = (afd.categories || []).flatMap(c => (c.sentences || []).flatMap(s =>
+        Object.keys(s).filter(k => !['section', 'sentence', 'matched_patterns'].includes(k))));
+      if (invented.length) {
+        problems.push('an AFD quotation carries a non-quotation key: ' + invented[0]);
+      }
+    }
+  }
+
+  // 20. Every headline number in the day dialog must name the basis it was
+  //     computed from.  The ledger enforces this on the data; this enforces it
+  //     on what a landlord actually reads.
+  {
+    const cell = doc.querySelector('.day[data-date]');
+    if (cell) {
+      cell.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      const dlg = text('#day-dialog-body');
+      const headline = doc.querySelector('#day-dialog-body table.kv');
+      const rows = headline ? Array.from(headline.querySelectorAll('tr')) : [];
+      const ABSENT = /\u2014|not available|no official/i;
+      rows.forEach(tr => {
+        const label = ((tr.cells[0] || {}).textContent || '').trim();
+        const value = ((tr.cells[1] || {}).textContent || '').trim();
+        if (!label || ABSENT.test(value)) return;   // no value, so no basis is owed
+        const fine = tr.querySelector('.fine');
+        if (!fine || fine.textContent.trim().length < 8) {
+          problems.push('day dialog shows "' + label + '" with no basis: ' +
+            tr.textContent.replace(/\s+/g, ' ').slice(0, 140));
+        }
+      });
+      // All six headline fields the brief asks for must be present to check.
+      const allLabels = rows.map(tr => ((tr.cells[0] || {}).textContent || '')).join('|');
+      ['High / low', 'Humidity', 'Chance of rain', 'Rain amount', 'Max wind', 'Max gust']
+        .forEach(k => { if (!allLabels.includes(k)) problems.push('day dialog headline table missing row: ' + k); });
+      if (!rows.length) problems.push('day dialog rendered no headline rows to check for basis');
+      if (!dlg) problems.push('day dialog empty while checking basis');
+    }
+  }
+
   if (problems.length) {
     console.error('SMOKE TEST FAILED');
     problems.forEach(p => console.error(' - ' + p));

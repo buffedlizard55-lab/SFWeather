@@ -19,6 +19,7 @@ from __future__ import annotations
 import csv
 import datetime as dt
 import io
+import re
 import statistics
 from collections import defaultdict
 
@@ -1786,3 +1787,451 @@ def score_forecast_history(history, ghcn_observations, gsod_observations=None):
         "scored_pairs": pairs,
     }
 
+
+
+# ------------------------------------------- NWS discussion language scanning
+
+#: Sections of an NWS Area Forecast Discussion that are about something other
+#: than the land forecast for this ZIP.  A gale warning in the MARINE section or
+#: a wind shear note in AVIATION is not a landlord-relevant wind event at
+#: 94122, and counting them produced flags that read as property risk.  The
+#: exclusion is published alongside the scan (never silent).
+AFD_EXCLUDED_SECTIONS = frozenset({"AVIATION", "MARINE", "FIRE WEATHER"})
+
+#: An AFD section header line looks like ``.LONG TERM...`` on its own line.
+AFD_SECTION_RE = re.compile(r"^\.([A-Z][A-Z0-9 &'()/-]{1,60})\.\.\.$")
+
+#: ``&&`` on its own line is the AWIPS product separator.
+AFD_BREAK_RE = re.compile(r"^\s*&&\s*$")
+
+#: Sentences that are product furniture rather than forecast content: the AWIPS
+#: transmission header, URLs and social-media links, and the forecaster-initials
+#: footer ("SHORT TERM...MM LONG TERM....MM").  They are counted and the count is
+#: published, so the filter can never quietly eat a real sentence.
+AFD_FURNITURE_RE = (
+    re.compile(r"\b(?:https?://|www\.|\.com/|\.gov/)", re.I),
+    re.compile(r"^[A-Z0-9 ]{6,}$"),                      # "000 FXUS66 KMTR 181434 AFDMTR"
+    re.compile(r"\.\.\.\.*[A-Z]{2}\b"),                   # forecaster initials footer
+    re.compile(r"^(?:Issued|Updated) at ", re.I),         # issuance metadata line
+)
+
+#: The preamble (AWIPS header, product title and issuing office) carries no
+#: forecast content, so it is not scanned - and the exclusion is published.
+AFD_PREAMBLE = "(preamble)"
+
+#: The phrase sets below are the whole detection rule.  They are deliberately
+#: narrow and every one of them is a phrase a forecaster writes, not a stem:
+#: a bare ``rain`` match would fire on any September discussion that mentions a
+#: chance of rain, which is noise, not signal.  Case-sensitive patterns are
+#: marked ``cs`` (upper-case acronyms such as PWAT/IVT, where a case-insensitive
+#: match would hit ordinary words).
+AFD_LANGUAGE_CATEGORIES = (
+    {
+        "id": "atmospheric_river",
+        "label": "Atmospheric river / subtropical moisture plume",
+        "why_it_matters": (
+            "Atmospheric rivers carry most of California's high-total, "
+            "long-duration rain. For a landlord this is the pattern behind "
+            "roof, gutter, drainage and hillside failures - and the one worth "
+            "preparing for days in advance."),
+        "patterns": (
+            (r"atmospheric rivers?", False),
+            (r"pineapple express", False),
+            (r"subtropical moisture", False),
+            (r"(?:moisture|water vapou?r) plume", False),
+            (r"plume of (?:subtropical |deep |rich )?moisture", False),
+            (r"precipitable water", False),
+            (r"\bPWAT\b", True),
+            (r"integrated vapou?r transport", False),
+            (r"\bIVT\b", True),
+            # ``AR`` alone is only accepted once the same discussion has spelled
+            # the term out, so an unrelated upper-case AR can never create a
+            # flag on its own.
+            (r"\bARs?\b", "only_after_spelled_out"),
+        ),
+    },
+    {
+        "id": "prolonged_rain",
+        "label": "Prolonged / multi-day rain",
+        "why_it_matters": (
+            "Days of straight rain, not the daily total, is what saturates "
+            "soil, fills gutters faster than they drain and keeps repair crews "
+            "off a roof. This is the forecaster's own language for that pattern."),
+        "patterns": (
+            (r"periods of rain", False),
+            (r"steady rain", False),
+            (r"persistent rain", False),
+            (r"prolonged rain", False),
+            (r"long[- ]duration", False),
+            (r"days of rain", False),
+            (r"extended period of (?:heavy |persistent )?rain", False),
+            (r"rain (?:will |should )?continue", False),
+            (r"continues to rain", False),
+            (r"back[- ]to[- ]back", False),
+            (r"multiple (?:rounds|waves|systems|storms)", False),
+            (r"series of (?:storms|systems)", False),
+            (r"another (?:storm|system|front|round)", False),
+            (r"successive (?:storms|systems)", False),
+            (r"train(?:ing|s)? (?:over|across|through)", False),
+        ),
+    },
+    {
+        "id": "heavy_rain",
+        "label": "Heavy rain / flooding",
+        "why_it_matters": (
+            "Short-duration intensity is what overwhelms storm drains, garage "
+            "thresholds and ground-floor entryways, and what turns a wet day "
+            "into a water-intrusion call."),
+        "patterns": (
+            (r"heavy rain", False),
+            (r"moderate to heavy", False),
+            (r"torrential", False),
+            (r"rain(?:fall)? rates", False),
+            (r"rainfall totals", False),
+            (r"excessive rain", False),
+            (r"flash flood", False),
+            (r"flood watch", False),
+            (r"river flood", False),
+            (r"urban (?:and small stream )?flooding", False),
+            (r"small stream flooding", False),
+            (r"standing water", False),
+            (r"ponding", False),
+        ),
+    },
+    {
+        "id": "strong_wind",
+        "label": "Strong wind / wind hazard",
+        "why_it_matters": (
+            "Wind is what turns rain into intrusion: it drives water under "
+            "flashing and through window seals, and it is what brings down "
+            "fences, trees and scaffolding."),
+        "patterns": (
+            (r"wind advisory", False),
+            (r"high wind", False),
+            (r"damaging winds?", False),
+            (r"hazardous winds?", False),
+            (r"gale", False),
+            (r"storm[- ]force", False),
+            (r"gusts? (?:of|to|up to|near|around) \d", False),
+            (r"winds? (?:of|to|up to|near|around|increasing to) \d", False),
+        ),
+    },
+    {
+        "id": "quoted_rainfall_amount",
+        "label": "An explicit rainfall amount in NWS's own text",
+        "why_it_matters": (
+            "When a forecaster writes an amount, that is the closest thing to a "
+            "usable number in the discussion. It is quoted here exactly as "
+            "written and is NOT attached to any scoreboard day."),
+        "patterns": (
+            (r"\d+(?:\.\d+)?\s*(?:-|to|\u2013)\s*\d+(?:\.\d+)?\s*(?:inch|inches)\b", False),
+            (r"\d+(?:\.\d+)?\s*(?:inch|inches)\b(?: of)?\s*(?:rain|precipitation|liquid)", False),
+            (r"(?:rain|rainfall|precipitation)(?: totals)? of \d", False),
+        ),
+    },
+    {
+        "id": "wind_and_rain_together",
+        "label": "Wind and rain in the same sentence",
+        "why_it_matters": (
+            "The single combination a landlord cannot fix after the fact: "
+            "wind-driven rain finds gaps that neither hazard finds alone. A "
+            "match here means NWS discussed both in one sentence."),
+        "patterns": (("__BOTH__", False),),
+    },
+)
+
+#: For the joint category, both a wind word and a rain word must appear in the
+#: same sentence.  These are broad on purpose: the narrowness comes from
+#: requiring the two together.
+AFD_WIND_WORDS = re.compile(r"\b(?:wind|winds|windy|gust|gusts|gusty|breezy|breeze)\b", re.I)
+AFD_RAIN_WORDS = re.compile(
+    r"\b(?:rain|rains|rainy|rainfall|rainshowers?|showers?|precipitation|precip|"
+    r"drizzle|storm|storms|downpour|wet)\b", re.I)
+AFD_AR_SPELLED_OUT = re.compile(r"atmospheric rivers?", re.I)
+
+#: The published sentence is the source sentence with runs of whitespace
+#: collapsed.  A reviewer can Ctrl-F the result in the fetched product once the
+#: same collapse is applied, which is exactly what the claim ledger does.
+def collapse_ws(text):
+    return re.sub(r"\s+", " ", text or "").strip()
+
+
+def afd_sections(text):
+    """Split an AFD product text into ``(section, body)`` blocks, in order.
+
+    Section headers are the ``.LONG TERM...`` lines NWS writes; ``&&`` is the
+    AWIPS separator; anything before the first header is filed under
+    ``"(preamble)"`` so the AWIPS header and the KEY MESSAGES block are never
+    silently dropped.
+    """
+    blocks = []
+    section = "(preamble)"
+    buf = []
+    for line in (text or "").replace("\r", "\n").split("\n"):
+        m = AFD_SECTION_RE.match(line.strip())
+        if m:
+            if buf:
+                blocks.append((section, "\n".join(buf)))
+            section, buf = m.group(1).strip(), []
+            continue
+        if AFD_BREAK_RE.match(line):
+            if buf:
+                blocks.append((section, "\n".join(buf)))
+                buf = []
+            continue
+        buf.append(line)
+    if buf:
+        blocks.append((section, "\n".join(buf)))
+    return blocks
+
+
+def afd_sentences(body):
+    """Unwrap a hard-wrapped AFD block into readable sentences.
+
+    NWS wraps discussion prose at about 70 columns *mid-sentence*, so a single
+    newline is a wrap and must become a space; a blank line is a paragraph
+    break.  A hyphen at the end of a line is a wrap, not part of the word
+    (``above-\nnormal`` -> ``above-normal``), matching the rule already used for
+    CPC pages in ``main.extract_key_sentences``.
+    """
+    body = re.sub(r"(?<=[a-z])-\s*\n\s*(?=[a-z])", "-", body or "")
+    # KEY MESSAGES is a bulleted list, and each bullet is an independent
+    # statement of the forecaster's own summary.  Without this the whole list
+    # unwraps into one long "sentence" that quotes several points as if they
+    # were one.
+    body = re.sub(r"\n(?=\s*[-*]\s)", r"\n\n", body)
+    out = []
+    for para in re.split(r"\n\s*\n", body):
+        flat = re.sub(r"\n(?=\S)", " ", para)
+        for piece in re.split(r"(?<=[.!?])\s+(?=[A-Z(\d])", flat):
+            s = collapse_ws(piece).strip(" |")
+            # Fix the space-before-punctuation that unwrapping can leave, and
+            # put hyphenated number ranges back together ("1 - 2 inches").
+            s = re.sub(r"\s+([,.;:])", r"\1", s)
+            s = re.sub(r"(?<=\d)\s*-\s*(?=\d)", "-", s)
+            if 20 <= len(s) <= 500:
+                out.append(s)
+    return out
+
+
+def _afd_match_sentence(patterns, sentence, ar_available):
+    """Return the list of patterns from *patterns* that *sentence* matches.
+
+    One function holds the whole matching rule, so the published sentence list
+    and the published count are both derived from it and cannot disagree.
+
+    ``cs`` is ``True`` for upper-case acronyms (``PWAT``, ``IVT``, ``AR``),
+    which must not match case-insensitively, and the special value
+    ``"only_after_spelled_out"`` for a bare ``AR``: accepted only when the same
+    discussion has already spelled out "atmospheric river", so an unrelated
+    upper-case AR can never create a flag.
+    """
+    matched = []
+    for pattern, cs in patterns:
+        if pattern == "__BOTH__":
+            if AFD_WIND_WORDS.search(sentence) and AFD_RAIN_WORDS.search(sentence):
+                matched.append("wind term and rain term in the same sentence")
+            continue
+        if cs == "only_after_spelled_out":
+            if not ar_available:
+                continue
+            cs = True
+        if re.search(pattern, sentence, 0 if cs else re.I):
+            matched.append(pattern)
+    return matched
+
+
+def afd_language_scan(afd, excluded_sections=AFD_EXCLUDED_SECTIONS):
+    """Flag the landlord-relevant language in an NWS Area Forecast Discussion.
+
+    Returns a publishable dict.  The rule that governs the whole function:
+    **a flag is a quotation, never a number.**  Nothing returned here is ever
+    attached to a scoreboard day or converted into a daily value, because an
+    AFD sentence has no date in it and this project will not invent one.
+
+    ``afd`` is the dict stored under ``nws["products"]["AFD"]`` (keys ``text``,
+    ``issuance_time``, ``source_url``, ``label``, ``id``).
+    """
+    afd = afd or {}
+    text = afd.get("text") or ""
+    ar_available = bool(AFD_AR_SPELLED_OUT.search(text))
+
+    base = {
+        "product": afd.get("product_name") or "Area Forecast Discussion",
+        "product_type": "AFD",
+        "product_id": afd.get("id"),
+        "issuance_time": afd.get("issuance_time"),
+        "source_url": afd.get("source_url"),
+        "text_chars": len(text),
+        "excluded_sections": sorted(excluded_sections),
+        "exclusion_reason": (
+            "The MARINE, AVIATION and FIRE WEATHER sections describe hazards for "
+            "boaters, pilots and fuels, not for a building at 94122. They are "
+            "excluded from the scan and the exclusion is published rather than "
+            "silent."),
+        "usage_note": (
+            "Every item below is a verbatim quotation of NWS's own discussion, "
+            "with runs of whitespace collapsed. A flag is never converted into a "
+            "number on the scoreboard, and no calendar date is attached to a "
+            "quotation: the discussion covers the next several days, not a named "
+            "date. Absence of a phrase is a statement about this discussion, not "
+            "about the season."),
+        "verbatim_rule": (
+            "whitespace-collapsed substring of the fetched product text "
+            "(re-checked by pipeline/verify_claims.py on every run)"),
+        "scope_caveat": (
+            "NWS San Francisco/Monterey (MTR) writes one discussion for the whole "
+            "Bay Area and Central Coast forecast area, not for 94122. A quoted "
+            "sentence may be about the inland valleys, the hills or the immediate "
+            "coast. The full sentence and its section are published so the reader "
+            "can see what it refers to; this project never narrows a quotation to "
+            "the ZIP on its own."),
+        "sources": ([{"label": "NWS Area Forecast Discussion (api.weather.gov)",
+                      "url": afd.get("source_url")}] if afd.get("source_url") else []),
+    }
+
+    if not text:
+        base.update({"scanned": False,
+                     "reason": "no Area Forecast Discussion text was captured this run",
+                     "sections_scanned": [], "sections_excluded_this_run": [],
+                     "categories": [], "any_language_found": False})
+        return base
+
+    scanned, excluded_run = [], []
+    sentences = []
+    furniture_dropped = 0
+    excluded_upper = {s.upper() for s in excluded_sections}
+    for section, body in afd_sections(text):
+        # NWS repeats a header line before and after each block, so a section
+        # name would otherwise be listed twice with an empty body the second
+        # time.  Dedupe in order; never list a section that contributed nothing.
+        if section.upper() in excluded_upper:
+            if section not in excluded_run:
+                excluded_run.append(section)
+            continue
+        if section == AFD_PREAMBLE:
+            continue
+        kept = []
+        for s in afd_sentences(body):
+            if any(rx.search(s) for rx in AFD_FURNITURE_RE):
+                furniture_dropped += 1
+                continue
+            kept.append(s)
+        if not kept:
+            continue
+        if section not in scanned:
+            scanned.append(section)
+        sentences.extend((section, s) for s in kept)
+
+    categories = []
+    total_matches = 0
+    for cat in AFD_LANGUAGE_CATEGORIES:
+        hits = []
+        n_hits = 0
+        for section, s in sentences:
+            matched = _afd_match_sentence(cat["patterns"], s, ar_available)
+            if not matched:
+                continue
+            # Count in the same pass that collects, so the published count and
+            # the published list can never be produced by two different readings
+            # of the rules (which is how a count silently drifts from its
+            # evidence).  The list is capped; the count is not, so a truncated
+            # list can never understate how much was found.
+            n_hits += 1
+            if len(hits) < 8:
+                hits.append({"section": section, "sentence": s,
+                             "matched_patterns": matched})
+        total_matches += n_hits
+        note = None
+        if cat["id"] == "atmospheric_river" and not ar_available:
+            note = ("The bare abbreviation 'AR' was not accepted as a match "
+                    "because this discussion never spells out 'atmospheric "
+                    "river', so an upper-case AR from some other context could "
+                    "not be distinguished.")
+        if len(hits) < n_hits:
+            note = ((note + " " if note else "") +
+                    f"{n_hits} sentences matched; the {len(hits)} longest-list "
+                    "slots shown first are published in full.")
+        categories.append({
+            "id": cat["id"],
+            "label": cat["label"],
+            "why_it_matters": cat["why_it_matters"],
+            "terms": [p for p, _cs in cat["patterns"] if p != "__BOTH__"]
+                     or ["wind term AND rain term in the same sentence"],
+            "sentence_count": n_hits,
+            "sentences": hits,
+            "note": note,
+        })
+
+    base.update({
+        "scanned": True,
+        "reason": None,
+        "sections_scanned": scanned,
+        "sections_excluded_this_run": excluded_run,
+        "preamble_excluded": AFD_PREAMBLE,
+        "furniture_sentences_dropped": furniture_dropped,
+        "categories": categories,
+        "any_language_found": total_matches > 0,
+        "sentences_scanned": len(sentences),
+        "none_found_statement": (
+            None if total_matches else
+            f"The Area Forecast Discussion issued {afd.get('issuance_time') or '(unknown time)'} "
+            f"contains none of the {sum(len(c['patterns']) for c in AFD_LANGUAGE_CATEGORIES)} "
+            f"listed phrases in its {len(scanned)} land-forecast sections "
+            f"({len(sentences)} sentences scanned). That is a statement about this "
+            "discussion only. It is not evidence that the season will be dry."),
+    })
+    return base
+
+
+def parse_census_geographies(payload):
+    """Read the Census reverse-geocode response for the 94122 centroid.
+
+    The Census geocoder returns ``result.geographies`` keyed by geography type,
+    each a list of records.  Only the fields this project publishes are read, by
+    name, and a geography that is absent stays absent - it is never guessed.
+    This is the official evidence for *which part of San Francisco* the single
+    forecast point sits in; the ZCTA centroid alone does not say.
+    """
+    geos = ((payload or {}).get("result") or {}).get("geographies") or {}
+    if not geos:
+        return None
+
+    def first(key):
+        rows = geos.get(key) or []
+        return rows[0] if rows and isinstance(rows[0], dict) else None
+
+    def name_of(row, *fields):
+        for f in fields:
+            v = (row or {}).get(f)
+            if isinstance(v, str) and v.strip():
+                return v.strip()
+            if isinstance(v, (int, float)):
+                return v
+        return None
+
+    co_sub = first("County Subdivisions")
+    county = first("Counties")
+    place = first("Incorporated Places") or first("Census Designated Places")
+    tract = first("Census Tracts")
+    block = first("2020 Census Blocks") or first("Census Blocks")
+    cd = first("119th Congressional Districts") or first("Congressional Districts")
+    urban = first("Urban Areas")
+
+    out = {
+        "county_subdivision": name_of(co_sub, "NAME", "BASENAME"),
+        "county_subdivision_geoid": name_of(co_sub, "GEOID"),
+        "county": name_of(county, "NAME"),
+        "county_geoid": name_of(county, "GEOID"),
+        "place": name_of(place, "NAME"),
+        "place_geoid": name_of(place, "GEOID"),
+        "census_tract": name_of(tract, "NAME"),
+        "census_tract_geoid": name_of(tract, "GEOID"),
+        "census_block_geoid": name_of(block, "GEOID"),
+        "congressional_district": name_of(cd, "NAME"),
+        "urban_area": name_of(urban, "NAME"),
+        "geography_types_returned": sorted(geos.keys()),
+    }
+    if not any(out[k] for k in ("county_subdivision", "county", "census_tract")):
+        return None
+    return out

@@ -110,8 +110,9 @@ want a commercial second opinion you must read it at the source.
 
 ### 12. Forecast gusts and rain amounts carry one allocation step
 The `/forecast/hourly` product returns **no `windGust` and no QPF** for grid
-`MTR 82,105` (0 of 156 periods on 17 Sep 2026), so those two fields come from the
-raw gridpoint series at the same point.
+`MTR 82,105` — the pipeline counts the null periods on every run and reports the
+count in `data/quality_report.json` rather than quoting a snapshot here — so those
+two fields come from the raw gridpoint series at the same point.
 
 * **Gusts** are an instantaneous value, so the daily figure is simply the maximum
   over the hours falling in that local day, converted km/h → mph. No modelling.
@@ -148,6 +149,42 @@ statement. The tile wording, the day dialog and the legend all keep the two apar
 and the smoke test refuses a climatology tile that uses the word "rain" (bug 39).
 Readers comparing a September-looking tile with a January one should know they are
 reading two different quantities.
+
+### 15. The Area Forecast Discussion is written for a whole forecast area, not for 94122
+The AFD scan quotes NWS forecasters verbatim, but the discussion covers the entire
+MTR forecast area — the Bay Area, the Central Coast, the Delta, the Sierra
+foothills and the coastal waters. A sentence like "strongest winds for the inland
+valleys and gaps/passes" is true *somewhere in that area* and says nothing about
+one ZIP code in the Sunset.
+
+* The card publishes a `scope_caveat` to that effect, and the site renders it
+  with the quotations rather than below them.
+* `MARINE`, `AVIATION` and `FIRE WEATHER` sections are excluded from the scan
+  (open-ocean and airport conditions are not a landlord's roof), and the
+  exclusion is published with its reason.
+* The scan publishes **no numbers**: no date, no rainfall amount, no probability.
+  A quoted amount stays inside quotation marks with its own words ("rainfall
+  totals of 3 inches possible along the coast range"), and the ledger fails the
+  run if a date or an amount is attached to any quotation.
+* Nothing in the scan promotes a day's tier. Days inside the official horizon
+  keep their NWS values; days outside it stay climatology.
+* The scan reflects the most recent discussion at the time of the run — usually
+  issued within the last 24 hours — and is re-run nightly. It is not an archive
+  of discussions.
+
+### 16. "Sunset District" is a Census name, not a city neighbourhood boundary
+The forecast point is called the Sunset District because the Census geographer
+places the published 94122 centroid inside the county subdivision **Sunset CCD**
+(GEOID `0607593267`). That is an official statistical boundary, and it is the
+evidence the site publishes.
+
+What it is **not**: a city-defined neighbourhood boundary. The City and County of
+San Francisco publishes analysis neighbourhoods (Inner Sunset, Outer Sunset,
+Parkside, …) whose edges differ from the Census subdivision, and the ZIP 94122
+itself spans more than one of them. So the site does not claim to cover "Outer
+Sunset" as a municipal unit; it covers the ZCTA centroid and names the geography
+the Census reports. If the geocoder is unreachable on a run, no name is printed —
+the card says the geography was not retrieved and the irregularity is recorded.
 
 ---
 
