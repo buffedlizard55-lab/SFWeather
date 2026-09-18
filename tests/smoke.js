@@ -108,6 +108,25 @@ setTimeout(() => {
       .forEach(k => { if (!dlg.includes(k)) problems.push('day dialog missing row: ' + k); });
   }
 
+  // The day dialog's column count must come from the data.  It read
+  // "13 element columns read, including 14 traced to named columns" while the
+  // 13 was hard-coded and the file also carries a year-count column.
+  {
+    const cell = doc.querySelector('.day[data-date]');
+    if (cell) {
+      cell.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      const dlg = text('#day-dialog-body');
+      const m = dlg.match(/(\d+) column\(s\) of the published file traced/);
+      if (dlg.includes('element columns read') && !m) {
+        problems.push('day dialog states a hard-coded published-column count: ' +
+          dlg.slice(Math.max(0, dlg.indexOf('Source: NCEI') - 120), dlg.indexOf('Source: NCEI') + 60));
+      }
+      if (m && Number(m[1]) < 10) {
+        problems.push('day dialog reports an implausibly small published-column count: ' + m[1]);
+      }
+    }
+  }
+
   // CSV export path.
   try {
     const csv = doc.querySelector('#export-csv');
