@@ -655,16 +655,23 @@ function renderLocation(run) {
    * Sunset" is a local split with no federal boundary, and the naming_note that
    * says so comes from the data rather than being typed here. */
   const g = c.census_geographies || null;
+  /* A geography the Census did not report for this point must still appear,
+   * saying so.  kvTable drops a row whose value is null, so returning null here
+   * would silently delete the row and hide the gap - which is the opposite of
+   * flagging an irregularity.  degrade_smoke.py found exactly that. */
+  const NOT_REPORTED = 'not reported by the Census for this point';
+  const geoOr = (value, text) => (value ? text : NOT_REPORTED);
   const geoRows = g ? [
-    ['County subdivision (Census)', g.county_subdivision
-      ? `${g.county_subdivision} · GEOID ${g.county_subdivision_geoid || DASH}` : null],
-    ['County', g.county ? `${g.county} · GEOID ${g.county_geoid || DASH}` : null],
-    ['Incorporated place', g.place ? `${g.place} · GEOID ${g.place_geoid || DASH}` : null],
-    ['Census tract', g.census_tract
-      ? `${g.census_tract} · GEOID ${g.census_tract_geoid || DASH}` : null],
-    ['Census block', g.census_block_geoid || null],
-    ['Congressional district', g.congressional_district || null],
-    ['Urban area', g.urban_area || null],
+    ['County subdivision (Census)',
+      geoOr(g.county_subdivision,
+        `${g.county_subdivision} · GEOID ${g.county_subdivision_geoid || DASH}`)],
+    ['County', geoOr(g.county, `${g.county} · GEOID ${g.county_geoid || DASH}`)],
+    ['Incorporated place', geoOr(g.place, `${g.place} · GEOID ${g.place_geoid || DASH}`)],
+    ['Census tract', geoOr(g.census_tract,
+      `${g.census_tract} · GEOID ${g.census_tract_geoid || DASH}`)],
+    ['Census block', geoOr(g.census_block_geoid, g.census_block_geoid)],
+    ['Congressional district', geoOr(g.congressional_district, g.congressional_district)],
+    ['Urban area', geoOr(g.urban_area, g.urban_area)],
     ['Geography source', link(g.url, 'U.S. Census Bureau geocoder — reverse lookup of this point')]
   ] : [
     ['County subdivision (Census)',

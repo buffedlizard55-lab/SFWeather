@@ -133,7 +133,7 @@ retrieval time of the exact file.
 | Layer | What it does |
 | --- | --- |
 | `pipeline/verify_sources.py` | Fails the build if any host outside the official list is used. There is no path to a commercial or unofficial source. |
-| `pipeline/verify_claims.py` (47 checks) | Re-derives every headline number from the same file and checks the project's rules: no `NWS FORECAST` badge outside the official horizon, no invented daily value, no humidity presented as an observation when it is a derivation, no NOAA *test* message shown as a real alert, quotes are plain text with no HTML entities left in them, and every source URL printed on the site is traced to a recorded fetch; no published text carries a Unicode replacement character; every CPC polygon sitting on the 33.3% baseline is flagged as such wherever it appears; and every figure in the executive bottom line is found in the dataset it claims to read. New this pass: every quoted forecaster sentence must be a whitespace-collapsed substring of the fetched discussion text, no quotation may carry a date or an amount, the named Census geography must be traceable to a recorded fetch with nesting GEOIDs, and every published day-value must name its own basis. Warnings (not failures) also catch documentation drift: a figure quoted in the README that the dataset does not publish, or a date in the docs near the run date that this run never published. **Each guard is falsified before it is kept** — a guard that cannot be made to fail by mutating a fixture copy of `data/` is treated as a bug in the guard. The harnesses are committed: `tests/falsify_guards.py` (15 ledger cases) and `tests/falsify_smoke.py` (8 render cases), both run in CI. |
+| `pipeline/verify_claims.py` (47 checks) | Re-derives every headline number from the same file and checks the project's rules: no `NWS FORECAST` badge outside the official horizon, no invented daily value, no humidity presented as an observation when it is a derivation, no NOAA *test* message shown as a real alert, quotes are plain text with no HTML entities left in them, and every source URL printed on the site is traced to a recorded fetch; no published text carries a Unicode replacement character; every CPC polygon sitting on the 33.3% baseline is flagged as such wherever it appears; and every figure in the executive bottom line is found in the dataset it claims to read. New this pass: every quoted forecaster sentence must be a whitespace-collapsed substring of the fetched discussion text, no quotation may carry a date or an amount, the named Census geography must be traceable to a recorded fetch with nesting GEOIDs, and every published day-value must name its own basis. Warnings (not failures) also catch documentation drift: a figure quoted in the README that the dataset does not publish, or a date in the docs near the run date that this run never published. **Each guard is falsified before it is kept** — a guard that cannot be made to fail by mutating a fixture copy of `data/` is treated as a bug in the guard. The harnesses are committed and run in CI: `tests/falsify_guards.py` (15 ledger cases), `tests/falsify_smoke.py` (8 render cases) and `tests/degrade_smoke.py` (7 degraded dataset states that must render honestly, plus 3 that break the renderer to prove the first 7 are really checked). |
 | Workflow gate | `summary.failed > 0` → **the run publishes nothing**. It commits diagnostics only ("refresh NOT published") and the site keeps the last verified dataset. |
 | `data/provenance.json` | The full fetch log: every URL, status, size, SHA-256, timestamp. |
 | `data/verify.json` + `verify_report.txt` | The claim ledger as machine-readable JSON and as plain text. |
@@ -213,6 +213,7 @@ tests/                      test_parsers.py (offline), smoke.js (jsdom render)
 tests/fixtures/             recorded real official responses used by the offline tests
 tests/falsify_guards.py     proves each ledger guard can fail (15 mutated fixtures)
 tests/falsify_smoke.py      proves each render guard can fail (8 mutated copies)
+tests/degrade_smoke.py      degraded data must render honestly (10 cases)
 .github/workflows/          update-data.yml (nightly), site-test.yml (on push)
 ```
 
@@ -227,6 +228,7 @@ python3 tests/test_parsers.py       # offline unit tests (316 assertions)
 python3 tests/falsify_guards.py     # ledger guards can fail (15 cases)
 npm test                            # render the page in jsdom (needs: npm install)
 python3 tests/falsify_smoke.py      # render guards can fail (8 cases)
+python3 tests/degrade_smoke.py      # degraded data renders honestly (10 cases)
 python3 -m http.server 8000         # open http://localhost:8000
 ```
 

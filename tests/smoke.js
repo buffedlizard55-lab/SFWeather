@@ -497,13 +497,43 @@ setTimeout(() => {
   }
 
   // 16. Nothing on the whole page may render the machine artefacts NaN or
-  //     "undefined".
-  ['#landlord', '#season', '#calendar', '#wind'].forEach(sel => {
-    const t = text(sel);
-    if (/\bundefined\b|\bNaN\b/.test(t)) {
-      problems.push('section ' + sel + ' renders "undefined" or "NaN"');
+  //     "undefined".  This used to name four sections, which quietly left out
+  //     the two the newest cards live in (#now, #location) - so it now walks
+  //     every <section> in the document and a future card is covered without
+  //     anyone having to remember to extend a list.
+  {
+    const sections = Array.from(doc.querySelectorAll('section[id]'));
+    if (sections.length < 4) {
+      problems.push('only ' + sections.length + ' sections found to scan for NaN/undefined');
     }
-  });
+    sections.forEach(sec => {
+      const t = (sec.textContent || '');
+      if (/\bundefined\b|\bNaN\b/.test(t)) {
+        const m = t.match(/.{0,60}(\bundefined\b|\bNaN\b).{0,40}/);
+        problems.push('section #' + sec.id + ' renders "undefined" or "NaN": ' +
+          (m ? m[0].replace(/\s+/g, ' ') : ''));
+      }
+      if (/\[object HTML/.test(t)) {
+        problems.push('section #' + sec.id + ' leaked a DOM node as text');
+      }
+    });
+    ['#landlord', '#season', '#calendar', '#wind', '#now', '#location'].forEach(sel => {
+      if (!doc.querySelector(sel)) problems.push('expected section ' + sel + ' is missing');
+    });
+    // A missing value must render as an em dash or a named reason, never as the
+    // machine token.  The word "null" does appear legitimately inside an
+    // irregularity message ("some hourly fields are null"), so this checks the
+    // shape of the leak - an element whose whole content is the token - rather
+    // than banning the word.
+    Array.from(doc.querySelectorAll('td, th, .value, .stat-value, .fine, span'))
+      .forEach(node => {
+        const own = (node.textContent || '').trim();
+        if (/^(null|undefined|NaN)$/.test(own)) {
+          problems.push('a cell renders a bare machine token "' + own + '" (' +
+            (node.closest('section[id]') || {}).id + ')');
+        }
+      });
+  }
 
   // 19. The NWS Area Forecast Discussion card must render the scan the ledger
   //     verified: the sentence count it claims, a quote block for every
@@ -514,10 +544,28 @@ setTimeout(() => {
     const calJson = JSON.parse(fs.readFileSync(path.join(repo, 'data/calendar.json'), 'utf8'));
     const afd = calJson.afd_language || null;
     const card = doc.querySelector('#afd-language');
-    if (!afd) {
-      problems.push('calendar.json has no afd_language block');
-    } else if (!card) {
+    if (!card) {
       problems.push('#afd-language card missing from the page');
+    } else if (!afd) {
+      // Dataset completeness is the ledger's job (afd-language-verbatim fails a
+      // build with no block).  What the page owes is an honest sentence, so a
+      // future upstream failure cannot leave a card that looks populated.
+      const t0 = card.textContent;
+      if (!/not present|not scanned/i.test(t0)) {
+        problems.push('AFD card is empty instead of saying the scan is absent: ' + t0.slice(0, 90));
+      }
+      if (/\bundefined\b|\bNaN\b/.test(t0)) problems.push('AFD card renders undefined/NaN');
+    } else if (afd.scanned === false) {
+      // Honest degradation: the reason must be printed, not swallowed.
+      const t0 = card.textContent;
+      if (!/not scanned/i.test(t0)) problems.push('AFD card does not say it was not scanned');
+      if (!(afd.reason || '').trim() || !t0.includes(String(afd.reason).trim().slice(0, 30))) {
+        problems.push('AFD card does not print the recorded reason for not scanning: ' + afd.reason);
+      }
+      if (afd.source_url && !card.querySelector('a[href^="https://"]')) {
+        problems.push('AFD card knows the product URL but prints no link');
+      }
+      if (/\bundefined\b|\bNaN\b/.test(t0)) problems.push('AFD card renders undefined/NaN');
     } else {
       const t = card.textContent;
       const nSentences = (afd.categories || []).reduce((n, c) => n + (c.sentences || []).length, 0);
@@ -590,6 +638,60 @@ setTimeout(() => {
         .forEach(k => { if (!allLabels.includes(k)) problems.push('day dialog headline table missing row: ' + k); });
       if (!rows.length) problems.push('day dialog rendered no headline rows to check for basis');
       if (!dlg) problems.push('day dialog empty while checking basis');
+    }
+  }
+
+  // 21. The Location card's honesty about the Census geography.  The site calls
+  //     this point the Sunset District, so the card must either show the Census
+  //     evidence for that name or say plainly that the lookup did not run.
+  //     The third possibility - printing a district name with no evidence, or
+  //     claiming a retrieval that did not happen - is what this guard exists to
+  //     catch; it was found by tests/degrade_smoke.py, which broke the fallback
+  //     wording and discovered nothing noticed.
+  {
+    const runJson = JSON.parse(fs.readFileSync(path.join(repo, 'data/run.json'), 'utf8'));
+    const g = (((runJson.target || {}).centroid) || {}).census_geographies || null;
+    const card = doc.querySelector('#location');
+    if (!card) {
+      problems.push('#location card missing');
+    } else {
+      const t = card.textContent;
+      const rows = Array.from(card.querySelectorAll('tr'));
+      const subRow = rows.find(tr => /County subdivision/i.test((tr.cells[0] || {}).textContent || ''));
+      const subVal = subRow ? ((subRow.cells[1] || {}).textContent || '') : '';
+      if (!subRow) {
+        problems.push('Location card has no "County subdivision (Census)" row');
+      } else if (!g) {
+        if (!/not retrieved/i.test(subVal)) {
+          problems.push('no Census geography in the dataset but the card does not say it was ' +
+            'not retrieved: "' + subVal.slice(0, 90) + '"');
+        }
+        if (/CCD|Census Tract|GEOID/i.test(subVal)) {
+          problems.push('the card names a geography it has no evidence for: "' +
+            subVal.slice(0, 90) + '"');
+        }
+      } else {
+        const name = g.county_subdivision;
+        if (name && !subVal.includes(String(name))) {
+          problems.push('Census named "' + name + '" but the card shows "' + subVal.slice(0, 70) + '"');
+        }
+        if (g.county_subdivision_geoid && !t.includes(String(g.county_subdivision_geoid))) {
+          problems.push('the card omits the county-subdivision GEOID ' + g.county_subdivision_geoid);
+        }
+        if (!/geocoding\.geo\.census\.gov/.test(
+              Array.from(card.querySelectorAll('a')).map(a => a.getAttribute('href') || '').join(' '))) {
+          problems.push('the card prints no link to the Census geocoder it read');
+        }
+        const note = (doc.querySelector('#location-note') || {}).textContent || '';
+        if ((g.naming_note || '').trim().length > 20 && !note.includes(String(g.naming_note).trim().slice(0, 40))) {
+          problems.push('the card omits the published naming_note that says this is a Census ' +
+            'subdivision, not a city neighbourhood');
+        }
+        if ((g.geography_types_returned || []).length &&
+            !note.includes(String(g.geography_types_returned[0]))) {
+          problems.push('the card omits the geography types the Census actually returned');
+        }
+      }
     }
   }
 

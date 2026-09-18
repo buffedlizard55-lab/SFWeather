@@ -58,6 +58,12 @@ guard can fail). GitHub Pages serves `main` from the repository root; the
 
    **Keep that property when adding cases:** a falsification case must assert
    that its mutation actually changed something.
+6. **`tests/degrade_smoke.py`** renders seven degraded dataset states (AFD block
+   absent, scan not run, scan found nothing, Census lookup absent, Census names
+   all null, Census partial, a scoreboard day all null) and asserts the page still
+   renders honestly — plus three cases that break the renderer on purpose to prove
+   those checks can fail. It immediately found bug 49: the Location card was
+   silently deleting a Census row whenever the Census reported no name for it.
 
 ### Known state to expect on the next run
 
