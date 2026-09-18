@@ -40,6 +40,17 @@ period*, and are never converted into daily numbers.
 
 ## The landlord summary (all values from the current dataset)
 
+The dashboard opens with a **ranked executive summary of repair & maintenance cost
+drivers** — prolonged wet spells (roof, gutters, drainage), heavy single-day rain
+(storm drains, entryways), wind + rain together (wind-driven intrusion), peak gusts
+(fences, trees, tenant safety), the total seasonal water load (budget baseline plus
+the ENSO/CPC tilt), and wet-day frequency (condensation, works scheduling). Each
+driver carries its numbers and its official source links; the "why it matters"
+sentence is labelled *guidance, not a weather claim*. Two figures published there
+are *expected counts* (sums of the per-date 1991–2020 probabilities): about
+**15.0 days per season with ≥0.25 in of rain** and **3.2 days with ≥1.00 in** — an
+expectation over the observed distribution, not a prediction for 2026-27.
+
 **Typical rainy season, 1 Oct – 31 Jan, San Francisco downtown gauge `USW00023272`
 (1991–2020, n = 30 seasons)**
 
@@ -82,12 +93,12 @@ retrieval time of the exact file.
 | Workflow gate | `summary.failed > 0` → **the run publishes nothing**. It commits diagnostics only ("refresh NOT published") and the site keeps the last verified dataset. |
 | `data/provenance.json` | The full fetch log: every URL, status, size, SHA-256, timestamp. |
 | `data/verify.json` + `verify_report.txt` | The claim ledger as machine-readable JSON and as plain text. |
-| `tests/test_parsers.py` | 89 offline assertions (stdlib only, no network) on the parsing/derivation code and exact official-host allow-list — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, an end-to-end aggregation over a synthetic file with hand-computable expected values, the rule that a CPC explanation must describe the category actually displayed, and the NWS gridpoint gust/QPF aggregation including the local-midnight accumulation split. |
+| `tests/test_parsers.py` | 121 offline assertions (stdlib only, no network) on the parsing/derivation code and exact official-host allow-list — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, an end-to-end aggregation over a synthetic file with hand-computable expected values, the rule that a CPC explanation must describe the category actually displayed, the NWS gridpoint gust/QPF aggregation including the local-midnight accumulation split, and the maintenance cost-driver rules (expected-days summation, Storm Events damage parsing, ENSO display formatting, no claim without evidence). |
 | `tests/smoke.js` (`npm test`) | Renders the whole page in jsdom against the committed data and fails on an empty section, a broken day dialog or CSV export, a truncated source label, a mislabelled source link, a CPC note that does not explain its own category, an unlabelled rain/temperature outlook, an unrounded humidity, or a forecast day missing its gust or rain amount. |
 
 **Every forecast day can be checked by hand:** open the day's dialog, follow the
 source link, and compare. The site's *Verification* section lists all 17 recorded
-claims (23 checks) with their evidence, and *Irregularities* lists anything the
+claims (26 checks) with their evidence, and *Irregularities* lists anything the
 pipeline flagged rather than smoothed over.
 
 ---

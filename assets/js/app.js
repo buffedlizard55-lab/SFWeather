@@ -56,6 +56,14 @@ function n(v, dp = 0, suffix = '') {
 
 function pct(v, dp = 0) { return v === null || v === undefined ? DASH : Number(v).toFixed(dp) + '%'; }
 
+/** Reader-facing ENSO phase label. "el_nino" is a data key, not a phrase -
+ *  the executive summary used to print it raw. */
+function phaseLabel(p) {
+  const m = { el_nino: 'El Ni\u00f1o', la_nina: 'La Ni\u00f1a', neutral: 'Neutral' };
+  if (p === null || p === undefined || p === '') return DASH;
+  return m[p] || String(p).replace(/_/g, ' ');
+}
+
 /** Render CPC outlooks for a month, precipitation first and clearly labelled.
  *
  * A CPC outlook is a probability for a whole period and says nothing about a
@@ -249,8 +257,20 @@ function renderLandlord(ll, cal) {
     {
       cls: 'enso',
       title: 'ENSO now',
-      value: exec.current_enso ? `${exec.current_enso.phase || DASH} ${exec.current_enso.oni_c !== undefined ? (exec.current_enso.oni_c > 0 ? '+' : '') + exec.current_enso.oni_c + '°C' : ''}` : DASH,
-      sub: exec.current_enso ? `${exec.current_enso.year_month || ''} ONI · El Niño mean ${n(exec.enso_stratified?.el_nino?.mean, 2)} in vs La Niña ${n(exec.enso_stratified?.la_nina?.mean, 2)} in` : '',
+      // The ONI value is season-labelled ("JJA 2026"), not month-labelled:
+      // an earlier version looked for year_month only and printed a bare
+      // "ONI" with the raw "el_nino" token.  Use the season label and the
+      // mapped phase; fall back to the raw data only if it is honestly raw.
+      value: exec.current_enso
+        ? `${exec.current_enso.phase_label || phaseLabel(exec.current_enso.phase)}` +
+          (exec.current_enso.oni_c_fmt ? ` ${exec.current_enso.oni_c_fmt}`
+            : exec.current_enso.oni_c !== undefined
+              ? ` ${exec.current_enso.oni_c > 0 ? '+' : ''}${exec.current_enso.oni_c}°C` : '')
+        : DASH,
+      sub: exec.current_enso
+        ? `${[exec.current_enso.label || exec.current_enso.year_month, 'ONI'].filter(Boolean).join(' ')} · ` +
+          `El Niño mean ${n(exec.enso_stratified?.el_nino?.mean, 2)} in vs La Niña ${n(exec.enso_stratified?.la_nina?.mean, 2)} in`
+        : '',
     },
     {
       cls: 'rain',
@@ -357,6 +377,59 @@ function renderLandlord(ll, cal) {
       ])
     ]);
   }));
+
+  renderCostDrivers(ll);
+}
+
+/* ---------------------------------------------- maintenance cost drivers */
+
+/** Ranked repair & maintenance cost drivers, straight from landlord.json.
+ *
+ *  The block separates two kinds of content on purpose: the "why it matters"
+ *  sentence is maintenance *guidance* (labelled as such on the card), while
+ *  every row in the evidence table is a number copied from the verified
+ *  datasets.  A driver with no evidence rows would be an unverifiable claim,
+ *  so the renderer refuses to show one.
+ */
+function renderCostDrivers(ll) {
+  const host = $('#landlord-cost-drivers');
+  if (!host) return;
+  const exec = (ll && ll.executive_summary) || {};
+  const note = $('#landlord-cost-note');
+  if (note) note.textContent = exec.cost_drivers_note || '';
+  const drivers = exec.cost_drivers || [];
+  if (!drivers.length) {
+    host.append(el('p', { class: 'empty', text: 'Cost-driver summary unavailable in this run.' }));
+    return;
+  }
+  drivers.forEach(d => {
+    const evidence = Array.isArray(d.evidence) ? d.evidence : [];
+    if (!evidence.length) return; // never show a claim without its numbers
+    const srcNode = el('div', { class: 'action-source' });
+    srcNode.append(document.createTextNode('Sources: '));
+    let firstSrc = true;
+    (Array.isArray(d.sources) ? d.sources : []).forEach(s => {
+      if (!s || !s.url) return;
+      if (!firstSrc) srcNode.append(document.createTextNode(' \u00b7 '));
+      firstSrc = false;
+      // Show the whole URL, like the action checklist, so the link text can
+      // be compared with the href character for character.
+      srcNode.append(link(s.url, s.url.replace(/^https?:\/\//, '')));
+    });
+    host.append(el('div', { class: 'cost-driver' }, [
+      el('div', { class: 'cd-head' }, [
+        el('span', { class: 'cd-rank', text: '#' + (d.rank !== undefined ? d.rank : '?') }),
+        el('h4', { text: d.driver || DASH })
+      ]),
+      el('p', { class: 'cd-why' }, [
+        el('span', { class: 'cd-why-tag', text: 'Why it matters (guidance, not a weather claim): ' }),
+        document.createTextNode(d.why_it_costs || '')
+      ]),
+      el('table', { class: 'kv cd-ev' }, evidence.map(ev =>
+        el('tr', {}, [el('th', { text: ev.label }), el('td', { text: ev.value })]))),
+      srcNode
+    ]));
+  });
 }
 
 /* --------------------------------------------------------------- sections */

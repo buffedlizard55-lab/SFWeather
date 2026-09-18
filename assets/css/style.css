@@ -394,3 +394,27 @@ dialog form { padding: 0 22px 20px; }
   .card { break-inside: avoid; box-shadow: none; border: 1px solid #d5dbe3; }
   body { background: #fff; }
 }
+
+/* ---------------- maintenance cost drivers (executive summary) --------- */
+.cost-drivers { display: grid; gap: 12px; margin-top: 10px; }
+.cost-driver {
+  border: 1px solid var(--line);
+  border-left: 4px solid #14497a;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fff;
+}
+.cost-driver .cd-head { display: flex; align-items: baseline; gap: 10px; }
+.cost-driver .cd-head h4 { margin: 0 0 4px 0; }
+.cost-driver .cd-rank {
+  background: #14497a; color: #fff; font-size: 12px; font-weight: 700;
+  border-radius: 999px; padding: 2px 9px; white-space: nowrap;
+}
+.cost-driver .cd-why { margin: 6px 0 10px 0; font-size: 13.5px; line-height: 1.5; }
+.cost-driver .cd-why-tag { font-weight: 700; color: #6b5b00; }
+.cost-driver table.cd-ev th { width: 46%; font-size: 12.5px; }
+.cost-driver table.cd-ev td { font-size: 13px; }
+.cost-driver .action-source { margin-top: 8px; }
+@media print {
+  .cost-driver { break-inside: avoid; }
+}
