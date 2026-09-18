@@ -1,9 +1,9 @@
 {
-  "generated_utc": "2026-09-18T19:06:09Z",
+  "generated_utc": "2026-09-18T19:22:17Z",
   "counts": {
-    "total": 3,
+    "total": 4,
     "errors": 0,
-    "warnings": 1,
+    "warnings": 2,
     "info": 2
   },
   "irregularities": [
@@ -49,6 +49,27 @@
           "San Francisco Downtown site hit 5.46<U+FFFD><U+FFFD><U+FFFD> in the 24 hours of December 31st. This",
           " second wettest day on record, just 0.08<U+FFFD><U+FFFD><U+FFFD> less than 1st place (11/5/1994) with",
           "second wettest day on record, just 0.08<U+FFFD><U+FFFD><U+FFFD> less than 1st place (11/5/1994) with "
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "area": "coverage",
+      "message": "At least one NCEI archive this project reads is more than 180 days behind the run date. Every published statistic is a 1991-2020 statistic and is unaffected; the flag exists so nothing claims to describe *current* conditions from a stale archive.",
+      "evidence": {
+        "archives": [
+          {
+            "area": "wind",
+            "last_date": "2025-08-27",
+            "age_days": 387,
+            "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+          },
+          {
+            "area": "isd_hourly",
+            "last_date": "2025-08-27",
+            "age_days": 387,
+            "url": "https://www.ncei.noaa.gov/data/global-hourly/access/"
+          }
         ]
       }
     }

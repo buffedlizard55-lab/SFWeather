@@ -10,10 +10,12 @@ SFWeather pipeline - 2026-09-18
       sample record: 1973-10-21 -> {'PRCP': 8.0, 'TMAX': 206.0, 'TMIN': 156.0, 'SNOW': None, 'SNWD': None}
 [6/7] computing rainy-season climatology
 [7/7] Storm Events + writing outputs
+      record coverage: STALE archive(s) -> wind=2025-08-27 (387 d), isd_hourly=2025-08-27 (387 d)
 
 === summary ===
-  fetches: 139 ok / 2 failed
-  irregularities: 3
+  fetches: 139 ok / 4 failed
+  irregularities: 4
     [info] nws: Some hourly forecast fields are null in the NWS gridded forecast for this grid cell.
     [warning] nws: No HWO products returned for office MTR.
     [info] storm_events: NCEI's Storm Events file lost 12 character(s) before this project fetched it (U+FFFD is already present in the published file). Those characters were removed from the narrative text and are not guesse
+    [warning] coverage: At least one NCEI archive this project reads is more than 180 days behind the run date. Every published statistic is a 1991-2020 statistic and is unaffected; the flag exists so nothing claims to descr
