@@ -340,3 +340,30 @@ made to fail was treated as a bug in the guard, not as evidence of correctness.
 committed datasets predate the severity counters, so it reports "not yet
 produced" and will start comparing real values on the next pipeline run.
 
+## Independent re-check of the official claims (18 Sep 2026)
+
+The sandbox cannot reach NOAA directly (see the environment note at the top), so
+the re-check below was done by retrieving the official pages through a separate
+read-only web client, independent of the pipeline that produced the datasets.
+This is the manual-review path the brief asks for: open the link, find the text.
+
+| Claim on the site | Official page | What it says now | Verdict |
+| --- | --- | --- | --- |
+| ENSO Alert System Status is **El Niño Advisory** | [CPC ENSO Diagnostic Discussion](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml) | "ENSO Alert System Status: **El Niño Advisory**", issued **10 September 2026** | matches |
+| The discussion says "El Niño is strengthening, with a greater than 90% chance of a very strong event during the Northern Hemisphere fall and winter 2026-27" | same page, Synopsis | verbatim, including the closing summary sentence | matches (quote is exact) |
+| "During the October-December 2026 season, there is a 75% chance of a historic event" | same page | verbatim: "…a 75% chance of a historic event that would exceed the strength of previous El Niño events dating back to 1950 (+2.5°C or more for a 3-month RONI value)" | matches (quote is exact) |
+| Niño-3.4 / Niño-3 / Niño-1+2 anomalies are +1.8 / +2.5 / +3.4 °C | same page | "+1.8°C in Niño-3.4, +2.5°C in Niño-3, and +3.4°C in Niño-1+2" | matches |
+| The next discussion is due 8 October 2026 | same page | "The next ENSO Diagnostics Discussion is scheduled for 8 October 2026." | matches |
+| The CPC long-lead shapefiles the site samples are the current issuance | [CPC GIS data page](https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/) | the 6-10 day index lists `610prcp_20260917.zip` / `610temp_20260917.zip` as the latest, i.e. the 17 Sep issuance the site records | matches |
+
+### What this does and does not establish
+
+It establishes that the *official text* the site quotes and links is the text the
+agency is publishing today, and that the issuance dates the site records are the
+current ones. It does **not** re-fetch and re-parse the GHCN/GSOD/NCEI files —
+those are large binary/CSV products and the pipeline's own SHA-256, byte count and
+retrieval time for each one are recorded in `data/provenance.json` and listed on
+the page, which is the mechanism for that half of the review. Any figure traced to
+a raw file is checkable there in one step: open the URL in the ledger row, download
+the file, and compare against the value the row prints.
+

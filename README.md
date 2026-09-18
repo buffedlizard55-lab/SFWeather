@@ -40,7 +40,19 @@ period*, and are never converted into daily numbers.
 
 ## The landlord summary (all values from the current dataset)
 
-The dashboard opens with a **ranked executive summary of repair & maintenance cost
+The dashboard opens with **"The bottom line — your six questions, answered in
+order"**: rain amount, rain duration, hard-rain days, wind, wind+rain together,
+and how severe the storms have actually been. Each answer states its numbers,
+the basis it rests on (observed record vs official outlook), and the official
+links to check it; an answer whose source link is missing is withheld and
+marked rather than shown unsourced. Immediately below it, kept visually
+separate, is the **official outlook strip**: the current ENSO state and Alert
+System Status, how many CPC long-lead periods covering Oct–Jan carry a tilt
+above the 33.3% baseline, the observed record *conditioned on that same ENSO
+phase*, and how much of the scoreboard currently lies inside the real NWS
+forecast horizon.
+
+Then comes the **ranked executive summary of repair & maintenance cost
 drivers** — prolonged wet spells (roof, gutters, drainage), heavy single-day rain
 (storm drains, entryways), wind + rain together (wind-driven intrusion), peak gusts
 (fences, trees, tenant safety), the total seasonal water load (budget baseline plus
@@ -60,6 +72,7 @@ expectation over the observed distribution, not a prediction for 2026-27.
 | How many wet days? | mean **34.5** days (range 7–55) |
 | Will we get a long wet spell? | **96.7%** of seasons had a run of ≥3 consecutive wet days, **80.0%** ≥5 days, **53.3%** ≥7 days, **23.3%** ≥10 days. The longest run averaged 7.3 days (max 17) |
 | Rain *and* strong wind together? | mean **11.1 days per season** with rain and ≥20 kt wind at SFO, **2.2 days** with ≥0.50 in and a ≥35 kt gust; strongest gust of the season averages 53.8 mph (max 70 mph) |
+| How severe do storms get? | Days per season at ≥1.00 in: **3.2** counted from the record vs **3.26** summed from NOAA's own published probabilities; gusts ≥40 kt: 4.8 days. No NWS warning category is applied — those criteria are per forecast zone — so severity is published as counts at plain thresholds, with **record values bound to the season that produced them** |
 | Does El Niño matter? | In this record, El Niño seasons averaged **14.23 in** (n=11), neutral 13.31 in (n=7), La Niña 11.16 in (n=12) — wetter on average, with huge spread |
 
 **Current ENSO state (NOAA's own product, not a re-derivation)**
@@ -89,11 +102,11 @@ retrieval time of the exact file.
 | Layer | What it does |
 | --- | --- |
 | `pipeline/verify_sources.py` | Fails the build if any host outside the official list is used. There is no path to a commercial or unofficial source. |
-| `pipeline/verify_claims.py` | Re-derives every headline number from the same file and checks the project's rules: no `NWS FORECAST` badge outside the official horizon, no invented daily value, no humidity presented as an observation when it is a derivation, no NOAA *test* message shown as a real alert, quotes are plain text with no HTML entities left in them, and every source URL printed on the site is traced to a recorded fetch. |
+| `pipeline/verify_claims.py` (39 checks) | Re-derives every headline number from the same file and checks the project's rules: no `NWS FORECAST` badge outside the official horizon, no invented daily value, no humidity presented as an observation when it is a derivation, no NOAA *test* message shown as a real alert, quotes are plain text with no HTML entities left in them, and every source URL printed on the site is traced to a recorded fetch; no published text carries a Unicode replacement character; every CPC polygon sitting on the 33.3% baseline is flagged as such wherever it appears; and every figure in the executive bottom line is found in the dataset it claims to read. **Each guard is falsified before it is kept** — a guard that cannot be made to fail by mutating a fixture copy of `data/` is treated as a bug in the guard. |
 | Workflow gate | `summary.failed > 0` → **the run publishes nothing**. It commits diagnostics only ("refresh NOT published") and the site keeps the last verified dataset. |
 | `data/provenance.json` | The full fetch log: every URL, status, size, SHA-256, timestamp. |
 | `data/verify.json` + `verify_report.txt` | The claim ledger as machine-readable JSON and as plain text. |
-| `tests/test_parsers.py` | 121 offline assertions (stdlib only, no network) on the parsing/derivation code and exact official-host allow-list — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, an end-to-end aggregation over a synthetic file with hand-computable expected values, the rule that a CPC explanation must describe the category actually displayed, the NWS gridpoint gust/QPF aggregation including the local-midnight accumulation split, and the maintenance cost-driver rules (expected-days summation, Storm Events damage parsing, ENSO display formatting, no claim without evidence). |
+| `tests/test_parsers.py` | 212 offline assertions (stdlib only, no network) on the parsing/derivation code and exact official-host allow-list — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, an end-to-end aggregation over a synthetic file with hand-computable expected values, the rule that a CPC explanation must describe the category actually displayed, the NWS gridpoint gust/QPF aggregation including the local-midnight accumulation split, and the maintenance cost-driver rules (expected-days summation, Storm Events damage parsing, ENSO display formatting, no claim without evidence). |
 | `tests/smoke.js` (`npm test`) | Renders the whole page in jsdom against the committed data and fails on an empty section, a broken day dialog or CSV export, a truncated source label, a mislabelled source link, a CPC note that does not explain its own category, an unlabelled rain/temperature outlook, an unrounded humidity, or a forecast day missing its gust or rain amount. |
 
 **Every forecast day can be checked by hand:** open the day's dialog, follow the
