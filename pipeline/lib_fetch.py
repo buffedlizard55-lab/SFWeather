@@ -90,9 +90,18 @@ def strip_unrepresentable(text):
             continue
         out.append(ch)
     clean = "".join(out)
+    # The snippets that document the loss are written with a VISIBLE marker
+    # rather than the raw character.  Two reasons: the ledger check that nothing
+    # published contains U+FFFD stays absolute (no exception carve-out for the
+    # evidence block, which would be a hole big enough to drive the original bug
+    # through), and a reader of the JSON sees "<U+FFFD>" instead of a glyph that
+    # renders as a black diamond in half the terminals on earth.
     for i, ch in enumerate(text):
         if ch in UNREPRESENTABLE and len(contexts) < 5:
-            contexts.append(text[max(0, i - 40):i + 40])
+            snippet = text[max(0, i - 40):i + 40]
+            for bad in UNREPRESENTABLE:
+                snippet = snippet.replace(bad, "<U+%04X>" % ord(bad))
+            contexts.append(snippet)
     return clean, removed, contexts
 
 

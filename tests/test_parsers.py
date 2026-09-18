@@ -1292,6 +1292,11 @@ check("what remains is the publisher's text, not a reconstruction",
 check("the removal records the surrounding text so it can be checked",
       len(_ctx) == 5 and all("5.46" in c or "0.08" in c or "5.54" in c for c in _ctx),
       str(_ctx[:1]))
+# The evidence snippets must not re-publish the character they document: the
+# ledger's "no U+FFFD anywhere" rule stays absolute, with no carve-out.
+check("the evidence snippets mark the loss visibly and carry no replacement character",
+      "\ufffd" not in "".join(_ctx) and all("<U+FFFD>" in c for c in _ctx)
+      and "<U+0000>" not in "".join(_ctx), str(_ctx[:1]))
 check("clean text is returned unchanged with a zero count",
       lib_fetch.strip_unrepresentable("nothing to do") == ("nothing to do", 0, []), "")
 check("an empty or missing string is handled",
