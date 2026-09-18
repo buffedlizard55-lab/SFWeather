@@ -503,3 +503,34 @@ catches. That boundary is written in the harness so it is not rediscovered.
   geocode step. The first CI run that repopulates `run.json` (or records a
   `geography` irregularity) resolves it; the check is written to accept either
   outcome and reject only the silent one.
+
+---
+
+## Pass 3 — re-check against the original request, line by line (18 Sep 2026)
+
+The brief had eight requirements. Each is restated in the requester's terms and
+checked against the live dataset rather than against intent. Numbers below were
+read out of the committed `data/*.json` at the 2026-09-18T18:58:35Z run.
+
+| # | Requirement | Where it is met | Evidence |
+| --- | --- | --- | --- |
+| 1 | A meaningful executive summary of the weather factors affecting repair and maintenance costs | *The bottom line — your six questions, answered in order*, then six ranked cost drivers | 6 answers carrying 29 numbers and 11 official links; 6 drivers with 25 evidence rows and 13 links. Each answer states its basis (observed record vs official outlook) and its sample size; each driver's "why it costs" sentence is labelled guidance, not a weather claim |
+| 2 | Forecasts from publicly available, free, official/verified sources | `pipeline/verify_sources.py` + `data/provenance.json` | 141 recorded fetches across 6 hosts, all official `.gov`: ncei.noaa.gov (90), www.cpc.ncep.noaa.gov (22), api.weather.gov (15), ftp.cpc.ncep.noaa.gov (12), www2.census.gov (1), geocoding.geo.census.gov (1). Every entry has a SHA-256. The allow-list is exact-match, so a look-alike domain cannot pass. No API key anywhere |
+| 3 | Landlord focus: rain amounts, rain duration, wind, simultaneous wind+rain, storm severity | Bottom-line answers `rain_amount`, `rain_duration`, `heavy_rain_days`, `wind`, `wind_and_rain`, `storm_severity` | All six present with numbers, basis and links. Severity is published as counts at plain thresholds (≥0.50/1.00/2.00/4.00 in, wind ≥30 kt, gusts ≥40/50 kt, and days that are both) with records bound to the season that produced them — never as a borrowed NWS warning category, whose criteria are per forecast zone |
+| 4 | Day-by-day scoreboard for every day Oct 2026 – Jan 2027 with temperature, humidity, rain chance, rain amount, wind and gusts | `data/calendar.json` → `days` | **123 days, 2026-10-01 → 2027-01-31, no gaps.** All seven published fields (`high_f`, `low_f`, `humidity_pct`, `rain_chance_pct`, `rain_amount_in`, `wind_max_mph`, `gust_max_mph`) are non-null on **123/123** days and each carries a stated basis on **123/123**. Plus 7 days inside the live NWS horizon in `current_forecast`, each with its covered-hour count |
+| 5 | GitHub Pages site: clean, user-friendly, simple, organised, easy to read, with official verified links | Repository root (`index.html`, `assets/`), served by Pages from `main` | Sections: location, landlord dashboard, season outlook, scoreboard, wind, current forecast, AFD language, sources, verification, irregularities. Every source link points at the exact endpoint read. `tests/smoke.js` renders the page headlessly and fails on an empty section, a broken dialog, a truncated label, a mislabelled link, or a machine token in any `<section id>` |
+| 6 | No hallucinations; verify line by line; links for manual review; no manual input; flag irregularities | `pipeline/verify_claims.py`, `data/quality_report.json` | **48 checks, 18 recorded claims, 48/48 passing** at this run. Every claim carries its statement, value, unit, method and source; 14 of 18 carry an independent cross-check. Irregularities are recorded rather than smoothed over — 3 at this run (null hourly NWS fields for this grid cell, no HWO product from MTR, character loss inside NCEI's own Storm Events file), and every failed fetch is now explained too (bug 51). No value is typed in: even the centroid is downloaded and matched, with a hard-coded fallback that raises a data-quality error |
+| 7 | Run three passes: implement+verify, review for bugs/missing requirements/edge cases, re-check against the original request | This document | Pass 1: implementation, ledger and tests green. Pass 2 (bugs/edge cases): bugs 40–50, including four documentation-drift defects the new guards found on their first run, a renderer silently deleting a Census row, and two falsification cases that had quietly stopped testing their guards. Pass 3: this table, plus bug 51 found while checking requirement 6 |
+| 8 | Create a PR, merge it to main, and state remaining work and limitations | Branch `arena/01a0b5b2-sfweather` | Remaining work: `docs/NEXT_SESSION.md` §2 (priority-ordered, each with the official endpoint it depends on). Limitations: `docs/LIMITATIONS.md` §1–16, including the two added this session (the AFD is written for a whole forecast area, and "Sunset District" is a Census subdivision rather than a city neighbourhood line) |
+
+### What this pass did **not** establish
+
+* The site cannot be checked from a browser inside the build environment, so
+  "clean and easy to read" is verified structurally (headless render, no empty
+  section, no machine token, every label sourced) rather than aesthetically.
+* The AFD scan is qualitative by design. It proves NWS wrote a sentence; it does
+  not prove anything about 94122 on a named day, and it must not be extended to
+  attach dates to quotations (see `docs/NEXT_SESSION.md` item 4).
+* `failed-fetches-explained` warns against the currently committed quality
+  report, because those two 404s predate the fix. It is a warning by design and
+  clears on the next pipeline run.
