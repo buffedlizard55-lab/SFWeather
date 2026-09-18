@@ -25,7 +25,7 @@
   },
   "forecast_daily": {
     "updated": "2026-09-18T03:51:56+00:00",
-    "generated_at": "2026-09-18T04:04:13+00:00",
+    "generated_at": "2026-09-18T04:10:46+00:00",
     "valid_times": "2026-09-17T21:00:00+00:00/P8DT4H",
     "elevation_m": 45.1104,
     "periods": [
@@ -273,7 +273,7 @@
   },
   "forecast_hourly": {
     "updated": "2026-09-18T03:51:56+00:00",
-    "generated_at": "2026-09-18T04:04:13+00:00",
+    "generated_at": "2026-09-18T04:10:47+00:00",
     "elevation_m": 45.1104,
     "periods": [
       {
@@ -5197,17 +5197,17 @@
       "elevation_m": 3.048,
       "distance_m": 19117.58413345,
       "observation": {
-        "timestamp": "2026-09-18T03:40:00+00:00",
+        "timestamp": "2026-09-18T03:50:00+00:00",
         "temperature_c": 17,
         "dewpoint_c": 14,
         "relative_humidity_pct": 82.509292694902,
         "wind_speed_kmh": null,
         "wind_gust_kmh": null,
         "wind_direction_deg": null,
-        "barometric_pressure_pa": 101964.16,
+        "barometric_pressure_pa": 101998.03,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
-        "text_description": "Clear"
+        "text_description": "Mostly Clear"
       },
       "observation_url": "https://api.weather.gov/stations/KSFO/observations/latest"
     },
@@ -5222,7 +5222,7 @@
         "dewpoint_c": 9.42,
         "relative_humidity_pct": null,
         "wind_speed_kmh": 4.824,
-        "wind_gust_kmh": 9.648,
+        "wind_gust_kmh": null,
         "wind_direction_deg": 246,
         "barometric_pressure_pa": null,
         "precipitation_last_hour_mm": null,
@@ -5250,7 +5250,7 @@
         "dewpoint_c": 13.94,
         "relative_humidity_pct": 86.972543160518,
         "wind_speed_kmh": 0,
-        "wind_gust_kmh": 0,
+        "wind_gust_kmh": null,
         "wind_direction_deg": 80,
         "barometric_pressure_pa": 101910,
         "precipitation_last_hour_mm": null,
@@ -5265,7 +5265,7 @@
     "count": 0,
     "test_count": 0,
     "count_including_tests": 0,
-    "updated": "2026-09-18T04:08:06+00:00",
+    "updated": "2026-09-18T04:08:44+00:00",
     "events": [],
     "source_url": "https://api.weather.gov/alerts/active?zone=CAZ006",
     "human_url": "https://www.weather.gov/mtr"
