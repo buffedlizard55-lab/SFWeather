@@ -1257,6 +1257,249 @@ check("a completely absent severity block still renders every answer",
 
 # --------------------------------------------------------------------------- #
 
+# --------------------------------------------------------------------------- #
+section("publisher text encoding and character loss (lib_fetch)")
+
+import lib_fetch  # noqa: E402
+import landlord_summary as landlord  # noqa: E402
+
+# NCEI's Storm Events CSVs are not reliably UTF-8.  The pipeline used to decode
+# them with errors="replace" and commit the result.
+_txt, _enc = lib_fetch.decode_text("caf\u00e9 \u2014 5.46\u201d".encode("cp1252"))
+check("a CP1252 body decodes to the publisher's characters, not U+FFFD",
+      _enc == "cp1252" and "\ufffd" not in _txt and "5.46\u201d" in _txt,
+      "enc=%s text=%r" % (_enc, _txt))
+_txt, _enc = lib_fetch.decode_text("caf\u00e9".encode("utf-8"))
+check("a valid UTF-8 body is decoded as UTF-8", _enc == "utf-8" and _txt == "caf\u00e9",
+      "enc=%s" % _enc)
+_txt, _enc = lib_fetch.decode_text(None)
+check("a missing body yields an empty string and encoding 'none'",
+      _txt == "" and _enc == "none", "enc=%s" % _enc)
+_txt, _enc = lib_fetch.decode_text(bytes([0xff, 0xfe, 0x00, 0x01]))
+check("a body that is neither UTF-8 nor CP1252 still decodes without raising",
+      isinstance(_txt, str), "enc=%s" % _enc)
+
+# The real 31 Dec 2022 narrative, as NCEI serves it: valid UTF-8 that already
+# contains U+FFFD where a typographic character used to be.
+_real_lossy = ("San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of "
+               "December 31st, just 0.08\ufffd less than 1st place (11/5/1994) with 5.54\ufffd.")
+_clean, _n, _ctx = lib_fetch.strip_unrepresentable(_real_lossy)
+check("the five already-lost characters in the real narrative are removed",
+      _n == 5 and "\ufffd" not in _clean, "n=%s clean=%r" % (_n, _clean))
+check("what remains is the publisher's text, not a reconstruction",
+      "hit 5.46 in the 24 hours of December 31st" in _clean
+      and "just 0.08 less than 1st place (11/5/1994) with 5.54." in _clean, _clean)
+check("the removal records the surrounding text so it can be checked",
+      len(_ctx) == 5 and all("5.46" in c or "0.08" in c or "5.54" in c for c in _ctx),
+      str(_ctx[:1]))
+check("clean text is returned unchanged with a zero count",
+      lib_fetch.strip_unrepresentable("nothing to do") == ("nothing to do", 0, []), "")
+check("an empty or missing string is handled",
+      lib_fetch.strip_unrepresentable("") == ("", 0, [])
+      and lib_fetch.strip_unrepresentable(None)[1] == 0, "")
+
+# --------------------------------------------------------------------------- #
+section("CPC 33% baseline (the tilt that is not a tilt)")
+
+# CPC publishes whole percentages against a three-way baseline of 100/3 = 33.3.
+# Cat="Above" with Prob=33.0 is real published data and is NOT a tilt.
+_synth = [
+    {"variable": "prcp", "valid_season": "OND 2026", "category": "EC",
+     "category_label": "Equal chances", "prob": 33.0, "issued": "2026-09-17", "url": "u"},
+    {"variable": "prcp", "valid_season": "NDJ 2026-2027", "category": "Above",
+     "category_label": "Above median", "prob": 33.0, "issued": "2026-09-17", "url": "u"},
+    {"variable": "prcp", "valid_season": "DJF 2026-2027", "category": "Above",
+     "category_label": "Above median", "prob": 40.0, "issued": "2026-09-17", "url": "u"},
+    {"variable": "prcp", "valid_season": "JFM 2027", "category": "Above",
+     "category_label": "Above median", "prob": 50.0, "issued": "2026-09-17", "url": "u"},
+    {"variable": "temp", "valid_season": "DJF 2026-2027", "category": "Above",
+     "category_label": "Above normal", "prob": 40.0, "issued": "2026-09-17", "url": "u"},
+]
+_tilt = landlord.cpc_tilt_summary(_synth)
+check("cpc_tilt_summary counts precipitation periods only",
+      _tilt["periods_covering_this_season"] == 4, json.dumps(_tilt)[:160])
+check("an Above/33% polygon is counted as the baseline, not as a tilt",
+      _tilt["periods_at_climatological_baseline"] == 2 and _tilt["periods_with_a_tilt"] == 2,
+      "tilt=%s baseline=%s" % (_tilt["periods_with_a_tilt"],
+                               _tilt["periods_at_climatological_baseline"]))
+check("the strongest tilt is reported by probability",
+      _tilt["highest_probability"]["period"] == "JFM 2027"
+      and _tilt["highest_probability"]["probability_pct"] == 50.0,
+      json.dumps(_tilt["highest_probability"]))
+check("no precipitation records at all yields None rather than a zero summary",
+      landlord.cpc_tilt_summary([]) is None and landlord.cpc_tilt_summary(None) is None, "")
+
+# --------------------------------------------------------------------------- #
+section("executive bottom line")
+
+_bl, _off = landlord.build_bottom_line(
+    season_total={"n": 30, "mean": 12.79, "median": 13.26, "min": 1.71, "max": 22.82,
+                  "p10": 6.38, "p90": 18.59},
+    wet_days={"mean": 34.5},
+    streak_prob={"ge_3_days": {"pct": 96.7}, "ge_5_days": {"pct": 80.0},
+                 "ge_7_days": {"pct": 53.3}, "ge_10_days": {"pct": 23.3}},
+    longest_streak={"n": 30, "mean": 7.3, "max": 17.0},
+    wind_rain={"mean": 11.1, "max": 24}, heavy_wind_and_rain={"mean": 2.2, "max": 8},
+    max_gust={"n": 30, "mean": 53.8, "max": 70.0},
+    expected_days={"ge_025in_days": 14.97, "ge_100in_days": 3.19},
+    severity={
+        "wet_days_ge_1in": {"mean": 3.2}, "gust_days_ge_40kt": {"mean": 4.8},
+        "severe_wind_and_rain_days": {"mean": 0.4},
+        "record_daily_prcp_in": {"season": "1997-1998", "value": 4.34},
+        "record_days_ge_1in": {"season": "1997-1998", "value": 9},
+        "record_severe_wind_and_rain_days": {"season": "2016-2017", "value": 2},
+        "threshold_comparison": [
+            {"threshold_in": 0.5, "project_mean_days": 9.9, "noaa_expected_days": 10.1},
+            {"threshold_in": 1.0, "project_mean_days": 3.2, "noaa_expected_days": 3.26},
+            {"threshold_in": 2.0, "project_mean_days": 0.9, "noaa_expected_days": 0.7},
+            {"threshold_in": 4.0, "project_mean_days": 0.0, "noaa_expected_days": 0.0}],
+        "published_expected": {"ge_025in_days": 14.9, "ge_100in_days": 3.26},
+    },
+    latest_oni={"phase": "el_nino", "phase_label": "El Ni\u00f1o", "oni_c": 1.8},
+    oni_when="JJA 2026", diagnostic_status="El Ni\u00f1o Advisory",
+    tilt={"periods_with_a_tilt": 2},
+    storms={"n_events": 119, "years": [2014, 2026], "events": [], "n_with_damage": 12},
+    days_in_horizon=0, horizon_last_day="2026-09-24",
+    enso_strat={"el_nino": {"n": 11, "mean": 14.23, "median": 13.5, "min": 5.6,
+                            "max": 22.1, "phase_label": "El Ni\u00f1o"},
+                "la_nina": {"n": 9, "mean": 11.16, "median": 11.0, "min": 1.71,
+                            "max": 20.5, "phase_label": "La Ni\u00f1a"},
+                "neutral": {"n": 10, "mean": 13.31, "median": 13.0, "min": 6.0,
+                            "max": 22.8, "phase_label": "Neutral"}})
+check("the bottom line answers the six questions in order",
+      [i["n"] for i in _bl] == [1, 2, 3, 4, 5, 6], str([i["n"] for i in _bl]))
+check("every answer names its question and gives an answer",
+      all(i["question"].strip() and i["answer"].strip() for i in _bl), "")
+check("every answer states a basis and a confidence",
+      all(i["basis"].strip() and i["confidence"] for i in _bl), "")
+check("every answer carries a link to an official host",
+      all(s["url"].startswith("https://") and ".gov" in s["url"] for i in _bl
+          for s in i["sources"]), "")
+check("every answer carries supporting numbers",
+      all(len(i["numbers"]) >= 2 for i in _bl), str([len(i["numbers"]) for i in _bl]))
+check("no published value is blank or None",
+      all(v["value"] not in (None, "", "None") for i in _bl for v in i["numbers"]), "")
+check("a severity counter that was not derived says so in words",
+      all("not derived this run" not in v["value"] or isinstance(v["value"], str)
+          for i in _bl for v in i["numbers"]), "")
+
+# The threshold table is the two-method comparison; both columns must appear.
+_thr_rows = [v for i in _bl if i["key"] == "heavy_rain_days" for v in i["numbers"]
+             if "≥ 0.50 in" in v["label"] or "≥ 2.00 in" in v["label"]]
+check("the hard-rain answer carries the counted-vs-NOAA threshold rows",
+      len(_thr_rows) == 2 and all("counted" in r["value"] and "NOAA published" in r["value"]
+                                  for r in _thr_rows), json.dumps(_thr_rows))
+
+# The storm-severity answer must never present a dollar figure, and must say
+# that no warning category is applied.
+_q6 = [i for i in _bl if i["key"] == "storm_severity"][0]
+check("the severity answer reports counts, not a dollar total",
+      "$" not in _q6["answer"] and "dollar" in _q6["answer"].lower(), _q6["answer"][:150])
+check("the severity answer refuses to restate an NWS warning category",
+      "no named warning category" in _q6["answer"].lower(), _q6["answer"][-160:])
+check("the damage figure is reported as a count of records, with its denominator",
+      any("of 119" in v["value"] for v in _q6["numbers"]), json.dumps(_q6["numbers"])[:200])
+
+# ENSO-conditioned record: the one bridge to the cost question.
+_cond = _off.get("enso_conditioned_record") or {}
+check("the conditioned record uses the phase NOAA published for this season",
+      _cond.get("phase") == "el_nino" and _cond.get("seasons_in_phase") == 11
+      and _cond.get("mean_in") == 14.23, json.dumps(_cond)[:160])
+check("the conditioned record states it is not a forecast",
+      "NOT a forecast" in (_cond.get("how_to_read") or ""), _cond.get("how_to_read") or "")
+check("the conditioned record lists the other phases for contrast",
+      [c["phase"] for c in _cond.get("contrast") or []] == ["neutral", "la_nina"],
+      json.dumps(_cond.get("contrast")))
+check("a phase with no seasons yields None, never a zero-filled block",
+      (landlord.build_bottom_line(
+          season_total={}, wet_days={}, streak_prob={}, longest_streak={}, wind_rain={},
+          heavy_wind_and_rain={}, max_gust={}, expected_days={}, severity={},
+          latest_oni={"phase": "el_nino"}, oni_when=None, diagnostic_status=None,
+          tilt=None, storms=None, days_in_horizon=None, horizon_last_day=None,
+          enso_strat={"la_nina": {"n": 9, "mean": 11.16}})[1]
+       ).get("enso_conditioned_record") is None, "")
+
+# The documented crash: a severity block that arrives as None, not missing.
+_bl_none, _off_none = landlord.build_bottom_line(
+    season_total={}, wet_days={}, streak_prob={}, longest_streak={}, wind_rain={},
+    heavy_wind_and_rain={}, max_gust={}, expected_days={}, severity=None,
+    latest_oni={}, oni_when=None, diagnostic_status=None, tilt=None, storms=None,
+    days_in_horizon=None, horizon_last_day=None)
+check("an entirely missing severity block still renders six answers",
+      len(_bl_none) == 6 and all(i["answer"] for i in _bl_none), str(len(_bl_none)))
+check("the official outlook separates ENSO, CPC, the horizon and the conditioned record",
+      set(_off_none) == {"enso", "cpc_tilt", "daily_forecast", "enso_conditioned_record"},
+      str(sorted(_off_none)))
+
+# --------------------------------------------------------------------------- #
+section("storm-severity counters (hand-computable synthetic season)")
+
+_mmdd = [(10, 1), (10, 2), (10, 3), (11, 1), (11, 2), (12, 1), (12, 2),
+         (1, 1), (1, 2), (1, 3)]
+_ghcn, _gsod = {}, {}
+for _si, _sy in enumerate((1991, 1992)):
+    for (_m, _d) in _mmdd:
+        _y = _sy if _m >= 10 else _sy + 1
+        _iso = "%04d-%02d-%02d" % (_y, _m, _d)
+        _big = (_si == 0 and _m == 12 and _d == 1)
+        _ghcn[_iso] = {"PRCP": 550.0 if _big else 10.0}
+        _gsod[_iso] = {"prcp_in": 2.17 if _big else 0.1,
+                       "max_wind_kt": 35.0 if _d == 1 else 5.0,
+                       "gust_kt": 45.0 if _d == 1 else 10.0}
+_sev = climo.build_season_statistics(_ghcn, _gsod, _mmdd, (1991, 1992), {}, None)
+_s0 = _sev["seasons"][0]
+_s1 = _sev["seasons"][1]
+check("2.165 in counts as a >=1.00 in day and a >=2.00 in day but not >=4.00 in",
+      (_s0["wet_days_ge_1in"], _s0["wet_days_ge_2in"], _s0["wet_days_ge_400in"]) == (1, 1, 0),
+      str([_s0[k] for k in ("wet_days_ge_1in", "wet_days_ge_2in", "wet_days_ge_400in")]))
+check("0.50 in is a lower bar, so it can only count more days",
+      _s0["wet_days_ge_050in"] >= _s0["wet_days_ge_1in"] >= _s0["wet_days_ge_2in"]
+      >= _s0["wet_days_ge_400in"], str([_s0[k] for k in ("wet_days_ge_050in",
+                                                         "wet_days_ge_1in",
+                                                         "wet_days_ge_2in",
+                                                         "wet_days_ge_400in")]))
+check("the wettest single day in the season is 2.17 in",
+      _s0["max_daily_prcp_in"] == 2.17, str(_s0["max_daily_prcp_in"]))
+check("45 kt becomes 51.8 mph and is kept as a record bound to its season",
+      _s0["max_gust_mph"] == 51.8
+      and _sev["severity_record"]["max_gust_mph"] == {"season": "1991-1992", "value": 51.8},
+      json.dumps(_sev["severity_record"].get("max_gust_mph")))
+check("a >=1.00 in day with a >=40 kt gust counts as one joint severe day",
+      _s0["severe_wind_and_rain_days"] == 1 and _s1["severe_wind_and_rain_days"] == 0,
+      "%s / %s" % (_s0["severe_wind_and_rain_days"], _s1["severe_wind_and_rain_days"]))
+check("the joint tiers are ordered: severe <= heavy (both are same-day tests)",
+      _s0["severe_wind_and_rain_days"] <= _s0["heavy_wind_and_rain_days"] + 1, "")
+check("a counter with no qualifying day is 0, not None",
+      _s0["gust_days_ge_50kt"] == 0 and _sev["distribution"]["gust_days_ge_50kt"]["mean"] == 0.0,
+      json.dumps(_sev["distribution"]["gust_days_ge_50kt"]))
+check("four 30 kt days are counted, and the record is bound to the season",
+      _s0["wind_days_ge_30kt"] == 4
+      and _sev["severity_record"]["most_wet_days_ge_1in"]["value"] == 1, "")
+check("every new counter is summarised across seasons with a mean and a max",
+      all(_sev["distribution"].get(k, {}).get("mean") is not None
+          for k in ("wet_days_ge_050in", "wet_days_ge_1in", "wet_days_ge_2in",
+                    "wet_days_ge_400in", "wind_days_ge_30kt", "gust_days_ge_40kt",
+                    "gust_days_ge_50kt", "severe_wind_and_rain_days", "max_wind_mph")),
+      str(sorted(_sev["distribution"])))
+
+# --------------------------------------------------------------------------- #
+section("committed data: the published severity blocks")
+
+if os.path.exists(os.path.join(ROOT, "data", "calendar.json")):
+    with io.open(os.path.join(ROOT, "data", "calendar.json"), encoding="utf-8") as fh:
+        _cal2 = json.load(fh)
+    _days = _cal2.get("days") or []
+    _missing = [k for k in ("p_rain_day_pct", "p_wind_and_rain_pct")
+                if not all((d.get("climo") or {}).get(k) is not None for d in _days)]
+    check("every scoreboard day publishes its rain and joint probabilities",
+          not _missing, "missing keys on some days: %s" % _missing)
+    _pe = (_cal2.get("season_summary") or {}).get("wet_days") or {}
+    check("the committed season summary publishes the wet-day distribution",
+          _pe.get("mean") is not None and _pe.get("n") == len(_cal2.get("season_by_year") or []),
+          json.dumps(_pe))
+
+# --------------------------------------------------------------------------- #
+
 passed = sum(1 for _n, ok, _d in RESULTS if ok)
 failed = [(n, d) for n, ok, d in RESULTS if not ok]
 print("\n%d/%d checks passed" % (passed, len(RESULTS)))

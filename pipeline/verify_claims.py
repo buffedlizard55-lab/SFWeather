@@ -1214,11 +1214,18 @@ def main() -> int:
             loss_problems.append("characters were removed but no field is named")
         if not ti.get("reason"):
             loss_problems.append("characters were removed with no stated reason")
-        sev = ti.get("encoding_fallback_used")
-        if sev is not False:
-            loss_problems.append(
-                "the disclosure claims the loss is in the publisher's file, but "
-                f"encoding_fallback_used is {sev!r} - this project's decoder may be the cause")
+        # The claim "the glyph was already gone in the publisher's file" is only
+        # supportable if the file that contained it decoded as UTF-8 with no
+        # fallback.  Each affected field records the encoding used for its own
+        # file, so a file that needed a fallback cannot hide behind a clean one.
+        for entry in ti.get("fields_affected") or []:
+            if (entry.get("encoding_used") or "utf-8") != "utf-8":
+                loss_problems.append(
+                    f"{entry.get('field')} in {entry.get('file')} was decoded as "
+                    f"{entry.get('encoding_used')}, so this project's decoder cannot be "
+                    "ruled out as the cause")
+        if ti.get("encoding_fallback_used") is True and not ti.get("files_with_an_encoding_fallback"):
+            loss_problems.append("a fallback was used but no file is named")
         noted = [i for i in (quality.get("irregularities") or [])
                  if i.get("area") == "storm_events" and "U+FFFD" in (i.get("message") or "")]
         if not noted:

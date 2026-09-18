@@ -201,13 +201,13 @@ setTimeout(() => {
       }
       const row = windRows.find(tr => tr.textContent.includes('\u2265 ' + kt + ' kt'));
       const cell = row && row.querySelector('td') ? row.querySelector('td').textContent.trim() : '';
-      if (sev[k] && sev[k].mean !== null && sev[k].mean !== undefined) {
-        if (!/mean [\d.]+/.test(cell)) {
-          problems.push('#wind-table shows no mean for ' + k + ': "' + cell + '"');
-        }
-      } else if (cell !== '\u2014') {
-        problems.push('#wind-table prints "' + cell + '" for ' + k +
-          ', which has no mean in the data (expected an em dash)');
+      // A counter that is published has a mean by construction (it is the
+      // mean of 30 per-season counts), so the page must show a number.  An em
+      // dash here means the data was published incomplete and the renderer
+      // swallowed it - which is a defect, not a graceful degradation.
+      if (!/mean [\d.]+/.test(cell)) {
+        problems.push('#wind-table shows "' + cell + '" for ' + k +
+          ', a counter that is published with no usable mean');
       }
     });
   if (/undefined|null|NaN/.test(windText)) {

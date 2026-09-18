@@ -1328,7 +1328,8 @@ def fetch_storm_events(years):
                             "the original glyph was lost before this project fetched the file. "
                             "It is removed rather than guessed at; the surrounding text is "
                             "verbatim."),
-                 "encoding_fallback_used": None}
+                 "encoding_fallback_used": None,
+                 "files_with_an_encoding_fallback": []}
     for year in sorted(by_year, reverse=True):
         if year not in years:
             continue
@@ -1352,8 +1353,12 @@ def fetch_storm_events(years):
         # "5.46\ufffd\ufffd\ufffd".  Try UTF-8 strictly first and fall back to the
         # publisher's legacy encoding, recording which one was used.
         raw_text, raw_encoding = fetchlib.decode_text(raw)
-        if text_loss["encoding_fallback_used"] is None:
-            text_loss["encoding_fallback_used"] = (raw_encoding != "utf-8")
+        if raw_encoding != "utf-8":
+            text_loss["encoding_fallback_used"] = True
+            text_loss["files_with_an_encoding_fallback"].append(
+                {"file": fname, "encoding_used": raw_encoding})
+        elif text_loss["encoding_fallback_used"] is None:
+            text_loss["encoding_fallback_used"] = False
         if raw_encoding != "utf-8":
             note_irregularity(
                 "warning", "storm_events",
@@ -1403,9 +1408,14 @@ def fetch_storm_events(years):
                 if _removed:
                     events[-1][_field] = _clean
                     text_loss["characters_removed"] += _removed
+                    # The encoding actually used for THIS file is recorded per
+                    # removal: it is the evidence that the lost glyph was already
+                    # gone in the bytes NCEI served rather than destroyed by this
+                    # project's decoder, and the ledger checks exactly that.
                     text_loss["fields_affected"].append(
                         {"event_id": events[-1]["event_id"], "field": _field,
-                         "removed": _removed})
+                         "removed": _removed, "file": fname,
+                         "encoding_used": raw_encoding})
                     for _c in _ctx:
                         if len(text_loss["contexts"]) < 5:
                             text_loss["contexts"].append(_c)
@@ -1426,6 +1436,7 @@ def fetch_storm_events(years):
             {"characters_removed": text_loss["characters_removed"],
              "fields_affected": text_loss["fields_affected"][:5],
              "encoding_fallback_used": text_loss["encoding_fallback_used"],
+             "files_with_an_encoding_fallback": text_loss["files_with_an_encoding_fallback"],
              "contexts": text_loss["contexts"]})
     return {"county": "San Francisco County, CA (FIPS 06075)",
             "years": sorted(years), "files_used": files_used,
