@@ -1392,8 +1392,9 @@ check("a severity counter that was not derived says so in words",
 _thr_rows = [v for i in _bl if i["key"] == "heavy_rain_days" for v in i["numbers"]
              if "≥ 0.50 in" in v["label"] or "≥ 2.00 in" in v["label"]]
 check("the hard-rain answer carries the counted-vs-NOAA threshold rows",
-      len(_thr_rows) == 2 and all("counted" in r["value"] and "NOAA published" in r["value"]
-                                  for r in _thr_rows), json.dumps(_thr_rows))
+      len(_thr_rows) == 2
+      and all("counted" in r["label"] and "NOAA published" in r["label"]
+              and " vs " in r["value"] for r in _thr_rows), json.dumps(_thr_rows))
 
 # The storm-severity answer must never present a dollar figure, and must say
 # that no warning category is applied.

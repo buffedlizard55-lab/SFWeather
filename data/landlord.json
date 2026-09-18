@@ -291,18 +291,18 @@
         "n": 3,
         "key": "heavy_rain_days",
         "question": "How many hard-rain days will there be?",
-        "answer": "Expect about 14.97 days with \u2265 0.25 in and about 3.19 days with \u2265 1.00 in per season. Those are the days that overwhelm area drains, garage thresholds and ground-floor entryways. The counts are sums of the per-date observed probabilities, so they are an expectation over the 30-season record, and NOAA's own published per-date probabilities give almost the same answer (14.9 and 3.26 days) \u2014 two independent methods, same station, same threshold.",
+        "answer": "Expect about 14.97 days with \u2265 0.25 in and about 3.19 days with \u2265 1.00 in per season. Those are the days that overwhelm area drains, garage thresholds and ground-floor entryways. The counts are sums of the per-date observed probabilities, so they are an expectation over the 30-season record. NOAA's own published per-date probabilities give 14.9 and 3.26 days. The two independent methods agree to within 0.06 day(s) per season across 4 thresholds. ",
         "numbers": [
           {
-            "label": "Days \u2265 0.25 in per season",
-            "value": "14.97 (expected)"
+            "label": "Days \u2265 0.25 in per season, method A (sum of this project's per-date probabilities)",
+            "value": "14.97 days"
           },
           {
-            "label": "Days \u2265 1.00 in per season",
-            "value": "3.19 (expected)"
+            "label": "Days \u2265 1.00 in per season, method A",
+            "value": "3.19 days"
           },
           {
-            "label": "Same, NOAA's own published probabilities",
+            "label": "Days \u2265 0.25 in / \u2265 1.00 in, method B (NOAA's published probabilities)",
             "value": "14.9 / 3.26 days"
           },
           {
@@ -310,20 +310,20 @@
             "value": "5.54 in (1994-1995)"
           },
           {
-            "label": "Days \u2265 0.50 in per season",
-            "value": "8.4 counted \u00b7 8.39 NOAA published"
+            "label": "Days \u2265 0.50 in per season, method A (counted) vs method B (NOAA published)",
+            "value": "8.4 vs 8.39"
           },
           {
-            "label": "Days \u2265 1.00 in per season",
-            "value": "3.2 counted \u00b7 3.26 NOAA published"
+            "label": "Days \u2265 1.00 in per season, method A (counted) vs method B (NOAA published)",
+            "value": "3.2 vs 3.26"
           },
           {
-            "label": "Days \u2265 2.00 in per season",
-            "value": "0.5 counted \u00b7 0.51 NOAA published"
+            "label": "Days \u2265 2.00 in per season, method A (counted) vs method B (NOAA published)",
+            "value": "0.5 vs 0.51"
           },
           {
-            "label": "Days \u2265 4.00 in per season",
-            "value": "0.0 counted \u00b7 0.02 NOAA published"
+            "label": "Days \u2265 4.00 in per season, method A (counted) vs method B (NOAA published)",
+            "value": "0.0 vs 0.02"
           }
         ],
         "basis": "1991\u20132020 observed record \u2014 an expectation over those 30 seasons, not a prediction for 2026-27",
@@ -698,6 +698,7 @@
           "project_mean_days": 8.4,
           "project_max_days": 17.0,
           "noaa_expected_days": 8.39,
+          "difference_days": 0.01,
           "project_method": "mean of the 30 seasons' counts of days at or above this threshold, from the station's daily precipitation file",
           "noaa_method": "sum of NOAA's own published per-date percent-of-years value (DLY-PRCP-PCTALL-GE***HI) over the 123 dates"
         },
@@ -706,6 +707,7 @@
           "project_mean_days": 3.2,
           "project_max_days": 7.0,
           "noaa_expected_days": 3.26,
+          "difference_days": -0.06,
           "project_method": "mean of the 30 seasons' counts of days at or above this threshold, from the station's daily precipitation file",
           "noaa_method": "sum of NOAA's own published per-date percent-of-years value (DLY-PRCP-PCTALL-GE***HI) over the 123 dates"
         },
@@ -714,6 +716,7 @@
           "project_mean_days": 0.5,
           "project_max_days": 2.0,
           "noaa_expected_days": 0.51,
+          "difference_days": -0.01,
           "project_method": "mean of the 30 seasons' counts of days at or above this threshold, from the station's daily precipitation file",
           "noaa_method": "sum of NOAA's own published per-date percent-of-years value (DLY-PRCP-PCTALL-GE***HI) over the 123 dates"
         },
@@ -722,10 +725,18 @@
           "project_mean_days": 0.0,
           "project_max_days": 1.0,
           "noaa_expected_days": 0.02,
+          "difference_days": -0.02,
           "project_method": "mean of the 30 seasons' counts of days at or above this threshold, from the station's daily precipitation file",
           "noaa_method": "sum of NOAA's own published per-date percent-of-years value (DLY-PRCP-PCTALL-GE***HI) over the 123 dates"
         }
       ],
+      "two_method_agreement": {
+        "thresholds_compared": 4,
+        "largest_difference_days": 0.06,
+        "agree_within_a_tenth": true,
+        "statement": "The two independent methods agree to within 0.06 day(s) per season across 4 thresholds.",
+        "source_note": "One method counts days in this station's daily file; the other sums NOAA's own published per-date probabilities. They share a station but not a derivation."
+      },
       "published_expected": {
         "ge_001in_days": 34.01,
         "ge_010in_days": 22.73,

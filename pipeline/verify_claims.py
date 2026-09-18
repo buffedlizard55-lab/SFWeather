@@ -1130,6 +1130,52 @@ def main() -> int:
                      True, "the threshold table is not in this snapshot yet",
                      severity="warning")
 
+    # ---------------------- 12c-quater. the computed agreement verdict is true
+    # The page's strongest claim is that two independent NOAA products agree.
+    # That verdict is computed in the pipeline from the differences, then quoted
+    # - so the check is simply: re-compute it.  An overstated verdict here would
+    # be the most persuasive wrong sentence on the site.
+    agree = (((landlord.get("executive_summary") or {}).get("severity") or {})
+             .get("two_method_agreement") or {})
+    agree_bad = []
+    if agree:
+        diffs = [t.get("difference_days") for t in thr if t.get("difference_days") is not None]
+        if not diffs:
+            agree_bad.append("a verdict was published with nothing to base it on")
+        else:
+            worst = max(abs(float(d)) for d in diffs)
+            if agree.get("thresholds_compared") != len(diffs):
+                agree_bad.append({"thresholds_compared": agree.get("thresholds_compared"),
+                                  "recomputed": len(diffs)})
+            if agree.get("largest_difference_days") is None or \
+                    abs(float(agree["largest_difference_days"]) - worst) > 0.005:
+                agree_bad.append({"largest_difference_days": agree.get("largest_difference_days"),
+                                  "recomputed": round(worst, 2)})
+            claimed_ok = bool(agree.get("agree_within_a_tenth"))
+            if claimed_ok != (worst <= 0.10):
+                agree_bad.append({"agree_within_a_tenth": claimed_ok, "recomputed": worst <= 0.10})
+            stmt = agree.get("statement") or ""
+            # The sentence must carry the number it is claiming, so a reader
+            # cannot read "agree" without seeing how well.
+            if f"{worst:.2f}" not in stmt:
+                agree_bad.append({"statement": stmt,
+                                  "problem": "the verdict sentence does not quote the "
+                                             "difference it is based on"})
+            if "agree" in stmt.lower() and worst > 0.10:
+                agree_bad.append({"statement": stmt,
+                                  "problem": "the sentence claims agreement the numbers "
+                                             "do not support"})
+    ledger.check("two-method-verdict-recomputable",
+                 "The counted-vs-published agreement verdict is re-derivable from the "
+                 "differences it describes",
+                 not agree_bad,
+                 (f"{agree.get('thresholds_compared')} threshold(s); largest difference "
+                  f"{agree.get('largest_difference_days')} day(s)"
+                  if agree and not agree_bad else
+                  ("no verdict in this snapshot (the severity block has not been produced yet)"
+                   if not agree else f"{len(agree_bad)} mismatch(es)")),
+                 evidence=agree_bad[:5])
+
     # ------------------------- 12c-ter. one name, one quantity (days_covered)
     # ``days_covered`` used to mean two different things in two different
     # files: "scoreboard days inside the NWS horizon" in nws_window, and

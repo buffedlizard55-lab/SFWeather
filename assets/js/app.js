@@ -1432,6 +1432,14 @@ function cpcCategoryCell(r) {
 /** "mean X · p10–p90 Y–Z per season", or an em dash when the run did not
  *  compute it.  Severity counters are days per season at or above a plain
  *  threshold; no NWS warning category is implied by any of them. */
+function noteMissingAgreementVerdict() {
+  // Not an error - an older snapshot simply has no verdict - but it must not
+  // read as "the methods agree" by omission, so the page says so instead.
+  const host = $('#storm-summary');
+  if (host) host.append(el('p', { class: 'fine bl-warn',
+    text: 'This snapshot does not carry a computed agreement verdict for the two methods.' }));
+}
+
 function severityLine(d) {
   if (!d || d.mean === null || d.mean === undefined) return DASH;
   const band = (d.p10 !== undefined && d.p90 !== undefined)
@@ -1554,22 +1562,31 @@ function renderStorms(s, cal) {
   const cmp = llSev.threshold_comparison || [];
   if (cmp.length) {
     $('#storm-summary').append(el('h4', { text: 'Heavy-rain days per season — counted vs NOAA-published' }));
+    const num = (v, d) => (v === null || v === undefined ? DASH : n(v, d));
     $('#storm-summary').append(table(
-      [{ label: 'Threshold' }, { label: 'This project (mean of 30 seasons)', num: true },
-       { label: "NOAA's published per-date probabilities", num: true },
-       { label: 'Peak season (project)', num: true }],
+      [{ label: 'Threshold' }, { label: 'Method A: counted in the record', num: true },
+       { label: 'Method B: NOAA published', num: true }, { label: 'A − B', num: true },
+       { label: 'Peak season (method A)', num: true }],
       cmp.map(t => [
         `≥ ${Number(t.threshold_in).toFixed(2)} in`,
-        t.project_mean_days === null || t.project_mean_days === undefined ? DASH : n(t.project_mean_days, 2),
-        t.noaa_expected_days === null || t.noaa_expected_days === undefined ? DASH : n(t.noaa_expected_days, 2),
-        t.project_max_days === null || t.project_max_days === undefined ? DASH : n(t.project_max_days, 0)
+        num(t.project_mean_days, 2), num(t.noaa_expected_days, 2),
+        (t.difference_days === null || t.difference_days === undefined) ? DASH
+          : (t.difference_days > 0 ? '+' : '') + Number(t.difference_days).toFixed(2),
+        num(t.project_max_days, 0)
       ])));
+    // The verdict on whether the two methods agree is computed in the pipeline
+    // from the differences themselves and quoted here verbatim - so the page
+    // cannot claim agreement on a day the numbers stop agreeing.
+    const agree = llSev.two_method_agreement || {};
     $('#storm-summary').append(el('p', { class: 'fine', text:
       'Both columns answer the same question — how many days a season reach this threshold — from two ' +
-      'independent NOAA products. The first is this project counting daily values in the station record; ' +
-      "the second sums NOAA's own published percent-of-years value for each calendar date " +
-      '(DLY-PRCP-PCTALL-GE***HI in the 1991-2020 daily normals). They are computed by different methods ' +
-      'from different files, so agreement is evidence and disagreement is worth knowing about.' }));
+      'independent NOAA products: this project counting daily values in the station record, and the sum of ' +
+      "NOAA's own published percent-of-years value for each calendar date (DLY-PRCP-PCTALL-GE***HI in the " +
+      '1991-2020 daily normals). ' + (agree.statement ? agree.statement + ' ' : '') +
+      (agree.source_note ? agree.source_note : '') }));
+    if (agree.statement === undefined) {
+      noteMissingAgreementVerdict();
+    }
   }
 
   // NCEI writes damage as a number plus a magnitude suffix (K / M / B).  The old

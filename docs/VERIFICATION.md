@@ -401,3 +401,31 @@ The sentence a reader sees is therefore
 `…hit 5.46 in the 24 hours of December 31st, just 0.08 less than 1st place
 (11/5/1994) with 5.54.` — verbatim minus the three glyphs NCEI had already lost.
 
+## Validation result: two independent NOAA products agree on storm severity
+
+The severity work was built so that every claim could be checked against a second
+official product rather than against this project's own arithmetic. The 18 Sep
+2026 run produced the first real comparison, and it is the strongest piece of
+evidence on the site:
+
+| Threshold | Method A: this project counting days in `USW00023272` | Method B: sum of NOAA's published per-date percent-of-years (`DLY-PRCP-PCTALL-GE***HI`) | Difference |
+| --- | --- | --- | --- |
+| ≥ 0.50 in | 8.40 days/season (peak 17) | 8.39 days/season | **+0.01** |
+| ≥ 1.00 in | 3.20 (peak 7, 1996-97) | 3.26 | **−0.06** |
+| ≥ 2.00 in | 0.50 (peak 2) | 0.51 | **−0.01** |
+| ≥ 4.00 in | 0.00 (peak 1) | 0.02 | **−0.02** |
+
+Two different files, two different derivations, same station — within 0.06 days
+per season everywhere. The site prints this table and quotes the verdict, and the
+`two-method-verdict-recomputable` ledger check re-derives the verdict from the
+differences, so the sentence cannot outlive the numbers that justified it.
+
+### A second, independent cross-check
+
+NCEI's Storm Events narrative for 31 December 2022 records "5.46 in in the
+24 hours … just 0.08 less than 1st place (11/5/1994) with 5.54". The GHCN-derived
+severity record reports `max_daily_prcp_in = 5.54 in`, season **1994-1995** —
+i.e. the GHCN file's own wettest day in the window is the 5 November 1994 event,
+0.08 in above the 2022 event, exactly as NCEI's storm narrative says. Two
+different NCEI products, fetched separately, agree on both the value and the gap.
+

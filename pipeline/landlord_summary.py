@@ -271,8 +271,8 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
         if proj is None and noaa is None:
             continue
         thr_rows.append({
-            "label": f"Days \u2265 {inches:.2f} in per season",
-            "value": (f"{proj} counted \u00b7 {noaa} NOAA published"
+            "label": f"Days \u2265 {inches:.2f} in per season, method A (counted) vs method B (NOAA published)",
+            "value": (f"{proj} vs {noaa}"
                       if proj is not None and noaa is not None
                       else (f"{proj} counted" if proj is not None else f"{noaa} NOAA published")),
         })
@@ -284,15 +284,17 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
             f"Expect about {g(expected_days,'ge_025in_days')} days with \u2265 0.25 in and about "
             f"{g(expected_days,'ge_100in_days')} days with \u2265 1.00 in per season. Those are the days that "
             "overwhelm area drains, garage thresholds and ground-floor entryways. The counts are sums of the "
-            "per-date observed probabilities, so they are an expectation over the 30-season record, and "
-            "NOAA's own published per-date probabilities give almost the same answer "
-            f"({g(g(severity,'published_expected'),'ge_025in_days')} and "
-            f"{g(g(severity,'published_expected'),'ge_100in_days')} days) \u2014 two independent methods, "
-            "same station, same threshold."),
+            "per-date observed probabilities, so they are an expectation over the 30-season record. "
+            + (f"NOAA's own published per-date probabilities give {g(g(severity,'published_expected'),'ge_025in_days')} "
+               f"and {g(g(severity,'published_expected'),'ge_100in_days')} days. "
+               + (g(g(severity, 'two_method_agreement'), 'statement') + " "
+                  if g(g(severity, 'two_method_agreement'), 'statement') else ""))),
         "numbers": [
-            {"label": "Days \u2265 0.25 in per season", "value": f"{g(expected_days,'ge_025in_days')} (expected)"},
-            {"label": "Days \u2265 1.00 in per season", "value": f"{g(expected_days,'ge_100in_days')} (expected)"},
-            {"label": "Same, NOAA's own published probabilities",
+            {"label": "Days \u2265 0.25 in per season, method A (sum of this project's per-date probabilities)",
+             "value": f"{g(expected_days,'ge_025in_days')} days"},
+            {"label": "Days \u2265 1.00 in per season, method A",
+             "value": f"{g(expected_days,'ge_100in_days')} days"},
+            {"label": "Days \u2265 0.25 in / \u2265 1.00 in, method B (NOAA's published probabilities)",
              "value": f"{g(g(severity,'published_expected'),'ge_025in_days')} / "
                       f"{g(g(severity,'published_expected'),'ge_100in_days')} days"},
             {"label": "Wettest single day on record in the window",
@@ -1080,16 +1082,43 @@ def main():
         noaa = pub_expected.get(noaa_key)
         if proj is None and noaa is None:
             continue
-        threshold_comparison.append({
+        proj_mean = (proj or {}).get("mean")
+        entry = {
             "threshold_in": inches,
-            "project_mean_days": (proj or {}).get("mean"),
+            "project_mean_days": proj_mean,
             "project_max_days": (proj or {}).get("max"),
             "noaa_expected_days": noaa,
+            "difference_days": (round(proj_mean - noaa, 2)
+                                if (proj_mean is not None and noaa is not None) else None),
             "project_method": ("mean of the 30 seasons' counts of days at or above this "
                                "threshold, from the station's daily precipitation file"),
             "noaa_method": ("sum of NOAA's own published per-date percent-of-years value "
                             "(DLY-PRCP-PCTALL-GE***HI) over the 123 dates"),
-        })
+        }
+        threshold_comparison.append(entry)
+
+    # Whether the claim "the two methods agree" is allowed to be made is decided
+    # here, from the numbers, not written into the prose by hand: if the
+    # differences had come out large the site would have to say that instead.
+    _diffs = [abs(t["difference_days"]) for t in threshold_comparison
+              if t.get("difference_days") is not None]
+    two_method_agreement = None
+    if _diffs:
+        _worst = max(_diffs)
+        two_method_agreement = {
+            "thresholds_compared": len(_diffs),
+            "largest_difference_days": round(_worst, 2),
+            "agree_within_a_tenth": _worst <= 0.10,
+            "statement": (f"The two independent methods agree to within {_worst:.2f} day(s) "
+                          f"per season across {len(_diffs)} thresholds."
+                          if _worst <= 0.10 else
+                          f"The two independent methods differ by up to {_worst:.2f} day(s) "
+                          f"per season across {len(_diffs)} thresholds; both are published "
+                          "as-is and neither is adjusted."),
+            "source_note": ("One method counts days in this station's daily file; the other "
+                            "sums NOAA's own published per-date probabilities. They share a "
+                            "station but not a derivation."),
+        }
     severity_record = calendar.get("severity_record", {}) or {}
     severity = {
         **severity_dist,
@@ -1101,6 +1130,7 @@ def main():
         "record_severe_wind_and_rain_days": severity_record.get(
             "most_severe_wind_and_rain_days"),
         "threshold_comparison": threshold_comparison,
+        "two_method_agreement": two_method_agreement,
         "published_expected": pub_expected,
         "sources": [
             {"label": "NCEI GHCN-Daily USW00023272", "url": GHCN_URL},

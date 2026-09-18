@@ -211,21 +211,29 @@ lives in `climo.implausible_normals_value()` and is unit-tested.
 
 ## 2. Open work, in priority order
 
-### 0. Finish what this session opened
-**Why:** two items are one pipeline run from done.
-**Work:**
-1. Confirm the refreshed `data/` makes `no-replacement-characters` pass and
-   `severity-counters-arithmetic` move out of its deferred branch (it should
-   then compare nine counters against `season_by_year`).
-2. Look at the two-method threshold table with real numbers for the first time.
-   If the project's count and NOAA's published expectation disagree materially
-   at 0.50 or 2.00 in, that disagreement is the most interesting thing on the
-   page and needs a sentence explaining the likely cause (NOAA's published
-   per-date percentages are smoothed and come from a different station/period
-   than this project's count).
-3. Re-run the falsification harness for the two guards whose fixtures were
-   synthetic (`severity-counters-arithmetic`, `threshold-table-recomputable`).
-**Effort:** an hour, once the run lands.
+### 0. Finish what this session opened — mostly done, two items left
+**Done on the 04:05 UTC run:** the ledger is **41 of 41** with 0 warnings; the
+severity counters are in the committed data; the character-loss disclosure works
+and `no-replacement-characters` passes.
+
+**The result that came back is the best evidence on the site** — the project's own
+count and NOAA's own published expectation agree to within **0.06 days per
+season** across all four thresholds NOAA publishes (0.50 in: 8.40 vs 8.39;
+1.00 in: 3.20 vs 3.26; 2.00 in: 0.50 vs 0.51; 4.00 in: 0.00 vs 0.02). A second
+cross-check landed too: NCEI's Storm Events narrative for 31 Dec 2022 says the
+5.46 in that day was "0.08 less than 1st place (11/5/1994) with 5.54", and the
+GHCN-derived record independently reports `max_daily_prcp_in = 5.54 in` in
+season 1994-1995.
+
+**Still open:**
+1. Re-run `bash /tmp/negsmoke.sh`-style falsification against the *refreshed*
+   data for `severity-counters-arithmetic` (it now has real per-season values to
+   compare, so removing a per-season counter must fail the check) and for
+   `threshold-table-recomputable` with the real published probabilities.
+2. Decide whether the four-method picture in the bottom line (3.19 expected /
+   3.20 counted / 3.26 NOAA-published, all for "days ≥ 1.00 in") is clearer as
+   one merged row. It is currently three rows with explicit method labels.
+**Effort:** an hour.
 
 ### 1. Hourly ISD wind → hour-by-hour simultaneous wind and rain
 **Why:** the joint wind+rain statistic currently pairs a local-day rain total with a

@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-18T04:05:30Z
+generated_utc: 2026-09-18T04:08:11Z
 
-checks: 40 passed, 0 failed, 0 warning(s)  (of 40)
+checks: 41 passed, 0 failed, 0 warning(s)  (of 41)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         105 recorded fetches (104 unique URLs)
@@ -40,7 +40,7 @@ checks: 40 passed, 0 failed, 0 warning(s)  (of 40)
 [PASS] cost-driver-expected-days-arithmetic: The published expected heavy-rain day counts equal the sum of the per-date 1991-2020 probabilities in the committed climatology table
         ge_025in_days: published 14.97 vs recomputed 14.97 over 123 season dates; ge_100in_days: published 3.19 vs recomputed 3.19 over 123 season dates
 [PASS] raw-phase-tokens-dataset: No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)
-        0 raw tokens across 14596 scanned string(s)
+        0 raw tokens across 14598 scanned string(s)
 [PASS] phase-label-present: Every ENSO phase value a renderer can reach ships with a reader-facing label (no underscore token, correct capitalisation)
         3 label(s) published
 [PASS] raw-phase-tokens: No raw ENSO data token (el_nino / la_nina) appears in any reader-facing executive-summary string
@@ -73,6 +73,8 @@ checks: 40 passed, 0 failed, 0 warning(s)  (of 40)
         9 counter(s) recomputed from season_by_year
 [PASS] threshold-table-recomputable: Every NOAA column in the counted-vs-published threshold table equals the sum of the published per-date probabilities
         4 threshold(s) recomputed from the daily published values
+[PASS] two-method-verdict-recomputable: The counted-vs-published agreement verdict is re-derivable from the differences it describes
+        4 threshold(s); largest difference 0.06 day(s)
 [PASS] no-ambiguous-days-covered: No dataset publishes a bare 'days_covered' that means something different in each file
         0 ambiguous keys
 [PASS] cpc-baseline-honesty: No CPC polygon whose probability sits on the 33.3% three-way baseline is presented as a tilt

@@ -217,6 +217,41 @@ setTimeout(() => {
     problems.push('#storm-summary leaks a data token: ' + text('#storm-summary').slice(0, 200));
   }
 
+  // 17b. The counted-vs-published threshold table is the page's own evidence
+  //      that the two methods agree, so it has to render every threshold the
+  //      pipeline compared, print both columns, and quote the verdict the
+  //      pipeline computed rather than a sentence typed into the renderer.
+  const sevBlk = ((((landlordLeadJson.executive_summary || {}).severity) || {}));
+  const cmpRows = sevBlk.threshold_comparison || [];
+  if (cmpRows.length) {
+    const stormText = text('#storm-summary');
+    cmpRows.forEach(t => {
+      const label = '≥ ' + Number(t.threshold_in).toFixed(2) + ' in';
+      if (!stormText.includes(label)) {
+        problems.push('#storm-summary omits the ' + label + ' threshold row');
+      }
+      const cells = Array.from(doc.querySelectorAll('#storm-summary td'))
+        .map(td => td.textContent.trim());
+      const pair = [t.project_mean_days, t.noaa_expected_days]
+        .filter(v => v !== null && v !== undefined)
+        .map(v => Number(v).toFixed(2));
+      pair.forEach(v => {
+        if (!cells.includes(v)) {
+          problems.push('#storm-summary does not show ' + v + ' for the ' + label +
+            ' row (the value is in the data)');
+        }
+      });
+    });
+    const verdict = (sevBlk.two_method_agreement || {}).statement;
+    if (verdict && !stormText.includes(verdict)) {
+      problems.push('#storm-summary does not quote the computed agreement verdict: "' +
+        verdict + '"');
+    }
+    if (!verdict && !/does not carry a computed agreement verdict/.test(stormText)) {
+      problems.push('#storm-summary neither quotes an agreement verdict nor says one is missing');
+    }
+  }
+
   // 18. The renaming of nws_window.days_covered must not have been half-done:
   //     a stale reader silently reads undefined and prints "0 day(s)".
   const win = calJson.nws_window || {};
