@@ -2046,6 +2046,105 @@ function renderCaveats(cal) {
   }
 }
 
+/* ------------------------------------------------- NWS forecast verification */
+
+function renderNwsVerification() {
+  const host = $('#nws-verification-body');
+  if (!host) return;
+  return fetch('data/forecast_verification.json').then(r => r.ok ? r.json() : null).then(v => {
+    if (!v) {
+      host.append(el('p', { class: 'empty', text: 'No verification dataset is committed yet (data/forecast_verification.json missing).' }));
+      return;
+    }
+    const n = v.total_scored_pairs || 0;
+    host.append(el('p', { class: 'fine', text:
+      `Status: ${n} forecast-vs-observation pair(s) scored so far. ` +
+      (n === 0
+        ? 'The first scored pairs appear once observed days accumulate past the current NWS horizon \\u2014 every run archives a snapshot, and observations are matched automatically as GHCN-Daily updates.'
+        : 'Running error and POP calibration statistics are below.') }));
+
+    if (n === 0) {
+      host.append(el('div', { class: 'callout callout-info' }, [
+        el('h3', { text: 'Waiting for the first observable day' }),
+        el('p', { class: 'fine', text:
+          'The current NWS horizon reaches out 8 days; a forecast issued today is not scored ' +
+          'until that day has passed and NCEI has published a GHCN-Daily observation for it. ' +
+          'Archived snapshots build up nightly; scored pairs populate automatically.' })
+      ]));
+      return;
+    }
+
+    const rows = [];
+    const mae = v.overall_high_mae_f;
+    const pge = v.pop_ge_50_rain_pct;
+    const plt = v.pop_lt_50_rain_pct;
+    rows.push(['High-temp MAE (all lead days)', mae == null ? DASH : `${mae} \\u00b0F`]);
+    rows.push(['Rain frequency when POP \\u2265 50%', pge == null ? DASH : `${pge}%`]);
+    rows.push(['Rain frequency when POP < 50%', plt == null ? DASH : `${plt}%`]);
+    host.append(el('table', { class: 'kv' }, rows.map(([k, v]) =>
+      el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
+
+    const byLead = v.by_lead_days || [];
+    if (byLead.length) {
+      host.append(el('h4', { text: 'By lead time (days from issuance to target)' }));
+      host.append(table(
+        [{ label: 'Lead (days)' }, { label: 'n' }, { label: 'High MAE (\\u00b0F)' }, { label: 'Low MAE (\\u00b0F)' },
+         { label: '% rain when POP\\u226550' }, { label: '% rain when POP<50' }],
+        byLead.map(r => [r.lead_days, r.sample_size ?? 0,
+          r.high_mae_f ?? DASH, r.low_mae_f ?? DASH,
+          r.pop_ge_50_pct_rain == null ? DASH : r.pop_ge_50_pct_rain + '%',
+          r.pop_lt_50_pct_rain == null ? DASH : r.pop_lt_50_pct_rain + '%'])));
+    }
+  }).catch(err => {
+    host.append(el('p', { class: 'fine', text: 'Could not read forecast_verification.json: ' + err.message }));
+  });
+}
+
+/* ----------------------------------------------------------- CPC back-test */
+
+function renderCpcBacktest() {
+  const host = $('#cpc-backtest-body');
+  if (!host) return;
+  return fetch('data/cpc_backtest.json').then(r => r.ok ? r.json() : null).then(bt => {
+    if (!bt) {
+      host.append(el('div', { class: 'callout callout-info' }, [
+        el('h3', { text: 'Not yet built \\u2014 data-source limitation, flagged' }),
+        el('p', { class: 'fine', text:
+          'CPC\\u2019s live GIS server at ftp.cpc.ncep.noaa.gov only hosts the current month\\u2019s ' +
+          'issuance of seasprcp_YYYYMM.zip / seastemp_YYYYMM.zip. To back-test, the pipeline ' +
+          'must fetch every past issuance (mid-month, third-Thursday, 0.5-month lead going back ' +
+          'to 1995) from CPC\\u2019s static archive or from the IRI Data Library, sample each at ' +
+          '37.7605N / -122.4839W, and compare the above/below/EC category with the observed ' +
+          'Oct\\u2013Jan (and OND/NDJ/DJF/JFM) precipitation total from GHCN-Daily at USW00023272.' }),
+        el('p', { class: 'fine', text:
+          'Until those archived issuances are downloaded and stored under data/cpc_archive/, ' +
+          'this card honestly reports \\u201cpending back-fill\\u201d rather than guessing a ' +
+          'hit-rate. The sampling + comparison code path is the same code used for the live ' +
+          'CPC section (pipeline/lib_shape.py point-in-polygon against CPC polygons), so ' +
+          'plugging in the archive files is a data-fetch task, not a new-method task.' }),
+        el('p', { class: 'fine', text: 'Required next: bulk-fetch historical seasprcp issuances from CPC/IRI and add them to the provenance allow-list (verify_sources.py already allows ftp.cpc.ncep.noaa.gov, but IRI lives on iridl.ldeo.columbia.edu and must be vetted separately).' })
+      ]));
+      return;
+    }
+    const rows = bt.summary || [];
+    if (!rows.length) {
+      host.append(el('p', { class: 'empty', text: 'Back-test file present but contains no scored seasons yet.' }));
+      return;
+    }
+    host.append(el('p', { class: 'fine', text: bt.note || '' }));
+    host.append(table(
+      [{ label: 'Season' }, { label: 'CPC issued tilt' }, { label: 'CPC probability' },
+       { label: 'Observed tercile at 94122' }, { label: 'Hit?' }],
+      rows.map(r => [r.season, r.tilt || DASH,
+        r.probability == null ? DASH : r.probability + '%',
+        r.observed_tercile || DASH,
+        el('span', { class: 'pill pill-' + (r.hit ? 'ok' : r.hit === false ? 'fail' : 'warn'),
+          text: r.hit == null ? 'n/a' : (r.hit ? 'hit' : 'miss') })])));
+  }).catch(err => {
+    host.append(el('p', { class: 'fine', text: 'Could not read cpc_backtest.json: ' + err.message }));
+  });
+}
+
 /* ------------------------------------------------------------ verification */
 
 function renderVerify(verify, prov) {
@@ -2234,6 +2333,8 @@ async function boot() {
     renderWind(calendar, landlord);
     renderStorms(storms, calendar);
     renderSources(prov);
+    renderNwsVerification();
+    renderCpcBacktest();
     renderVerify(verify, prov);
     renderPublishedNormals(calendar);
     renderQuality(quality, run);

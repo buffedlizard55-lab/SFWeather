@@ -59,7 +59,8 @@ const REQUIRED_SECTIONS = [
   '#enso-body', '#cpc-season-table', '#monthly-table', '#enso-strat', '#discussions',
   '#now-current', '#nws-forecast', '#nws-obs', '#nws-alerts', '#calendar-grid',
   '#streak-table', '#streak-chart', '#wind-table', '#gust-table', '#storm-summary',
-  '#provenance', '#verify-body', '#quality-report', '#caveats'
+  '#provenance', '#nws-verification-body', '#cpc-backtest-body',
+  '#verify-body', '#quality-report', '#caveats'
 ];
 
 setTimeout(() => {
@@ -498,6 +499,19 @@ setTimeout(() => {
 
   // 16. Nothing on the whole page may render the machine artefacts NaN or
   //     "undefined".
+  // NWS verification card must either show scored pairs or explicitly state it
+  // is waiting for the first observable day - never silently empty.
+  const nwsV = text('#nws-verification-body');
+  if (!nwsV.includes('scored') && !nwsV.includes('observ') && !nwsV.includes('wait')) {
+    problems.push('#nws-verification-body does not explain its status: ' + nwsV.slice(0, 200));
+  }
+  // CPC back-test card must either show scored seasons or explain the archive gap.
+  const cpcV = text('#cpc-backtest-body');
+  if (!cpcV.includes('back') && !cpcV.includes('archive') && !cpcV.includes('archive')
+      && !cpcV.includes('Season') && !cpcV.includes('tilt')) {
+    problems.push('#cpc-backtest-body does not explain its status: ' + cpcV.slice(0, 200));
+  }
+
   ['#landlord', '#season', '#calendar', '#wind'].forEach(sel => {
     const t = text(sel);
     if (/\bundefined\b|\bNaN\b/.test(t)) {
