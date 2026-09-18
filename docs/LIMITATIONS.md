@@ -318,3 +318,33 @@ the card says the geography was not retrieved and the irregularity is recorded.
   if rain and wind each occurred somewhere in that day, which is why it is higher.
   It is kept on the page, labelled, and the same-station whole-day row exists to
   show how much of the gap is the pairing rule rather than the station.
+
+## The hourly record, and what it does and does not settle (added 18 Sep 2026 session 8)
+
+* **It is SFO, not the Sunset.** The hour-by-hour coincidence is measured at
+  station 72494023234 (KSFO), 11.9 mi away and more exposed.  Every wind figure
+  here stays an **upper bound** for 94122 — the hourly method fixes *when*, not
+  *where*.
+* **A sustained wind at the observation time is not a gust.**  The hourly
+  statistic uses the ISD `WND` speed.  Gusts exist only in the GSOD daily file, so
+  the "heavy" row (≥ 0.50 in and a gust ≥ 35 kt) is still a whole-day pairing and
+  is labelled as one.
+* **Some ISD precipitation reports cover more than one hour.**  Those hours are
+  counted and disclosed separately; they are not hour-by-hour measurements.
+* **Three of the 30 seasons used are missing 1–4 of the 123 dates** (2009-10,
+  2016-17, 2019-20); the thinnest coverage is published with the figure.  Seasons
+  outside the 1991–2020 window are excluded and named.
+* **The station's own hourly record is not current.**  NCEI's ISD and GSOD files
+  for this station end well before the run date while GHCN-Daily is current, so
+  the site publishes the newest row it actually fetched for each archive, its age
+  in days and its URL, and flags anything more than 180 days behind.  Every
+  published statistic is a 1991–2020 statistic and is unaffected — the flag exists
+  so nothing here is read as a statement about this week.
+* **The two methods are not interchangeable.**  The whole-day figure counts a day
+  if rain and wind each occurred somewhere in that day.  It is kept, labelled, and
+  the same-station row shows how much of the gap is the pairing rule.
+* **A missing fetch is published, not hidden.**  Fetches that are supposed to be
+  absent (a not-yet-published annual file, a station with no observations product)
+  are counted separately from failures and each must name a checkable reason; a
+  fetch that was supposed to work and did not is listed by URL on the status line
+  and recorded as a ledger warning.

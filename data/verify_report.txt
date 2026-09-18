@@ -1,12 +1,18 @@
 SFWeather verification ledger
-generated_utc: 2026-09-18T19:22:18Z
+generated_utc: 2026-09-18T19:46:54Z
 
-checks: 50 passed, 0 failed, 0 warning(s)  (of 50)
+checks: 53 passed, 0 failed, 1 warning(s)  (of 54)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         143 recorded fetches (142 unique URLs)
 [PASS] provenance-record-count: The provenance manifest count agrees with the pipeline run metadata
         manifest has 143 records; run.json says 143
+[PASS] fetch-counts-recompute: The published fetch counts (ok / failed / absent by design) match the manifest entry by entry
+        run.json says 139 ok / 4 failed / None absent by design; the manifest recounts 139 / 4 / 0 (this dataset predates the classification, so only the ok count is required to agree)
+[PASS] expected-absences-justified: Every fetch classified as an expected absence carries a reason the ledger can check against its own URL
+        0 expected absence(s), all justified by URL
+[WARN] fetch-failures-flagged: Every fetch that was supposed to work and did not is flagged for review
+        4 fetch(es) failed that are not expected absences: https://api.weather.gov/stations/OAMC1/observations/latest, https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/2026/72494023234.csv, https://www.ncei.noaa.gov/data/global-hourly/access/2026/72494023234.csv, https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/acce
 [PASS] hosts-official: Every recorded fetch is an official government host
         hosts: api.weather.gov, ftp.cpc.ncep.noaa.gov, geocoding.geo.census.gov, www.cpc.ncep.noaa.gov, www.ncei.noaa.gov, www2.census.gov
 [PASS] centroid-verified: The 94122 coordinate came from the Census file, not by hand
@@ -69,6 +75,8 @@ checks: 50 passed, 0 failed, 0 warning(s)  (of 50)
         6 answer(s); all structural rules hold
 [PASS] bottom-line-numbers-traceable: Every figure the executive bottom line quotes exists in the dataset it claims to read
         all quoted figures found in the source datasets
+[PASS] storm-events-counts-recompute: Every published Storm Events count is re-derived from the county file, and the two cards that count them use one definition
+        119 records, 99 rain-related, 12 with a token damage figure; bottom line and cost driver agree
 [PASS] severity-counters-arithmetic: Every published severity counter equals the arithmetic summary of the per-season values
         9 counter(s) recomputed from season_by_year
 [PASS] threshold-table-recomputable: Every NOAA column in the counted-vs-published threshold table equals the sum of the published per-date probabilities

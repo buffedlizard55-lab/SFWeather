@@ -129,6 +129,84 @@ def _c7(repo):
     return repo
 
 
+
+@case("the hourly wind+rain mean is dropped from the landlord data",
+      expect_msg="hourly block reports available with no days mean")
+def _c8(repo):
+    def fn(ll):
+        blk = ll["executive_summary"]["wind_and_rain_hourly"]
+        blk["days_with_a_simultaneous_hour"].pop("mean", None)
+    patch_json(repo, "data/landlord.json", fn)
+    return repo
+
+
+@case("the multi-hour precipitation disclosure is removed")
+def _c9(repo):
+    def fn(ll):
+        for row in ll["executive_summary"]["bottom_line"]:
+            if row.get("key") == "wind_and_rain":
+                row["confidence"] = row["confidence"].replace(
+                    "longer than one hour", "LONGER THAN ONE HOUR")
+    patch_json(repo, "data/landlord.json", fn)
+    return repo
+
+
+@case("the stale-archive flag names only the first stale archive")
+def _c10(repo):
+    p = repo / "assets" / "js" / "app.js"
+    s = p.read_text()
+    old = "`Flagged: ${stale.map(labelFor).join('; ')} `"
+    assert old in s, "fixture cannot mutate the stale-archive line it expects"
+    s = s.replace(old, "`Flagged: ${stale.slice(0, 1).map(labelFor).join('; ')} `", 1)
+    p.write_text(s)
+    return repo
+
+
+@case("the status line stops disclosing expected absences")
+def _c11(repo):
+    # First give the fixture the shape the next pipeline run will produce: four
+    # fetches that are supposed to be absent.  Then remove the disclosure.
+    def fn(prov):
+        n = 0
+        for e in prov["entries"]:
+            if not e.get("ok"):
+                e["expected_absent"] = True
+                n += 1
+        assert n, "fixture expected at least one failed fetch to reclassify"
+    patch_json(repo, "data/provenance.json", fn)
+    p = repo / "assets" / "js" / "app.js"
+    src = p.read_text()
+    old = "    + (absent ? ` \u00b7 ${absent} absent by design (not-yet-published annual file or station without an observations endpoint)` : '')"
+    assert old in src, "fixture cannot mutate the expected-absence clause it expects"
+    p.write_text(src.replace(old, "", 1))
+    return repo
+
+
+@case("the status line counts an expected absence as a failure")
+def _c12(repo):
+    def fn(prov):
+        n = 0
+        for e in prov["entries"]:
+            if not e.get("ok"):
+                e["expected_absent"] = True
+                n += 1
+        assert n, "fixture expected at least one failed fetch to reclassify"
+    patch_json(repo, "data/provenance.json", fn)
+    p = repo / "assets" / "js" / "app.js"
+    src = p.read_text()
+    old = "e.ok === false && !e.expected_absent).length;"
+    assert old in src, "fixture cannot mutate the failure count it expects"
+    p.write_text(src.replace(old, "e.ok === false).length;", 1))
+    return repo
+
+
+def patch_json(repo, rel, fn):
+    p = repo / rel
+    data = json.loads(p.read_text())
+    fn(data)
+    p.write_text(json.dumps(data))
+
+
 def run_smoke(repo):
     proc = subprocess.run(["node", "tests/smoke.js", str(repo)],
                           capture_output=True, text=True, cwd=str(REPO),

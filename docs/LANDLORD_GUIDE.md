@@ -140,16 +140,34 @@ Source: same GHCN-Daily file.
 Wind from **NCEI GSOD 72494023234 (KSFO)**, 11.9 miles SE of 94122 (great-circle distance from the 94122 centroid, published as `climatology.meta.station_distance_mi.wind_ksfo` and recomputed every run), more open/exposed than Sunset — so treat as **upper bound** for 94122. Units: knots in CSV, converted mph ×1.15078 per GSOD README: https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt (README is authority, also notes GSOD days are UTC 00-24Z ≈ 16:00-16:00 local, so joint stat is approximation).
 
 - Average daily max sustained wind at SFO: **17.2 mph**; average daily max gust: **30.7 mph**
-- **11.1 days/season** with both rain (≥0.01 in) and sustained wind ≥20 kt (median 10, max 24)
 - **2.2 days/season** with heavy rain (≥0.50 in) AND gust ≥35 kt (median 2, max 8)
 - Strongest gust of season: mean **53.8 mph**, record **70 mph**
 
+**Wind and rain at the same time** is answered two ways, and the site publishes
+both rather than one:
+
+- **hour by hour** from **NCEI ISD global-hourly 72494023234 (KSFO)**: a local
+  date counts when at least one observation has both `wind ≥ 20 kt` and
+  precipitation > 0. This is the headline on the site's *Wind + rain together*
+  card, with its per-season coverage and the seasons excluded from it.
+- **whole day at a time** from GSOD + GHCN-Daily: a date counts when the day's
+  rain total and the day's wind maximum each cross the threshold — a looser
+  test that cannot tell rain in the morning from wind at night.
+
+The figures themselves are **not** repeated here (they are recomputed nightly and
+a number typed into this file would contradict them within a month — see the
+`readme-figures-traceable` guard). Read them from the site card or from
+`data/landlord.json` → `executive_summary.wind_and_rain_hourly`.
+
 Definitions used:
 - wet_day: calendar day ≥0.01 in
-- wind_and_rain_day: SFO max sustained ≥20 kt AND precip ≥0.01 in
-- heavy_wind_and_rain_day: SFO max gust ≥35 kt AND precip ≥0.50 in
+- wind_and_rain_hour: one ISD observation with sustained wind ≥20 kt and precipitation > 0
+- wind_and_rain_day: SFO max sustained ≥20 kt AND precip ≥0.01 in (whole-day pairing)
+- heavy_wind_and_rain_day: SFO max gust ≥35 kt AND precip ≥0.50 in (whole-day pairing)
 
-Source: https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/
+Sources:
+- Hourly: https://www.ncei.noaa.gov/data/global-hourly/access/ (per-year station files)
+- Daily: https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/
 
 ### Storm severity
 
@@ -185,7 +203,7 @@ Sources for climatology days:
 
 1. **Gutters, downspouts, roof drains** — Expect 12.79 in mean seasonal total, but up to 22.82 in in wettest El Niño year (1997-98). December mean 4.78 in, January 4.47 in. Clean before Oct 1.
 2. **Week-long rain plan** — 53.3% of seasons have ≥7-day wet streak, 23.3% have ≥10 days. Longest recorded 17 days. Tenant communication for extended wet periods, check for leaks.
-3. **Wind+rain combo** — 11.1 days/season average with rain + ≥20 kt sustained at SFO (upper bound). Heavy combo 2.2 days/season. Secure loose items, check trees, fences.
+3. **Wind+rain combo** — the site's *Wind + rain together* card gives the hour-by-hour count (rain and ≥20 kt in the same hour) and, beside it, the whole-day count this guide used to quote. All of it is measured at SFO, an upper bound for the Sunset. Secure loose items, check trees and fences.
 4. **Gusts** — Season max gust mean 53.8 mph, record 70 mph at SFO. Sunset less, but use as upper bound for insurance/planning.
 5. **ENSO tilt** — Read the current ENSO state and the current CPC probabilities on the site (*ENSO — the single biggest driver of a San Francisco winter* and *What the official CPC outlooks say for this window*); they are republished nightly from NOAA's own products and this file does not duplicate them, because a number typed here would contradict the verified dataset within a month. What is stable and safe to plan from is the observed record: in 1991-2020, El Niño seasons averaged 14.23 in and La Niña seasons 11.16 in over Oct-Jan, with substantial min/max overlap — a tilt, not a verdict.
 6. **No daily forecast beyond 7 days** — Don't trust any site showing specific rain amount for Jan 15 2027 today. Use climatology as planning baseline, and watch NWS 7-day as season approaches — dashboard auto-promotes days to real forecast nightly.

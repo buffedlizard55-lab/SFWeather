@@ -74,6 +74,14 @@ ISD_URL = "https://www.ncei.noaa.gov/data/global-hourly/access/"
 #: in the published output with their coverage instead of being averaged in.
 HOURLY_SEASON_MIN_COVERAGE_PCT = 95.0
 
+#: NCEI Storm Events types this project counts as rain-related: flooding and
+#: flash flooding, the "Heavy Rain" type NWS files when rain is the hazard, and
+#: debris flow, which is the rain-driven slope failure a landlord's drainage and
+#: foundation question runs into.  Defined once because two cards used to count
+#: "flood-type" reports with two different sets, so the same page published 98
+#: and 99 for the same quantity.
+RAIN_RELATED_EVENT_TYPES = ("Flood", "Flash Flood", "Heavy Rain", "Debris Flow")
+
 
 def summarise_hourly_wind_rain(isd, period, daily_wind_rain, heavy_wind_rain,
                                min_coverage_pct=HOURLY_SEASON_MIN_COVERAGE_PCT):
@@ -522,16 +530,24 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
         min_cov = g(coverage, "min_coverage_pct")
         multi = g(hourly, "simultaneous_hours_from_multi_hour_reports")
         if hourly.get("same_station_daily_fields_available"):
+            same_mean = same_station_daily.get("mean")
+            cross_mean = (wind_rain or {}).get("mean")
             comparison_sentence = (
                 f"Pairing a whole day\u2019s rain with a whole day\u2019s wind maximum \u2014 a method "
                 f"that cannot tell rain in the morning from wind at night \u2014 gives "
-                f"{g(same_station_daily,'mean')} days on that same station, and ")
+                f"{g(same_station_daily,'mean')} days on that same station and ")
             after_comparison = ""
+            agreement_sentence = (
+                " The two whole-day constructions agree, so the gap to the hourly count is the "
+                "pairing rule, not the change of rain gauge."
+                if (same_mean is not None and cross_mean is not None
+                    and abs(float(same_mean) - float(cross_mean)) < 0.05) else "")
         else:
             comparison_sentence = ""
             after_comparison = ("The same-station whole-day comparison is not published in this run\u2019s "
                                 "hourly dataset, so the hour-by-hour figure above is the one to use; for "
                                 "reference, the whole-day method gives ")
+            agreement_sentence = ""
         hourly_answer = (
             f"On the hour-by-hour record at SFO, rain and sustained wind \u2265 20 kt coincide on about "
             f"{g(hourly_days,'mean')} days a season (median {g(hourly_days,'median')}, range "
@@ -539,9 +555,10 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
             f"which is about {g(hourly_hours,'mean')} simultaneous hours a season. "
             + comparison_sentence + after_comparison
             + f"{g(wind_rain,'mean')} days when the downtown rain gauge is paired with SFO wind (the figure "
-              "this page published before the hourly record was used). Those are the days water is driven "
-              "sideways under shingles, laps and window seals, and the days fences fail. The SFO wind figure "
-              "is an upper bound for the Sunset.")
+              "this page published before the hourly record was used)."
+            + agreement_sentence
+            + " Those are the days water is driven sideways under shingles, laps and window seals, and the "
+              "days fences fail. The SFO wind figure is an upper bound for the Sunset.")
         hourly_numbers = [
             {"label": "Days per season with a simultaneous wind+rain hour (hourly record)",
              "value": (f"mean {g(hourly_days,'mean')} \u00b7 median {g(hourly_days,'median')} \u00b7 "
@@ -611,7 +628,7 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
     })
 
     storm_rows = (storms or {}).get("events") or []
-    flood_types = ("Flood", "Flash Flood", "Heavy Rain")
+    flood_types = RAIN_RELATED_EVENT_TYPES
     years = (storms or {}).get("years") or []
     span = f"{years[0]}\u2013{years[-1]}" if years else "the covered years"
     n_flood = sum(1 for e in storm_rows if (e.get("event_type") or "") in flood_types)
@@ -639,7 +656,8 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
     sev_answer = (
         (sev_sentence + " " if sev_bits else "")
         + f"NOAA's Storm Events Database holds {n_all} records for San Francisco County over {span}, of "
-        + f"which {n_flood} are flood-type. Its damage column is not usable as a cost estimate "
+        + f"which {n_flood} are rain-related ({', '.join(flood_types)}). "
+        + "Its damage column is not usable as a cost estimate "
         + ("\u2014 every non-zero value NCEI holds for this county is a token amount "
            f"({n_dmg} of {n_all} records carry one) \u2014 " if n_dmg else "\u2014 ")
         + "so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. "
@@ -647,7 +665,8 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
           "per forecast zone and this project does not restate them.")
     sev_numbers = [
         {"label": "Storm Events records, SF County", "value": f"{n_all} ({span})"},
-        {"label": "Flood-type records", "value": f"{n_flood}"},
+        {"label": "Rain-related records (Flood, Flash Flood, Heavy Rain, Debris Flow)",
+         "value": f"{n_flood} of {n_all}"},
         {"label": "Records with a non-zero damage figure",
          "value": ("not derived this run" if n_dmg is None else f"{n_dmg} of {n_all} \u2014 no dollar total published")},
     ]
@@ -789,7 +808,7 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
     flood_with_damage = None
     storm_years = None
     if storms and isinstance(storms.get("events"), list):
-        flood_types = {"Flood", "Flash Flood", "Heavy Rain", "Debris Flow"}
+        flood_types = RAIN_RELATED_EVENT_TYPES
         flood_count = sum(1 for e in storms["events"]
                           if (e or {}).get("event_type") in flood_types)
         flood_with_damage = sum(
@@ -813,7 +832,9 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
                 "value": f"{dec.get('max')} in / {(jan or {}).get('max')} in"})
         if flood_count is not None:
             evidence.append({
-                "label": f"Flood-type storm reports in SF County ({storm_years or 'archive years'})",
+                "label": (f"Rain-related storm reports in SF County "
+                          f"(Flood, Flash Flood, Heavy Rain, Debris Flow; "
+                          f"{storm_years or 'archive years'})"),
                 "value": (f"{flood_count} events in NOAA Storm Events "
                           "(reported events only - under-reporting is likely)")})
             if flood_with_damage is not None:

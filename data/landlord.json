@@ -1072,7 +1072,7 @@
         "n": 5,
         "key": "wind_and_rain",
         "question": "Will wind and rain hit at the same time?",
-        "answer": "On the hour-by-hour record at SFO, rain and sustained wind \u2265 20 kt coincide on about 7.9 days a season (median 7.0, range 1.0\u201316.0 over 30 seasons, 1991-1992 .. 2020-2021), which is about 29.5 simultaneous hours a season. Pairing a whole day\u2019s rain with a whole day\u2019s wind maximum \u2014 a method that cannot tell rain in the morning from wind at night \u2014 gives 11.1 days on that same station, and 11.1 days when the downtown rain gauge is paired with SFO wind (the figure this page published before the hourly record was used). Those are the days water is driven sideways under shingles, laps and window seals, and the days fences fail. The SFO wind figure is an upper bound for the Sunset.",
+        "answer": "On the hour-by-hour record at SFO, rain and sustained wind \u2265 20 kt coincide on about 7.9 days a season (median 7.0, range 1.0\u201316.0 over 30 seasons, 1991-1992 .. 2020-2021), which is about 29.5 simultaneous hours a season. Pairing a whole day\u2019s rain with a whole day\u2019s wind maximum \u2014 a method that cannot tell rain in the morning from wind at night \u2014 gives 11.1 days on that same station and 11.1 days when the downtown rain gauge is paired with SFO wind (the figure this page published before the hourly record was used). The two whole-day constructions agree, so the gap to the hourly count is the pairing rule, not the change of rain gauge. Those are the days water is driven sideways under shingles, laps and window seals, and the days fences fail. The SFO wind figure is an upper bound for the Sunset.",
         "numbers": [
           {
             "label": "Days per season with a simultaneous wind+rain hour (hourly record)",
@@ -1116,15 +1116,15 @@
         "n": 6,
         "key": "storm_severity",
         "question": "How severe have the storms actually been here?",
-        "answer": "On the station record, the season averages 3.2 days a season at \u2265 1.00 in of rain, 2.4 days with a gust \u2265 40 kt, 0.5 days that are both. NOAA's Storm Events Database holds 119 records for San Francisco County over 2014\u20132026, of which 98 are flood-type. Its damage column is not usable as a cost estimate \u2014 every non-zero value NCEI holds for this county is a token amount (12 of 119 records carry one) \u2014 so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. No named warning category (Advisory / Warning / High Wind) is applied: those criteria are written per forecast zone and this project does not restate them.",
+        "answer": "On the station record, the season averages 3.2 days a season at \u2265 1.00 in of rain, 2.4 days with a gust \u2265 40 kt, 0.5 days that are both. NOAA's Storm Events Database holds 119 records for San Francisco County over 2014\u20132026, of which 99 are rain-related (Flood, Flash Flood, Heavy Rain, Debris Flow). Its damage column is not usable as a cost estimate \u2014 every non-zero value NCEI holds for this county is a token amount (12 of 119 records carry one) \u2014 so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. No named warning category (Advisory / Warning / High Wind) is applied: those criteria are written per forecast zone and this project does not restate them.",
         "numbers": [
           {
             "label": "Storm Events records, SF County",
             "value": "119 (2014\u20132026)"
           },
           {
-            "label": "Flood-type records",
-            "value": "98"
+            "label": "Rain-related records (Flood, Flash Flood, Heavy Rain, Debris Flow)",
+            "value": "99 of 119"
           },
           {
             "label": "Records with a non-zero damage figure",
@@ -1521,7 +1521,7 @@
             "value": "12.03 in / 12.07 in"
           },
           {
-            "label": "Flood-type storm reports in SF County (2014\u20132026)",
+            "label": "Rain-related storm reports in SF County (Flood, Flash Flood, Heavy Rain, Debris Flow; 2014\u20132026)",
             "value": "99 events in NOAA Storm Events (reported events only - under-reporting is likely)"
           },
           {

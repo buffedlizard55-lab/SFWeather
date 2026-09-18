@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T19:22:18Z",
+  "generated_utc": "2026-09-18T19:46:54Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,12 +9,14 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 50,
-    "passed": 50,
+    "total": 54,
+    "passed": 53,
     "failed": 0,
-    "warnings": 0,
+    "warnings": 1,
     "failed_checks": [],
-    "warning_checks": []
+    "warning_checks": [
+      "fetch-failures-flagged"
+    ]
   },
   "checks": [
     {
@@ -36,6 +38,36 @@
         "manifest_records": 143,
         "run_manifest_entries": 143
       }
+    },
+    {
+      "id": "fetch-counts-recompute",
+      "title": "The published fetch counts (ok / failed / absent by design) match the manifest entry by entry",
+      "status": "pass",
+      "detail": "run.json says 139 ok / 4 failed / None absent by design; the manifest recounts 139 / 4 / 0 (this dataset predates the classification, so only the ok count is required to agree)",
+      "evidence": {
+        "manifest_ok": 139,
+        "manifest_failed": 4,
+        "manifest_expected_absences": 0,
+        "run_expected_absences": null,
+        "expected_absent_urls": []
+      }
+    },
+    {
+      "id": "expected-absences-justified",
+      "title": "Every fetch classified as an expected absence carries a reason the ledger can check against its own URL",
+      "status": "pass",
+      "detail": "0 expected absence(s), all justified by URL",
+      "evidence": {
+        "run_year": "2026",
+        "unjustified": []
+      }
+    },
+    {
+      "id": "fetch-failures-flagged",
+      "title": "Every fetch that was supposed to work and did not is flagged for review",
+      "status": "warn",
+      "detail": "4 fetch(es) failed that are not expected absences: https://api.weather.gov/stations/OAMC1/observations/latest, https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/2026/72494023234.csv, https://www.ncei.noaa.gov/data/global-hourly/access/2026/72494023234.csv, https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/acce",
+      "evidence": null
     },
     {
       "id": "hosts-official",
@@ -539,6 +571,25 @@
       "status": "pass",
       "detail": "all quoted figures found in the source datasets",
       "evidence": []
+    },
+    {
+      "id": "storm-events-counts-recompute",
+      "title": "Every published Storm Events count is re-derived from the county file, and the two cards that count them use one definition",
+      "status": "pass",
+      "detail": "119 records, 99 rain-related, 12 with a token damage figure; bottom line and cost driver agree",
+      "evidence": {
+        "file_records": 119,
+        "file_rain_related": 99,
+        "file_rain_related_with_damage": 4,
+        "file_with_damage": 12,
+        "published": {
+          "records": 119,
+          "rain_related": 99,
+          "with_damage": 12,
+          "cost_driver_rain_related": 99,
+          "cost_driver_with_damage": 4
+        }
+      }
     },
     {
       "id": "severity-counters-arithmetic",

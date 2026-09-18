@@ -298,6 +298,136 @@ def _d2(tmp):
     return _repo_copy_with(mutate_readme=mutate)(tmp)
 
 
+@case("hourly wind+rain mean does not match the per-season values", "fail",
+      "wind-rain-hourly-arithmetic")
+def _h1(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    ll = load("landlord.json")
+    hourly = ll["executive_summary"]["wind_and_rain_hourly"]
+    published = hourly.get("days_with_a_simultaneous_hour") or {}
+    if published.get("mean") is None:
+        raise AssertionError("fixture expected a published hourly mean to corrupt")
+    published["mean"] = round(float(published["mean"]) + 1.0, 2)
+    dump(tmp / "landlord.json", ll)
+    return tmp
+
+
+@case("a season published as used is also listed as excluded", "fail",
+      "wind-rain-hourly-arithmetic")
+def _h2(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    ll = load("landlord.json")
+    hourly = ll["executive_summary"]["wind_and_rain_hourly"]
+    if not hourly.get("per_season") or not hourly.get("excluded_seasons"):
+        raise AssertionError("fixture expected both used and excluded seasons")
+    hourly["excluded_seasons"][0]["season"] = hourly["per_season"][0]["season"]
+    dump(tmp / "landlord.json", ll)
+    return tmp
+
+
+@case("a used season sits below the published coverage floor", "fail",
+      "wind-rain-hourly-arithmetic")
+def _h3(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    ll = load("landlord.json")
+    hourly = ll["executive_summary"]["wind_and_rain_hourly"]
+    if not hourly.get("per_season"):
+        raise AssertionError("fixture expected published seasons")
+    # 100% floor: any used season with thinner coverage must be caught.
+    hourly["coverage"]["min_coverage_pct_required"] = 100.0
+    dump(tmp / "landlord.json", ll)
+    return tmp
+
+
+@case("the hourly statistic loses its ISD source URL", "fail", "wind-rain-hourly-traceable")
+def _h4(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    ll = load("landlord.json")
+    hourly = ll["executive_summary"]["wind_and_rain_hourly"]
+    if not hourly.get("source_url"):
+        raise AssertionError("fixture expected a source_url to strip")
+    hourly["source_url"] = "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+    dump(tmp / "landlord.json", ll)
+    return tmp
+
+
+@case("an archive last_date stops matching its published age", "fail", "record-coverage-published")
+def _h5(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    run = load("run.json")
+    cov = run.get("record_coverage") or {}
+    archives = cov.get("archives") or []
+    if not archives:
+        raise AssertionError("fixture expected a published record_coverage block")
+    archives[0]["last_date"] = "1999-01-01"
+    dump(tmp / "run.json", run)
+    return tmp
+
+
+@case("the record_coverage block disappears from the run", "warn", "record-coverage-published")
+def _h6(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    run = load("run.json")
+    if "record_coverage" not in run:
+        raise AssertionError("fixture expected a record_coverage block to remove")
+    run.pop("record_coverage")
+    dump(tmp / "run.json", run)
+    return tmp
+
+
+@case("a current daily archive is relabelled as a not-yet-published annual file",
+      "fail", "expected-absences-justified")
+def _h7(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    prov = load("provenance.json")
+    run = load("run.json")
+    ghcn = next((e for e in prov["entries"]
+                 if "global-historical-climatology-network-daily" in str(e.get("url"))), None)
+    if ghcn is None:
+        raise AssertionError("fixture expected a GHCN-Daily fetch to relabel")
+    if not ghcn.get("ok"):
+        raise AssertionError("fixture expected the GHCN-Daily fetch to have succeeded")
+    # Simulate the regression: the daily archive stops answering, and the run
+    # quietly writes it off as an annual file that is not published yet.
+    ghcn["ok"] = False
+    ghcn["http_status"] = 404
+    ghcn["expected_absent"] = "annual-file-not-yet-published"
+    counts = run["counts"]
+    counts["successful_fetches"] -= 1
+    counts["expected_absences"] = counts.get("expected_absences", 0) + 1
+    dump(tmp / "provenance.json", prov)
+    dump(tmp / "run.json", run)
+    return tmp
+
+
+@case("an expected absence invents its own reason", "fail", "expected-absences-justified")
+def _h8(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    prov = load("provenance.json")
+    run = load("run.json")
+    entry = next((e for e in prov["entries"]
+                  if "/access/2026/" in str(e.get("url")) and not e.get("ok")), None)
+    if entry is None:
+        entry = next((e for e in prov["entries"] if not e.get("ok")), None)
+    if entry is None:
+        raise AssertionError("fixture expected at least one failed fetch to relabel")
+    entry["expected_absent"] = "the-provider-is-slow-today"
+    counts = run["counts"]
+    counts["failed_fetches"] = max(0, counts["failed_fetches"] - 1)
+    counts["expected_absences"] = counts.get("expected_absences", 0) + 1
+    dump(tmp / "provenance.json", prov)
+    dump(tmp / "run.json", run)
+    return tmp
+
+
 def main():
     failures = []
     for name, expect, check_id, build in CASES:

@@ -197,7 +197,12 @@ function renderDataStatus(cal, quality, prov, verify) {
   const ageHours = Number.isFinite(generated) ? (now - generated) / 3600000 : null;
   const maxAgeHours = 36;
   const fetches = (prov && prov.entries) || [];
-  const failed = fetches.filter(e => e && e.ok === false).length;
+  // A fetch that failed is a fetch that was supposed to work.  An expected
+  // absence -- the current year's annual NCEI file before the provider publishes
+  // it, a station with no observations endpoint -- is reported on its own line,
+  // because folding it into the failure count hides a real outage.
+  const failed = fetches.filter(e => e && e.ok === false && !e.expected_absent).length;
+  const absent = fetches.filter(e => e && e.ok === false && e.expected_absent).length;
   const irregularities = (quality && quality.irregularities) || [];
   const qualityErrors = Number((quality && quality.counts && quality.counts.errors) || 0);
   const verifyFailed = Number((verify && verify.summary && verify.summary.failed) || 0);
@@ -224,7 +229,14 @@ function renderDataStatus(cal, quality, prov, verify) {
     headline = `Official data snapshot is ${ageHours.toFixed(1)} hours old`;
     detail = `Fetched/build timestamp: ${timestamp} UTC. The nightly job is expected to refresh this page; for life-safety decisions use weather.gov directly.`;
   }
-  const summary = `${fetches.length} recorded source fetches · ${failed} failed fetch${failed === 1 ? '' : 'es'} · ${irregularities.length} flagged irregularit${irregularities.length === 1 ? 'y' : 'ies'} · ${verifyFailed} failed claim check${verifyFailed === 1 ? '' : 's'}`;
+  let summary = `${fetches.length} recorded source fetches · ${failed} failed fetch${failed === 1 ? '' : 'es'}`
+    + (absent ? ` · ${absent} absent by design (not-yet-published annual file or station without an observations endpoint)` : '')
+    + ` · ${irregularities.length} flagged irregularit${irregularities.length === 1 ? 'y' : 'ies'} · ${verifyFailed} failed claim check${verifyFailed === 1 ? '' : 's'}`;
+  if (failed > 0) {
+    const which = fetches.filter(e => e && e.ok === false && !e.expected_absent)
+      .map(e => String(e.url || '').replace(/^https?:\/\//, '')).slice(0, 3);
+    summary += ` — review: ${which.join(', ')}`;
+  }
   box.append(el('div', { class: classes }, [
     el('strong', { text: headline }),
     el('span', { class: 'data-status-detail', text: detail }),
@@ -1986,8 +1998,15 @@ function renderQuality(q, run) {
     ]))));
     const stale = cov.stale_archives || [];
     if (stale.length) {
-      host.append(el('p', { class: 'fine', text:
-        `Flagged: ${stale.join(', ')} is more than 180 days behind the run date. ` +
+      // Name the archives the way the table above names them, not by the raw
+      // area key, so the flag points at a row the reader can actually find.
+      const labelFor = area => {
+        const row = (cov.archives || []).find(a => a.area === area);
+        return row ? (row.label || area) : area;
+      };
+      host.append(el('p', { class: 'fine', id: 'quality-stale-flag', text:
+        `Flagged: ${stale.map(labelFor).join('; ')} ` +
+        (stale.length > 1 ? 'are' : 'is') + ' more than 180 days behind the run date. ' +
         'That is published rather than hidden \u2014 it limits any claim about *recent* ' +
         'conditions, not the 1991\u20132020 statistics.' }));
     }

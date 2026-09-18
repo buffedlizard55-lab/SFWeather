@@ -98,8 +98,49 @@ def note_irregularity(severity, area, message, evidence=None):
     })
 
 
-def record(res, **kwargs):
-    MANIFEST.append(res.provenance(**kwargs))
+def count_fetches(manifest):
+    """Classify manifest entries: succeeded, really failed, absent by design.
+
+    Kept as a function so ``run.json``, the ledger and the tests all compute the
+    three numbers the same way.  An expected absence is never a failure: counting
+    a not-yet-published annual file as one would mask a station that stopped
+    answering.
+    """
+    ok = sum(1 for m in manifest if m.get("ok"))
+    absent = sum(1 for m in manifest if not m.get("ok") and m.get("expected_absent"))
+    failed = sum(1 for m in manifest if not m.get("ok") and not m.get("expected_absent"))
+    return {"manifest_entries": len(manifest), "successful_fetches": ok,
+            "failed_fetches": failed, "expected_absences": absent}
+
+
+#: The only reasons a missing fetch may be labelled an expected absence.  Naming
+#: them is what stops a real outage being reclassified as routine: the ledger
+#: re-checks each label against the URL (see verify_claims.py), so marking a
+#: station that stopped answering as "expected" fails the run instead of
+#: silencing it.
+EXPECTED_ABSENCE_RULES = (
+    "annual-file-not-yet-published",       # NCEI publishes an annual file after the year ends
+    "station-without-observations-product",  # NWS lists the station but publishes no observations/latest
+    "candidate-station-without-the-product",  # NCEI publishes hourly normals for some candidates only
+)
+
+
+def record(res, expected_absent=None, **kwargs):
+    """Append a fetch to the manifest.
+
+    ``expected_absent`` may name one of :data:`EXPECTED_ABSENCE_RULES`.  Those
+    entries are recorded (never hidden) and reported separately from failures,
+    because counting a not-yet-published annual file as a failure would make a
+    real failure -- an archive that stopped answering -- invisible in the total.
+    The label is only ever attached to a fetch that actually failed; a 200 is a
+    200.
+    """
+    entry = res.provenance(**kwargs)
+    if expected_absent and not entry.get("ok"):
+        if expected_absent not in EXPECTED_ABSENCE_RULES:
+            raise ValueError(f"unknown expected-absence rule: {expected_absent!r}")
+        entry["expected_absent"] = expected_absent
+    MANIFEST.append(entry)
     return res
 
 
@@ -424,7 +465,14 @@ def fetch_nws(lat, lon):
                 continue
             obs_url = f"{base}/stations/{sid}/observations/latest"
             obs, ores = fetchlib.get_json(obs_url)
-            record(ores, note=f"Latest official observation from station {sid}")
+            # Not every station the grid cell lists publishes an observations/latest
+            # product; NWS answers 404 for those.  That is the provider's normal
+            # state, so it is recorded as an expected absence with its reason rather
+            # than counted as a failed fetch (a real outage must not hide in that
+            # total), and the reason is re-checked by the ledger.
+            record(ores, note=f"Latest official observation from station {sid}",
+                   expected_absent=("station-without-observations-product"
+                                    if ores.status == 404 else None))
             entry = {
                 "station_id": sid,
                 "name": sp.get("name"),
@@ -1181,7 +1229,11 @@ def fetch_gsod(years):
             url = (f"https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
                    f"{year}/{sid}.csv")
             res = fetchlib.get(url, timeout=300)
-            record(res, note=f"NCEI GSOD {year}: {sid}")
+            # NCEI publishes an annual file only once the year is complete, so a 404
+            # on the current year is the provider's normal state, not a failure.
+            record(res, note=f"NCEI GSOD {year}: {sid}",
+                   expected_absent=("annual-file-not-yet-published"
+                                    if year >= dt.date.today().year else None))
             statuses.append({"year": year, "status": res.status, "ok": res.ok})
             if res.ok and res.body:
                 for r in climo.parse_gsod(res.text()):
@@ -1213,7 +1265,9 @@ def fetch_isd_hourly_summary(years, station_id="72494023234", station_name=None)
     for year in years:
         url = f"{base_url}{year}/{station_id}.csv"
         res = fetchlib.get(url, timeout=300)
-        record(res, note=f"NCEI ISD global-hourly {year}: {station_id}")
+        record(res, note=f"NCEI ISD global-hourly {year}: {station_id}",
+               expected_absent=("annual-file-not-yet-published"
+                                if year >= dt.date.today().year else None))
         statuses.append({"year": year, "status": res.status, "ok": res.ok})
         if res.ok and res.body:
             records = climo.parse_isd_hourly(res.text())
@@ -1435,7 +1489,12 @@ def fetch_humidity_normals():
     for sid, name in GHCN_CANDIDATES:
         url = f"https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/{sid}.csv"
         res = fetchlib.get(url, timeout=300)
-        record(res, note=f"NCEI 1991-2020 Hourly Climate Normals: {sid}")
+        # These are candidate stations in preference order and NCEI publishes the
+        # hourly-normals product for only some of them, so a 404 on a candidate is
+        # the expected answer, not a fetch failure.
+        record(res, note=f"NCEI 1991-2020 Hourly Climate Normals: {sid}",
+               expected_absent=("candidate-station-without-the-product"
+                                if res.status == 404 else None))
         if not (res.ok and res.body):
             continue
         text = res.text()
@@ -1818,9 +1877,11 @@ def main():
         "normals_period": list(NORMALS_PERIOD),
         "record_coverage": coverage,
         "counts": {
-            "manifest_entries": len(MANIFEST),
-            "successful_fetches": sum(1 for m in MANIFEST if m["ok"]),
-            "failed_fetches": sum(1 for m in MANIFEST if not m["ok"]),
+            # A real failure is a fetch that was supposed to work and did not.
+            # Expected absences (a not-yet-published annual file, a station with no
+            # observations endpoint) are published on their own line so one real
+            # failure cannot hide inside a pile of routine 404s.
+            **count_fetches(MANIFEST),
             "irregularities": len(IRREGULARITIES),
         },
     }
@@ -1910,9 +1971,28 @@ def main():
         jr = dist.get("wind_and_rain_days") or {}
         hj = dist.get("heavy_wind_and_rain_days") or {}
         mg = dist.get("max_gust_mph") or {}
+        if isd_summary:
+            # The hour-by-hour figure is the one that means "at the same time";
+            # the whole-day figure below is kept because it is what the site
+            # published before and both are advertised on the page.
+            hourly_days = {}
+            for s in isd_summary.get("per_season") or []:
+                sy = s.get("season_year")
+                if isinstance(sy, int) and NORMALS_PERIOD[0] <= sy <= NORMALS_PERIOD[1]:
+                    hourly_days.setdefault("days", []).append(s.get("days_simultaneous"))
+                    hourly_days.setdefault("hours", []).append(s.get("wind_rain_hours"))
+            days = [v for v in hourly_days.get("days", []) if v is not None]
+            hours = [v for v in hourly_days.get("hours", []) if v is not None]
+            if days and hours:
+                lines.append(
+                    "WIND+RAIN the same HOUR per season (SFO ISD hourly, >=20kt & >0 in one "
+                    f"observation): days with at least one such hour mean "
+                    f"{climo.summarise(days)['mean']}  median {climo.summarise(days)['median']}  "
+                    f"max {max(days)}; simultaneous hours mean {climo.summarise(hours)['mean']}  "
+                    f"median {climo.summarise(hours)['median']}  over {len(days)} season(s)")
         if jr:
-            lines.append(f"WIND+RAIN DAYS per season (SFO, >=20kt & >=0.01in): mean {jr['mean']}  "
-                         f"median {jr['median']}  max {jr['max']}")
+            lines.append(f"WIND+RAIN DAYS per season, whole-day pairing (SFO, >=20kt & >=0.01in): "
+                         f"mean {jr['mean']}  median {jr['median']}  max {jr['max']}")
         if hj:
             lines.append(f"HEAVY wind+rain days (>=35kt gust & >=0.50in): mean {hj['mean']}  "
                          f"median {hj['median']}  max {hj['max']}")
@@ -1939,14 +2019,19 @@ def main():
     if ds:
         lines.append("DRIEST  Oct-Jan seasons: " + ", ".join(f"{w['season']} {w['total_prcp_in']}in" for w in ds))
         lines.append("")
-    lines.append(f"FETCHES: {run['counts']['successful_fetches']} ok / {run['counts']['failed_fetches']} failed")
+    lines.append(f"FETCHES: {run['counts']['successful_fetches']} ok / "
+                 f"{run['counts']['failed_fetches']} failed / "
+                 f"{run['counts'].get('expected_absences', 0)} absent by design "
+                 f"(a not-yet-published annual file, a station without an "
+                 f"observations endpoint)")
     lines.append(f"IRREGULARITIES: {run['counts']['irregularities']}")
     for i in IRREGULARITIES:
         lines.append(f"  [{i['severity']}] {i['area']}: {i['message']}")
     (outdir / "summary.txt").write_text("\n".join(lines) + "\n")
 
     log(f"  fetches: {run['counts']['successful_fetches']} ok / "
-        f"{run['counts']['failed_fetches']} failed")
+        f"{run['counts']['failed_fetches']} failed / "
+        f"{run['counts'].get('expected_absences', 0)} absent by design")
     log(f"  irregularities: {run['counts']['irregularities']}")
     for i in IRREGULARITIES:
         log(f"    [{i['severity']}] {i['area']}: {i['message'][:200]}")

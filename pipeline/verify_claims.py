@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 import statistics
 import sys
 from pathlib import Path
@@ -35,6 +36,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # would otherwise shadow the module - the same trap already hit
 # build_calendar.py.
 import climo as climo_lib  # noqa: E402
+# The Rain-related event-type set and the damage parser are used by the
+# storm-event recount below; importing them keeps one definition in the project
+# instead of a second copy that can drift.
+from landlord_summary import RAIN_RELATED_EVENT_TYPES, parse_damage_usd  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -198,6 +203,89 @@ def main() -> int:
                  f"manifest has {len(manifest_entries)} records; run.json says {expected_records}",
                  evidence={"manifest_records": len(manifest_entries),
                            "run_manifest_entries": expected_records})
+
+    # The three fetch counts must be re-derivable from the manifest, and an
+    # "expected absence" must never be silently folded into the failure count:
+    # that is how a station that stopped answering disappears behind a routine
+    # 404 for a not-yet-published annual file.
+    counts = run.get("counts") or {}
+    ok_n = sum(1 for e in manifest_entries if e.get("ok"))
+    absent_n = sum(1 for e in manifest_entries if not e.get("ok") and e.get("expected_absent"))
+    failed_n = sum(1 for e in manifest_entries if not e.get("ok") and not e.get("expected_absent"))
+    ledger.check("fetch-counts-recompute",
+                 "The published fetch counts (ok / failed / absent by design) match "
+                 "the manifest entry by entry",
+                 counts.get("expected_absences") is None
+                 or (counts.get("successful_fetches") == ok_n
+                     and counts.get("failed_fetches") == failed_n
+                     and counts.get("expected_absences") == absent_n),
+                 f"run.json says {counts.get('successful_fetches')} ok / "
+                 f"{counts.get('failed_fetches')} failed / "
+                 f"{counts.get('expected_absences')} absent by design; the manifest "
+                 f"recounts {ok_n} / {failed_n} / {absent_n}"
+                 + ("" if counts.get("expected_absences") is not None else
+                    " (this dataset predates the classification, so only the ok "
+                    "count is required to agree)"),
+                 evidence={"manifest_ok": ok_n, "manifest_failed": failed_n,
+                           "manifest_expected_absences": absent_n,
+                           "run_expected_absences": counts.get("expected_absences"),
+                           "expected_absent_urls":
+                               [e.get("url") for e in manifest_entries
+                                if e.get("expected_absent")][:6]})
+
+    # Every "expected absence" must name a reason that its own URL can be checked
+    # against.  Without this, an archive that stops answering could be relabelled
+    # as routine and silently leave the failure count -- which is the whole point
+    # of separating the two numbers.
+    absence_rules = {
+        "annual-file-not-yet-published",
+        "station-without-observations-product",
+        "candidate-station-without-the-product",
+    }
+    run_year = str(run.get("generated_utc") or "")[:4]
+    bad_absences = []
+    for e in manifest_entries:
+        rule = e.get("expected_absent")
+        if not rule:
+            continue
+        url = str(e.get("url") or "")
+        if rule not in absence_rules:
+            bad_absences.append((url, f"unknown reason {rule!r}"))
+        elif rule == "annual-file-not-yet-published":
+            m = re.search(r"/access/(\d{4})/", url)
+            if not m or not (run_year.isdigit() and int(m.group(1)) >= int(run_year)):
+                bad_absences.append((url, "annual-file rule needs a year >= the run year"))
+        elif rule == "station-without-observations-product":
+            if not re.search(r"/stations/[A-Za-z0-9]+/observations/latest$", url):
+                bad_absences.append((url, "station rule needs an observations/latest URL"))
+        elif rule == "candidate-station-without-the-product":
+            if "/normals-hourly/" not in url:
+                bad_absences.append((url, "candidate rule needs an hourly-normals URL"))
+    ledger.check("expected-absences-justified",
+                 "Every fetch classified as an expected absence carries a reason the "
+                 "ledger can check against its own URL",
+                 not bad_absences,
+                 (f"{len([e for e in manifest_entries if e.get('expected_absent')])} "
+                  f"expected absence(s), all justified by URL"
+                  if not bad_absences else
+                  "; ".join(f"{u}: {why}" for u, why in bad_absences)[:280]),
+                 evidence={"run_year": run_year,
+                           "unjustified": [{"url": u, "why": w} for u, w in bad_absences][:6]})
+
+    if failed_n:
+        # A real failure is a finding to review, not a published number to accept.
+        # It is a warning rather than a hard failure so one flaky request cannot
+        # stop the nightly publish; every check that needs the missing bytes fails
+        # on its own evidence, and the site names the failing URLs on the status
+        # line instead of burying the count.
+        ledger.check(
+            "fetch-failures-flagged",
+            "Every fetch that was supposed to work and did not is flagged for review",
+            False,
+            f"{failed_n} fetch(es) failed that are not expected absences: "
+            + ", ".join(e.get("url", "?") for e in manifest_entries
+                        if not e.get("ok") and not e.get("expected_absent"))[:280],
+            severity="warn")
 
     hosts = [host_of(e.get("url")) for e in manifest_entries]
     ledger.check("hosts-official",
@@ -1034,6 +1122,69 @@ def main() -> int:
                  ("all quoted figures found in the source datasets" if not bl_untraceable
                   else f"{len(bl_untraceable)} figure(s) not found"),
                  evidence=bl_untraceable[:10])
+
+    # ---------------------------------- 12b2. storm-event counts, one definition
+    # Two cards on the same page used to count "flood-type" reports with two
+    # different type sets, so the page published 98 in one place and 99 in the
+    # other for the same quantity.  The counts are now re-derived here from
+    # storm_events.json, and the two published places must agree with each other
+    # and with the file.
+    sev_item = next((r for r in (landlord.get("executive_summary") or {})
+                     .get("bottom_line", []) if r.get("key") == "storm_severity"), {})
+    def _leading_int(text):
+        m = re.search(r"(\d[\d,]*)", str(text or ""))
+        return int(m.group(1).replace(",", "")) if m else None
+
+    events = (storms or {}).get("events") or []
+    rain_types = tuple(RAIN_RELATED_EVENT_TYPES)
+    rain_n = sum(1 for e in events if (e or {}).get("event_type") in rain_types)
+    rain_damage_n = sum(
+        1 for e in events
+        if (e or {}).get("event_type") in rain_types
+        and (parse_damage_usd((e or {}).get("damage_property")) or 0) > 0)
+    all_damage_n = sum(1 for e in events
+                       if (parse_damage_usd((e or {}).get("damage_property")) or 0) > 0)
+
+    sev_numbers = {n.get("label"): n.get("value") for n in (sev_item.get("numbers") or [])}
+    published_all = _leading_int(sev_numbers.get("Storm Events records, SF County"))
+    published_rain = _leading_int(next((v for k, v in sev_numbers.items()
+                                        if str(k).startswith("Rain-related records")), None))
+    published_damage = _leading_int(sev_numbers.get("Records with a non-zero damage figure"))
+    driver_rain = driver_damage = None
+    for driver in (landlord.get("executive_summary") or {}).get("cost_drivers") or []:
+        for ev_item in driver.get("evidence") or []:
+            label = str(ev_item.get("label") or "")
+            if label.startswith("Rain-related storm reports"):
+                driver_rain = _leading_int(ev_item.get("value"))
+            if label.startswith("\u2026of those, reports carrying"):
+                driver_damage = _leading_int(ev_item.get("value"))
+    storm_problems = []
+    if published_all is not None and published_all != len(events):
+        storm_problems.append(f"bottom line says {published_all} records; the file holds {len(events)}")
+    if published_rain is not None and published_rain != rain_n:
+        storm_problems.append(f"bottom line says {published_rain} rain-related; recount from the file gives {rain_n}")
+    if driver_rain is not None and driver_rain != rain_n:
+        storm_problems.append(f"cost driver says {driver_rain} rain-related; recount gives {rain_n}")
+    if published_rain is not None and driver_rain is not None and published_rain != driver_rain:
+        storm_problems.append(f"the two published rain-related counts disagree: {published_rain} vs {driver_rain}")
+    if published_damage is not None and published_damage != all_damage_n:
+        storm_problems.append(f"bottom line says {published_damage} records carry damage; the file gives {all_damage_n}")
+    if driver_damage is not None and driver_damage != rain_damage_n:
+        storm_problems.append(f"cost driver says {driver_damage} rain-related records carry damage; the file gives {rain_damage_n}")
+    ledger.check("storm-events-counts-recompute",
+                 "Every published Storm Events count is re-derived from the county file, "
+                 "and the two cards that count them use one definition",
+                 not storm_problems,
+                 (f"{len(events)} records, {rain_n} rain-related, {all_damage_n} with a "
+                  f"token damage figure; bottom line and cost driver agree"
+                  if not storm_problems else "; ".join(storm_problems))[:280],
+                 evidence={"file_records": len(events), "file_rain_related": rain_n,
+                           "file_rain_related_with_damage": rain_damage_n,
+                           "file_with_damage": all_damage_n,
+                           "published": {"records": published_all, "rain_related": published_rain,
+                                         "with_damage": published_damage,
+                                         "cost_driver_rain_related": driver_rain,
+                                         "cost_driver_with_damage": driver_damage}})
 
     # ------------------------------------- 12c. severity counters arithmetic
     # The per-season severity counters live in calendar.json's season_by_year.

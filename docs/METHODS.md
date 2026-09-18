@@ -459,3 +459,79 @@ This was added because NCEI's annual GSOD and ISD files for this station stop
 well before the run date while the GHCN-Daily file is current, and nothing on the
 site said so. The archive dates are now re-derived from the datasets by the
 ledger (`record-coverage-published`), so a wrong date or age fails the run.
+
+## 18. Wind and rain *at the same time*: what the site now publishes (added 18 Sep 2026 session 8)
+
+The landlord question "does the wind arrive with the rain?" used to be answered
+one way: count a day when the downtown gauge recorded rain and SFO's daily
+maximum sustained wind reached 20 kt.  That figure (11.1 days a season) cannot
+tell rain in the morning from wind at night, and its two halves come from
+different stations.  It is still published — **and it is still labelled** — as
+the whole-day method.
+
+The site now leads with the hour-by-hour count from the NCEI **ISD global-hourly**
+archive for the same wind station (72494023234, KSFO):
+
+| Figure | Definition | Source |
+| --- | --- | --- |
+| Days a season with a simultaneous hour | a local date with >= 1 observation carrying both `wind >= 20 kt` and liquid precipitation > 0 | ISD hourly |
+| Simultaneous hours a season | those hours, counted | ISD hourly |
+| Days a season, whole-day, same station | a local date whose rain total > 0 and whose maximum sustained wind >= 20 kt | ISD hourly rollup |
+| Days a season, whole-day, downtown gauge x SFO wind | the figure published before | GHCN-Daily + GSOD |
+
+**Why three of the four rows exist.** They separate two effects that the single old
+number conflated: the same-station row isolates *pairing* (whole days against the
+same hour), and the cross-station row isolates the *gauge* (downtown rain against
+SFO rain).  On the 1991-92..2020-21 seasons the two whole-day rows agree, which is
+the site's own evidence that the gap to the hourly number is the pairing rule, not
+the change of station — and the bottom line says exactly that, computed at build
+time rather than typed.
+
+**Rules attached to the hourly statistic.**
+
+1. **A season is used only if it is inside the same season-year window as the
+   daily statistic and the station reported on >= 95% of the 123 Oct 1 - Jan 31
+   dates** (`HOURLY_SEASON_MIN_COVERAGE_PCT`).  Excluded seasons are listed with
+   their coverage and the reason, and the ledger fails the run if a season is both
+   used and excluded, or if a used season sits below the published floor.
+2. **An absent measurement is never a zero.**  If the committed hourly summary
+   predates the per-date wind maximum and precipitation total, the same-station
+   row reads "not published in this run's hourly dataset" and a note says so;
+   publishing 0.0 would state that wind and rain never share a day at SFO.
+3. **Multi-hour accumulations are disclosed.**  ISD `AA1` field 1 is the number of
+   hours the reported depth covers.  Hours counted from reports covering more than
+   one hour are published separately rather than described as hour-by-hour
+   measurements.
+4. **The whole-day figure is never removed**, only labelled: a reader comparing an
+   older note of it must still find it.
+
+## 19. Failures, expected absences, and why the two numbers are separate (added 18 Sep 2026 session 8)
+
+`run.json` publishes three fetch counts — `successful_fetches`, `failed_fetches`
+and `expected_absences` — and the page prints all three.  The split exists because
+four of the ~140 fetches in a normal run are *supposed* to 404:
+
+| Case | Rule token | Why it is expected |
+| --- | --- | --- |
+| NCEI annual file for the current year | `annual-file-not-yet-published` | NCEI publishes an annual file after the year ends |
+| A station NWS lists with no `observations/latest` product | `station-without-observations-product` | the provider answers 404 for stations that do not publish it (OAMC1 in this grid cell) |
+| A candidate station with no hourly-normals file | `candidate-station-without-the-product` | NCEI publishes hourly normals for some stations only (not `USW00023272`) |
+
+Counting those as failures would hide a real one: an archive that stopped
+answering would look like the same routine 404s.  So each absence must name a rule
+from the closed set, the ledger re-checks each rule against the fetch's own URL
+(`expected-absences-justified`), the three counts are re-derived from the manifest
+entry by entry (`fetch-counts-recompute`), and any fetch that was supposed to work
+and did not is listed by URL on the page and recorded in the ledger
+(`fetch-failures-flagged`, a warning rather than a hard failure so one flaky
+request cannot stop the nightly publish).
+
+## 20. One definition per published quantity (added 18 Sep 2026 session 8)
+
+A line-by-line pass over the rendered page found the same phrase, "flood-type
+storm reports", carrying **98** in one card and **99** in another, because two
+functions each defined the set of event types themselves.  The set now lives once
+(`landlord_summary.RAIN_RELATED_EVENT_TYPES` = Flood, Flash Flood, Heavy Rain,
+Debris Flow), both cards name the types in the label, and the ledger re-derives
+every published Storm Events count from `storm_events.json` and fails the run if
+the two cards disagree (`storm-events-counts-recompute`).

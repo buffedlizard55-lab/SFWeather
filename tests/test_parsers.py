@@ -1948,6 +1948,70 @@ check("a geography is read by name, so a re-ordered response still parses",
                                    "GEOID": "0607593267"}]}}})["county_subdivision"] == "Sunset CCD",
       "name lookup failed")
 
+
+# --------------------------------------------------------------------------- #
+# The three fetch counts, and the one rule that keeps an expected absence from
+# hiding a real failure.  ``run.json`` publishes "139 ok / 0 failed / 4 absent by
+# design" and the site repeats it, so the arithmetic and the labelling both have
+# to hold: a not-yet-published annual file is routine, an archive that stopped
+# answering is not.
+# --------------------------------------------------------------------------- #
+
+MANIFEST_FIXTURE = [
+    {"url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/1991/72494023234.csv",
+     "ok": True},
+    {"url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/2026/72494023234.csv",
+     "ok": False, "expected_absent": "annual-file-not-yet-published"},
+    {"url": "https://api.weather.gov/stations/OAMC1/observations/latest",
+     "ok": False, "expected_absent": "station-without-observations-product"},
+    {"url": "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023272.csv",
+     "ok": False, "expected_absent": "candidate-station-without-the-product"},
+    {"url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
+     "ok": False},                                    # a real failure
+]
+
+_counts = pipeline_main.count_fetches(MANIFEST_FIXTURE)
+check("count_fetches separates a real failure from three expected absences",
+      _counts == {"manifest_entries": 5, "successful_fetches": 1,
+                  "failed_fetches": 1, "expected_absences": 3},
+      "got %r" % (_counts,))
+check("count_fetches counts every manifest entry exactly once",
+      sum(_counts[k] for k in ("successful_fetches", "failed_fetches",
+                               "expected_absences")) == len(MANIFEST_FIXTURE))
+check("the expected-absence rules are a closed set of three named reasons",
+      set(pipeline_main.EXPECTED_ABSENCE_RULES) == {
+          "annual-file-not-yet-published",
+          "station-without-observations-product",
+          "candidate-station-without-the-product"},
+      repr(pipeline_main.EXPECTED_ABSENCE_RULES))
+
+
+class _FakeResult:
+    """Minimal stand-in for lib_fetch.FetchResult's provenance() surface."""
+
+    def __init__(self, ok, url):
+        self.ok, self.url = ok, url
+
+    def provenance(self, note=None, **extra):
+        return {"url": self.url, "ok": self.ok, "http_status": 200 if self.ok else 404,
+                "note": note, **extra}
+
+
+try:
+    pipeline_main.record(_FakeResult(False, "https://x/"), expected_absent="made-up-reason")
+    _raised = False
+except ValueError:
+    _raised = True
+check("a failed fetch cannot be labelled with an invented absence reason", _raised)
+
+# A successful fetch is never labelled absent, however it is called: the label
+# describes the provider's normal state, not this run's luck.
+_ok_entry = pipeline_main.record(_FakeResult(True, "https://x/"),
+                                 expected_absent="annual-file-not-yet-published")
+check("a 200 is never recorded as an expected absence",
+      "expected_absent" not in pipeline_main.MANIFEST[-1])
+pipeline_main.MANIFEST.clear()
+
 # --------------------------------------------------------------------------- #
 
 passed = sum(1 for _n, ok, _d in RESULTS if ok)
