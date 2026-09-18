@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T20:11:43Z",
+  "generated_utc": "2026-09-18T20:21:40Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Sunset District \u2014 Inner and Outer Sunset)",
@@ -50,7 +50,7 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-18T20:09:47Z",
+        "retrieved_utc": "2026-09-18T20:19:56Z",
         "sha256": "b7b8df03b1365a8463fe07a95913f07e23627f52eff60daece1b6a8ea4f65fb7",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
@@ -1576,7 +1576,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610temp.new.gif",
         "sha256": "ae7b152ee1ac84e60b30e2b35d39329e66f58b543f20331d252a686af18d3c08",
         "bytes": 289706,
-        "retrieved_utc": "2026-09-18T20:10:29Z",
+        "retrieved_utc": "2026-09-18T20:20:31Z",
         "ok": true,
         "local_path": "assets/cpc/610day_temp.gif"
       },
@@ -1589,7 +1589,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610prcp.new.gif",
         "sha256": "60f2c6f48ce47fab8a186d617963d5a32d3b89db8dee822e6b5ded3d1291285d",
         "bytes": 308525,
-        "retrieved_utc": "2026-09-18T20:10:29Z",
+        "retrieved_utc": "2026-09-18T20:20:31Z",
         "ok": true,
         "local_path": "assets/cpc/610day_prcp.gif"
       },
@@ -1602,7 +1602,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814temp.new.gif",
         "sha256": "baad8dffe264a4293e8cf18aca612056e6c6af310fde94bbf1296ac6e9b3e2b6",
         "bytes": 274306,
-        "retrieved_utc": "2026-09-18T20:10:29Z",
+        "retrieved_utc": "2026-09-18T20:20:31Z",
         "ok": true,
         "local_path": "assets/cpc/814day_temp.gif"
       },
@@ -1615,7 +1615,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814prcp.new.gif",
         "sha256": "0fd3efea8fb71818fdc60e2c82936af472c42820ce1f6004733016f8bf2fe652",
         "bytes": 284137,
-        "retrieved_utc": "2026-09-18T20:10:29Z",
+        "retrieved_utc": "2026-09-18T20:20:31Z",
         "ok": true,
         "local_path": "assets/cpc/814day_prcp.gif"
       },
@@ -1628,7 +1628,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34temp.gif",
         "sha256": "85ffe90963e4aa3079dd2b0d4930eaf3ed665abed5a9757316d472f0af8b99e9",
         "bytes": 256477,
-        "retrieved_utc": "2026-09-18T20:10:29Z",
+        "retrieved_utc": "2026-09-18T20:20:31Z",
         "ok": true,
         "local_path": "assets/cpc/wk34_temp.gif"
       },
@@ -1641,7 +1641,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34prcp.gif",
         "sha256": "89318b732ebe39affa76ad19a4b1eaa4a242ddb2d3467c1b3e797cd4a9d45e89",
         "bytes": 253178,
-        "retrieved_utc": "2026-09-18T20:10:29Z",
+        "retrieved_utc": "2026-09-18T20:20:32Z",
         "ok": true,
         "local_path": "assets/cpc/wk34_prcp.gif"
       },
@@ -1655,7 +1655,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/30day/off15_temp.gif",
         "sha256": "40177cb325e4b902940c5c1fba1388abc17071f85645f5a04b1edf9e5a4a3bae",
         "bytes": 246338,
-        "retrieved_utc": "2026-09-18T20:10:30Z",
+        "retrieved_utc": "2026-09-18T20:20:32Z",
         "ok": true,
         "local_path": "assets/cpc/30day_temp.gif"
       },
@@ -1669,7 +1669,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/30day/off15_prcp.gif",
         "sha256": "4c138aa986dfe3a0933327f68c65ddfc63109d536ce2bb0480d3306a184d78f1",
         "bytes": 248509,
-        "retrieved_utc": "2026-09-18T20:10:30Z",
+        "retrieved_utc": "2026-09-18T20:20:32Z",
         "ok": true,
         "local_path": "assets/cpc/30day_prcp.gif"
       }
@@ -1705,7 +1705,7 @@
     "official": {
       "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
       "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-      "retrieved_utc": "2026-09-18T20:10:30Z",
+      "retrieved_utc": "2026-09-18T20:20:33Z",
       "definition": "ONI = 3-month running mean of ERSSTv5 sea-surface temperature anomalies in the Nino 3.4 region; NOAA declares El Nino at >= +0.5 C and La Nina at <= -0.5 C.",
       "seasons": [
         {
@@ -2061,7 +2061,7 @@
         "label": "CPC ENSO Diagnostic Discussion (monthly status + Alert System Status)",
         "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml",
         "sha256": "eacaf2fa573069c599ad95006be54a1f363384d2fea7b6ef25abdc8c654af575",
-        "retrieved_utc": "2026-09-18T20:10:31Z",
+        "retrieved_utc": "2026-09-18T20:20:33Z",
         "characters": 3482,
         "mentions_current_year": true,
         "usable_as_current_source": true,
@@ -2085,7 +2085,7 @@
         "label": "CPC long-lead (monthly/seasonal) outlook discussion",
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
         "sha256": "c6307e499e46cf2c0047f87de6a3169ed484923b62755f5e4350d786589ea781",
-        "retrieved_utc": "2026-09-18T20:10:31Z",
+        "retrieved_utc": "2026-09-18T20:20:33Z",
         "characters": 16942,
         "mentions_current_year": true,
         "usable_as_current_source": true,
@@ -2113,7 +2113,7 @@
         "label": "CPC ONI_v5 page (interactive; not machine-readable)",
         "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php",
         "sha256": "7e9cef7ebf78acaede6847bc2134751811b0807d263f43bc11023f0b6d0a6815",
-        "retrieved_utc": "2026-09-18T20:10:31Z",
+        "retrieved_utc": "2026-09-18T20:20:34Z",
         "characters": 1702,
         "mentions_current_year": false,
         "usable_as_current_source": false,
@@ -2132,7 +2132,7 @@
     "station_name": "SAN FRANCISCO INTL AP, CA US",
     "url": "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv",
     "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
-    "retrieved_utc": "2026-09-18T20:11:24Z",
+    "retrieved_utc": "2026-09-18T20:21:24Z",
     "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (hourly, by station)",
     "method": "mean of hourly relative humidity computed from the official hourly temperature and dew-point normals with the Magnus formula",
     "month_rh_pct": {
@@ -2768,7 +2768,7 @@
     "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
     "url": "https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv",
     "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-    "retrieved_utc": "2026-09-18T20:11:14Z",
+    "retrieved_utc": "2026-09-18T20:21:14Z",
     "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (monthly, by station)"
   },
   "daily_normals_official": {
@@ -2777,7 +2777,7 @@
     "url": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv",
     "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
     "bytes": 462174,
-    "retrieved_utc": "2026-09-18T20:11:14Z",
+    "retrieved_utc": "2026-09-18T20:21:14Z",
     "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (daily, by station)",
     "units": {
       "normal_high_f": "degrees Fahrenheit (DLY-TMAX-NORMAL, as published)",
@@ -5299,7 +5299,7 @@
       "count": 0,
       "test_count": 0,
       "count_including_tests": 0,
-      "updated": "2026-09-18T20:09:45+00:00",
+      "updated": "2026-09-18T20:18:10+00:00",
       "events": [],
       "source_url": "https://api.weather.gov/alerts/active?zone=CAZ006",
       "human_url": "https://www.weather.gov/mtr"
@@ -5313,8 +5313,8 @@
         "observation": {
           "timestamp": "2026-09-18T19:43:00+00:00",
           "temperature_c": 17.01,
-          "dewpoint_c": 13.57,
-          "relative_humidity_pct": 80.1862435616,
+          "dewpoint_c": 13.53,
+          "relative_humidity_pct": 79.977831767292,
           "wind_speed_kmh": null,
           "wind_gust_kmh": null,
           "wind_direction_deg": null,
@@ -5351,10 +5351,10 @@
         "elevation_m": 3.048,
         "distance_m": 19117.58413345,
         "observation": {
-          "timestamp": "2026-09-18T20:00:00+00:00",
+          "timestamp": "2026-09-18T20:05:00+00:00",
           "temperature_c": 19,
-          "dewpoint_c": 13,
-          "relative_humidity_pct": 68.176241889352,
+          "dewpoint_c": 14,
+          "relative_humidity_pct": 72.761266404652,
           "wind_speed_kmh": null,
           "wind_gust_kmh": null,
           "wind_direction_deg": null,
@@ -5399,14 +5399,14 @@
         "elevation_m": 29.410152,
         "distance_m": 22798.124785519,
         "observation": {
-          "timestamp": "2026-09-18T19:43:00+00:00",
-          "temperature_c": 22.22,
-          "dewpoint_c": 16.14,
-          "relative_humidity_pct": 68.466626743663,
-          "wind_speed_kmh": 0,
+          "timestamp": "2026-09-18T19:53:00+00:00",
+          "temperature_c": null,
+          "dewpoint_c": null,
+          "relative_humidity_pct": null,
+          "wind_speed_kmh": null,
           "wind_gust_kmh": 1.62,
-          "wind_direction_deg": 153,
-          "barometric_pressure_pa": 101950,
+          "wind_direction_deg": null,
+          "barometric_pressure_pa": null,
           "precipitation_last_hour_mm": null,
           "precipitation_last_3_hours_mm": null,
           "text_description": ""

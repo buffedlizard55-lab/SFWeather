@@ -164,6 +164,6 @@
   "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
   "url": "https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv",
   "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-  "retrieved_utc": "2026-09-18T20:11:14Z",
+  "retrieved_utc": "2026-09-18T20:21:14Z",
   "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (monthly, by station)"
 }
