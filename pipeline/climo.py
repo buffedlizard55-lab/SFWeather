@@ -17,6 +17,7 @@ day is missing in the archive it stays missing and is counted as such.
 from __future__ import annotations
 
 import csv
+import datetime as dt
 import io
 import statistics
 from collections import defaultdict
@@ -167,12 +168,24 @@ def parse_ghcn_daily(text):
 
 def ghcn_to_inches(tenths_mm):
     """GHCN PRCP is tenths of a millimetre."""
-    return None if tenths_mm is None else tenths_mm * 0.1 / MM_PER_INCH
+    if tenths_mm is None:
+        return None
+    try:
+        val = float(tenths_mm)
+    except (ValueError, TypeError):
+        return None
+    return val * 0.1 / MM_PER_INCH
 
 
 def ghcn_to_f(tenths_c):
     """GHCN TMAX/TMIN are tenths of a degree Celsius."""
-    return None if tenths_c is None else tenths_c / 10.0 * 9.0 / 5.0 + 32.0
+    if tenths_c is None:
+        return None
+    try:
+        val = float(tenths_c)
+    except (ValueError, TypeError):
+        return None
+    return val / 10.0 * 9.0 / 5.0 + 32.0
 
 
 # ------------------------------------------------------------------- GSOD
@@ -269,6 +282,128 @@ def parse_gsod(text):
             "min_f": num(row, i_min, GSOD_SCALE, GSOD_MISSING["MIN"]),
         })
     return rows
+
+
+def parse_isd_hourly(text, tz_name="America/Los_Angeles"):
+    """Parse NCEI ISD hourly CSV (e.g. station 72494023234) into hourly records.
+
+    ISD format specifications (NCEI global-hourly format document):
+    - DATE: ISO 8601 UTC timestamp (e.g. "1991-10-01T00:56:00")
+    - WND: direction (3 chars), direction_quality, type, speed in tenths of m/s (4 chars, 9999=missing), speed_quality
+    - AA1: liquid precipitation period in hours (2 chars), depth in tenths of mm (4 chars, 9999=missing), trace/condition, quality
+    """
+    lines = text.splitlines()
+    if not lines:
+        return []
+    reader = csv.DictReader(lines)
+    try:
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        tz = dt.timezone(dt.timedelta(hours=-8))
+
+    records = []
+    for r in reader:
+        date_str = r.get("DATE")
+        if not date_str:
+            continue
+        try:
+            dt_utc = dt.datetime.fromisoformat(date_str)
+            if dt_utc.tzinfo is None:
+                dt_utc = dt_utc.replace(tzinfo=dt.timezone.utc)
+            dt_local = dt_utc.astimezone(tz)
+        except Exception:
+            continue
+
+        wnd = (r.get("WND") or "").strip()
+        wnd_parts = wnd.split(",")
+        speed_kt = None
+        if len(wnd_parts) >= 4 and wnd_parts[3] != "9999":
+            try:
+                ms = float(wnd_parts[3]) / 10.0
+                speed_kt = round(ms * 1.943844, 1)
+            except ValueError:
+                pass
+
+        aa1 = (r.get("AA1") or "").strip()
+        prcp_in = None
+        if aa1:
+            aa1_parts = aa1.split(",")
+            if len(aa1_parts) >= 2 and aa1_parts[1] != "9999":
+                try:
+                    mm = float(aa1_parts[1]) / 10.0
+                    prcp_in = round(mm / 25.4, 3)
+                except ValueError:
+                    pass
+
+        m = dt_local.month
+        in_season = (m >= 10 or m <= 1)
+        records.append({
+            "timestamp_utc": dt_utc.isoformat(),
+            "local_date": dt_local.date().isoformat(),
+            "local_month": dt_local.month,
+            "local_day": dt_local.day,
+            "local_hour": dt_local.hour,
+            "in_season": in_season,
+            "wind_speed_kt": speed_kt,
+            "prcp_in": prcp_in,
+            "is_wind_and_rain": (speed_kt is not None and speed_kt >= 20.0
+                                 and prcp_in is not None and prcp_in > 0.0),
+        })
+    return records
+
+
+def aggregate_isd_hourly_wind_and_rain(records):
+    """Aggregate parsed ISD hourly records into seasonal and daily summary stats.
+
+    Counts simultaneous hours (wind >= 20 kt and precipitation > 0) and total hours
+    with valid joint observations in the Oct 1 - Jan 31 window.
+    """
+    season_records = [r for r in records if r.get("in_season")]
+    valid_joint_hours = 0
+    simultaneous_hours = 0
+    by_season_year = defaultdict(lambda: {"valid_hours": 0, "wind_rain_hours": 0})
+    by_local_date = defaultdict(lambda: {"valid_hours": 0, "wind_rain_hours": 0})
+
+    for r in season_records:
+        w = r.get("wind_speed_kt")
+        p = r.get("prcp_in")
+        if w is None or p is None:
+            continue
+        valid_joint_hours += 1
+        ld = r["local_date"]
+        # Season year: Oct-Dec is year Y; Jan is year Y-1
+        lm = r["local_month"]
+        ly = int(ld[:4])
+        s_year = ly if lm >= 10 else ly - 1
+
+        by_season_year[s_year]["valid_hours"] += 1
+        by_local_date[ld]["valid_hours"] += 1
+
+        if r.get("is_wind_and_rain"):
+            simultaneous_hours += 1
+            by_season_year[s_year]["wind_rain_hours"] += 1
+            by_local_date[ld]["wind_rain_hours"] += 1
+
+    per_season = []
+    for sy in sorted(by_season_year.keys()):
+        vh = by_season_year[sy]["valid_hours"]
+        wrh = by_season_year[sy]["wind_rain_hours"]
+        per_season.append({
+            "season_year": sy,
+            "season": f"{sy}-{sy + 1}",
+            "valid_hours": vh,
+            "wind_rain_hours": wrh,
+            "pct_hours": pct(wrh, vh) if vh else 0.0,
+        })
+
+    return {
+        "valid_joint_hours": valid_joint_hours,
+        "simultaneous_wind_rain_hours": simultaneous_hours,
+        "overall_pct": pct(simultaneous_hours, valid_joint_hours) if valid_joint_hours else 0.0,
+        "per_season": per_season,
+        "by_local_date": dict(by_local_date),
+    }
 
 
 # -------------------------------------------------------------- ENSO / ONI
@@ -1457,3 +1592,197 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
         "driest_seasons": [{"season": s["season"], "total_prcp_in": s["total_prcp_in"]}
                            for s in ranked[:5]],
     }
+
+
+# --------------------------------------------------- Forecast Verification
+
+def record_forecast_snapshot(current_forecast):
+    """Create a normalized forecast snapshot from a calendar current_forecast block.
+
+    Returns a dict with issuance date, generated timestamp, and per-target-date forecast fields:
+    high_f, low_f, pop_pct, qpf_in, wind_max_mph.
+    """
+    if not current_forecast:
+        return None
+    gen_utc = current_forecast.get("generated_utc") or ""
+    try:
+        issuance_date = dt.datetime.fromisoformat(gen_utc.replace("Z", "+00:00")).date().isoformat()
+    except Exception:
+        issuance_date = None
+
+    days_out = []
+    for d in current_forecast.get("days", []):
+        t_date = d.get("date")
+        if not t_date:
+            continue
+        days_out.append({
+            "target_date": t_date,
+            "high_f": d.get("high_f"),
+            "low_f": d.get("low_f"),
+            "pop_pct": d.get("rain_chance_pct"),
+            "qpf_in": d.get("rain_amount_in"),
+            "wind_max_mph": d.get("wind_max_mph"),
+            "gust_max_mph": d.get("gust_max_mph"),
+        })
+
+    return {
+        "issuance_date": issuance_date,
+        "generated_utc": gen_utc,
+        "forecast_updated": current_forecast.get("forecast_updated"),
+        "days": days_out,
+    }
+
+
+def update_forecast_history(existing_history, new_snapshot):
+    """Append a new forecast snapshot into the history list if not already present.
+
+    Deduplicates based on issuance_date (or generated_utc if issuance_date is missing).
+    """
+    history = list(existing_history or [])
+    if not new_snapshot:
+        return history
+
+    key = new_snapshot.get("issuance_date") or new_snapshot.get("generated_utc")
+    for i, item in enumerate(history):
+        cur_key = item.get("issuance_date") or item.get("generated_utc")
+        if cur_key == key:
+            history[i] = new_snapshot
+            return history
+
+    history.append(new_snapshot)
+    history.sort(key=lambda x: x.get("issuance_date") or x.get("generated_utc") or "")
+    return history
+
+
+def score_forecast_history(history, ghcn_observations, gsod_observations=None):
+    """Score historical NWS forecasts against observed GHCN-Daily and GSOD records.
+
+    For each target date where an observation is recorded:
+    - Measures high temperature error: (forecast_high - observed_tmax)
+    - Measures low temperature error: (forecast_low - observed_tmin)
+    - Scores POP calibration: whether precipitation >= 0.01 in occurred when POP >= 50%, < 50%, etc.
+    - Groups scores by lead days (1 to 7).
+    """
+    pairs = []
+    for snapshot in (history or []):
+        iss_date_str = snapshot.get("issuance_date")
+        if not iss_date_str:
+            continue
+        try:
+            iss_d = dt.date.fromisoformat(iss_date_str)
+        except ValueError:
+            continue
+
+        for d in snapshot.get("days", []):
+            target_str = d.get("target_date")
+            if not target_str:
+                continue
+            try:
+                target_d = dt.date.fromisoformat(target_str)
+            except ValueError:
+                continue
+
+            lead_days = (target_d - iss_d).days
+            if lead_days < 0 or lead_days > 10:
+                continue
+
+            obs_ghcn = ghcn_observations.get(target_str)
+            obs_gsod = (gsod_observations or {}).get(target_str)
+            if not obs_ghcn and not obs_gsod:
+                continue
+
+            # Ground truth:
+            # Temperature: GHCN TMAX/TMIN in tenths of deg C converted to deg F
+            obs_high = None
+            obs_low = None
+            obs_prcp = None
+            if obs_ghcn:
+                tmax_raw = obs_ghcn.get("TMAX")
+                tmin_raw = obs_ghcn.get("TMIN")
+                prcp_raw = obs_ghcn.get("PRCP")
+                if tmax_raw is not None:
+                    try:
+                        obs_high = round((float(tmax_raw) / 10.0) * 1.8 + 32.0, 1)
+                    except ValueError:
+                        pass
+                if tmin_raw is not None:
+                    try:
+                        obs_low = round((float(tmin_raw) / 10.0) * 1.8 + 32.0, 1)
+                    except ValueError:
+                        pass
+                if prcp_raw is not None:
+                    obs_prcp = ghcn_to_inches(prcp_raw)
+
+            # Fallback to GSOD if GHCN is missing
+            if obs_high is None and obs_gsod and obs_gsod.get("max_f") is not None:
+                obs_high = obs_gsod["max_f"]
+            if obs_low is None and obs_gsod and obs_gsod.get("min_f") is not None:
+                obs_low = obs_gsod["min_f"]
+            if obs_prcp is None and obs_gsod and obs_gsod.get("prcp_in") is not None:
+                obs_prcp = obs_gsod["prcp_in"]
+
+            pairs.append({
+                "issuance_date": iss_date_str,
+                "target_date": target_str,
+                "lead_days": lead_days,
+                "fc_high": d.get("high_f"),
+                "obs_high": obs_high,
+                "high_error": (d.get("high_f") - obs_high) if (d.get("high_f") is not None and obs_high is not None) else None,
+                "fc_low": d.get("low_f"),
+                "obs_low": obs_low,
+                "low_error": (d.get("low_f") - obs_low) if (d.get("low_f") is not None and obs_low is not None) else None,
+                "fc_pop": d.get("pop_pct"),
+                "obs_prcp_in": obs_prcp,
+                "observed_rain": (obs_prcp is not None and obs_prcp >= 0.01) if obs_prcp is not None else None,
+            })
+
+    # Summary by lead days
+    by_lead = defaultdict(lambda: {"high_errors": [], "low_errors": [], "pop_pairs": []})
+    for p in pairs:
+        ld = p["lead_days"]
+        if p["high_error"] is not None:
+            by_lead[ld]["high_errors"].append(abs(p["high_error"]))
+        if p["low_error"] is not None:
+            by_lead[ld]["low_errors"].append(abs(p["low_error"]))
+        if p["fc_pop"] is not None and p["observed_rain"] is not None:
+            by_lead[ld]["pop_pairs"].append((p["fc_pop"], p["observed_rain"]))
+
+    lead_stats = []
+    for ld in sorted(by_lead.keys()):
+        he = by_lead[ld]["high_errors"]
+        le = by_lead[ld]["low_errors"]
+        pop_p = by_lead[ld]["pop_pairs"]
+
+        high_mae = round(sum(he) / len(he), 2) if he else None
+        low_mae = round(sum(le) / len(le), 2) if le else None
+
+        # POP calibration: rain frequency when POP >= 50% vs POP < 50%
+        ge_50 = [r for pop, r in pop_p if pop >= 50]
+        lt_50 = [r for pop, r in pop_p if pop < 50]
+        pop_ge_50_hit_rate = round(100.0 * sum(ge_50) / len(ge_50), 1) if ge_50 else None
+        pop_lt_50_hit_rate = round(100.0 * sum(lt_50) / len(lt_50), 1) if lt_50 else None
+
+        lead_stats.append({
+            "lead_days": ld,
+            "sample_size": max(len(he), len(le), len(pop_p)),
+            "high_mae_f": high_mae,
+            "low_mae_f": low_mae,
+            "pop_ge_50_pct_rain": pop_ge_50_hit_rate,
+            "pop_lt_50_pct_rain": pop_lt_50_hit_rate,
+        })
+
+    all_he = [p["high_error"] for p in pairs if p["high_error"] is not None]
+    all_abs_he = [abs(e) for e in all_he]
+    all_pop = [p for p in pairs if p["fc_pop"] is not None and p["observed_rain"] is not None]
+    all_ge_50 = [p["observed_rain"] for p in all_pop if p["fc_pop"] >= 50]
+    all_lt_50 = [p["observed_rain"] for p in all_pop if p["fc_pop"] < 50]
+
+    return {
+        "total_scored_pairs": len(pairs),
+        "overall_high_mae_f": round(sum(all_abs_he) / len(all_abs_he), 2) if all_abs_he else None,
+        "pop_ge_50_rain_pct": round(100.0 * sum(all_ge_50) / len(all_ge_50), 1) if all_ge_50 else None,
+        "pop_lt_50_rain_pct": round(100.0 * sum(all_lt_50) / len(all_lt_50), 1) if all_lt_50 else None,
+        "by_lead_days": lead_stats,
+        "scored_pairs": pairs,
+    }
+
