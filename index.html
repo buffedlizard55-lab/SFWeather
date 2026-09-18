@@ -27,6 +27,8 @@
       <a href="#wind">Wind &amp; rain</a>
       <a href="#storms">Storms</a>
       <a href="#sources">Sources</a>
+      <a href="#nws-verification">NWS verification</a>
+      <a href="#cpc-backtest">CPC back-test</a>
       <a href="#verify">Verification</a>
       <a href="#quality">Data quality</a>
       <a href="#limits">Limits</a>
@@ -347,6 +349,42 @@
       </div>
     </section>
 
+    <!-- ============================ NWS forecast verification ====== -->
+    <section id="nws-verification" class="section">
+      <h2>NWS forecast verification — how good the 7-day forecast has actually been at 94122</h2>
+      <div class="card">
+        <p class="fine">Every night the pipeline saves the 7-day NWS forecast it just fetched; once a
+          forecast day is far enough in the past to have an observation at the NOAA
+          GHCN/GSOD station, it is scored against what actually fell. This card
+          reports the running score. It starts empty because the current forecast
+          window (last 8 days) has not yet observed — the first scored pairs appear
+          as soon as the season gets under way. Source: NWS gridpoint forecasts
+          archived in <code>data/forecast_history.json</code>; observations from
+          <a href="https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv" target="_blank" rel="noopener">GHCN-Daily USW00023272</a>.</p>
+        <div id="nws-verification-body"></div>
+      </div>
+    </section>
+
+    <!-- ============================ CPC back-testing ================ -->
+    <section id="cpc-backtest" class="section">
+      <h2>CPC back-test — how often a CPC above-median tilt actually verified here</h2>
+      <div class="card">
+        <p class="fine">A CPC "above-normal precipitation" probability for a 3-month season is only
+          useful if, over the years, those tilts have actually correlated with wetter
+          seasons <em>at this point</em>. Once enough archived CPC issuances have
+          been sampled at the 94122 centroid, this card will show the observed
+          hit-rate for "above-median" and "below-median" tilts for the OND / NDJ /
+          DJF / JFM seasons that cover Oct–Jan. The back-test machinery is in place
+          (shapefile sampling per issuance, season-total computation from GHCN-Daily);
+          issuances from before today cannot be fetched from the live CPC GIS server
+          (it only hosts the latest month), so a back-fill from CPC's static archive
+          is required. Status below. Source: CPC seasonal shapefile archives
+          <code>seasprcp_YYYYMM.zip</code> / <code>seastemp_YYYYMM.zip</code> at
+          <a href="https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/" target="_blank" rel="noopener">ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/</a>.</p>
+        <div id="cpc-backtest-body"></div>
+      </div>
+    </section>
+
     <!-- ============================ verification ===================== -->
     <section id="verify" class="section">
       <h2>Verification — every number checked against its source</h2>
@@ -421,9 +459,9 @@
             both figures are published side by side. Remaining gap: the hourly archive’s own
             coverage is now published per season, and three of the 30 seasons it is averaged
             over are missing 1–4 of the 123 dates.</li>
-          <li><strong>CPC back-testing</strong> — score past CPC outlooks against what actually happened at 94122 to say “when CPC tips above-median for OND here, it verified X% of the time”.</li>
-          <li><strong>Atmospheric river awareness — done.</strong> Storm-pattern language is now scanned out of the NWS Area Forecast Discussion and quoted verbatim; no date or amount is ever attached to a quotation. Remaining gap: the scan counts language, it cannot yet say how many days a discussion covers.</li>
-          <li><strong>NWS forecast verification</strong> — store each night’s forecast and score vs observations. The history file and scoring code exist; the first scored pairs appear once observed days accumulate past the current NWS horizon.</li>
+          <li><strong>NWS forecast verification loop — scoring pipeline live, page card added.</strong> The history file, scoring code and page card (<a href="#nws-verification">NWS verification</a>) all exist; the first scored pairs appear once observed days accumulate past the current NWS horizon (the card says so explicitly while the count is 0).</li>
+          <li><strong>CPC back-testing — page card added, data back-fill required.</strong> The <a href="#cpc-backtest">CPC back-test card</a> now explains exactly what blocks the hit-rate (CPC's live server only exposes the current month; historical <code>seasprcp_YYYYMM.zip</code> archives must be bulk-fetched from a vetted static source, then sampled with the same point-in-polygon code used for live outlooks). See <code>docs/NEXT_SESSION.md</code> §2.1.</li>
+          <li><strong>Atmospheric river awareness — done.</strong> Storm-pattern language is scanned out of the NWS Area Forecast Discussion and quoted verbatim; no date or amount is ever attached to a quotation. Remaining gap: the scan counts language, it cannot yet say how many days a discussion covers.</li>
           <li><strong>Humidity for climatology days</strong> is not an observed NOAA relative-humidity
             normal. Where available, it is a labelled per-calendar-date derivation from official NCEI
             hourly temperature and dew-point normals (Magnus formula); if that source is unavailable,
