@@ -142,7 +142,7 @@ retrieval time of the exact file.
 
 **Every forecast day can be checked by hand:** open the day's dialog, follow the
 source link, and compare. The site's *Verification* section lists all 18 recorded
-claims (47 checks) with their evidence, and *Irregularities* lists anything the
+claims (48 checks) with their evidence, and *Irregularities* lists anything the
 pipeline flagged rather than smoothed over.
 
 ---
