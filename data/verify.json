@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T19:06:09Z",
+  "generated_utc": "2026-09-18T19:20:03Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,12 +9,14 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 47,
-    "passed": 47,
+    "total": 50,
+    "passed": 49,
     "failed": 0,
-    "warnings": 0,
+    "warnings": 1,
     "failed_checks": [],
-    "warning_checks": []
+    "warning_checks": [
+      "record-coverage-published"
+    ]
   },
   "checks": [
     {
@@ -204,7 +206,7 @@
       "id": "raw-phase-tokens-dataset",
       "title": "No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)",
       "status": "pass",
-      "detail": "0 raw tokens across 15383 scanned string(s)",
+      "detail": "0 raw tokens across 15454 scanned string(s)",
       "evidence": []
     },
     {
@@ -500,10 +502,15 @@
       "id": "source-traceability",
       "title": "Every source URL printed on the site is either fetched (with a hash) or an official landing page with fetched files beneath it",
       "status": "pass",
-      "detail": "15 URL(s) traced, 1 landing page(s), 0 untraceable",
+      "detail": "16 URL(s) traced, 2 landing page(s), 0 untraceable",
       "evidence": {
         "untraceable": [],
         "landing_pages": [
+          {
+            "url": "https://www.ncei.noaa.gov/data/global-hourly/access/",
+            "note": "ISD hourly dataset landing page; the per-year station files under this path are fetched nightly and drive the hour-by-hour wind+rain statistic",
+            "files_fetched_under_it": 35
+          },
           {
             "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
             "note": "GSOD dataset landing page; the per-year files under this path are fetched nightly",
@@ -659,7 +666,7 @@
       "evidence": {
         "unmatched": [],
         "block_found": true,
-        "published_number_count": 301,
+        "published_number_count": 387,
         "allowlist": [
           0.01,
           0.1,
@@ -701,6 +708,94 @@
           "2026-10-09"
         ]
       }
+    },
+    {
+      "id": "wind-rain-hourly-arithmetic",
+      "title": "The hour-by-hour wind+rain figures equal the arithmetic over the per-season values, over exactly the seasons published as used",
+      "status": "pass",
+      "detail": "30 season(s) used, 5 excluded and named; mean days with a simultaneous hour 7.9",
+      "evidence": {
+        "problems": [],
+        "coverage": {
+          "dates_expected_per_season": 123,
+          "min_coverage_pct_required": 95.0,
+          "seasons_used": 30,
+          "min_coverage_pct": 96.7,
+          "seasons_below_full_coverage": [
+            {
+              "season": "2009-2010",
+              "dates_with_data": 122,
+              "coverage_pct": 99.2
+            },
+            {
+              "season": "2016-2017",
+              "dates_with_data": 119,
+              "coverage_pct": 96.7
+            },
+            {
+              "season": "2019-2020",
+              "dates_with_data": 121,
+              "coverage_pct": 98.4
+            }
+          ],
+          "seasons_excluded": [
+            {
+              "season": "1990-1991",
+              "dates_with_data": 32,
+              "coverage_pct": 26.0,
+              "excluded_because": "season 1990-1991 is outside the 1991-2020 window the daily statistic uses"
+            },
+            {
+              "season": "2021-2022",
+              "dates_with_data": 123,
+              "coverage_pct": 100.0,
+              "excluded_because": "season 2021-2022 is outside the 1991-2020 window the daily statistic uses"
+            },
+            {
+              "season": "2022-2023",
+              "dates_with_data": 120,
+              "coverage_pct": 97.6,
+              "excluded_because": "season 2022-2023 is outside the 1991-2020 window the daily statistic uses"
+            },
+            {
+              "season": "2023-2024",
+              "dates_with_data": 123,
+              "coverage_pct": 100.0,
+              "excluded_because": "season 2023-2024 is outside the 1991-2020 window the daily statistic uses"
+            },
+            {
+              "season": "2024-2025",
+              "dates_with_data": 110,
+              "coverage_pct": 89.4,
+              "excluded_because": "season 2024-2025 is outside the 1991-2020 window the daily statistic uses"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wind-rain-hourly-traceable",
+      "title": "The hourly wind+rain statistic names the station and the fetched ISD archive it was computed from",
+      "status": "pass",
+      "detail": "station 72494023234, 35 year file(s) retrieved, source_url https://www.ncei.noaa.gov/data/global-hourly/access/",
+      "evidence": {
+        "station_id": "72494023234",
+        "years_ok": [
+          1991,
+          1992,
+          1993,
+          1994,
+          1995
+        ],
+        "years_ok_count": 35
+      }
+    },
+    {
+      "id": "record-coverage-published",
+      "title": "The run publishes how current each source archive is",
+      "status": "warn",
+      "detail": "run.json carries no record_coverage block; this dataset predates the coverage step, and the site must not claim currency from it",
+      "evidence": null
     }
   ],
   "claims": [
@@ -1210,9 +1305,9 @@
       "id": "sources-listed",
       "statement": "Source URLs referenced by the scoreboard",
       "value": {
-        "count": 15,
+        "count": 16,
         "all_traced": true,
-        "landing_pages": 1
+        "landing_pages": 2
       },
       "unit": "URLs",
       "method": "union of every source URL attached to a day or a CPC record",

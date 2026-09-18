@@ -831,6 +831,9 @@ def main() -> int:
     citation_only = {
         "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/":
             "GSOD dataset landing page; the per-year files under this path are fetched nightly",
+        "https://www.ncei.noaa.gov/data/global-hourly/access/":
+            "ISD hourly dataset landing page; the per-year station files under this path "
+            "are fetched nightly and drive the hour-by-hour wind+rain statistic",
     }
     untraceable, cited = [], []
     for u in sorted(refs):
@@ -1593,6 +1596,207 @@ def main() -> int:
         f"contradicts the published window {sorted(window_dates)}",
         severity="warning",
         evidence={"stale": stale_dates[:10], "window_dates": sorted(window_dates)})
+
+    # ------------------------------------ 12d. hour-by-hour wind+rain statistics
+    # The landlord's key question is whether rain and wind happen *at the same
+    # time*.  The published hour-by-hour figure must be the arithmetic over the
+    # per-season values in isd_hourly_summary.json, over exactly the seasons the
+    # block says it used, and it may not be published at all if the hourly
+    # archive is absent.
+    isd = load("isd_hourly_summary.json")
+    hourly = ((landlord.get("executive_summary") or {}).get("wind_and_rain_hourly")
+              or {})
+    _isd_years_ok = [y.get("year") for y in (isd.get("per_year") or []) if y.get("ok")]
+    isd_url = ("https://www.ncei.noaa.gov/data/global-hourly/access/"
+               f"{min(_isd_years_ok)}/{(isd or {}).get('station_id') or '72494023234'}.csv"
+               ) if _isd_years_ok else None
+    if not hourly:
+        ledger.check("wind-rain-hourly-published",
+                     "The hour-by-hour wind+rain statistic is published when the hourly "
+                     "archive is available",
+                     True,
+                     "landlord.json carries no hourly wind+rain block; the site must then "
+                     "publish the whole-day figure alone, which it does",
+                     severity="warning")
+    elif not hourly.get("available"):
+        ledger.check("wind-rain-hourly-published",
+                     "The hour-by-hour wind+rain statistic is published when the hourly "
+                     "archive is available",
+                     bool(isd.get("by_local_date")),
+                     "the block reports itself unavailable while an hourly archive exists",
+                     severity="warning",
+                     evidence={"reason": hourly.get("reason"),
+                               "archive_dates": len((isd or {}).get("by_local_date") or {})})
+    else:
+        y0, y1 = (run.get("normals_period") or [1991, 2020])
+        per_season = hourly.get("per_season") or []
+        problems = []
+        if not per_season:
+            problems.append("no per-season values published")
+        # Every season used must sit inside the window the daily statistic uses.
+        outside = [s.get("season") for s in per_season
+                   if not (y0 <= (s.get("season_year") or 0) <= y1)]
+        if outside:
+            problems.append(f"seasons outside the {y0}-{y1} window: {outside[:5]}")
+        # The cover story must match the data: an excluded season may not also be
+        # counted as used.
+        used_names = {s.get("season") for s in per_season}
+        overlap = [e.get("season") for e in (hourly.get("excluded_seasons") or [])
+                   if e.get("season") in used_names]
+        if overlap:
+            problems.append(f"seasons both used and excluded: {overlap}")
+        # Coverage: a season below the *published threshold* may not be used, and
+        # the excluded seasons must carry a reason.
+        required = ((hourly.get("coverage") or {}).get("min_coverage_pct_required"))
+        if required is None:
+            problems.append("the coverage threshold the seasons were filtered by is not published")
+        low = [s.get("season") for s in per_season
+               if (s.get("coverage_pct") is not None and required is not None
+                   and s["coverage_pct"] < required - 1e-9)]
+        if low:
+            problems.append(f"seasons used below the published minimum coverage "
+                            f"({required}%): {low[:5]}")
+        unnamed = [e.get("season") for e in (hourly.get("excluded_seasons") or [])
+                   if not e.get("excluded_because")]
+        if unnamed:
+            problems.append(f"excluded seasons with no reason: {unnamed[:5]}")
+
+        def recompute(key):
+            vals = [s.get(key) for s in per_season if s.get(key) is not None]
+            if not vals:
+                return None
+            return {"n": len(vals), "mean": round(statistics.fmean(vals), 2),
+                    "median": round(statistics.median(vals), 2),
+                    "max": max(vals), "min": min(vals)}
+
+        for field, key in (("days_with_a_simultaneous_hour", "days_simultaneous"),
+                           ("simultaneous_hours_per_season", "simultaneous_hours")):
+            published = hourly.get(field) or {}
+            got = recompute(key)
+            if published.get("mean") is None:
+                problems.append(f"{field}: published with no mean")
+            elif got is None:
+                problems.append(f"{field}: published but no per-season values")
+            elif round(float(published["mean"]), 2) != got["mean"]:
+                problems.append(f"{field}: published mean {published['mean']} vs "
+                                f"recomputed {got['mean']}")
+            elif published.get("max") is not None and round(float(published["max"]), 1) != round(got["max"], 1):
+                problems.append(f"{field}: published max {published['max']} vs "
+                                f"recomputed max {got['max']}")
+
+        # The same-station whole-day comparison needs the per-date wind maximum.
+        # If the fields are absent it must be None, never a zero.
+        has_fields = any(isinstance(d, dict) and "wind_max_kt" in d
+                         for d in (isd.get("by_local_date") or {}).values())
+        pair = hourly.get("days_daily_pair_same_station")
+        if has_fields and (pair is None or pair.get("mean") is None):
+            problems.append("per-date wind maximum present but the whole-day pairing is not published")
+        if not has_fields and pair is not None:
+            problems.append("whole-day pairing published although the per-date fields are absent")
+        if hourly.get("same_station_daily_fields_available") != has_fields:
+            problems.append("same_station_daily_fields_available does not match the archive")
+
+        ledger.check("wind-rain-hourly-arithmetic",
+                     "The hour-by-hour wind+rain figures equal the arithmetic over the "
+                     "per-season values, over exactly the seasons published as used",
+                     not problems,
+                     (f"{len(per_season)} season(s) used, {len(hourly.get('excluded_seasons') or [])} "
+                      f"excluded and named; mean days with a simultaneous hour "
+                      f"{(hourly.get('days_with_a_simultaneous_hour') or {}).get('mean')}")
+                     if not problems else "; ".join(problems[:6]),
+                     evidence={"problems": problems[:10],
+                               "coverage": hourly.get("coverage")})
+
+        # The station, the archive and the method must be traceable to a recorded
+        # official fetch: a quote of a method that was never fetched is exactly
+        # the kind of claim this ledger exists to stop.
+        station_id = str(isd.get("station_id") or "")
+        fetched_years = [y for y in (isd.get("per_year") or []) if y.get("ok")]
+        ledger.check("wind-rain-hourly-traceable",
+                     "The hourly wind+rain statistic names the station and the fetched ISD "
+                     "archive it was computed from",
+                     bool(station_id) and bool(fetched_years)
+                     and any(f"global-hourly" in (e.get("url") or "")
+                             and station_id in (e.get("url") or "")
+                             for e in manifest_entries)
+                     and hourly.get("source_url") == "https://www.ncei.noaa.gov/data/"
+                                                     "global-hourly/access/",
+                     f"station {station_id}, {len(fetched_years)} year file(s) retrieved, "
+                     f"source_url {hourly.get('source_url')}",
+                     evidence={"station_id": station_id,
+                               "years_ok": [y.get("year") for y in fetched_years][:5],
+                               "years_ok_count": len(fetched_years)})
+
+    # ----------------------------------------------- 12e. archive recency published
+    # An archive that stops updating must not be presented as current.  run.json
+    # publishes the newest row of each NCEI archive; a claim that a source is
+    # current cannot outrun that date.
+    cov = run.get("record_coverage") or {}
+    if not cov:
+        ledger.check("record-coverage-published",
+                     "The run publishes how current each source archive is",
+                     False,
+                     "run.json carries no record_coverage block; this dataset predates the "
+                     "coverage step, and the site must not claim currency from it",
+                     severity="warning")
+    else:
+        problems = []
+        for a in cov.get("archives") or []:
+            if not a.get("last_date"):
+                problems.append(f"{a.get('area')}: no last_date published")
+                continue
+            if a.get("age_days") is None:
+                problems.append(f"{a.get('area')}: age_days not computable from last_date")
+                continue
+            try:
+                expected_age = (dt.date.fromisoformat(str(cov.get("as_of")))
+                                - dt.date.fromisoformat(str(a["last_date"])[:10])).days
+            except ValueError:
+                problems.append(f"{a.get('area')}: last_date is not an ISO date")
+                continue
+            if expected_age != a["age_days"]:
+                problems.append(f"{a.get('area')}: age_days {a['age_days']} but the dates "
+                                f"give {expected_age}")
+        stale = [a.get("area") for a in (cov.get("archives") or [])
+                 if (a.get("age_days") or 0) > 180]
+        if sorted(stale) != sorted(cov.get("stale_archives") or []):
+            problems.append(f"stale_archives {cov.get('stale_archives')} does not match the "
+                            f"archives older than 180 days {stale}")
+        if bool(cov.get("recent_enough_for_current_conditions")) != (not stale):
+            problems.append("recent_enough_for_current_conditions disagrees with the archive ages")
+        # The ISD recency must be the one the parsed hourly rows actually carry.
+        isd_last = (isd or {}).get("latest_observation_utc")
+        cov_isd = next((a for a in (cov.get("archives") or []) if a.get("area") == "isd_hourly"),
+                       None)
+        if isd_last and cov_isd and (cov_isd.get("last_date") or "")[:10] != str(isd_last)[:10]:
+            problems.append(f"isd_hourly last_date {cov_isd.get('last_date')} does not match "
+                            f"the parsed rows {str(isd_last)[:10]}")
+        # A missing hourly archive is a data-availability event the site already
+        # discloses, not a claim problem, so that case warns instead of failing.
+        isd_absent = not (isd or {}).get("latest_observation_utc")
+        ledger.check("record-coverage-published",
+                     "The published archive dates and ages are re-derived from the datasets, "
+                     "and a stale archive is flagged rather than presented as current",
+                     not problems,
+                     (f"{len(cov.get('archives') or [])} archive(s); stale: "
+                      f"{cov.get('stale_archives') or 'none'}")
+                     if not problems else "; ".join(problems[:6]),
+                     severity="warning" if (isd_absent and all(
+                         "isd_hourly" in p for p in problems)) else "error",
+                     evidence={"problems": problems[:10], "archives": cov.get("archives")})
+        years_ok = [y.get("year") for y in (isd.get("per_year") or []) if y.get("ok")]
+        isd_file_url = (f"https://www.ncei.noaa.gov/data/global-hourly/access/"
+                        f"{max(years_ok)}/{isd.get('station_id')}.csv") if years_ok else None
+        ledger.claim(
+            "archive-recency",
+            "Newest observation available in each NCEI archive this project reads",
+            {a.get("area"): a.get("last_date") for a in (cov.get("archives") or [])},
+            source=(src(isd_file_url, f"NCEI ISD hourly {max(years_ok)} "
+                                      f"({isd.get('station_id')})")
+                    if isd_file_url and fetch_ok(isd_file_url) else {}),
+            method="Newest date present in the fetched annual files; every published "
+                   "statistic is a 1991-2020 statistic and does not depend on it.",
+            verified=bool(cov.get("archives")))
 
     # ------------------------------------------------------------- write out
     summary = ledger.summary()

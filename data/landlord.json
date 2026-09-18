@@ -80,6 +80,597 @@
       "strength": "strong",
       "strength_label": "strong"
     },
+    "wind_and_rain_hourly": {
+      "available": true,
+      "station_id": "72494023234",
+      "station_name": "SAN FRANCISCO INTERNATIONAL AIRPORT (KSFO)",
+      "source": "NOAA NCEI Integrated Surface Database (ISD) station 72494023234",
+      "source_url": "https://www.ncei.noaa.gov/data/global-hourly/access/",
+      "units_period": null,
+      "method": null,
+      "timezone": "America/Los_Angeles",
+      "wind_threshold_kt": 20.0,
+      "season_window": "1991-1992 .. 2020-2021",
+      "n_seasons_used": 30,
+      "hours_with_both_observations": 104994,
+      "simultaneous_hours_total": 1029,
+      "simultaneous_hours_from_multi_hour_reports": null,
+      "days_with_a_simultaneous_hour": {
+        "n": 30,
+        "mean": 7.9,
+        "median": 7.0,
+        "min": 1.0,
+        "max": 16.0,
+        "p10": 4.0,
+        "p25": 5.0,
+        "p75": 11.0,
+        "p90": 12.0
+      },
+      "simultaneous_hours_per_season": {
+        "n": 30,
+        "mean": 29.5,
+        "median": 29.0,
+        "min": 2.0,
+        "max": 82.0,
+        "p10": 5.0,
+        "p25": 16.0,
+        "p75": 39.0,
+        "p90": 50.0
+      },
+      "same_station_daily_fields_available": false,
+      "days_daily_pair_same_station": null,
+      "days_rain_same_station": null,
+      "days_wind_ge_threshold_same_station": null,
+      "cross_station_daily_days": {
+        "n": 30,
+        "mean": 11.1,
+        "median": 10.0,
+        "min": 2.0,
+        "max": 24.0,
+        "p10": 6.0,
+        "p25": 7.0,
+        "p75": 14.0,
+        "p90": 18.0
+      },
+      "heavy_cross_station_daily_days": {
+        "n": 30,
+        "mean": 2.2,
+        "median": 2.0,
+        "min": 0.0,
+        "max": 8.0,
+        "p10": 0.0,
+        "p25": 0.0,
+        "p75": 3.0,
+        "p90": 5.0
+      },
+      "difference_daily_minus_hourly_same_station": null,
+      "difference_cross_station_minus_hourly": 3.2,
+      "coverage": {
+        "dates_expected_per_season": 123,
+        "min_coverage_pct_required": 95.0,
+        "seasons_used": 30,
+        "min_coverage_pct": 96.7,
+        "seasons_below_full_coverage": [
+          {
+            "season": "2009-2010",
+            "dates_with_data": 122,
+            "coverage_pct": 99.2
+          },
+          {
+            "season": "2016-2017",
+            "dates_with_data": 119,
+            "coverage_pct": 96.7
+          },
+          {
+            "season": "2019-2020",
+            "dates_with_data": 121,
+            "coverage_pct": 98.4
+          }
+        ],
+        "seasons_excluded": [
+          {
+            "season": "1990-1991",
+            "dates_with_data": 32,
+            "coverage_pct": 26.0,
+            "excluded_because": "season 1990-1991 is outside the 1991-2020 window the daily statistic uses"
+          },
+          {
+            "season": "2021-2022",
+            "dates_with_data": 123,
+            "coverage_pct": 100.0,
+            "excluded_because": "season 2021-2022 is outside the 1991-2020 window the daily statistic uses"
+          },
+          {
+            "season": "2022-2023",
+            "dates_with_data": 120,
+            "coverage_pct": 97.6,
+            "excluded_because": "season 2022-2023 is outside the 1991-2020 window the daily statistic uses"
+          },
+          {
+            "season": "2023-2024",
+            "dates_with_data": 123,
+            "coverage_pct": 100.0,
+            "excluded_because": "season 2023-2024 is outside the 1991-2020 window the daily statistic uses"
+          },
+          {
+            "season": "2024-2025",
+            "dates_with_data": 110,
+            "coverage_pct": 89.4,
+            "excluded_because": "season 2024-2025 is outside the 1991-2020 window the daily statistic uses"
+          }
+        ]
+      },
+      "per_season": [
+        {
+          "season_year": 1991,
+          "season": "1991-1992",
+          "dates_with_data": 123,
+          "days_simultaneous": 3,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 5,
+          "valid_hours": 2953,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 1992,
+          "season": "1992-1993",
+          "dates_with_data": 123,
+          "days_simultaneous": 16,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 50,
+          "valid_hours": 2953,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 1993,
+          "season": "1993-1994",
+          "dates_with_data": 123,
+          "days_simultaneous": 2,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 2,
+          "valid_hours": 2953,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 1994,
+          "season": "1994-1995",
+          "dates_with_data": 123,
+          "days_simultaneous": 13,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 37,
+          "valid_hours": 2953,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 1995,
+          "season": "1995-1996",
+          "dates_with_data": 123,
+          "days_simultaneous": 10,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 41,
+          "valid_hours": 2954,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 1996,
+          "season": "1996-1997",
+          "dates_with_data": 123,
+          "days_simultaneous": 11,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 34,
+          "valid_hours": 2979,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 1997,
+          "season": "1997-1998",
+          "dates_with_data": 123,
+          "days_simultaneous": 7,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 8,
+          "valid_hours": 2977,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 1998,
+          "season": "1998-1999",
+          "dates_with_data": 123,
+          "days_simultaneous": 8,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 26,
+          "valid_hours": 2951,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 1999,
+          "season": "1999-2000",
+          "dates_with_data": 123,
+          "days_simultaneous": 5,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 7,
+          "valid_hours": 3018,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2000,
+          "season": "2000-2001",
+          "dates_with_data": 123,
+          "days_simultaneous": 5,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 19,
+          "valid_hours": 3041,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2001,
+          "season": "2001-2002",
+          "dates_with_data": 123,
+          "days_simultaneous": 9,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 32,
+          "valid_hours": 3072,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2002,
+          "season": "2002-2003",
+          "dates_with_data": 123,
+          "days_simultaneous": 11,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 64,
+          "valid_hours": 3161,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2003,
+          "season": "2003-2004",
+          "dates_with_data": 123,
+          "days_simultaneous": 6,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 32,
+          "valid_hours": 3182,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2004,
+          "season": "2004-2005",
+          "dates_with_data": 123,
+          "days_simultaneous": 14,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 46,
+          "valid_hours": 3232,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2005,
+          "season": "2005-2006",
+          "dates_with_data": 123,
+          "days_simultaneous": 10,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 74,
+          "valid_hours": 3265,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2006,
+          "season": "2006-2007",
+          "dates_with_data": 123,
+          "days_simultaneous": 6,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 17,
+          "valid_hours": 3162,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2007,
+          "season": "2007-2008",
+          "dates_with_data": 123,
+          "days_simultaneous": 7,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 32,
+          "valid_hours": 3179,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2008,
+          "season": "2008-2009",
+          "dates_with_data": 123,
+          "days_simultaneous": 5,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 18,
+          "valid_hours": 3107,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2009,
+          "season": "2009-2010",
+          "dates_with_data": 122,
+          "days_simultaneous": 10,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 39,
+          "valid_hours": 3067,
+          "dates_expected": 123,
+          "coverage_pct": 99.2
+        },
+        {
+          "season_year": 2010,
+          "season": "2010-2011",
+          "dates_with_data": 123,
+          "days_simultaneous": 11,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 31,
+          "valid_hours": 3095,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2011,
+          "season": "2011-2012",
+          "dates_with_data": 123,
+          "days_simultaneous": 5,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 27,
+          "valid_hours": 3080,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2012,
+          "season": "2012-2013",
+          "dates_with_data": 123,
+          "days_simultaneous": 7,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 45,
+          "valid_hours": 3200,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2013,
+          "season": "2013-2014",
+          "dates_with_data": 123,
+          "days_simultaneous": 1,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 3,
+          "valid_hours": 2991,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2014,
+          "season": "2014-2015",
+          "dates_with_data": 123,
+          "days_simultaneous": 6,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 13,
+          "valid_hours": 3173,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2015,
+          "season": "2015-2016",
+          "dates_with_data": 123,
+          "days_simultaneous": 12,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 39,
+          "valid_hours": 3232,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2016,
+          "season": "2016-2017",
+          "dates_with_data": 119,
+          "days_simultaneous": 12,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 82,
+          "valid_hours": 3048,
+          "dates_expected": 123,
+          "coverage_pct": 96.7
+        },
+        {
+          "season_year": 2017,
+          "season": "2017-2018",
+          "dates_with_data": 123,
+          "days_simultaneous": 4,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 5,
+          "valid_hours": 3086,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2018,
+          "season": "2018-2019",
+          "dates_with_data": 123,
+          "days_simultaneous": 7,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 24,
+          "valid_hours": 3050,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        },
+        {
+          "season_year": 2019,
+          "season": "2019-2020",
+          "dates_with_data": 121,
+          "days_simultaneous": 5,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 16,
+          "valid_hours": 3017,
+          "dates_expected": 123,
+          "coverage_pct": 98.4
+        },
+        {
+          "season_year": 2020,
+          "season": "2020-2021",
+          "dates_with_data": 123,
+          "days_simultaneous": 9,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 17,
+          "valid_hours": 3062,
+          "dates_expected": 123,
+          "coverage_pct": 100.0
+        }
+      ],
+      "excluded_seasons": [
+        {
+          "season_year": 1990,
+          "season": "1990-1991",
+          "dates_with_data": 32,
+          "days_simultaneous": 0,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 0,
+          "valid_hours": 752,
+          "dates_expected": 123,
+          "coverage_pct": 26.0,
+          "excluded_because": "season 1990-1991 is outside the 1991-2020 window the daily statistic uses"
+        },
+        {
+          "season_year": 2021,
+          "season": "2021-2022",
+          "dates_with_data": 123,
+          "days_simultaneous": 5,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 40,
+          "valid_hours": 3207,
+          "dates_expected": 123,
+          "coverage_pct": 100.0,
+          "excluded_because": "season 2021-2022 is outside the 1991-2020 window the daily statistic uses"
+        },
+        {
+          "season_year": 2022,
+          "season": "2022-2023",
+          "dates_with_data": 120,
+          "days_simultaneous": 15,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 61,
+          "valid_hours": 3104,
+          "dates_expected": 123,
+          "coverage_pct": 97.6,
+          "excluded_because": "season 2022-2023 is outside the 1991-2020 window the daily statistic uses"
+        },
+        {
+          "season_year": 2023,
+          "season": "2023-2024",
+          "dates_with_data": 123,
+          "days_simultaneous": 6,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 13,
+          "valid_hours": 3246,
+          "dates_expected": 123,
+          "coverage_pct": 100.0,
+          "excluded_because": "season 2023-2024 is outside the 1991-2020 window the daily statistic uses"
+        },
+        {
+          "season_year": 2024,
+          "season": "2024-2025",
+          "dates_with_data": 110,
+          "days_simultaneous": 6,
+          "days_daily_pair": 0,
+          "days_rain": 0,
+          "days_wind_ge_threshold": 0,
+          "simultaneous_hours": 30,
+          "valid_hours": 2492,
+          "dates_expected": 123,
+          "coverage_pct": 89.4,
+          "excluded_because": "season 2024-2025 is outside the 1991-2020 window the daily statistic uses"
+        }
+      ],
+      "notes": [
+        "The committed hourly summary carries only the simultaneous-hour counts, so the same-station whole-day pairing is reported as unavailable rather than as zero. The next pipeline run writes the per-date wind maximum and daily precipitation total and the comparison appears.",
+        "The count of simultaneous hours coming from multi-hour precipitation reports is not present in this run's hourly summary.",
+        "The hourly summary predates the coverage fields; coverage is reported from the 123-date season definition used by this project's parser."
+      ]
+    },
+    "record_coverage": null,
     "season_total_prcp": {
       "n": 30,
       "mean": 12.79,
@@ -412,20 +1003,36 @@
         "n": 5,
         "key": "wind_and_rain",
         "question": "Will wind and rain hit at the same time?",
-        "answer": "Yes \u2014 on about 11.1 days a season at SFO (\u2265 0.01 in of rain and sustained wind \u2265 20 kt), and on about 2.2 heavy days (\u2265 0.50 in and a gust \u2265 35 kt). Those are the days water is driven sideways under shingles, laps and window seals, and the days fences fail. The SFO wind figure is an upper bound; the rain figure is the downtown gauge.",
+        "answer": "On the hour-by-hour record at SFO, rain and sustained wind \u2265 20 kt coincide on about 7.9 days a season (median 7.0, range 1.0\u201316.0 over 30 seasons, 1991-1992 .. 2020-2021), which is about 29.5 simultaneous hours a season. The same-station whole-day comparison is not published in this run\u2019s hourly dataset, so the hour-by-hour figure above is the one to use; for reference, the whole-day method gives 11.1 days when the downtown rain gauge is paired with SFO wind (the figure this page published before the hourly record was used). Those are the days water is driven sideways under shingles, laps and window seals, and the days fences fail. The SFO wind figure is an upper bound for the Sunset.",
         "numbers": [
           {
-            "label": "Wind+rain days per season",
+            "label": "Days per season with a simultaneous wind+rain hour (hourly record)",
+            "value": "mean 7.9 \u00b7 median 7.0 \u00b7 min 1.0 \u00b7 max 16.0"
+          },
+          {
+            "label": "Simultaneous wind+rain hours per season",
+            "value": "mean 29.5 \u00b7 median 29.0 \u00b7 max 82.0"
+          },
+          {
+            "label": "Days per season, same station, whole-day pairing (for comparison)",
+            "value": "not published in this run's hourly dataset"
+          },
+          {
+            "label": "Days per season, whole-day pairing, downtown rain gauge + SFO wind",
             "value": "mean 11.1 \u00b7 max 24.0"
           },
           {
-            "label": "Heavy wind+rain days per season",
+            "label": "Heavy wind+rain days per season (\u2265 0.50 in and a gust \u2265 35 kt, whole-day pairing)",
             "value": "mean 2.2 \u00b7 max 8.0"
           }
         ],
-        "basis": "1991\u20132020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown); 1991\u20132020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away)",
-        "confidence": "GSOD days are 00\u201324Z (about 16:00\u201316:00 local), so the joint statistic pairs a local-day rain total with a UTC-day wind figure \u2014 stated, not corrected",
+        "basis": "1991\u20132020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown); 1991\u20132020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away); hour-by-hour observed record, NOAA NCEI ISD hourly station 72494023234 (SFO ASLO, 11.9 mi away) \u2014 an hour counts when a single observation carries wind \u2265 20 kt and precipitation > 0",
+        "confidence": "n = 30 seasons; thinnest season covers 96.7% of the 123 Oct\u2013Jan dates; the multi-hour-accumulation count is not published in this run\u2019s hourly dataset; the whole-day method pairs a local-day rain total with a UTC-day wind figure (00\u201324Z), which is why it counts more days",
         "sources": [
+          {
+            "label": "NCEI ISD hourly archive (station 72494023234, SFO)",
+            "url": "https://www.ncei.noaa.gov/data/global-hourly/access/"
+          },
           {
             "label": "NCEI GSOD 72494023234 (KSFO)",
             "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
@@ -867,10 +1474,14 @@
       },
       {
         "driver": "Wind + rain together \u2014 wind-driven water intrusion",
-        "why_it_costs": "Wind pushes rain sideways under shingles, laps and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. These are also fence-failure and tree-limb days. Wind is recorded at SFO, 11.9 miles away (computed great-circle distance from the 94122 centroid, see climatology.meta.station_distance_mi) and more exposed, so treat the counts as an upper bound for the Sunset.",
+        "why_it_costs": "Wind pushes rain sideways under shingles, laps and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. These are also fence-failure and tree-limb days. Wind is recorded at SFO, 11.9 miles away (computed great-circle distance from the 94122 centroid, see climatology.meta.station_distance_mi) and more exposed, so treat the counts as an upper bound for the Sunset. The headline count is the hour-by-hour one: rain and wind measured in the same hour, not rain and wind somewhere on the same day.",
         "evidence": [
           {
-            "label": "Days with rain \u2265 0.01 in and sustained wind \u2265 20 kt",
+            "label": "Days per season with a simultaneous wind \u2265 20 kt + rain hour (hour-by-hour record, SFO)",
+            "value": "mean 7.9 \u00b7 median 7.0 \u00b7 max 16.0 over 30 seasons"
+          },
+          {
+            "label": "Days with rain \u2265 0.01 in and sustained wind \u2265 20 kt (whole-day pairing, downtown gauge + SFO wind)",
             "value": "mean 11.1 \u00b7 median 10.0 \u00b7 max 24.0 per season"
           },
           {
@@ -879,6 +1490,10 @@
           }
         ],
         "sources": [
+          {
+            "label": "NCEI ISD hourly archive (station 72494023234, SFO)",
+            "url": "https://www.ncei.noaa.gov/data/global-hourly/access/"
+          },
           {
             "label": "NCEI GSOD 72494023234 (KSFO wind)",
             "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
@@ -1003,7 +1618,7 @@
       }
     ],
     "cost_drivers_note": "Ranked for the landlord question behind this site: what about this rainy season plausibly drives repair and maintenance cost. The 'Why it matters' sentence under each driver is maintenance guidance about cost mechanisms \u2014 it is not a weather claim. Every number is computed from, and links to, the official sources shown. Expected-day counts are sums of the per-date 1991\u20132020 observed probabilities (linearity of expectation): an expectation over the distribution, not a prediction for 2026-27.",
-    "key_finding": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 11.1 days per season on average at SFO (upper bound for Sunset). Current ENSO: El Ni\u00f1o (official ONI +1.80 \u00b0C, JJA 2026) - in this record El Ni\u00f1o seasons averaged wetter than La Ni\u00f1a (14.23 in vs 11.16 in), with a wide spread in both; CPC status \"El Ni\u00f1o Advisory\". The CPC outlooks attached to each day show the official probabilities for this window."
+    "key_finding": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 7.9 days per season on average at SFO on the hour-by-hour record (upper bound for Sunset); pairing whole days instead gives 11.1 days. Current ENSO: El Ni\u00f1o (official ONI +1.80 \u00b0C, JJA 2026) - in this record El Ni\u00f1o seasons averaged wetter than La Ni\u00f1a (14.23 in vs 11.16 in), with a wide spread in both; CPC status \"El Ni\u00f1o Advisory\". The CPC outlooks attached to each day show the official probabilities for this window."
   },
   "monthly": [
     {
@@ -1836,10 +2451,10 @@
     {
       "category": "Wind + rain",
       "priority": "high",
-      "title": "Expect 11.1 days per season with both rain and sustained wind \u226520 kt",
-      "detail": "At SFO ASOS (more exposed than Sunset, so upper bound for 94122): mean 11.1, median 10.0, max 24.0 days per Oct-Jan season with \u22650.01 in rain AND \u226520 kt sustained wind. Heavy wind+rain (\u22650.50 in AND gust \u226535 kt): mean 2.2, max 8.0 days.",
-      "source": "NCEI GSOD 72494023234 (KSFO) + GHCN-Daily",
-      "source_url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+      "title": "Expect 7.9 days per season when rain and sustained wind \u2265 20 kt happen in the same hour",
+      "detail": "Hour-by-hour NCEI ISD record at SFO ASOS (more exposed than the Sunset, so an upper bound for 94122): mean 7.9, median 7.0, max 16.0 local dates per Oct-Jan season carrying at least one hour with rain AND sustained wind \u2265 20 kt, over 30 seasons. 11.1 days when the downtown rain gauge is paired with SFO wind. Heavy wind+rain (\u22650.50 in AND gust \u226535 kt, whole days): mean 2.2, max 8.0 days.",
+      "source": "NCEI ISD hourly 72494023234 (KSFO) + GSOD + GHCN-Daily",
+      "source_url": "https://www.ncei.noaa.gov/data/global-hourly/access/"
     },
     {
       "category": "Wind / gusts",

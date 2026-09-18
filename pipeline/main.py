@@ -63,6 +63,9 @@ GSOD_STATIONS = [
     ("72494023234", "SAN FRANCISCO INTERNATIONAL AIRPORT (KSFO)"),
     ("72494023272", "SAN FRANCISCO DOWNTOWN (KSFO alt id)"),
 ]
+#: The wind station this project publishes against (the first entry above).  Named
+#: once so the ISD summary, the GSOD summary and the site cannot drift apart.
+GSOD_WIND_NAME = GSOD_STATIONS[0][1]
 
 CPC_GIS_BASE = "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst"
 CPC_WWW_BASE = "https://www.cpc.ncep.noaa.gov"
@@ -1194,7 +1197,7 @@ def fetch_gsod(years):
     return None
 
 
-def fetch_isd_hourly_summary(years, station_id="72494023234"):
+def fetch_isd_hourly_summary(years, station_id="72494023234", station_name=None):
     """Fetch NCEI Integrated Surface Database (ISD) global-hourly data for SFO ASOS.
 
     Downloads hourly observations for station 72494023234 (KSFO) across the requested
@@ -1204,6 +1207,7 @@ def fetch_isd_hourly_summary(years, station_id="72494023234"):
     compact); only the computed joint-frequency summary is returned.
     """
     all_records = []
+    season_records = 0
     statuses = []
     base_url = "https://www.ncei.noaa.gov/data/global-hourly/access/"
     for year in years:
@@ -1214,6 +1218,7 @@ def fetch_isd_hourly_summary(years, station_id="72494023234"):
         if res.ok and res.body:
             records = climo.parse_isd_hourly(res.text())
             all_records.extend(records)
+            season_records += sum(1 for r in records if r.get("in_season"))
 
     if not all_records:
         note_irregularity("warning", "isd",
@@ -1224,11 +1229,92 @@ def fetch_isd_hourly_summary(years, station_id="72494023234"):
 
     summary = climo.aggregate_isd_hourly_wind_and_rain(all_records)
     summary["station_id"] = station_id
+    summary["station_name"] = station_name or "SAN FRANCISCO INTERNATIONAL AIRPORT (KSFO)"
     summary["years_requested"] = [years[0], years[-1]]
     summary["base_url"] = base_url
     summary["per_year"] = statuses
     summary["source"] = f"NOAA NCEI Integrated Surface Database (ISD) station {station_id}"
+    summary["timezone"] = "America/Los_Angeles"
+    summary["season_window"] = "Oct 1 - Jan 31, local time"
+    # Recency of the station's own record, straight from the parsed rows: the last
+    # observation timestamp in the fetched files and the last in-season local date.
+    # Published so a reader can see how current the hourly archive is without
+    # assuming it keeps up with the daily products.
+    stamps = sorted(r["timestamp_utc"] for r in all_records if r.get("timestamp_utc"))
+    summary["observations_parsed"] = len(all_records)
+    summary["season_observations_parsed"] = season_records
+    summary["latest_observation_utc"] = stamps[-1] if stamps else None
+    summary["earliest_observation_utc"] = stamps[0] if stamps else None
+    in_season_dates = sorted(summary["by_local_date"])
+    summary["latest_season_local_date"] = in_season_dates[-1] if in_season_dates else None
+    summary["units"] = {
+        "wind": "knots (knot = 1 nautical mile per hour), from the ISD WND speed "
+                "field in tenths of a metre per second converted with 1 m/s = 1.943844 kt",
+        "rain": "inches, from the ISD AA1 liquid-precipitation depth in tenths of a "
+                "millimetre divided by 25.4",
+        "day": "local calendar day in America/Los_Angeles (the season window is local)",
+    }
+    summary["method"] = (
+        "An hour counts when one observation carries both a usable wind speed and "
+        "usable liquid precipitation, and at that observation wind >= "
+        f"{climo.ISD_WIND_THRESHOLD_KT:g} kt while precipitation > 0. "
+        "A local date counts when at least one such hour falls on it.")
     return summary
+
+
+def build_record_coverage(*, ghcn, gsod, isd, today, normals_period):
+    """How far each NCEI archive actually reaches, and how old its newest row is.
+
+    This exists because a station archive can quietly stop: the wind archive in
+    this project ends long before the run date, and nothing on the page would have
+    said so.  Every published statistic is a 1991-2020 statistic and is unaffected;
+    what is affected is any claim about *recent* conditions, so the recency is
+    published next to the numbers rather than left to be assumed.
+    """
+    out = {"as_of": today.isoformat(), "normals_period": list(normals_period),
+           "archives": []}
+
+    def add(area, label, last_date, url, note):
+        age_days = None
+        if last_date:
+            try:
+                age_days = (today - dt.date.fromisoformat(str(last_date)[:10])).days
+            except ValueError:
+                age_days = None
+        out["archives"].append({
+            "area": area, "label": label, "last_date": last_date,
+            "age_days": age_days, "url": url, "note": note,
+        })
+
+    ghcn_last = None
+    if ghcn and ghcn.get("data"):
+        ghcn_last = sorted(ghcn["data"])[-1]
+    add("rain_temp", f"GHCN-Daily {ghcn.get('station_id') if ghcn else 'USW00023272'} "
+                     "(rain, daily high/low)",
+        ghcn_last, "https://www.ncei.noaa.gov/data/global-historical-climatology-"
+                   "network-daily/access/USW00023272.csv",
+        "Daily summaries, so this is the most current of the three archives.")
+
+    gsod_last = None
+    if gsod and gsod.get("data"):
+        gsod_last = sorted(gsod["data"])[-1]
+    add("wind", f"GSOD {gsod.get('station_id') if gsod else '72494023234'} (daily wind "
+                "and gusts, 00-24Z)",
+        gsod_last, "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
+        "Annual files; GSOD cannot be more current than the ISD hourly file it is "
+        "derived from.")
+
+    isd_last = (isd or {}).get("latest_observation_utc")
+    add("isd_hourly", f"ISD hourly {(isd or {}).get('station_id', '72494023234')} "
+                      "(hour-by-hour wind and precipitation)",
+        str(isd_last)[:10] if isd_last else None,
+        "https://www.ncei.noaa.gov/data/global-hourly/access/",
+        "Annual files of hourly observations.")
+
+    stale = [a for a in out["archives"] if a["age_days"] is None or a["age_days"] > 180]
+    out["stale_archives"] = [a["area"] for a in stale]
+    out["recent_enough_for_current_conditions"] = not stale
+    return out
 
 
 def fetch_daily_normals():
@@ -1611,9 +1697,12 @@ def main():
                               "rain climatology is unavailable.",
                               {"station": ghcn["station_id"], "url": ghcn["url"],
                                "bytes": ghcn["bytes"]})
-    gsod_years = list(range(1991, today.year))
+    # Fetch through the current calendar year: the 1991-2020 statistics below are
+    # restricted to the normals period either way, but the newest rows are what
+    # tells a reader whether an archive is still being updated.
+    gsod_years = list(range(1991, today.year + 1))
     gsod = fetch_gsod(gsod_years)
-    isd_summary = fetch_isd_hourly_summary(gsod_years)
+    isd_summary = fetch_isd_hourly_summary(gsod_years, station_name=GSOD_WIND_NAME)
     normals = fetch_daily_normals()
     monthly_normals = fetch_monthly_normals()
     humidity_normals = fetch_humidity_normals()
@@ -1705,12 +1794,29 @@ def main():
     log("[7/7] Storm Events + writing outputs")
     storm = fetch_storm_events(set(range(today.year - 12, today.year + 1)))
 
+    coverage = build_record_coverage(ghcn=ghcn, gsod=gsod, isd=isd_summary,
+                                     today=today, normals_period=NORMALS_PERIOD)
+    stale = [a for a in coverage["archives"] if a["area"] in coverage["stale_archives"]]
+    if stale:
+        note_irregularity(
+            "warning", "coverage",
+            "At least one NCEI archive this project reads is more than 180 days behind "
+            "the run date. Every published statistic is a 1991-2020 statistic and is "
+            "unaffected; the flag exists so nothing claims to describe *current* "
+            "conditions from a stale archive.",
+            {"archives": [{"area": a["area"], "last_date": a["last_date"],
+                           "age_days": a["age_days"], "url": a["url"]} for a in stale]})
+        log("      record coverage: STALE archive(s) -> "
+            + ", ".join(f"{a['area']}={a['last_date']} ({a['age_days']} d)"
+                        for a in stale))
+
     run = {
         "generated_utc": fetchlib.iso_utc(),
         "pipeline_version": "1.0",
         "target": {**TARGET, "centroid": centroid},
         "season": SEASON,
         "normals_period": list(NORMALS_PERIOD),
+        "record_coverage": coverage,
         "counts": {
             "manifest_entries": len(MANIFEST),
             "successful_fetches": sum(1 for m in MANIFEST if m["ok"]),

@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-18T19:06:09Z
+generated_utc: 2026-09-18T19:20:03Z
 
-checks: 47 passed, 0 failed, 0 warning(s)  (of 47)
+checks: 49 passed, 0 failed, 1 warning(s)  (of 50)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         141 recorded fetches (140 unique URLs)
@@ -40,7 +40,7 @@ checks: 47 passed, 0 failed, 0 warning(s)  (of 47)
 [PASS] cost-driver-expected-days-arithmetic: The published expected heavy-rain day counts equal the sum of the per-date 1991-2020 probabilities in the committed climatology table
         ge_025in_days: published 14.97 vs recomputed 14.97 over 123 season dates; ge_100in_days: published 3.19 vs recomputed 3.19 over 123 season dates
 [PASS] raw-phase-tokens-dataset: No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)
-        0 raw tokens across 15383 scanned string(s)
+        0 raw tokens across 15454 scanned string(s)
 [PASS] phase-label-present: Every ENSO phase value a renderer can reach ships with a reader-facing label (no underscore token, correct capitalisation)
         3 label(s) published
 [PASS] raw-phase-tokens: No raw ENSO data token (el_nino / la_nina) appears in any reader-facing executive-summary string
@@ -62,7 +62,7 @@ checks: 47 passed, 0 failed, 0 warning(s)  (of 47)
 [PASS] alert-test-filter: NOAA test messages are counted separately from real alerts
         real alerts=0, tests=0, total=0
 [PASS] source-traceability: Every source URL printed on the site is either fetched (with a hash) or an official landing page with fetched files beneath it
-        15 URL(s) traced, 1 landing page(s), 0 untraceable
+        16 URL(s) traced, 2 landing page(s), 0 untraceable
 [PASS] quotes-plain-text: Every quoted official sentence is decoded plain text, exactly as a browser shows it (no HTML entities)
         0 quoted string(s) contain entity text
 [PASS] bottom-line-structure: Every answer in the executive bottom line carries a basis, supporting numbers and an official source link, numbered in order
@@ -97,6 +97,12 @@ checks: 47 passed, 0 failed, 0 warning(s)  (of 47)
         all README table figures matched a published value
 [PASS] docs-current-dates-traceable: Any date in the documentation that could be read as the current NWS forecast horizon is a date this run actually published
         no documentation date near 2026-09-18 contradicts the published window ['2026-08-20', '2026-09-11', '2026-09-17', '2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27', '2026-10-01', '2026-10-09']
+[PASS] wind-rain-hourly-arithmetic: The hour-by-hour wind+rain figures equal the arithmetic over the per-season values, over exactly the seasons published as used
+        30 season(s) used, 5 excluded and named; mean days with a simultaneous hour 7.9
+[PASS] wind-rain-hourly-traceable: The hourly wind+rain statistic names the station and the fetched ISD archive it was computed from
+        station 72494023234, 35 year file(s) retrieved, source_url https://www.ncei.noaa.gov/data/global-hourly/access/
+[WARN] record-coverage-published: The run publishes how current each source archive is
+        run.json carries no record_coverage block; this dataset predates the coverage step, and the site must not claim currency from it
 
 claims recorded: 18
 
@@ -198,5 +204,5 @@ claims recorded: 18
     method: point-in-polygon sample of the official CPC GIS shapefile at 37.760459, -122.483894 (attributes read from the DBF)
     cross-check: {"used_nearest_polygon": false, "containing_polygon_index": 7, "containing_polygon_bbox_lon_lat": [-124.4097, 34.5429, -119.6101, 42.0986], "raw_dbf_attributes": {"Fcst_Date": "20260917", "Valid_Seas": "Oct 2026", "Prob": 40.0, "Cat": "Above"}, "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the bounding
 - sources-listed: Source URLs referenced by the scoreboard
-    value: {"count": 15, "all_traced": true, "landing_pages": 1} URLs
+    value: {"count": 16, "all_traced": true, "landing_pages": 2} URLs
     method: union of every source URL attached to a day or a CPC record

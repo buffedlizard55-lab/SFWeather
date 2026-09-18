@@ -393,10 +393,17 @@ function renderLandlord(ll, cal) {
       sub: exec.longest_streak ? `Max ${n(exec.longest_streak.max, 0)} days on record · ${exec.streak_probability?.ge_7_days?.pct || DASH}% seasons have ≥7 days, ${exec.streak_probability?.ge_10_days?.pct || DASH}% have ≥10 days` : '',
     },
     {
+      // Headline value is the hour-by-hour count when the run has it, because
+      // "at the same time" is an hourly statement.  The whole-day figure stays
+      // in the subtitle rather than disappearing.
       cls: 'wind',
       title: 'Wind + rain together',
-      value: exec.wind_and_rain ? `${n(exec.wind_and_rain.mean, 1)} days/season` : DASH,
-      sub: exec.wind_and_rain ? `At SFO (upper bound for Sunset). Median ${n(exec.wind_and_rain.median, 0)} · Max ${n(exec.wind_and_rain.max, 0)} · Heavy (≥0.5 in + gust ≥35 kt): ${n(exec.heavy_wind_and_rain?.mean, 1)} days avg` : '',
+      value: (exec.wind_and_rain_hourly?.available && exec.wind_and_rain_hourly?.days_with_a_simultaneous_hour?.mean !== undefined
+        ? `${n(exec.wind_and_rain_hourly.days_with_a_simultaneous_hour.mean, 1)} days/season`
+        : (exec.wind_and_rain ? `${n(exec.wind_and_rain.mean, 1)} days/season` : DASH)),
+      sub: exec.wind_and_rain_hourly?.available
+        ? `Same-hour co-occurrence at SFO (upper bound for Sunset) · Median ${n(exec.wind_and_rain_hourly.days_with_a_simultaneous_hour?.median, 0)} · Max ${n(exec.wind_and_rain_hourly.days_with_a_simultaneous_hour?.max, 0)} · whole-day pairing: ${n(exec.wind_and_rain?.mean, 1)} days avg`
+        : (exec.wind_and_rain ? `At SFO (upper bound for Sunset). Median ${n(exec.wind_and_rain.median, 0)} · Max ${n(exec.wind_and_rain.max, 0)} · Heavy (≥0.5 in + gust ≥35 kt): ${n(exec.heavy_wind_and_rain?.mean, 1)} days avg` : ''),
     },
     {
       cls: 'gust',
@@ -467,13 +474,51 @@ function renderLandlord(ll, cal) {
     `A 7-day wet run happens in ${sp.ge_7_days?.pct || DASH}% of years — close to a coin flip. ` +
     `Plan gutters, roof drains, and tenant comms for week-long rain.`;
 
-  // Wind+rain
-  $('#landlord-windrain').append(el('table', { class: 'kv' }, [
-    ['Wind+rain days/season (≥20kt + ≥0.01in)', `mean ${n(exec.wind_and_rain?.mean, 1)} · median ${n(exec.wind_and_rain?.median, 0)} · max ${n(exec.wind_and_rain?.max, 0)}`],
-    ['Heavy wind+rain (≥35kt gust + ≥0.5in)', `mean ${n(exec.heavy_wind_and_rain?.mean, 1)} · median ${n(exec.heavy_wind_and_rain?.median, 0)} · max ${n(exec.heavy_wind_and_rain?.max, 0)}`],
-    ['Season max gust (SFO, upper bound)', `mean ${n(exec.max_gust?.mean, 0)} mph · median ${n(exec.max_gust?.median, 0)} mph · max ${n(exec.max_gust?.max, 0)} mph`],
-    ['Source', 'NCEI GSOD 72494023234 (KSFO) + GHCN-Daily USW00023272 — wind at SFO is windier than Sunset, so treat as upper bound']
-  ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
+  // Wind+rain.  Two methods are published side by side: the hour-by-hour
+  // co-occurrence (the one that actually means "at the same time") and the
+  // whole-day pairing this page used before it.  Neither replaces the other;
+  // an unavailable figure says so instead of rendering as a zero.
+  const hwr = exec.wind_and_rain_hourly || {};
+  const hDays = hwr.days_with_a_simultaneous_hour || {};
+  const hHours = hwr.simultaneous_hours_per_season || {};
+  const hPair = hwr.days_daily_pair_same_station || {};
+  const windRainRows = [];
+  if (hwr.available) {
+    windRainRows.push([
+      'Wind+rain days/season — same HOUR (hour-by-hour record, SFO)',
+      `mean ${n(hDays.mean, 1)} · median ${n(hDays.median, 0)} · max ${n(hDays.max, 0)} over ${n(hwr.n_seasons_used, 0)} seasons (${hwr.season_window || DASH})`]);
+    windRainRows.push([
+      'Simultaneous wind+rain hours/season',
+      `mean ${n(hHours.mean, 1)} · median ${n(hHours.median, 0)} · max ${n(hHours.max, 0)}`]);
+    windRainRows.push([
+      'Wind+rain days/season — same DAY, same station (for comparison)',
+      hwr.same_station_daily_fields_available
+        ? `mean ${n(hPair.mean, 1)} · median ${n(hPair.median, 0)} · max ${n(hPair.max, 0)}`
+        : "not published in this run's hourly dataset"]);
+  }
+  windRainRows.push([
+    'Wind+rain days/season — same DAY, downtown gauge + SFO wind',
+    `mean ${n(exec.wind_and_rain?.mean, 1)} · median ${n(exec.wind_and_rain?.median, 0)} · max ${n(exec.wind_and_rain?.max, 0)}`]);
+  windRainRows.push([
+    'Heavy wind+rain (≥35kt gust + ≥0.5in, whole days)',
+    `mean ${n(exec.heavy_wind_and_rain?.mean, 1)} · median ${n(exec.heavy_wind_and_rain?.median, 0)} · max ${n(exec.heavy_wind_and_rain?.max, 0)}`]);
+  windRainRows.push([
+    'Season max gust (SFO, upper bound)',
+    `mean ${n(exec.max_gust?.mean, 0)} mph · median ${n(exec.max_gust?.median, 0)} mph · max ${n(exec.max_gust?.max, 0)} mph`]);
+  windRainRows.push([
+    'Source',
+    hwr.available
+      ? 'NCEI ISD hourly 72494023234 (KSFO) for the hourly figure, GSOD 72494023234 + GHCN-Daily USW00023272 for the whole-day figures — wind at SFO is windier than Sunset, so treat as upper bound'
+      : 'NCEI GSOD 72494023234 (KSFO) + GHCN-Daily USW00023272 — wind at SFO is windier than Sunset, so treat as upper bound']);
+  $('#landlord-windrain').append(el('table', { class: 'kv' }, windRainRows.map(([k, v]) =>
+    el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
+  if (hwr.available && hwr.method) {
+    $('#landlord-windrain').append(el('p', { class: 'fine', text:
+      `Hour-by-hour definition: ${hwr.method} Days are local calendar days (${hwr.timezone || 'America/Los_Angeles'}).` }));
+  }
+  (hwr.notes || []).forEach(note => {
+    $('#landlord-windrain').append(el('p', { class: 'fine', text: 'Note: ' + note }));
+  });
 
   // CPC
   const cpcRecs = ll.cpc_outlooks_relevant || [];
@@ -1565,7 +1610,7 @@ function severityLine(d) {
   return `mean ${n(d.mean, 1)} of ${n(d.max, 0)} days in the worst season${band}`;
 }
 
-function renderWind(cal) {
+function renderWind(cal, landlord) {
   const days = cal.days || [];
   const dist = cal.season_summary || {};
   const jr = dist.wind_and_rain_days || {}, hj = dist.heavy_wind_and_rain_days || {}, mg = dist.max_gust_mph || {};
@@ -1575,16 +1620,28 @@ function renderWind(cal) {
     return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   };
 
+  const hwr = ((landlord || {}).executive_summary || {}).wind_and_rain_hourly || {};
+  const hDays = hwr.days_with_a_simultaneous_hour || {};
+  const hHours = hwr.simultaneous_hours_per_season || {};
+  const hRows = [];
+  if (hwr.available) {
+    hRows.push(['Wind+rain days per season (same HOUR, SFO hourly record)',
+      `mean ${n(hDays.mean, 1)} \u00b7 median ${n(hDays.median, 1)} \u00b7 max ${n(hDays.max, 0)} over ${n(hwr.n_seasons_used, 0)} seasons`]);
+    hRows.push(['Simultaneous wind+rain hours per season',
+      `mean ${n(hHours.mean, 1)} \u00b7 median ${n(hHours.median, 1)} \u00b7 max ${n(hHours.max, 0)}`]);
+  }
   $('#wind-table').append(el('table', { class: 'kv' }, [
     ['Average daily max wind (SFO)', n(avg('normal_max_sustained_mph'), 1) + ' mph'],
     ['Average daily max gust (SFO)', n(avg('normal_max_gust_mph'), 1) + ' mph'],
-    ['Wind+rain days per season', `mean ${n(jr.mean, 1)} \u00b7 median ${n(jr.median, 1)} \u00b7 max ${n(jr.max, 0)}`],
+    ...hRows,
+    ['Wind+rain days per season (same DAY, whole-day pairing)', `mean ${n(jr.mean, 1)} \u00b7 median ${n(jr.median, 1)} \u00b7 max ${n(jr.max, 0)}`],
     ['Heavy wind+rain days per season', `mean ${n(hj.mean, 1)} \u00b7 median ${n(hj.median, 1)} \u00b7 max ${n(hj.max, 0)}`],
     ['Strongest gust of the season', `mean ${n(mg.mean, 0)} mph \u00b7 median ${n(mg.median, 0)} mph \u00b7 max ${n(mg.max, 0)} mph`],
     ['Days per season with sustained wind ≥ 30 kt', severityLine(dist.wind_days_ge_30kt)],
     ['Days per season with a gust ≥ 40 kt', severityLine(dist.gust_days_ge_40kt)],
     ['Days per season with a gust ≥ 50 kt', severityLine(dist.gust_days_ge_50kt)],
     ['Definition: wind+rain day', (cal.definitions || {}).wind_and_rain_day || DASH],
+    ['Definition: simultaneous wind+rain hour', ((landlord || {}).executive_summary || {}).wind_and_rain_hourly?.method || DASH],
     ['Definition: heavy wind+rain day', (cal.definitions || {}).heavy_wind_and_rain_day || DASH]
   ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
 
@@ -1903,10 +1960,39 @@ function renderPublishedNormals(cal) {
   if (cmp.note) box.append(el('p', { class: 'fine', text: cmp.note }));
 }
 
-function renderQuality(q) {
+function renderQuality(q, run) {
   const items = q.irregularities || [];
   const c = q.counts || {};
   const host = $('#quality-report');
+
+  // How far each NCEI archive behind these numbers actually reaches.  Published
+  // because an archive can stop updating quietly: a stale file cannot support a
+  // statement about current conditions, and the reader should not have to guess
+  // which of these is current.
+  const cov = (run || {}).record_coverage;
+  if (cov && (cov.archives || []).length) {
+    host.append(el('h3', { text: 'How current each source archive is' }));
+    host.append(el('p', { class: 'fine', text:
+      `Newest row this project fetched from each archive, as of ${cov.as_of || DASH}. ` +
+      'Every published statistic is a 1991\u20132020 statistic and does not depend on these ' +
+      'dates; they are here so nothing on this page is read as describing conditions today.' }));
+    host.append(el('table', { class: 'kv' }, cov.archives.map(a => el('tr', {}, [
+      el('th', { text: a.label || a.area }),
+      el('td', {}, [
+        document.createTextNode(`newest row ${a.last_date || 'not retrieved'}` +
+          (a.age_days === null || a.age_days === undefined ? '' : ` (${a.age_days} day(s) before this run)`) + ' '),
+        a.url ? link(a.url, 'source file') : null
+      ])
+    ]))));
+    const stale = cov.stale_archives || [];
+    if (stale.length) {
+      host.append(el('p', { class: 'fine', text:
+        `Flagged: ${stale.join(', ')} is more than 180 days behind the run date. ` +
+        'That is published rather than hidden \u2014 it limits any claim about *recent* ' +
+        'conditions, not the 1991\u20132020 statistics.' }));
+    }
+  }
+
   host.append(el('p', { class: 'fine', text:
     `${c.total || 0} flag(s): ${c.errors || 0} error, ${c.warnings || 0} warning, ${c.info || 0} info. ` +
     (q.generated_utc ? 'Generated ' + q.generated_utc : '') }));
@@ -2126,12 +2212,12 @@ async function boot() {
     renderAfdLanguage(calendar);
     renderCalendar(calendar);
     renderDuration(calendar);
-    renderWind(calendar);
+    renderWind(calendar, landlord);
     renderStorms(storms, calendar);
     renderSources(prov);
     renderVerify(verify, prov);
     renderPublishedNormals(calendar);
-    renderQuality(quality);
+    renderQuality(quality, run);
     renderCaveats(calendar);
     wireExports();
 

@@ -390,3 +390,72 @@ If the lookup fails, the pipeline records an irregularity in `quality_report.jso
 under area `geography` and the site prints that the geography was "not retrieved
 this run" instead of naming a district without evidence — the claim ledger
 accepts either outcome and rejects a silent third one (a name with no evidence).
+
+## 16. Wind and rain *at the same time* — two methods, both published (added 18 Sep 2026)
+
+The landlord's question is whether rain and wind arrive together, and the project
+used to answer it with a **whole-day pairing**: a day counted when the GHCN
+downtown gauge recorded ≥0.01 in and the GSOD SFO daily maximum sustained wind
+reached ≥20 kt. That method cannot tell rain in the morning from wind at night,
+and its two halves come from two stations 11.9 miles apart. It was, and remains,
+an upper bound.
+
+The hour-by-hour answer is now computed from the NCEI **ISD global-hourly**
+archive for the same wind station (`72494023234`, KSFO, the same station GSOD is
+derived from). An hour counts when **one observation** carries both a usable wind
+speed and usable liquid precipitation, with `wind ≥ 20 kt` and `precipitation > 0`
+at that observation. A local date (`America/Los_Angeles`) counts when at least one
+such hour falls on it. Thresholds, units and the local-day convention are written
+into `data/isd_hourly_summary.json` and re-read by the ledger, so the published
+method cannot drift from the code that computed it.
+
+Four numbers are published together on the landlord card, each labelled with what
+it measures:
+
+| Figure | What it counts | Source |
+| --- | --- | --- |
+| Days per season with a **simultaneous hour** | hour-by-hour co-occurrence at SFO | ISD hourly |
+| Simultaneous hours per season | the hours themselves | ISD hourly |
+| Days per season, **same station**, whole-day pairing | a day's rain × that day's wind maximum, both from SFO | ISD hourly (per-date rollup) |
+| Days per season, whole-day pairing, **downtown gauge × SFO wind** | the figure this project published first | GHCN-Daily + GSOD |
+
+The same-station whole-day figure exists to separate the two effects: the drop
+from it to the simultaneous figure is the co-occurrence effect (days where the two
+never overlapped), while the difference between the two whole-day rows is the
+station/gauge effect. Neither is "the right answer" — they answer different
+questions, so both are on the page.
+
+**Rules attached to this block:**
+
+1. **Seasons are filtered, and the filter is published.** A season enters only if
+   the station reported on at least 95% of the 123 Oct 1 – Jan 31 dates, and only
+   if it lies inside the same 1991–2020 season-year window the daily statistic
+   uses. Excluded seasons are listed with their coverage and the reason.
+2. **An absent measurement is never zero.** If the committed hourly summary
+   predates the per-date fields the same-station comparison needs, that row reads
+   "not published in this run's hourly dataset" and the block says so in `notes`.
+   The ledger fails the run if the published value disagrees with the underlying
+   per-season arithmetic, if a season is both used and excluded, or if a used
+   season sits below the published coverage floor.
+3. **Multi-hour accumulations are disclosed.** Some AA1 reports cover more than
+   one hour; those counted hours are reported separately rather than being
+   described as hour-by-hour measurements.
+4. **The whole-day figure is never deleted.** It stays on the card and in the
+   bottom line, labelled with its own method, because a reader comparing this
+   site with an older note of it should find the older number still there.
+
+## 17. How current each source archive is (added 18 Sep 2026)
+
+`run.json` publishes `record_coverage`: the newest row this project actually
+fetched from each NCEI archive (GHCN-Daily for rain and temperature, GSOD for
+daily wind, ISD hourly for the same station), the age of that row in days, and
+the URL it came from. Any archive more than 180 days behind the run date is
+listed in `stale_archives` and recorded as a **warning** irregularity, with the
+explanation that every published statistic is a 1991–2020 statistic and does not
+depend on the recency — the flag exists so that nothing on the page is read as
+describing *current* conditions from a stale file.
+
+This was added because NCEI's annual GSOD and ISD files for this station stop
+well before the run date while the GHCN-Daily file is current, and nothing on the
+site said so. The archive dates are now re-derived from the datasets by the
+ledger (`record-coverage-published`), so a wrong date or age fails the run.
