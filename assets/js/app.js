@@ -1159,6 +1159,23 @@ function openDay(d) {
       [{ label: 'Published quantity (NOAA column)' }, { label: 'NOAA published', num: true },
        { label: 'This project', num: true }, { label: 'Difference', num: true }],
       rows));
+    // NCEI cannot compute a wet-day percentile for a calendar date with too few
+    // wet days in the 30-year record, and writes its missing-value sentinel
+    // (-9999) in that cell.  The parser drops those, so the row is blank rather
+    // than a number; say why, so a reader does not read the blank as an omission
+    // on this project's side.  It is real information: this date is normally dry.
+    const pctlBlank = ['pcp_25pctl_in', 'pcp_50pctl_in', 'pcp_75pctl_in']
+      .filter(k => off[k] === null || off[k] === undefined).length;
+    if (pctlBlank) {
+      body.append(el('p', { class: 'fine', text:
+        pctlBlank === 3
+          ? 'NOAA publishes no wet-day precipitation percentile for this date: in the '
+            + '1991-2020 record it does not rain often enough here to compute one. The '
+            + 'three percentile rows are therefore blank. That is a property of the '
+            + 'date, not missing data on this page.'
+          : 'Some wet-day precipitation percentiles are blank because NOAA does not '
+            + 'publish them for this date.' }));
+    }
     const pubCols = off.published_columns || {};
     body.append(el('p', { class: 'fine' }, [
       'Source: ',
@@ -1435,7 +1452,12 @@ function renderPublishedNormals(cal) {
   if (flagged.length) {
     box.append(el('p', { class: 'fine', text:
       `${flagged.length} date(s) differ by more than 10 percentage points. Both values are ` +
-      'shown for each of them in the day dialog \u2014 neither is treated as the right one.' }));
+      'shown for each of them in the day dialog \u2014 neither is treated as the right one. ' +
+      'A gap that size is expected on a single date, and is not evidence that either side ' +
+      'is wrong: this project counts 30 seasons, so a probability near 40% carries a ' +
+      'sampling standard error of about \u00b19 percentage points on its own, before ' +
+      'NOAA\u2019s smoothing across dates is considered. What the comparison tests is the ' +
+      'average, and the average agrees.' }));
     box.append(table(
       [{ label: 'Date' }, { label: 'Quantity' }, { label: 'NOAA published', num: true },
        { label: 'This project', num: true }, { label: 'Difference', num: true }],

@@ -198,7 +198,16 @@ The threshold sequence for 01-01 is also monotone and physically consistent
    product, so a date's value is influenced by its neighbours. This project's
    count is the raw share of 30 seasons, which can only move in steps of
    1/30 = 3.33 points. A few points of difference is therefore expected.
-2. **Published percentiles are conditional on a wet day.** `DLY-PRCP-50PCTL` for
+2. **This project counts only 30 seasons.** A probability estimated from 30
+   independent seasons carries a standard error of about **±9 percentage points**
+   near p = 40 % (sqrt(p(1-p)/30)), and this project's counts can only move in steps
+   of 3.33 points. So a single date differing by 10-20 points is inside the noise of
+   the sample itself, and the comparison that means something is the *average*: over
+   the 123 dates of this window the mean difference is under half a point
+   (−0.4, −0.1, +0.1 pp for the three thresholds; −0.6 / −0.3 °F for the
+   temperature normals), i.e. no bias.  NOAA's smoothed value is the better single
+   estimate; this project's raw count is the one a reader can reproduce line by line.
+3. **Published percentiles are conditional on a wet day.** `DLY-PRCP-50PCTL` for
    01-01 is 0.21 in, while an unconditional 50th percentile cannot exceed
    ~0.025 in when only 36.8 % of years are wet. `landlord_summary.py`'s median
    wet-day amount is computed the same conditional way, so the two are
