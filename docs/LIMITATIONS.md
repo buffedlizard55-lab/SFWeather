@@ -263,12 +263,14 @@ the card says the geography was not retrieved and the irregularity is recorded.
 
 ## Storm-severity counters (added 18 Sep 2026)
 
-* **Every counter is a daily one.** `severe_wind_and_rain_days` pairs a rain total
-  and a gust from the **same GSOD daily row**, which is a UTC day (00–24Z, about
-  16:00–16:00 Pacific). Two events that a tenant experienced as simultaneous
-  within one local day can therefore fall on different GSOD dates, and two that
-  fell either side of a UTC midnight can be counted together. Hourly data would
-  fix this; it is listed as the top open item in `docs/NEXT_SESSION.md`.
+* **The severity counters are daily ones.** `severe_wind_and_rain_days` pairs a
+  rain total and a gust from the **same GSOD daily row**, which is a UTC day
+  (00–24Z, about 16:00–16:00 Pacific). Two events that a tenant experienced as
+  simultaneous within one local day can therefore fall on different GSOD dates,
+  and two that fell either side of a UTC midnight can be counted together. The
+  *wind-and-rain* headline no longer depends on this — it is now counted hour by
+  hour on local days from the ISD archive (see §"Wind and rain at the same time"
+  below) — but these storm-severity counters still do.
 * **No named warning category is applied.** "Days with a gust ≥ 40 kt" is not
   "High Wind Warning days". NWS writes those criteria per forecast zone and this
   project deliberately does not restate them, so the counters cannot be read as
@@ -285,3 +287,64 @@ the card says the geography was not retrieved and the irregularity is recorded.
   (12 of 119 records). The site says so on the page instead of quietly omitting
   the column or summing it.
 
+
+
+## Wind and rain at the same time — what the hourly method does and does not fix (added 18 Sep 2026)
+
+* **It is still SFO, not the Sunset.** The hourly co-occurrence is measured at
+  `72494023234` (KSFO), 11.9 mi away and more exposed than the Sunset, so every
+  wind figure here remains an **upper bound** for 94122. What the hourly method
+  fixes is *when* the two happened, not *where* they were measured.
+* **A wind speed at the observation time is not a gust.** The hourly statistic
+  uses the sustained wind in the ISD `WND` field. Gusts are only published in the
+  GSOD daily file, so the "heavy" rows (≥0.50 in and a ≥35 kt gust) remain
+  whole-day pairings and are labelled as such.
+* **Some ISD precipitation reports cover more than one hour.** Those hours are
+  counted as hours with rain *and* disclosed separately
+  (`simultaneous_hours_from_multi_hour_reports`); they are not presented as
+  hour-by-hour measurements.
+* **Three of the 30 seasons used are missing 1–4 of the 123 dates** (2009-10,
+  2016-17, 2019-20). The minimum coverage is published with the statistic. The
+  1990-91 and 2024-25 seasons, and 2021-22 onwards, are excluded because they are
+  outside the 1991–2020 window the daily method uses; the exclusion list is on the
+  page.
+* **The hourly archive itself is not current.** NCEI's annual GSOD and ISD files
+  for this station end well before the run date (the GHCN-Daily file is current).
+  Every published statistic is a 1991–2020 statistic and is unaffected, but the
+  dates are now published (`run.json` → `record_coverage`) so that nothing here is
+  read as a statement about this week — and a stale archive is flagged as an
+  irregularity rather than passing silently.
+* **The two methods are not interchangeable.** The whole-day figure counts a day
+  if rain and wind each occurred somewhere in that day, which is why it is higher.
+  It is kept on the page, labelled, and the same-station whole-day row exists to
+  show how much of the gap is the pairing rule rather than the station.
+
+## The hourly record, and what it does and does not settle (added 18 Sep 2026 session 8)
+
+* **It is SFO, not the Sunset.** The hour-by-hour coincidence is measured at
+  station 72494023234 (KSFO), 11.9 mi away and more exposed.  Every wind figure
+  here stays an **upper bound** for 94122 — the hourly method fixes *when*, not
+  *where*.
+* **A sustained wind at the observation time is not a gust.**  The hourly
+  statistic uses the ISD `WND` speed.  Gusts exist only in the GSOD daily file, so
+  the "heavy" row (≥ 0.50 in and a gust ≥ 35 kt) is still a whole-day pairing and
+  is labelled as one.
+* **Some ISD precipitation reports cover more than one hour.**  Those hours are
+  counted and disclosed separately; they are not hour-by-hour measurements.
+* **Three of the 30 seasons used are missing 1–4 of the 123 dates** (2009-10,
+  2016-17, 2019-20); the thinnest coverage is published with the figure.  Seasons
+  outside the 1991–2020 window are excluded and named.
+* **The station's own hourly record is not current.**  NCEI's ISD and GSOD files
+  for this station end well before the run date while GHCN-Daily is current, so
+  the site publishes the newest row it actually fetched for each archive, its age
+  in days and its URL, and flags anything more than 180 days behind.  Every
+  published statistic is a 1991–2020 statistic and is unaffected — the flag exists
+  so nothing here is read as a statement about this week.
+* **The two methods are not interchangeable.**  The whole-day figure counts a day
+  if rain and wind each occurred somewhere in that day.  It is kept, labelled, and
+  the same-station row shows how much of the gap is the pairing rule.
+* **A missing fetch is published, not hidden.**  Fetches that are supposed to be
+  absent (a not-yet-published annual file, a station with no observations product)
+  are counted separately from failures and each must name a checkable reason; a
+  fetch that was supposed to work and did not is listed by URL on the status line
+  and recorded as a ledger warning.

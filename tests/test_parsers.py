@@ -1558,6 +1558,138 @@ check("ISD per-season breakdown identifies season 1991-1992",
       len(_agg_isd["per_season"]) == 1 and _agg_isd["per_season"][0]["season"] == "1991-1992",
       json.dumps(_agg_isd["per_season"]))
 
+# The richer per-date/per-season rollup that the landlord dashboard publishes.
+# The sample above has three in-season rows on 1991-10-01: 20.0 kt + 0.098 in
+# (simultaneous), 10.0 kt + 0.000 in (dry), and a row with no wind reading.
+_ps = _agg_isd["per_season"][0]
+check("ISD per-season rollup counts dates, rain days, windy days and daily pairs",
+      (_ps["dates_with_data"], _ps["days_rain"], _ps["days_wind_ge_threshold"],
+       _ps["days_daily_pair"], _ps["days_simultaneous"], _ps["wind_rain_hours"])
+      == (1, 1, 1, 1, 1, 1),
+      json.dumps({k: _ps[k] for k in ("dates_with_data", "days_rain", "days_wind_ge_threshold",
+                                      "days_daily_pair", "days_simultaneous")}))
+check("ISD season coverage is measured against the 123-date Oct 1 - Jan 31 season",
+      _ps["dates_expected"] == 123 and _ps["coverage_pct"] == round(100 * 1 / 123, 1),
+      f"expected={_ps['dates_expected']} coverage={_ps['coverage_pct']}%")
+check("ISD season window is named from the date, not from the file year",
+      climo.isd_season_year("1991-10-01") == 1991      # October -> season year Y
+      and climo.isd_season_year("1992-01-31") == 1991  # January -> season year Y-1
+      and climo.isd_season_year("2027-01-01") == 2026,  # the January of the next season
+      f"{climo.isd_season_year('1991-10-01')} / {climo.isd_season_year('1992-01-31')} / "
+      f"{climo.isd_season_year('2027-01-01')}")
+check("ISD per-date rollup carries the day's max wind and summed precipitation",
+      _agg_isd["by_local_date"]["1991-10-01"]["wind_max_kt"] == 20.0
+      and _agg_isd["by_local_date"]["1991-10-01"]["prcp_in"] == 0.098,
+      json.dumps(_agg_isd["by_local_date"]["1991-10-01"]))
+check("the AA1 reporting period is kept so multi-hour accumulations can be disclosed",
+      _parsed_isd[0]["prcp_period_hours"] == 1
+      and _agg_isd["simultaneous_hours_from_multi_hour_reports"] == 0,
+      f"period={_parsed_isd[0]['prcp_period_hours']} "
+      f"multi={_agg_isd['simultaneous_hours_from_multi_hour_reports']}")
+
+# A six-hour accumulation must be counted as a simultaneous hour (rain did fall)
+# AND disclosed as not being an hour-by-hour measurement.
+_multi_isd = climo.parse_isd_hourly(
+    _sample_isd.splitlines()[0] + "\n" +
+    '"72494023234","1991-10-02T07:56:00","4","37.619"," -122.365","3.4","KSFO","FM-15","KSFO",'
+    '"V020","290,1,N,0103,1","99999,9,9,9","010000,1,9,9","+0172,1","+0111,1","10156,1",'
+    '"06,0025,9,5","99,99,99999,9,9,9"\n')
+_multi_agg = climo.aggregate_isd_hourly_wind_and_rain(_multi_isd)
+check("a 6-hour precipitation report still counts as rain, and is disclosed",
+      _multi_agg["simultaneous_wind_rain_hours"] == 1
+      and _multi_agg["simultaneous_hours_from_multi_hour_reports"] == 1,
+      json.dumps({k: v for k, v in _multi_agg.items()
+                  if k.startswith("simultaneous")}))
+
+# --------------------------------------------------------------------------- #
+section("Landlord dashboard: hour-by-hour wind+rain block")
+
+import landlord_summary as ls  # noqa: E402
+
+_isd_fixture = {
+    "station_id": "72494023234",
+    "station_name": "KSFO",
+    "source": "NCEI ISD",
+    "by_local_date": {
+        # season 1991-1992: one simultaneous day
+        "1991-10-05": {"valid_hours": 24, "wind_rain_hours": 2, "rain_hours": 3,
+                       "prcp_in": 0.4, "wind_max_kt": 24.0, "wind_max_mph": 27.6},
+        "1991-10-06": {"valid_hours": 24, "wind_rain_hours": 0, "rain_hours": 0,
+                       "prcp_in": 0.0, "wind_max_kt": 9.0},
+        # season 1992-1993: rain and wind on the same day but never the same hour
+        "1992-11-01": {"valid_hours": 24, "wind_rain_hours": 0, "rain_hours": 5,
+                       "prcp_in": 0.9, "wind_max_kt": 21.0},
+        "1992-11-02": {"valid_hours": 24, "wind_rain_hours": 1, "rain_hours": 1,
+                       "prcp_in": 0.2, "wind_max_kt": 30.0},
+        # season 1993-1994: thin coverage, must be excluded and named
+        "1993-12-01": {"valid_hours": 24, "wind_rain_hours": 9, "rain_hours": 9,
+                       "prcp_in": 1.1, "wind_max_kt": 40.0},
+        # a season outside the normals window, must be excluded and named
+        "2024-12-01": {"valid_hours": 24, "wind_rain_hours": 4, "rain_hours": 4,
+                       "prcp_in": 0.5, "wind_max_kt": 35.0},
+    },
+    "valid_joint_hours": 1000,
+    "simultaneous_wind_rain_hours": 16,
+    "simultaneous_hours_from_multi_hour_reports": 0,
+    "wind_threshold_kt": 20.0,
+    "dates_expected_per_season": 123,
+    "latest_observation_utc": "2025-08-26T23:56:00+00:00",
+}
+# The fixture carries only a handful of dates, so the coverage floor is lowered
+# for the test (the production floor is pinned separately below).
+_hr = ls.summarise_hourly_wind_rain(_isd_fixture, (1991, 2020),
+                                    {"mean": 11.1, "median": 10.0, "max": 24.0},
+                                    {"mean": 2.2, "median": 2.0, "max": 8.0},
+                                    min_coverage_pct=1.0)
+check("hourly block summarises only seasons inside the shared window with enough coverage",
+      _hr["n_seasons_used"] == 2 and [s["season"] for s in _hr["per_season"]]
+      == ["1991-1992", "1992-1993"],
+      json.dumps([s["season"] for s in _hr["per_season"]]))
+check("excluded seasons are named with the reason instead of being averaged in",
+      sorted(e["season"] for e in _hr["excluded_seasons"]) ==
+      ["1993-1994", "2024-2025"]
+      and all(e.get("excluded_because") for e in _hr["excluded_seasons"]),
+      json.dumps([(e["season"], e["excluded_because"]) for e in _hr["excluded_seasons"]]))
+check("hourly mean/median are the arithmetic over the used seasons (1 and 1)",
+      _hr["days_with_a_simultaneous_hour"]["mean"] == 1.0
+      and _hr["days_with_a_simultaneous_hour"]["n"] == 2,
+      json.dumps(_hr["days_with_a_simultaneous_hour"]))
+check("same-station whole-day pairing is counted from the per-date fields",
+      # season 1: 24 kt + 0.4 in on one day, dry on the other -> 1 pair, 1 windy day
+      # season 2: 21 kt + 0.9 in and 30 kt + 0.2 in -> 2 pairs, 2 windy days; means 1.5
+      _hr["days_daily_pair_same_station"]["mean"] == 1.5
+      and _hr["days_wind_ge_threshold_same_station"]["mean"] == 1.5,
+      json.dumps({"pair": _hr["days_daily_pair_same_station"],
+                  "windy": _hr["days_wind_ge_threshold_same_station"]}))
+check("the cross-station whole-day figure is carried through, not recomputed",
+      _hr["cross_station_daily_days"]["mean"] == 11.1
+      and _hr["difference_cross_station_minus_hourly"] == 10.1,
+      json.dumps({"cross": _hr["cross_station_daily_days"],
+                  "diff": _hr["difference_cross_station_minus_hourly"]}))
+
+# An older hourly summary (before the per-date fields existed) must report the
+# pairing as unavailable rather than as a measured zero.
+_old_isd = {"by_local_date": {"1991-10-05": {"valid_hours": 24, "wind_rain_hours": 2}},
+            "simultaneous_wind_rain_hours": 2, "valid_joint_hours": 24}
+_hr_old = ls.summarise_hourly_wind_rain(_old_isd, (1991, 2020), {"mean": 11.1}, {"mean": 2.2},
+                                       min_coverage_pct=0.5)
+check("an hourly summary without the per-date fields reports the pairing as unavailable",
+      _hr_old["available"] is True and _hr_old["days_daily_pair_same_station"] is None
+      and _hr_old["same_station_daily_fields_available"] is False,
+      json.dumps({k: v for k, v in _hr_old.items()
+                  if k.startswith("days_daily_pair") or k == "same_station_daily_fields_available"}))
+check("an unavailable pairing is explained in the published notes",
+      any("unavailable" in n for n in _hr_old["notes"]), json.dumps(_hr_old["notes"]))
+check("a missing hourly summary yields available=False, never a zero",
+      ls.summarise_hourly_wind_rain({}, (1991, 2020), {}, {})["available"] is False,
+      json.dumps(ls.summarise_hourly_wind_rain({}, (1991, 2020), {}, {})))
+check("the production coverage floor is published and applied at 95% of 123 dates",
+      ls.HOURLY_SEASON_MIN_COVERAGE_PCT == 95.0
+      and _hr["coverage"]["min_coverage_pct_required"] == 1.0
+      and ls.summarise_hourly_wind_rain(_isd_fixture, (1991, 2020), {}, {})["available"] is False,
+      f"floor={ls.HOURLY_SEASON_MIN_COVERAGE_PCT}")
+
+
 # --------------------------------------------------------------------------- #
 section("NWS forecast verification loop (open item 2)")
 
@@ -1815,6 +1947,70 @@ check("a geography is read by name, so a re-ordered response still parses",
           "County Subdivisions": [{"BASENAME": "Sunset", "NAME": "Sunset CCD",
                                    "GEOID": "0607593267"}]}}})["county_subdivision"] == "Sunset CCD",
       "name lookup failed")
+
+
+# --------------------------------------------------------------------------- #
+# The three fetch counts, and the one rule that keeps an expected absence from
+# hiding a real failure.  ``run.json`` publishes "139 ok / 0 failed / 4 absent by
+# design" and the site repeats it, so the arithmetic and the labelling both have
+# to hold: a not-yet-published annual file is routine, an archive that stopped
+# answering is not.
+# --------------------------------------------------------------------------- #
+
+MANIFEST_FIXTURE = [
+    {"url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/1991/72494023234.csv",
+     "ok": True},
+    {"url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/2026/72494023234.csv",
+     "ok": False, "expected_absent": "annual-file-not-yet-published"},
+    {"url": "https://api.weather.gov/stations/OAMC1/observations/latest",
+     "ok": False, "expected_absent": "station-without-observations-product"},
+    {"url": "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023272.csv",
+     "ok": False, "expected_absent": "candidate-station-without-the-product"},
+    {"url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
+     "ok": False},                                    # a real failure
+]
+
+_counts = pipeline_main.count_fetches(MANIFEST_FIXTURE)
+check("count_fetches separates a real failure from three expected absences",
+      _counts == {"manifest_entries": 5, "successful_fetches": 1,
+                  "failed_fetches": 1, "expected_absences": 3},
+      "got %r" % (_counts,))
+check("count_fetches counts every manifest entry exactly once",
+      sum(_counts[k] for k in ("successful_fetches", "failed_fetches",
+                               "expected_absences")) == len(MANIFEST_FIXTURE))
+check("the expected-absence rules are a closed set of three named reasons",
+      set(pipeline_main.EXPECTED_ABSENCE_RULES) == {
+          "annual-file-not-yet-published",
+          "station-without-observations-product",
+          "candidate-station-without-the-product"},
+      repr(pipeline_main.EXPECTED_ABSENCE_RULES))
+
+
+class _FakeResult:
+    """Minimal stand-in for lib_fetch.FetchResult's provenance() surface."""
+
+    def __init__(self, ok, url):
+        self.ok, self.url = ok, url
+
+    def provenance(self, note=None, **extra):
+        return {"url": self.url, "ok": self.ok, "http_status": 200 if self.ok else 404,
+                "note": note, **extra}
+
+
+try:
+    pipeline_main.record(_FakeResult(False, "https://x/"), expected_absent="made-up-reason")
+    _raised = False
+except ValueError:
+    _raised = True
+check("a failed fetch cannot be labelled with an invented absence reason", _raised)
+
+# A successful fetch is never labelled absent, however it is called: the label
+# describes the provider's normal state, not this run's luck.
+_ok_entry = pipeline_main.record(_FakeResult(True, "https://x/"),
+                                 expected_absent="annual-file-not-yet-published")
+check("a 200 is never recorded as an expected absence",
+      "expected_absent" not in pipeline_main.MANIFEST[-1])
+pipeline_main.MANIFEST.clear()
 
 # --------------------------------------------------------------------------- #
 # Failed fetches must be explained, not just counted (main.flag_failed_fetches)

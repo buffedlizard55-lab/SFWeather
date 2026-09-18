@@ -1,9 +1,9 @@
 {
-  "generated_utc": "2026-09-18T20:08:29Z",
+  "generated_utc": "2026-09-18T19:55:55Z",
   "counts": {
-    "total": 5,
+    "total": 4,
     "errors": 0,
-    "warnings": 3,
+    "warnings": 2,
     "info": 2
   },
   "irregularities": [
@@ -54,26 +54,23 @@
     },
     {
       "severity": "warning",
-      "area": "fetch",
-      "message": "A source fetch did not return HTTP 200 (404): Latest official observation from station OAMC1. Nothing was inferred in its place; whatever depends on it either used a documented fallback or is absent from this run's dataset.",
+      "area": "coverage",
+      "message": "At least one NCEI archive this project reads is more than 180 days behind the run date. Every published statistic is a 1991-2020 statistic and is unaffected; the flag exists so nothing claims to describe *current* conditions from a stale archive.",
       "evidence": {
-        "url": "https://api.weather.gov/stations/OAMC1/observations/latest",
-        "http_status": 404,
-        "note": "Latest official observation from station OAMC1",
-        "error": "HTTP 404 Not Found",
-        "retrieved_utc": "2026-09-18T20:06:00Z"
-      }
-    },
-    {
-      "severity": "warning",
-      "area": "fetch",
-      "message": "A source fetch did not return HTTP 200 (404): NCEI 1991-2020 Hourly Climate Normals: USW00023272. Nothing was inferred in its place; whatever depends on it either used a documented fallback or is absent from this run's dataset.",
-      "evidence": {
-        "url": "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023272.csv",
-        "http_status": 404,
-        "note": "NCEI 1991-2020 Hourly Climate Normals: USW00023272",
-        "error": "HTTP 404 Not Found",
-        "retrieved_utc": "2026-09-18T20:08:07Z"
+        "archives": [
+          {
+            "area": "wind",
+            "last_date": "2025-08-27",
+            "age_days": 387,
+            "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+          },
+          {
+            "area": "isd_hourly",
+            "last_date": "2025-08-27",
+            "age_days": 387,
+            "url": "https://www.ncei.noaa.gov/data/global-hourly/access/"
+          }
+        ]
       }
     }
   ]

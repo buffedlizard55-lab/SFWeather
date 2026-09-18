@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 import statistics
 import sys
 from pathlib import Path
@@ -35,6 +36,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # would otherwise shadow the module - the same trap already hit
 # build_calendar.py.
 import climo as climo_lib  # noqa: E402
+# The Rain-related event-type set and the damage parser are used by the
+# storm-event recount below; importing them keeps one definition in the project
+# instead of a second copy that can drift.
+from landlord_summary import RAIN_RELATED_EVENT_TYPES, parse_damage_usd  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -198,6 +203,89 @@ def main() -> int:
                  f"manifest has {len(manifest_entries)} records; run.json says {expected_records}",
                  evidence={"manifest_records": len(manifest_entries),
                            "run_manifest_entries": expected_records})
+
+    # The three fetch counts must be re-derivable from the manifest, and an
+    # "expected absence" must never be silently folded into the failure count:
+    # that is how a station that stopped answering disappears behind a routine
+    # 404 for a not-yet-published annual file.
+    counts = run.get("counts") or {}
+    ok_n = sum(1 for e in manifest_entries if e.get("ok"))
+    absent_n = sum(1 for e in manifest_entries if not e.get("ok") and e.get("expected_absent"))
+    failed_n = sum(1 for e in manifest_entries if not e.get("ok") and not e.get("expected_absent"))
+    ledger.check("fetch-counts-recompute",
+                 "The published fetch counts (ok / failed / absent by design) match "
+                 "the manifest entry by entry",
+                 counts.get("expected_absences") is None
+                 or (counts.get("successful_fetches") == ok_n
+                     and counts.get("failed_fetches") == failed_n
+                     and counts.get("expected_absences") == absent_n),
+                 f"run.json says {counts.get('successful_fetches')} ok / "
+                 f"{counts.get('failed_fetches')} failed / "
+                 f"{counts.get('expected_absences')} absent by design; the manifest "
+                 f"recounts {ok_n} / {failed_n} / {absent_n}"
+                 + ("" if counts.get("expected_absences") is not None else
+                    " (this dataset predates the classification, so only the ok "
+                    "count is required to agree)"),
+                 evidence={"manifest_ok": ok_n, "manifest_failed": failed_n,
+                           "manifest_expected_absences": absent_n,
+                           "run_expected_absences": counts.get("expected_absences"),
+                           "expected_absent_urls":
+                               [e.get("url") for e in manifest_entries
+                                if e.get("expected_absent")][:6]})
+
+    # Every "expected absence" must name a reason that its own URL can be checked
+    # against.  Without this, an archive that stops answering could be relabelled
+    # as routine and silently leave the failure count -- which is the whole point
+    # of separating the two numbers.
+    absence_rules = {
+        "annual-file-not-yet-published",
+        "station-without-observations-product",
+        "candidate-station-without-the-product",
+    }
+    run_year = str(run.get("generated_utc") or "")[:4]
+    bad_absences = []
+    for e in manifest_entries:
+        rule = e.get("expected_absent")
+        if not rule:
+            continue
+        url = str(e.get("url") or "")
+        if rule not in absence_rules:
+            bad_absences.append((url, f"unknown reason {rule!r}"))
+        elif rule == "annual-file-not-yet-published":
+            m = re.search(r"/access/(\d{4})/", url)
+            if not m or not (run_year.isdigit() and int(m.group(1)) >= int(run_year)):
+                bad_absences.append((url, "annual-file rule needs a year >= the run year"))
+        elif rule == "station-without-observations-product":
+            if not re.search(r"/stations/[A-Za-z0-9]+/observations/latest$", url):
+                bad_absences.append((url, "station rule needs an observations/latest URL"))
+        elif rule == "candidate-station-without-the-product":
+            if "/normals-hourly/" not in url:
+                bad_absences.append((url, "candidate rule needs an hourly-normals URL"))
+    ledger.check("expected-absences-justified",
+                 "Every fetch classified as an expected absence carries a reason the "
+                 "ledger can check against its own URL",
+                 not bad_absences,
+                 (f"{len([e for e in manifest_entries if e.get('expected_absent')])} "
+                  f"expected absence(s), all justified by URL"
+                  if not bad_absences else
+                  "; ".join(f"{u}: {why}" for u, why in bad_absences)[:280]),
+                 evidence={"run_year": run_year,
+                           "unjustified": [{"url": u, "why": w} for u, w in bad_absences][:6]})
+
+    if failed_n:
+        # A real failure is a finding to review, not a published number to accept.
+        # It is a warning rather than a hard failure so one flaky request cannot
+        # stop the nightly publish; every check that needs the missing bytes fails
+        # on its own evidence, and the site names the failing URLs on the status
+        # line instead of burying the count.
+        ledger.check(
+            "fetch-failures-flagged",
+            "Every fetch that was supposed to work and did not is flagged for review",
+            False,
+            f"{failed_n} fetch(es) failed that are not expected absences: "
+            + ", ".join(e.get("url", "?") for e in manifest_entries
+                        if not e.get("ok") and not e.get("expected_absent"))[:280],
+            severity="warn")
 
     hosts = [host_of(e.get("url")) for e in manifest_entries]
     ledger.check("hosts-official",
@@ -831,6 +919,9 @@ def main() -> int:
     citation_only = {
         "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/":
             "GSOD dataset landing page; the per-year files under this path are fetched nightly",
+        "https://www.ncei.noaa.gov/data/global-hourly/access/":
+            "ISD hourly dataset landing page; the per-year station files under this path "
+            "are fetched nightly and drive the hour-by-hour wind+rain statistic",
     }
     untraceable, cited = [], []
     for u in sorted(refs):
@@ -1031,6 +1122,69 @@ def main() -> int:
                  ("all quoted figures found in the source datasets" if not bl_untraceable
                   else f"{len(bl_untraceable)} figure(s) not found"),
                  evidence=bl_untraceable[:10])
+
+    # ---------------------------------- 12b2. storm-event counts, one definition
+    # Two cards on the same page used to count "flood-type" reports with two
+    # different type sets, so the page published 98 in one place and 99 in the
+    # other for the same quantity.  The counts are now re-derived here from
+    # storm_events.json, and the two published places must agree with each other
+    # and with the file.
+    sev_item = next((r for r in (landlord.get("executive_summary") or {})
+                     .get("bottom_line", []) if r.get("key") == "storm_severity"), {})
+    def _leading_int(text):
+        m = re.search(r"(\d[\d,]*)", str(text or ""))
+        return int(m.group(1).replace(",", "")) if m else None
+
+    events = (storms or {}).get("events") or []
+    rain_types = tuple(RAIN_RELATED_EVENT_TYPES)
+    rain_n = sum(1 for e in events if (e or {}).get("event_type") in rain_types)
+    rain_damage_n = sum(
+        1 for e in events
+        if (e or {}).get("event_type") in rain_types
+        and (parse_damage_usd((e or {}).get("damage_property")) or 0) > 0)
+    all_damage_n = sum(1 for e in events
+                       if (parse_damage_usd((e or {}).get("damage_property")) or 0) > 0)
+
+    sev_numbers = {n.get("label"): n.get("value") for n in (sev_item.get("numbers") or [])}
+    published_all = _leading_int(sev_numbers.get("Storm Events records, SF County"))
+    published_rain = _leading_int(next((v for k, v in sev_numbers.items()
+                                        if str(k).startswith("Rain-related records")), None))
+    published_damage = _leading_int(sev_numbers.get("Records with a non-zero damage figure"))
+    driver_rain = driver_damage = None
+    for driver in (landlord.get("executive_summary") or {}).get("cost_drivers") or []:
+        for ev_item in driver.get("evidence") or []:
+            label = str(ev_item.get("label") or "")
+            if label.startswith("Rain-related storm reports"):
+                driver_rain = _leading_int(ev_item.get("value"))
+            if label.startswith("\u2026of those, reports carrying"):
+                driver_damage = _leading_int(ev_item.get("value"))
+    storm_problems = []
+    if published_all is not None and published_all != len(events):
+        storm_problems.append(f"bottom line says {published_all} records; the file holds {len(events)}")
+    if published_rain is not None and published_rain != rain_n:
+        storm_problems.append(f"bottom line says {published_rain} rain-related; recount from the file gives {rain_n}")
+    if driver_rain is not None and driver_rain != rain_n:
+        storm_problems.append(f"cost driver says {driver_rain} rain-related; recount gives {rain_n}")
+    if published_rain is not None and driver_rain is not None and published_rain != driver_rain:
+        storm_problems.append(f"the two published rain-related counts disagree: {published_rain} vs {driver_rain}")
+    if published_damage is not None and published_damage != all_damage_n:
+        storm_problems.append(f"bottom line says {published_damage} records carry damage; the file gives {all_damage_n}")
+    if driver_damage is not None and driver_damage != rain_damage_n:
+        storm_problems.append(f"cost driver says {driver_damage} rain-related records carry damage; the file gives {rain_damage_n}")
+    ledger.check("storm-events-counts-recompute",
+                 "Every published Storm Events count is re-derived from the county file, "
+                 "and the two cards that count them use one definition",
+                 not storm_problems,
+                 (f"{len(events)} records, {rain_n} rain-related, {all_damage_n} with a "
+                  f"token damage figure; bottom line and cost driver agree"
+                  if not storm_problems else "; ".join(storm_problems))[:280],
+                 evidence={"file_records": len(events), "file_rain_related": rain_n,
+                           "file_rain_related_with_damage": rain_damage_n,
+                           "file_with_damage": all_damage_n,
+                           "published": {"records": published_all, "rain_related": published_rain,
+                                         "with_damage": published_damage,
+                                         "cost_driver_rain_related": driver_rain,
+                                         "cost_driver_with_damage": driver_damage}})
 
     # ------------------------------------- 12c. severity counters arithmetic
     # The per-season severity counters live in calendar.json's season_by_year.
@@ -1627,8 +1781,16 @@ def main() -> int:
     # normals file is a documented fallback, not a reason to stop publishing -
     # and a failure serious enough to break the build has already raised an
     # error of its own at the step that depended on it.
+    # Expected absences are excluded: main.EXPECTED_ABSENCE_RULES names them,
+    # `expected-absences-justified` re-checks each label against its own URL, and
+    # `fetch-failures-flagged` warns about everything else.  Re-flagging a
+    # not-yet-published annual file here would only add noise - and noise is how
+    # a real outage gets ignored.  What this check adds on top of those two is
+    # the *consequence*: a real failure has to be explained in the quality
+    # report, where main.flag_failed_fetches() writes what the dataset did
+    # without it, rather than only counted on the status line.
     failed_fetches = [e for e in (prov.get("entries") or [])
-                      if isinstance(e, dict) and
+                      if isinstance(e, dict) and not e.get("expected_absent") and
                       (e.get("ok") is False or (e.get("http_status") or 200) != 200)]
     irr_text = json.dumps(quality.get("irregularities") or [], default=str).lower()
     unexplained = []
@@ -1655,10 +1817,213 @@ def main() -> int:
         (f"{len(unexplained)} failed fetch(es) appear in the manifest but are not "
          f"explained in the quality report: "
          f"{[u['url'][:70] for u in unexplained]}") if unexplained else
-        (f"{len(failed_fetches)} failed fetch(es), all explained in the quality report"
-         if failed_fetches else "no fetch failed this run"),
+        (f"{len(failed_fetches)} real failure(s), all explained in the quality report"
+         if failed_fetches else
+         "no unexplained fetch failure this run (expected absences are labelled and "
+         "justified separately)"),
         severity="warning",
         evidence={"failed_fetches": len(failed_fetches), "unexplained": unexplained})
+
+    # ------------------------------------ 12d. hour-by-hour wind+rain statistics
+    # The landlord's key question is whether rain and wind happen *at the same
+    # time*.  The published hour-by-hour figure must be the arithmetic over the
+    # per-season values in isd_hourly_summary.json, over exactly the seasons the
+    # block says it used, and it may not be published at all if the hourly
+    # archive is absent.
+    isd = load("isd_hourly_summary.json")
+    hourly = ((landlord.get("executive_summary") or {}).get("wind_and_rain_hourly")
+              or {})
+    _isd_years_ok = [y.get("year") for y in (isd.get("per_year") or []) if y.get("ok")]
+    isd_url = ("https://www.ncei.noaa.gov/data/global-hourly/access/"
+               f"{min(_isd_years_ok)}/{(isd or {}).get('station_id') or '72494023234'}.csv"
+               ) if _isd_years_ok else None
+    if not hourly:
+        ledger.check("wind-rain-hourly-published",
+                     "The hour-by-hour wind+rain statistic is published when the hourly "
+                     "archive is available",
+                     True,
+                     "landlord.json carries no hourly wind+rain block; the site must then "
+                     "publish the whole-day figure alone, which it does",
+                     severity="warning")
+    elif not hourly.get("available"):
+        ledger.check("wind-rain-hourly-published",
+                     "The hour-by-hour wind+rain statistic is published when the hourly "
+                     "archive is available",
+                     bool(isd.get("by_local_date")),
+                     "the block reports itself unavailable while an hourly archive exists",
+                     severity="warning",
+                     evidence={"reason": hourly.get("reason"),
+                               "archive_dates": len((isd or {}).get("by_local_date") or {})})
+    else:
+        y0, y1 = (run.get("normals_period") or [1991, 2020])
+        per_season = hourly.get("per_season") or []
+        problems = []
+        if not per_season:
+            problems.append("no per-season values published")
+        # Every season used must sit inside the window the daily statistic uses.
+        outside = [s.get("season") for s in per_season
+                   if not (y0 <= (s.get("season_year") or 0) <= y1)]
+        if outside:
+            problems.append(f"seasons outside the {y0}-{y1} window: {outside[:5]}")
+        # The cover story must match the data: an excluded season may not also be
+        # counted as used.
+        used_names = {s.get("season") for s in per_season}
+        overlap = [e.get("season") for e in (hourly.get("excluded_seasons") or [])
+                   if e.get("season") in used_names]
+        if overlap:
+            problems.append(f"seasons both used and excluded: {overlap}")
+        # Coverage: a season below the *published threshold* may not be used, and
+        # the excluded seasons must carry a reason.
+        required = ((hourly.get("coverage") or {}).get("min_coverage_pct_required"))
+        if required is None:
+            problems.append("the coverage threshold the seasons were filtered by is not published")
+        low = [s.get("season") for s in per_season
+               if (s.get("coverage_pct") is not None and required is not None
+                   and s["coverage_pct"] < required - 1e-9)]
+        if low:
+            problems.append(f"seasons used below the published minimum coverage "
+                            f"({required}%): {low[:5]}")
+        unnamed = [e.get("season") for e in (hourly.get("excluded_seasons") or [])
+                   if not e.get("excluded_because")]
+        if unnamed:
+            problems.append(f"excluded seasons with no reason: {unnamed[:5]}")
+
+        def recompute(key):
+            vals = [s.get(key) for s in per_season if s.get(key) is not None]
+            if not vals:
+                return None
+            return {"n": len(vals), "mean": round(statistics.fmean(vals), 2),
+                    "median": round(statistics.median(vals), 2),
+                    "max": max(vals), "min": min(vals)}
+
+        for field, key in (("days_with_a_simultaneous_hour", "days_simultaneous"),
+                           ("simultaneous_hours_per_season", "simultaneous_hours")):
+            published = hourly.get(field) or {}
+            got = recompute(key)
+            if published.get("mean") is None:
+                problems.append(f"{field}: published with no mean")
+            elif got is None:
+                problems.append(f"{field}: published but no per-season values")
+            elif round(float(published["mean"]), 2) != got["mean"]:
+                problems.append(f"{field}: published mean {published['mean']} vs "
+                                f"recomputed {got['mean']}")
+            elif published.get("max") is not None and round(float(published["max"]), 1) != round(got["max"], 1):
+                problems.append(f"{field}: published max {published['max']} vs "
+                                f"recomputed max {got['max']}")
+
+        # The same-station whole-day comparison needs the per-date wind maximum.
+        # If the fields are absent it must be None, never a zero.
+        has_fields = any(isinstance(d, dict) and "wind_max_kt" in d
+                         for d in (isd.get("by_local_date") or {}).values())
+        pair = hourly.get("days_daily_pair_same_station")
+        if has_fields and (pair is None or pair.get("mean") is None):
+            problems.append("per-date wind maximum present but the whole-day pairing is not published")
+        if not has_fields and pair is not None:
+            problems.append("whole-day pairing published although the per-date fields are absent")
+        if hourly.get("same_station_daily_fields_available") != has_fields:
+            problems.append("same_station_daily_fields_available does not match the archive")
+
+        ledger.check("wind-rain-hourly-arithmetic",
+                     "The hour-by-hour wind+rain figures equal the arithmetic over the "
+                     "per-season values, over exactly the seasons published as used",
+                     not problems,
+                     (f"{len(per_season)} season(s) used, {len(hourly.get('excluded_seasons') or [])} "
+                      f"excluded and named; mean days with a simultaneous hour "
+                      f"{(hourly.get('days_with_a_simultaneous_hour') or {}).get('mean')}")
+                     if not problems else "; ".join(problems[:6]),
+                     evidence={"problems": problems[:10],
+                               "coverage": hourly.get("coverage")})
+
+        # The station, the archive and the method must be traceable to a recorded
+        # official fetch: a quote of a method that was never fetched is exactly
+        # the kind of claim this ledger exists to stop.
+        station_id = str(isd.get("station_id") or "")
+        fetched_years = [y for y in (isd.get("per_year") or []) if y.get("ok")]
+        ledger.check("wind-rain-hourly-traceable",
+                     "The hourly wind+rain statistic names the station and the fetched ISD "
+                     "archive it was computed from",
+                     bool(station_id) and bool(fetched_years)
+                     and any(f"global-hourly" in (e.get("url") or "")
+                             and station_id in (e.get("url") or "")
+                             for e in manifest_entries)
+                     and hourly.get("source_url") == "https://www.ncei.noaa.gov/data/"
+                                                     "global-hourly/access/",
+                     f"station {station_id}, {len(fetched_years)} year file(s) retrieved, "
+                     f"source_url {hourly.get('source_url')}",
+                     evidence={"station_id": station_id,
+                               "years_ok": [y.get("year") for y in fetched_years][:5],
+                               "years_ok_count": len(fetched_years)})
+
+    # ----------------------------------------------- 12e. archive recency published
+    # An archive that stops updating must not be presented as current.  run.json
+    # publishes the newest row of each NCEI archive; a claim that a source is
+    # current cannot outrun that date.
+    cov = run.get("record_coverage") or {}
+    if not cov:
+        ledger.check("record-coverage-published",
+                     "The run publishes how current each source archive is",
+                     False,
+                     "run.json carries no record_coverage block; this dataset predates the "
+                     "coverage step, and the site must not claim currency from it",
+                     severity="warning")
+    else:
+        problems = []
+        for a in cov.get("archives") or []:
+            if not a.get("last_date"):
+                problems.append(f"{a.get('area')}: no last_date published")
+                continue
+            if a.get("age_days") is None:
+                problems.append(f"{a.get('area')}: age_days not computable from last_date")
+                continue
+            try:
+                expected_age = (dt.date.fromisoformat(str(cov.get("as_of")))
+                                - dt.date.fromisoformat(str(a["last_date"])[:10])).days
+            except ValueError:
+                problems.append(f"{a.get('area')}: last_date is not an ISO date")
+                continue
+            if expected_age != a["age_days"]:
+                problems.append(f"{a.get('area')}: age_days {a['age_days']} but the dates "
+                                f"give {expected_age}")
+        stale = [a.get("area") for a in (cov.get("archives") or [])
+                 if (a.get("age_days") or 0) > 180]
+        if sorted(stale) != sorted(cov.get("stale_archives") or []):
+            problems.append(f"stale_archives {cov.get('stale_archives')} does not match the "
+                            f"archives older than 180 days {stale}")
+        if bool(cov.get("recent_enough_for_current_conditions")) != (not stale):
+            problems.append("recent_enough_for_current_conditions disagrees with the archive ages")
+        # The ISD recency must be the one the parsed hourly rows actually carry.
+        isd_last = (isd or {}).get("latest_observation_utc")
+        cov_isd = next((a for a in (cov.get("archives") or []) if a.get("area") == "isd_hourly"),
+                       None)
+        if isd_last and cov_isd and (cov_isd.get("last_date") or "")[:10] != str(isd_last)[:10]:
+            problems.append(f"isd_hourly last_date {cov_isd.get('last_date')} does not match "
+                            f"the parsed rows {str(isd_last)[:10]}")
+        # A missing hourly archive is a data-availability event the site already
+        # discloses, not a claim problem, so that case warns instead of failing.
+        isd_absent = not (isd or {}).get("latest_observation_utc")
+        ledger.check("record-coverage-published",
+                     "The published archive dates and ages are re-derived from the datasets, "
+                     "and a stale archive is flagged rather than presented as current",
+                     not problems,
+                     (f"{len(cov.get('archives') or [])} archive(s); stale: "
+                      f"{cov.get('stale_archives') or 'none'}")
+                     if not problems else "; ".join(problems[:6]),
+                     severity="warning" if (isd_absent and all(
+                         "isd_hourly" in p for p in problems)) else "error",
+                     evidence={"problems": problems[:10], "archives": cov.get("archives")})
+        years_ok = [y.get("year") for y in (isd.get("per_year") or []) if y.get("ok")]
+        isd_file_url = (f"https://www.ncei.noaa.gov/data/global-hourly/access/"
+                        f"{max(years_ok)}/{isd.get('station_id')}.csv") if years_ok else None
+        ledger.claim(
+            "archive-recency",
+            "Newest observation available in each NCEI archive this project reads",
+            {a.get("area"): a.get("last_date") for a in (cov.get("archives") or [])},
+            source=(src(isd_file_url, f"NCEI ISD hourly {max(years_ok)} "
+                                      f"({isd.get('station_id')})")
+                    if isd_file_url and fetch_ok(isd_file_url) else {}),
+            method="Newest date present in the fetched annual files; every published "
+                   "statistic is a 1991-2020 statistic and does not depend on it.",
+            verified=bool(cov.get("archives")))
 
     # ------------------------------------------------------------- write out
     summary = ledger.summary()

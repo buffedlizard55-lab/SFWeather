@@ -1,5 +1,5 @@
 SFWeather - rainy season digest
-generated_utc: 2026-09-18T20:08:29Z
+generated_utc: 2026-09-18T19:55:55Z
 target: 94122  centroid 37.7605, -122.4839  (verified=True) source=U.S. Census Bureau Gazetteer file (internal point / centroid)
 
 STATIONS
@@ -24,7 +24,8 @@ LONG WET STREAKS (consecutive days >= 0.01 in, Oct 1 - Jan 31)
   longest run per season: mean 7.3  median 7.0  min 2.0  max 17.0
 
 WET DAYS per season: mean 34.5  median 35.0  min 7.0  max 55.0
-WIND+RAIN DAYS per season (SFO, >=20kt & >=0.01in): mean 11.1  median 10.0  max 24.0
+WIND+RAIN the same HOUR per season (SFO ISD hourly, >=20kt & >0 in one observation): days with at least one such hour mean 7.9  median 7.0  max 16; simultaneous hours mean 29.5  median 29.0  over 30 season(s)
+WIND+RAIN DAYS per season, whole-day pairing (SFO, >=20kt & >=0.01in): mean 11.1  median 10.0  max 24.0
 HEAVY wind+rain days (>=35kt gust & >=0.50in): mean 2.2  median 2.0  max 8.0
 SEASON MAX GUST (mph, SFO): mean 53.8  median 54.1  max 70.0
 
@@ -36,10 +37,9 @@ OCT-JAN TOTAL RAINFALL BY ENSO PHASE (inches)
 WETTEST Oct-Jan seasons: 1997-1998 22.82in, 1994-1995 22.49in, 1996-1997 20.99in, 2001-2002 18.59in, 2016-2017 18.47in
 DRIEST  Oct-Jan seasons: 2013-2014 1.71in, 2020-2021 5.39in, 2011-2012 5.93in, 2008-2009 6.38in, 1991-1992 7.27in
 
-FETCHES: 139 ok / 2 failed
-IRREGULARITIES: 3
+FETCHES: 139 ok / 0 failed / 4 absent by design (a not-yet-published annual file, a station without an observations endpoint)
+IRREGULARITIES: 4
   [info] nws: Some hourly forecast fields are null in the NWS gridded forecast for this grid cell.
   [warning] nws: No HWO products returned for office MTR.
   [info] storm_events: NCEI's Storm Events file lost 12 character(s) before this project fetched it (U+FFFD is already present in the published file). Those characters were removed from the narrative text and are not guessed at; the count, the fields and the surrounding text are published in data/storm_events.json under text_integrity.
-  [warning] fetch: A source fetch did not return HTTP 200 (404): Latest official observation from station OAMC1. Nothing was inferred in its place; whatever depends on it either used a documented fallback or is absent from this run's dataset.
-  [warning] fetch: A source fetch did not return HTTP 200 (404): NCEI 1991-2020 Hourly Climate Normals: USW00023272. Nothing was inferred in its place; whatever depends on it either used a documented fallback or is absent from this run's dataset.
+  [warning] coverage: At least one NCEI archive this project reads is more than 180 days behind the run date. Every published statistic is a 1991-2020 statistic and is unaffected; the flag exists so nothing claims to describe *current* conditions from a stale archive.

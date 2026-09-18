@@ -285,6 +285,19 @@ def parse_gsod(text):
     return rows
 
 
+# ------------------------------------------------------------------- ISD
+
+#: Wind speed (knots) at or above which an hour counts as "windy" in the hourly
+#: co-occurrence statistic.  The same threshold the daily approximation has always
+#: used for the GSOD daily-max wind, so the two methods are comparable.
+ISD_WIND_THRESHOLD_KT = 20.0
+
+#: Days in the Oct 1 -> Jan 31 season window the hourly statistic is defined over.
+#: Used as the denominator of per-season data coverage: a season in which the
+#: station reported on fewer dates than this is not silently averaged in.
+ISD_SEASON_DATES_EXPECTED = 123
+
+
 def parse_isd_hourly(text, tz_name="America/Los_Angeles"):
     """Parse NCEI ISD hourly CSV (e.g. station 72494023234) into hourly records.
 
@@ -328,8 +341,14 @@ def parse_isd_hourly(text, tz_name="America/Los_Angeles"):
 
         aa1 = (r.get("AA1") or "").strip()
         prcp_in = None
+        prcp_period_hours = None
         if aa1:
             aa1_parts = aa1.split(",")
+            if aa1_parts and aa1_parts[0] not in ("", "99"):
+                try:
+                    prcp_period_hours = int(aa1_parts[0])
+                except ValueError:
+                    prcp_period_hours = None
             if len(aa1_parts) >= 2 and aa1_parts[1] != "9999":
                 try:
                     mm = float(aa1_parts[1]) / 10.0
@@ -348,23 +367,54 @@ def parse_isd_hourly(text, tz_name="America/Los_Angeles"):
             "in_season": in_season,
             "wind_speed_kt": speed_kt,
             "prcp_in": prcp_in,
-            "is_wind_and_rain": (speed_kt is not None and speed_kt >= 20.0
+            # AA1 field 1: the number of hours the reported depth covers.  Kept so
+            # the aggregation can disclose when a "wet hour" was really a
+            # multi-hour accumulation rather than an hour-by-hour measurement.
+            "prcp_period_hours": prcp_period_hours,
+            "is_wind_and_rain": (speed_kt is not None and speed_kt >= ISD_WIND_THRESHOLD_KT
                                  and prcp_in is not None and prcp_in > 0.0),
         })
     return records
 
 
+def isd_season_year(local_date):
+    """Season label year for a local ISO date: Oct-Dec is year Y, Jan is Y-1."""
+    y, m = int(local_date[:4]), int(local_date[5:7])
+    return y if m >= 10 else y - 1
+
+
 def aggregate_isd_hourly_wind_and_rain(records):
     """Aggregate parsed ISD hourly records into seasonal and daily summary stats.
 
-    Counts simultaneous hours (wind >= 20 kt and precipitation > 0) and total hours
-    with valid joint observations in the Oct 1 - Jan 31 window.
+    Counts hours in the Oct 1 - Jan 31 window where the observation carries BOTH a
+    usable wind speed and usable liquid precipitation, and of those, the hours where
+    ``wind >= 20 kt`` and ``precipitation > 0`` hold **at the same instant**
+    (``wind_rain_hours``).  That simultaneity is the point: the daily statistic used
+    elsewhere in this project pairs a whole local rain day with a whole daily wind
+    maximum, which cannot tell "rain in the morning, wind at night" from a storm.
+
+    The returned ``by_local_date`` carries, per local calendar date: valid joint
+    hours, rain hours, hours at or above the wind threshold, the summed reported
+    liquid precipitation, and the day's maximum sustained wind.  ``per_season``
+    rolls those up over the season window so a reader can see how many OCT-JAN dates
+    the station actually reported on (``dates_with_data`` / ``coverage_pct``) — a
+    season with thin coverage is visible rather than averaged in silently.
+
+    Precipitation depths are the AA1 liquid-precipitation depths exactly as the
+    station reported them.  Some reports cover more than one hour; the count of
+    counted simultaneous hours that came from such a report is published separately
+    (``simultaneous_hours_from_multi_hour_reports``) instead of being treated as an
+    hour-by-hour measurement.
     """
     season_records = [r for r in records if r.get("in_season")]
     valid_joint_hours = 0
     simultaneous_hours = 0
-    by_season_year = defaultdict(lambda: {"valid_hours": 0, "wind_rain_hours": 0})
-    by_local_date = defaultdict(lambda: {"valid_hours": 0, "wind_rain_hours": 0})
+    simultaneous_multi_hour_reports = 0
+    by_local_date = defaultdict(lambda: {
+        "valid_hours": 0, "wind_rain_hours": 0, "rain_hours": 0,
+        "wind_ge_threshold_hours": 0, "prcp_in": 0.0, "wind_max_kt": None,
+        "multi_hour_prcp_reports": 0,
+    })
 
     for r in season_records:
         w = r.get("wind_speed_kt")
@@ -372,38 +422,85 @@ def aggregate_isd_hourly_wind_and_rain(records):
         if w is None or p is None:
             continue
         valid_joint_hours += 1
-        ld = r["local_date"]
-        # Season year: Oct-Dec is year Y; Jan is year Y-1
-        lm = r["local_month"]
-        ly = int(ld[:4])
-        s_year = ly if lm >= 10 else ly - 1
-
-        by_season_year[s_year]["valid_hours"] += 1
-        by_local_date[ld]["valid_hours"] += 1
-
+        d = by_local_date[r["local_date"]]
+        d["valid_hours"] += 1
+        d["prcp_in"] = round(d["prcp_in"] + p, 3)
+        if p > 0.0:
+            d["rain_hours"] += 1
+        if w >= ISD_WIND_THRESHOLD_KT:
+            d["wind_ge_threshold_hours"] += 1
+        if d["wind_max_kt"] is None or w > d["wind_max_kt"]:
+            d["wind_max_kt"] = w
+        # AA1 field 1 is the number of hours the reported depth covers; a report
+        # covering more than one hour is not an hour-by-hour measurement.
+        period = r.get("prcp_period_hours")
+        if period is not None and period > 1:
+            d["multi_hour_prcp_reports"] += 1
         if r.get("is_wind_and_rain"):
             simultaneous_hours += 1
-            by_season_year[s_year]["wind_rain_hours"] += 1
-            by_local_date[ld]["wind_rain_hours"] += 1
+            d["wind_rain_hours"] += 1
+            if period is not None and period > 1:
+                simultaneous_multi_hour_reports += 1
 
     per_season = []
-    for sy in sorted(by_season_year.keys()):
-        vh = by_season_year[sy]["valid_hours"]
-        wrh = by_season_year[sy]["wind_rain_hours"]
+    seasons = defaultdict(lambda: {
+        "valid_hours": 0, "wind_rain_hours": 0, "dates_with_data": 0,
+        "days_rain": 0, "days_wind_ge_threshold": 0, "days_daily_pair": 0,
+        "days_simultaneous": 0, "earliest_date": None, "latest_date": None,
+    })
+    for local_date, d in by_local_date.items():
+        sy = isd_season_year(local_date)
+        s = seasons[sy]
+        s["valid_hours"] += d["valid_hours"]
+        s["wind_rain_hours"] += d["wind_rain_hours"]
+        s["dates_with_data"] += 1
+        if d["prcp_in"] > 0.0:
+            s["days_rain"] += 1
+        wind_max = d["wind_max_kt"]
+        windy = wind_max is not None and wind_max >= ISD_WIND_THRESHOLD_KT
+        if windy:
+            s["days_wind_ge_threshold"] += 1
+        if windy and d["prcp_in"] > 0.0:
+            s["days_daily_pair"] += 1
+        if d["wind_rain_hours"] > 0:
+            s["days_simultaneous"] += 1
+        if s["earliest_date"] is None or local_date < s["earliest_date"]:
+            s["earliest_date"] = local_date
+        if s["latest_date"] is None or local_date > s["latest_date"]:
+            s["latest_date"] = local_date
+
+    for sy in sorted(seasons.keys()):
+        s = seasons[sy]
+        vh = s["valid_hours"]
         per_season.append({
             "season_year": sy,
             "season": f"{sy}-{sy + 1}",
             "valid_hours": vh,
-            "wind_rain_hours": wrh,
-            "pct_hours": pct(wrh, vh) if vh else 0.0,
+            "wind_rain_hours": s["wind_rain_hours"],
+            "pct_hours": pct(s["wind_rain_hours"], vh) if vh else 0.0,
+            # Coverage: how much of Oct 1 - Jan 31 the station actually reported on.
+            "dates_with_data": s["dates_with_data"],
+            "dates_expected": ISD_SEASON_DATES_EXPECTED,
+            "coverage_pct": pct(s["dates_with_data"], ISD_SEASON_DATES_EXPECTED),
+            "earliest_date": s["earliest_date"],
+            "latest_date": s["latest_date"],
+            # Same-station day counts, so a reader can separate "wind and rain on
+            # the same day" from "wind and rain in the same hour".
+            "days_rain": s["days_rain"],
+            "days_wind_ge_threshold": s["days_wind_ge_threshold"],
+            "days_daily_pair": s["days_daily_pair"],
+            "days_simultaneous": s["days_simultaneous"],
         })
 
     return {
         "valid_joint_hours": valid_joint_hours,
         "simultaneous_wind_rain_hours": simultaneous_hours,
+        "simultaneous_hours_from_multi_hour_reports": simultaneous_multi_hour_reports,
         "overall_pct": pct(simultaneous_hours, valid_joint_hours) if valid_joint_hours else 0.0,
+        "wind_threshold_kt": ISD_WIND_THRESHOLD_KT,
+        "dates_expected_per_season": ISD_SEASON_DATES_EXPECTED,
         "per_season": per_season,
-        "by_local_date": dict(by_local_date),
+        "by_local_date": {k: dict(v) for k, v in sorted(by_local_date.items())},
     }
 
 

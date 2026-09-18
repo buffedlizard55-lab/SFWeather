@@ -112,7 +112,8 @@ La Nina <= -0.5 C).
 | Product | URL | Used for |
 | --- | --- | --- |
 | GHCN-Daily, `USW00023272` | <https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv> | daily precipitation, high and low temperature back to **1921-01-01** |
-| GSOD, `72494023234` (KSFO), 1991-2025 | <https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/> | daily mean wind, max sustained wind, max gust, precipitation |
+| GSOD, `72494023234` (KSFO), 1991-2026 | <https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/> | daily mean wind, max sustained wind, max gust, precipitation |
+| **ISD hourly (global-hourly), `72494023234` (KSFO), 1991-2026** | <https://www.ncei.noaa.gov/data/global-hourly/access/{year}/72494023234.csv> | hour-by-hour wind speed and liquid precipitation, used to count hours when rain and ≥20 kt wind **actually coincide** (the landlord's "at the same time" question). Raw hourly files are **not** committed - only the aggregated summary in `data/isd_hourly_summary.json` |
 | Storm Events (SF County FIPS 06075) | <https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/> | recorded storm events, magnitudes, damage |
 | 1991-2020 Daily Climate Normals, `USW00023272` | <https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv> | cross-check on the computed normals |
 | **1991-2020 Monthly Climate Normals**, `USW00023272` | <https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv> | **Independent cross-check** on this project's GHCN-derived monthly rainfall means; the nightly job publishes the difference (largest 0.07 in on the first run) |
@@ -122,6 +123,29 @@ La Nina <= -0.5 C).
 Station `USW00023272` is **SAN FRANCISCO DOWNTOWN, CA US**, at
 37.7705 N, -122.4269 W, elevation 45.7 m - the closest long-record
 precipitation gauge with a continuous daily series.
+
+### ISD hourly — the unit conventions used, and why
+
+The ISD hourly files are fixed-width-in-CSV: `WND` is
+`direction, direction quality, type, speed in tenths of m/s, speed quality` and
+`AA1` is `period in hours, depth in tenths of mm, condition, quality`. This project
+converts the speed with 1 m/s = 1.943844 kt and the depth with /25.4 in per mm, and
+publishes the conversion in `data/isd_hourly_summary.json` under `units` so a
+reviewer does not have to trust the code. Two conventions matter:
+
+* **AA1 field 1 is the number of hours the reported depth covers.** A report with a
+  period longer than one hour is an accumulation, not an hour-by-hour measurement.
+  Those hours are still counted has having rain, but the count of them is published
+  separately (`simultaneous_hours_from_multi_hour_reports`) rather than being
+  presented as if every hour were measured on its own.
+* **Local days, not UTC days.** ISD timestamps are UTC; the season window and the
+  daily counts are `America/Los_Angeles` (the same convention the GHCN rain days
+  use), which is why the hour-by-hour statistic does not inherit the GSOD
+  UTC-day caveat.
+
+The per-season coverage is published too (`dates_with_data` against the 123 dates of
+Oct 1 - Jan 31), and a season that reported on fewer than 95% of those dates is
+**excluded and named** rather than averaged in.
 
 ### Humidity — what is official and what is derived
 
