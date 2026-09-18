@@ -321,3 +321,72 @@ appears — the landlord CPC table, the main CPC season table and the day dialog
 Two ledger checks police it in both directions: no directional-baseline record
 may be unflagged, and nothing may be flagged as a baseline case that is not one.
 
+
+## 14. Scanning the Area Forecast Discussion for storm language (added 18 Sep 2026)
+
+The brief asks about rain duration, simultaneous wind and rain, and storm
+severity. NWS publishes numbers for all of those only inside its ~7-day horizon,
+but its forecasters write *qualitative* statements about the coming days in the
+Area Forecast Discussion (AFD). That text is official and free, so it is fetched
+and scanned — with a hard rule about what the scan may publish.
+
+**The rule: the scan publishes quotations, never numbers.** A discussion that
+says "rainfall totals of 3 inches possible along the coast range" is evidence
+that NWS wrote that sentence; it is *not* evidence of 3.00 in at 94122. So the
+scanner emits the sentence verbatim, the section it came from, and the patterns
+it matched. It emits no date, no amount, no probability and no per-day value. Two
+ledger checks enforce this from the data side (`afd-language-verbatim`,
+`afd-language-quotations-only`) and one render guard enforces it on the page.
+
+How the scan works (`climo.afd_sections`, `climo.afd_sentences`,
+`climo.afd_language_scan`):
+
+1. **Sections.** The AFD is split on its own `.HEADER...` markers, keeping the
+   text before the first one as `(preamble)` — the AWIPS transmission block
+   (`FXUS66 KMTR ...`), which is product furniture, not forecast prose. The body
+   stops at the `&&` separator.
+2. **Exclusions.** `MARINE`, `AVIATION` and `FIRE WEATHER` are excluded, because
+   "gale warning … storm-force gusts to 50 kt across the coastal waters" is a
+   statement about the ocean, and quoting it beside a landlord's roof would
+   overstate the hazard at the forecast point. Exclusions are published with the
+   reason, so a reader can see what was not scanned.
+3. **Sentences.** Hard line wraps are rejoined into whole sentences. A hyphen at
+   end of line is treated as a wrap, not as part of the word (`Above-\nnormal`
+   → `Above-normal`). `KEY MESSAGES` bullets are split into separate statements,
+   because merging them would join two unrelated hazards into one quotation.
+4. **Furniture filter.** Dropped: URLs, all-caps runs of 6+ characters, a
+   forecaster-initials footer, and "Issued at"/"Updated at" lines. The count of
+   dropped sentences is published.
+5. **Six categories.** `atmospheric_river`, `prolonged_rain`, `heavy_rain`,
+   `strong_wind`, `quoted_rainfall_amount`, `wind_and_rain_together` — each with
+   a `why_it_matters` sentence tying it to a repair or maintenance cost.
+6. **The bare-`AR` gate.** `\bARs?\b` is a legitimate abbreviation, but it is
+   also an ordinary English fragment. It is accepted **only** if the same
+   discussion spells out "atmospheric river" somewhere. `\bPWAT\b` and `\bIVT\b`
+   are matched case-sensitively for the same reason.
+7. **Matching once.** A single `_afd_match_sentence()` pass decides both the
+   count and the list, so a count can never disagree with the sentences published
+   beneath it.
+
+Each published sentence must be a whitespace-collapsed substring of the fetched
+text; the ledger re-checks that against `data/nws.json` and fails the run if any
+sentence cannot be found. On the current discussion (issued 2026-09-18T14:34Z)
+the scan covers 5 sections and 43 sentences, drops 7 furniture sentences, and
+finds one `strong_wind` match — no atmospheric-river, prolonged-rain or heavy-rain
+language, which in mid-September is the expected result. The card states that
+explicitly, along with the fact that finding none is **not** evidence that the
+season will be dry.
+
+## 15. Naming the forecast point (Census reverse geocode)
+
+The site says "Sunset District". Since that is a naming claim, it is read from
+the Census geographies endpoint at the published centroid rather than asserted.
+The response is parsed by *name* (so a re-ordered payload still parses), and the
+GEOIDs are required to nest: county `06075` must be a prefix of the county
+subdivision, the tract, and the block. The lookup URL and SHA-256 are recorded in
+`data/provenance.json` like every other fetch.
+
+If the lookup fails, the pipeline records an irregularity in `quality_report.json`
+under area `geography` and the site prints that the geography was "not retrieved
+this run" instead of naming a district without evidence — the claim ledger
+accepts either outcome and rejects a silent third one (a name with no evidence).

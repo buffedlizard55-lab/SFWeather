@@ -37,6 +37,8 @@ ALLOWED_HOSTS = frozenset({
 # Hosts that are known-good but require a note in the docs.
 NOTED = {
     "www2.census.gov": "U.S. Census Bureau - official Gazetteer files",
+    "geocoding.geo.census.gov": ("U.S. Census Bureau - Geocoder reverse lookup, used to "
+                                 "name the geography that contains the published centroid"),
 }
 
 

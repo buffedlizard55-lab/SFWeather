@@ -262,7 +262,7 @@ reached on only some code paths would have been silent.
 
 ## How the ledger and the tests stand now
 
-* `pipeline/verify_claims.py`: **32 automated checks, 18 recorded claims**, each claim
+* `pipeline/verify_claims.py`: **47 automated checks, 18 recorded claims**, each claim
   carrying value, unit, method, official URL, HTTP status, bytes, SHA-256, retrieval
   time and - where one exists - an independent cross-check. Order: provenance-present,
   provenance-record-count, hosts-official, centroid-verified, oni-official-read-directly,
@@ -429,3 +429,64 @@ i.e. the GHCN file's own wettest day in the window is the 5 November 1994 event,
 0.08 in above the 2022 event, exactly as NCEI's storm narrative says. Two
 different NCEI products, fetched separately, agree on both the value and the gap.
 
+
+---
+
+# Session 6 — 18 September 2026 (pass 6): forecaster language, named geography, per-field basis
+
+Two features were added and then reviewed line by line: a scan of the NWS Area
+Forecast Discussion for storm language, and a Census reverse geocode that names
+the forecast point from evidence instead of by assertion. Both are documented in
+`docs/METHODS.md` §14–15 and `docs/LIMITATIONS.md` §15–16.
+
+## Bugs found in this project during this pass (and fixed)
+
+| # | Symptom | Cause | Fix / guard |
+| --- | --- | --- | --- |
+| 40 | **`docs/LANDLORD_GUIDE.md` rendered two CPC categories as "EC 33%" when the sampled shapefiles said *Above normal* at 33.0%** — the exact baseline-honesty violation the site is required to avoid, and hand-typed numbers in a file the ledger cannot re-derive | The guide carried a hand-written table of CPC outlook values (manual input, which the brief forbids) and drifted from `data/landlord.json` | The table was **removed**, not corrected: prose now points at the site card, `cpc_outlooks_relevant` and the CPC archives, because a Markdown number cannot be re-derived by the ledger and will contradict the dataset within a month. New warning guard `readme-figures-traceable` and `docs-current-dates-traceable` police this class. The same pass removed the volatile ONI value and the CPC JFM probability from the action checklist, labelling the ONI line explicitly as a snapshot |
+| 41 | **README stated the forecast horizon as "17 Sep 2026 14:00 UTC through 25 Sep 2026 01:00 UTC, 8 local calendar days" and quoted a day's temperatures** | A snapshot of one run typed into prose; the horizon moves every few hours | Replaced with non-volatile wording that points at `calendar.json` → `nws_window` and the *Today's real forecast* panel. Found by `docs-current-dates-traceable` |
+| 42 | **README and `docs/LIMITATIONS.md` quoted "0 of 156 periods on 17 Sep 2026"** for the null `windGust`/QPF count | Same snapshot-in-prose class | Both now say the pipeline counts null periods each run and reports the count in `quality_report.json` |
+| 43 | **Climatology days published a gust, a wind speed, a temperature and a rain amount with no stated basis** (at HEAD: `gust_basis`, `wind_basis`, `temp_basis` empty on all 123 days; `gust_max_mph = 26.6`) | Only `humidity_basis` and `rain_amount_basis` were carried through to the climatology tier | Every one of the six headline fields plus temperature now carries a per-field basis on **both** tiers, naming the station, the variable, the season count and the unit conversion (GSOD knots → mph, GHCN-Daily tenths of mm). New ledger check `day-field-basis-complete` fails the run if any published value lacks its basis; render guard 20 fails if the day dialog shows a value with no basis line |
+| 44 | **A pre-existing tier guard had become stale**: `test_parsers.py` asserted "no climatology day carries an NWS gust basis" by testing `gust_basis` truthiness, so it failed the moment climatology days correctly gained a *climatological* basis | The guard tested a proxy for its intent, not the intent | Rewritten to test the intent: no climatology day's basis may mention `api.weather.gov`, `gridpoint`, `NWS forecast` …, and every climatology day's gust basis must name the observed record (`GSOD`/`GHCN`) |
+| 45 | **`climo.py` raised `NameError: name 're' is not defined`** on the first AFD run | The new scanner used `re` in a module that never imported it | `import re` added; the scanner is now covered by 19 offline unit assertions |
+| 46 | **The first AFD scanner quoted product furniture as forecast prose** — all-caps transmission headers, a forecaster-initials footer, URLs, "Issued at" lines — scanned the AWIPS preamble, listed duplicate section names, and merged `KEY MESSAGES` bullets so two unrelated hazards appeared as one quotation | Naive `.`-split over the raw text with no section or furniture handling | Section parser keeping `(preamble)` separate; `MARINE`/`AVIATION`/`FIRE WEATHER` excluded and published as excluded; furniture filter with a published drop count; duplicate sections deduped; bullets split. Result on the current discussion: 5 sections, 43 sentences, 7 furniture dropped, 1 `strong_wind` match, 0 verbatim violations |
+| 47 | **Two of my own new render guards were wrong on the first falsification run**: the quotation-key check counted *sentences* instead of *keys* (always failing), the basis guard read a third table cell that does not exist (the basis renders inline in a `.fine` span), and the scope check was keyword-based so it still passed with the caveat stripped | Guards written against an assumed DOM shape and an unflattened `flatMap` | All three rewritten; the scope guard now asserts the published `scope_caveat`, `usage_note` and `verbatim_rule` strings appear on the page, so a renderer reading the wrong key cannot pass |
+
+## What the falsification harnesses established
+
+`tests/falsify_guards.py` (15 cases, ledger) and `tests/falsify_smoke.py`
+(8 cases, render) both run in CI. Every new guard was mutated into failing before
+it was kept: broken GEOID nesting, an unrecorded Census fetch, a geography naming
+nothing, an edited quotation, a count smaller than its own list, a deleted AFD
+block, a scan claiming to have run on empty text, a date or an amount attached to
+a quotation, a value with no basis on either tier, a README figure the dataset
+does not publish, and a README horizon date this run never published. Two cases
+are recorded as expected **passes** on purpose: a geography absent *but flagged as
+an irregularity* (the honest degradation), and a quotation edited in the data —
+which the renderer must faithfully display and which `afd-language-verbatim`
+catches. That boundary is written in the harness so it is not rediscovered.
+
+## Independent source re-checks performed for this feature
+
+| Claim | Source checked | Verdict |
+| --- | --- | --- |
+| The 94122 centroid lies in the Census county subdivision "Sunset CCD" | Census geocoder reverse lookup at `x=-122.483894&y=37.760459` | Confirmed: `Sunset CCD`, GEOID `0607593267`, tract `326.01`, block `060750326013006`, county `06075`. Response excerpted to `tests/fixtures/census_geocoder_94122.json` with provenance in `tests/fixtures/README.md` |
+| A street address for the centroid | Census `/geocoder/locations/coordinates` | **Not available** — returns HTTP 404 for this coordinate, so no address is published. Recorded in `docs/DATA_SOURCES.md` |
+| The quoted AFD sentences are NWS's words | The fetched text in `data/nws.json` (product `AFD`, issued `2026-09-18T14:34Z`) | All 43 scanned sentences verified as whitespace-collapsed substrings; 0 violations. A synthetic discussion exercising all six categories was also scanned: all six fired, no MARINE/AVIATION leak, 0 violations |
+| No nearer official station offers both precipitation and wind | `/stations/.../observations/latest` distances in `data/nws.json` | Confirmed: SFOC1 (3.67 mi) carries no precipitation or wind; DW7094 (11.07), KSFO (11.88), MDEC1 (12.75), OAMC1 (12.8), DW3169 (14.17) are all farther than the GHCN downtown (3.2 mi) and GSOD SFO (11.9 mi) pair already used |
+
+## Standings after this pass
+
+* `pipeline/verify_claims.py`: **47 checks** (41 at the start of the session, +6),
+  18 recorded claims. Six new: `census-geographies-traceable`,
+  `afd-language-verbatim`, `afd-language-quotations-only`,
+  `day-field-basis-complete` (errors) and `readme-figures-traceable`,
+  `docs-current-dates-traceable` (warnings).
+* `tests/test_parsers.py`: **316 assertions** (+19), stdlib only, offline.
+* `tests/smoke.js`: guards **19** and **20** added (AFD card fidelity; per-field
+  basis in the day dialog).
+* Known expected failure on the committed dataset: `census-geographies-traceable`
+  fails against `data/run.json` as committed, because that file predates the
+  geocode step. The first CI run that repopulates `run.json` (or records a
+  `geography` irregularity) resolves it; the check is written to accept either
+  outcome and reject only the silent one.

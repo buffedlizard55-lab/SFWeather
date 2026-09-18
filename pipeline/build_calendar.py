@@ -574,6 +574,24 @@ def main():
                 "allocated to local days by hour)"
                 if n.get("qpf_from_gridpoint") else
                 "sum of NWS hourly QPF values") if n["qpf_known"] else None
+            # Every published field names the basis it used.  Previously only
+            # humidity, gust and rain amount did, so a reviewer of a forecast day
+            # could not tell where the temperature, the wind or the rain chance
+            # came from - the three fields are named here exactly as they are
+            # computed in daily_from_hourly(), not as they are assumed to be.
+            entry["temp_basis"] = (
+                "NWS hourly gridded forecast temperature: highest and lowest of the "
+                f"{n['hours']} grid hour(s) falling in this local day") if n["temps"] else None
+            entry["humidity_basis"] = (
+                "NWS hourly gridded forecast relative humidity: mean over the "
+                f"{n['hours']} grid hour(s) falling in this local day") if n["rh"] else None
+            entry["wind_basis"] = (
+                "NWS hourly gridded forecast wind speed, taking the upper end of each "
+                "hour's published range: highest of the hours falling in this local day"
+            ) if n["wind"] else None
+            entry["rain_chance_basis"] = (
+                "NWS hourly gridded probability of precipitation: highest of the hours "
+                "falling in this local day") if n["pop"] else None
             entry["hours_covered"] = n["hours"]
             entry["sources"] = [
                 {"label": "NWS hourly gridded forecast (api.weather.gov)", "url": hourly_url},
@@ -606,6 +624,50 @@ def main():
             entry["gust_max_mph"] = c.get("normal_max_gust_mph")
             entry["rain_chance_pct"] = c.get("p_rain_day_pct")
             entry["rain_amount_in"] = c.get("mean_daily_prcp_in")
+
+            # Per-field basis for a climatology day.  Each sentence describes the
+            # arithmetic that actually produced the number in
+            # climo.build_daily_climatology() - including the two facts a reader
+            # would otherwise assume away: that the rainfall mean includes dry
+            # days, and that GSOD wind days are UTC days.
+            p_id = meta.get("precip_station", {}).get("id", "")
+            p_name = meta.get("precip_station", {}).get("name", "")
+            w_id = meta.get("wind_station", {}).get("id", "")
+            w_name = meta.get("wind_station", {}).get("name", "")
+            n_years_p = c.get("n_years_precip")
+            n_years_w = c.get("n_years_wind")
+            period_txt = "%s-%s" % (tuple(run.get("normals_period", [1991, 2020])))
+            entry["temp_basis"] = (
+                "this project's mean of the observed daily maxima and minima "
+                f"(NOAA NCEI GHCN-Daily TMAX / TMIN) for this calendar date over the "
+                f"{period_txt} seasons at station {p_id} ({p_name}); NOAA's own "
+                "published normal for the same date is shown separately below and the "
+                "difference is stated, never averaged away"
+            ) if c.get("normal_high_f") is not None or c.get("normal_low_f") is not None else None
+            entry["rain_chance_basis"] = (
+                f"share of the {n_years_p} seasons with a GHCN-Daily precipitation value "
+                f"for this calendar date ({period_txt}) that recorded >= 0.01 in at "
+                f"station {p_id}"
+            ) if c.get("p_rain_day_pct") is not None else None
+            entry["rain_amount_basis"] = (
+                f"mean of ALL observed GHCN-Daily totals for this calendar date over the "
+                f"{n_years_p} seasons with a value ({period_txt}), dry days included - so "
+                "this is the expected amount for the date, not the amount on a day it "
+                f"rains; station {p_id}"
+            ) if c.get("mean_daily_prcp_in") is not None else None
+            entry["wind_basis"] = (
+                f"mean of the GSOD daily maximum sustained wind (MXSPD, knots converted "
+                f"at 1 kt = 1.15078 mph) for this calendar date over the {n_years_w} "
+                f"seasons with a value ({period_txt}) at station {w_id} ({w_name}); GSOD "
+                "days are UTC days (0000Z-2359Z), about 16:00-16:00 Pacific, and SFO is "
+                "more exposed than the Sunset, so this is an upper bound"
+            ) if c.get("normal_max_sustained_mph") is not None else None
+            entry["gust_basis"] = (
+                f"mean of the GSOD daily peak gust values (GUST, knots converted at "
+                f"1 kt = 1.15078 mph) reported for this calendar date over the "
+                f"{period_txt} seasons at station {w_id} ({w_name}); GSOD days are UTC "
+                "days (0000Z-2359Z)"
+            ) if c.get("normal_max_gust_mph") is not None else None
             entry["hours_covered"] = 0
             entry["sources"] = [
                 {"label": f"NCEI GHCN-Daily {meta.get('precip_station', {}).get('id', '')}",
@@ -758,9 +820,35 @@ def main():
                 "NWS gridpoint windGust series (max over the local day)"
                 if n_.get("gust_from_gridpoint") else
                 "NWS hourly forecast wind gust (max over the local day)") if n_["gust"] else None,
+            # Same per-field basis rule as the scoreboard days: this panel is the
+            # only real forecast on the site, so it carries the fullest
+            # provenance of all.
+            "temp_basis": (
+                "NWS hourly gridded forecast temperature: highest and lowest of the "
+                f"{n_['hours']} grid hour(s) falling in this local day") if n_["temps"] else None,
+            "humidity_basis": (
+                "NWS hourly gridded forecast relative humidity: mean over the "
+                f"{n_['hours']} grid hour(s) falling in this local day") if n_["rh"] else None,
+            "wind_basis": (
+                "NWS hourly gridded forecast wind speed, taking the upper end of each "
+                "hour's published range: highest of the hours falling in this local day"
+            ) if n_["wind"] else None,
+            "rain_chance_basis": (
+                "NWS hourly gridded probability of precipitation: highest of the hours "
+                "falling in this local day") if n_["pop"] else None,
             "hours_covered": n_["hours"],
             "periods": narrative.get(iso, []),
         })
+    # ---- NWS's own discussion language (atmospheric river, prolonged rain,
+    # heavy rain, strong wind, quoted amounts, wind+rain in one sentence) ------
+    # The Area Forecast Discussion is already fetched verbatim every night.  It
+    # is the only official product in which a forecaster says in words that a
+    # long-duration or high-intensity event is coming, which is precisely the
+    # landlord's "days or weeks of straight rain" question.  The scan publishes
+    # quotations, never numbers, and never attaches a quotation to a calendar
+    # date - see climo.afd_language_scan() for the rule set.
+    afd_language = climo_lib.afd_language_scan((nws.get("products") or {}).get("AFD"))
+
     current_forecast = {
         "generated_utc": (nws.get("forecast_hourly") or {}).get("generated_at"),
         "forecast_updated": nws_updated,
@@ -905,6 +993,7 @@ def main():
         "units": meta.get("units", {}),
         "stations": {"precip_temp": meta.get("precip_station"), "wind": meta.get("wind_station")},
         "current_forecast": current_forecast,
+        "afd_language": afd_language,
         "days": calendar,
     }
 

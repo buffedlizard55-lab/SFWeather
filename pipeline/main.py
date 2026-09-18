@@ -38,7 +38,13 @@ import climo                          # noqa: E402
 
 TARGET = {
     "zip": "94122",
-    "label": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset)",
+    # "Sunset District" is what the U.S. Census Bureau's own county-subdivision
+    # geography calls the area the published centroid falls in (see
+    # fetch_census_geographies).  "Outer Sunset" is a local name for the western
+    # half of the district and has no federal boundary, so it is not asserted in
+    # the label; the exact coordinate and the official geography are published
+    # instead.
+    "label": "San Francisco, CA 94122 (Sunset District — Inner and Outer Sunset)",
     "fallback_lat": 37.7599,      # replaced by the Census ZCTA centroid below
     "fallback_lon": -122.4849,
 }
@@ -219,6 +225,65 @@ def fetch_zip_centroid():
                       {"url": url})
     return {"lat": TARGET["fallback_lat"], "lon": TARGET["fallback_lon"],
             "source": "fallback (ZIP not present in Gazetteer)", "verified": False, "url": url}
+
+
+def fetch_census_geographies(lat, lon):
+    """Reverse-geocode the ZCTA centroid with the Census geocoder (official).
+
+    Why this exists: the Gazetteer gives one coordinate and an area, which is
+    enough to forecast a point but says nothing about *which part of San
+    Francisco* that point is in.  The Census geocoder returns the official
+    geographies that contain it - the county subdivision, whose Census name for
+    this ZIP is "Sunset CCD" - plus the county, place, tract, block and
+    legislative districts.  That is the evidence behind naming the district on
+    the site instead of asserting a neighbourhood from memory.
+
+    A failed lookup is a warning, never a fatal error: the site then simply does
+    not publish the field.  It is never inferred from the ZIP code.
+    """
+    url = ("https://geocoding.geo.census.gov/geocoder/geographies/coordinates"
+           f"?x={lon:.6f}&y={lat:.6f}"
+           "&benchmark=Public_AR_Current&vintage=Current_Current&format=json")
+    obj, res = fetchlib.get_json(url)
+    record(res, note=("U.S. Census Bureau geocoder - official geographies containing "
+                      "the 94122 centroid (county subdivision, tract, block)"))
+    if obj is None:
+        note_irregularity(
+            "warning", "geography",
+            "The Census reverse-geocode request failed, so the official geography "
+            "evidence for the forecast point is absent this run. Nothing was "
+            "inferred in its place.",
+            {"url": url, "status": res.status, "error": res.error})
+        return None
+
+    parsed = climo.parse_census_geographies(obj)
+    if not parsed:
+        note_irregularity(
+            "warning", "geography",
+            "The Census reverse-geocode response contained no county subdivision, "
+            "county or tract for the 94122 centroid; the field is omitted rather "
+            "than guessed.",
+            {"url": url, "geography_types": sorted(
+                (((obj.get("result") or {}).get("geographies")) or {}).keys())})
+        return None
+
+    parsed.update({
+        "source": ("U.S. Census Bureau geocoder (reverse lookup of the published "
+                   "ZCTA centroid)"),
+        "url": url,
+        "benchmark": "Public_AR_Current",
+        "vintage": "Current_Current",
+        "retrieved_utc": res.retrieved_utc,
+        "sha256": res.sha256,
+        "naming_note": (
+            "The county subdivision the Census returns for this point is its "
+            "official name for the Sunset District. \"Outer Sunset\" and \"Inner "
+            "Sunset\" are local names for the western and eastern halves of the "
+            "district and have no federal boundary, so this project publishes the "
+            "official geography and the exact coordinate instead of asserting one "
+            "of them."),
+    })
+    return parsed
 
 
 # ==========================================================================
@@ -1507,6 +1572,20 @@ def main():
     centroid = fetch_zip_centroid()
     lat, lon = centroid["lat"], centroid["lon"]
     log(f"      94122 centroid: {lat:.4f}, {lon:.4f} ({'verified' if centroid.get('verified') else 'FALLBACK'})")
+
+    # Official geography evidence for the point being forecast: which county
+    # subdivision, tract and block the centroid falls in.  Attached to the
+    # centroid so it travels with the target into run.json, calendar.json and
+    # landlord.json without a second source of truth.
+    census_geo = fetch_census_geographies(lat, lon)
+    if census_geo:
+        centroid["census_geographies"] = census_geo
+        log(f"      Census geographies at that point: "
+            f"{census_geo.get('county_subdivision') or 'n/a'} / "
+            f"tract {census_geo.get('census_tract') or 'n/a'} / "
+            f"{census_geo.get('place') or 'n/a'}, {census_geo.get('county') or 'n/a'}")
+    else:
+        log("      Census geographies: not retrieved this run (flagged)")
 
     log("[2/7] NWS (api.weather.gov)")
     nws = fetch_nws(lat, lon)

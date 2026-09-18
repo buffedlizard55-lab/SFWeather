@@ -625,10 +625,24 @@ if os.path.exists(_cal_path):
         _got = (_by.get(_iso) or {}).get("gust_max_mph")
         check("derived gust for %s matches NWS's stated %.0f mph within 2 mph" % (_iso, _expect),
               _got is not None and abs(_got - _expect) <= 2.0, str(_got))
-    # Tiering must be untouched: no climatology day may carry forecast values.
-    _bad_tier = [d["date"] for d in _cal.get("days", [])
-                 if d.get("tier") == "climatology" and d.get("gust_basis")]
-    check("no climatology day carries an NWS gust basis", not _bad_tier, str(_bad_tier[:3]))
+    # Tiering must be untouched: no climatology day may claim a forecast basis.
+    # This used to assert "no climatology day has a gust_basis at all", which
+    # stopped being true when every published value gained a per-field basis.
+    # What must hold is the intent: a climatology day's basis has to name the
+    # observed record, and must never name the NWS forecast the site does not
+    # have for that date.
+    _NWS_MARKERS = ("api.weather.gov", "nws hourly", "nws forecast", "gridpoint",
+                    "forecast/hourly", "weather.gov")
+    _clim_days = [d for d in _cal.get("days", []) if d.get("tier") == "climatology"]
+    _bad_tier = [(d["date"], k, str(d.get(k))[:60]) for d in _clim_days
+                 for k in ("temp_basis", "humidity_basis", "wind_basis",
+                           "gust_basis", "rain_chance_basis", "rain_amount_basis")
+                 if any(m in str(d.get(k) or "").lower() for m in _NWS_MARKERS)]
+    check("no climatology day claims an NWS forecast basis", not _bad_tier, str(_bad_tier[:3]))
+    _nobs = [d["date"] for d in _clim_days
+             if not any(s in str(d.get("gust_basis") or "") for s in ("GSOD", "GHCN"))]
+    check("every climatology day names the observed record behind its gust (%d days)"
+          % len(_clim_days), bool(_clim_days) and not _nobs, str(_nobs[:3]))
 else:
     check("data/calendar.json present to audit", False, "missing")
 
@@ -1583,6 +1597,224 @@ check("POP < 50% correctly evaluates dry condition (pop=10% -> observed rain=Fal
 check("lead days breakout handles 0-day lead and 1-day lead",
       len(_scored["by_lead_days"]) == 2 and _scored["by_lead_days"][1]["lead_days"] == 1,
       json.dumps(_scored["by_lead_days"]))
+
+# --------------------------------------------------------------------------- #
+# NWS Area Forecast Discussion language scan (climo.afd_language_scan)
+#
+# The scan publishes quotations, never numbers, so the tests pin down both
+# halves of that contract: that real forecaster language IS found (a scanner
+# that can only return zero would look correct on a dry September day and be
+# useless in January), and that nothing is invented, misattributed or smuggled
+# in from the marine and aviation sections.
+# --------------------------------------------------------------------------- #
+
+section("== AFD section and sentence parsing")
+
+_AFD_FIXTURE = """
+000
+FXUS66 KMTR 051234
+AFDMTR
+
+Area Forecast Discussion
+National Weather Service San Francisco CA
+434 AM PST Mon Jan 5 2027
+
+.KEY MESSAGES...
+
+ - An atmospheric river will bring periods of heavy rain
+ - Potential for 2-4 inches of rain in the hills
+
+.SHORT TERM...
+An atmospheric river oriented from the central Pacific will
+tap deep subtropical moisture, with PWAT values near 1.5 inches.
+Rain will continue for several days with steady rain at times and
+rainfall totals of 3 inches possible along the coast range.
+The AR is expected to train over the same area, producing
+flash flooding potential. Winds will increase with gusts to 45 mph,
+and strong south winds combined with heavy rain will make travel
+difficult. Multiple rounds of rain are likely through the weekend.
+Above-
+normal tides will compound the drainage problem.
+
+Issued at 434 AM PST
+FORECASTER INITIALS: JK/DR
+Discussion available at https://forecast.weather.gov/product.php?site=MTR&issuedby=MTR&product=AFD
+
+.MARINE...
+Gale warning in effect with storm-force gusts to 50 kt across the
+coastal waters.
+
+.AVIATION...
+IFR conditions with gusts to 35 kt and heavy rain at SFO.
+
+.FIRE WEATHER...
+No fire weather concerns at this time.
+
+&&
+"""
+
+_sections = climo.afd_sections(_AFD_FIXTURE)
+_sec_names = [n for n, _b in _sections]
+check("afd_sections finds the preamble and every .HEADER... section",
+      "(preamble)" in _sec_names and "KEY MESSAGES" in _sec_names
+      and "SHORT TERM" in _sec_names and "MARINE" in _sec_names
+      and "AVIATION" in _sec_names, str(_sec_names))
+check("afd_sections stops the last block at the && separator",
+      not any("&&" in b for _n, b in _sections), "&& leaked into a block body")
+
+_short = next(b for n, b in _sections if n == "SHORT TERM")
+_sents = climo.afd_sentences(_short)
+check("hard-wrapped prose is unwrapped into whole sentences",
+      any(s.startswith("An atmospheric river oriented from the central Pacific will "
+                       "tap deep subtropical moisture") for s in _sents), str(_sents[:2]))
+check("a hyphen at end of line is a wrap, not part of the word",
+      any("Above-normal tides" in s for s in _sents),
+      str([s for s in _sents if "normal tides" in s]))
+check("every sentence returned is whitespace-collapsed",
+      all(s == climo.collapse_ws(s) for s in _sents), "a sentence kept a newline or double space")
+
+_key = next(b for n, b in _sections if n == "KEY MESSAGES")
+_key_sents = climo.afd_sentences(_key)
+check("KEY MESSAGES bullets stay separate statements instead of merging",
+      len(_key_sents) == 2, str(_key_sents))
+
+section("== AFD language scan: positive detection")
+
+_scan = climo.afd_language_scan({"text": _AFD_FIXTURE, "issuance_time": "2027-01-05T12:34:00+00:00",
+                                 "source_url": "https://api.weather.gov/products/x",
+                                 "product_name": "Area Forecast Discussion", "id": "x"})
+_by_id = {c["id"]: c for c in _scan["categories"]}
+check("the scan reports itself as scanned when text was fetched",
+      _scan["scanned"] is True, str(_scan.get("reason")))
+check("atmospheric-river language is found",
+      _by_id["atmospheric_river"]["sentence_count"] >= 3,
+      str(_by_id["atmospheric_river"]["sentence_count"]))
+check("the bare abbreviation AR counts only after the term is spelled out",
+      any("The AR is expected to train" in s["sentence"]
+          for s in _by_id["atmospheric_river"]["sentences"]),
+      str([s["sentence"][:60] for s in _by_id["atmospheric_river"]["sentences"]]))
+check("prolonged-rain language is found",
+      _by_id["prolonged_rain"]["sentence_count"] >= 3,
+      str(_by_id["prolonged_rain"]["sentence_count"]))
+check("heavy-rain / flooding language is found",
+      _by_id["heavy_rain"]["sentence_count"] >= 3, str(_by_id["heavy_rain"]["sentence_count"]))
+check("strong-wind language is found",
+      _by_id["strong_wind"]["sentence_count"] >= 1, str(_by_id["strong_wind"]["sentence_count"]))
+check("an explicit rainfall amount in NWS's own text is found",
+      _by_id["quoted_rainfall_amount"]["sentence_count"] >= 2,
+      str(_by_id["quoted_rainfall_amount"]["sentence_count"]))
+check("wind and rain in the same sentence is found",
+      _by_id["wind_and_rain_together"]["sentence_count"] >= 1,
+      str(_by_id["wind_and_rain_together"]["sentence_count"]))
+
+section("== AFD language scan: no invention, no leakage")
+
+_collapsed_src = climo.collapse_ws(_AFD_FIXTURE)
+_not_verbatim = [s["sentence"] for c in _scan["categories"] for s in c["sentences"]
+                 if s["sentence"] not in _collapsed_src]
+check("every published sentence is a whitespace-collapsed substring of the source",
+      not _not_verbatim, str(_not_verbatim[:2]))
+_counts_short = [c["id"] for c in _scan["categories"]
+                 if c["sentence_count"] < len(c["sentences"])]
+check("no category count is smaller than its own published list",
+      not _counts_short, str(_counts_short))
+_leaked = [(c["id"], s["section"], s["sentence"][:50]) for c in _scan["categories"]
+           for s in c["sentences"] if s["section"] in ("MARINE", "AVIATION", "FIRE WEATHER")]
+check("marine, aviation and fire-weather sections never produce a flag",
+      not _leaked, str(_leaked))
+check("the excluded sections are published as excluded",
+      set(_scan["sections_excluded_this_run"]) == {"MARINE", "AVIATION", "FIRE WEATHER"},
+      str(_scan["sections_excluded_this_run"]))
+check("the scanned section list carries no duplicates",
+      len(_scan["sections_scanned"]) == len(set(_scan["sections_scanned"])),
+      str(_scan["sections_scanned"]))
+check("the AWIPS header is not scanned as forecast prose",
+      climo.AFD_PREAMBLE not in _scan["sections_scanned"], str(_scan["sections_scanned"]))
+check("product furniture is dropped and the drop is counted",
+      _scan["furniture_sentences_dropped"] >= 1, str(_scan["furniture_sentences_dropped"]))
+check("no quoted sentence carries a date or a value",
+      not any(k in s for c in _scan["categories"] for s in c["sentences"]
+              for k in ("date", "value", "amount_in", "probability")),
+      "a forbidden key appeared on a quoted sentence")
+check("the scope caveat and the usage note are published with the scan",
+      bool(_scan.get("scope_caveat")) and bool(_scan.get("usage_note")), "missing caveat/note")
+
+section("== AFD language scan: dry discussion and missing product")
+
+_DRY = """
+.KEY MESSAGES...
+
+ - Warming trend Friday into the weekend
+
+.SHORT TERM...
+High pressure builds in with mostly sunny skies and light winds.
+The marine layer reforms overnight along the coast.
+
+.MARINE...
+Small craft advisory for the coastal waters this afternoon.
+"""
+_dry = climo.afd_language_scan({"text": _DRY, "issuance_time": "2026-09-18T14:34:00+00:00",
+                                "source_url": "https://api.weather.gov/products/y", "id": "y"})
+_dry_hits = sum(c["sentence_count"] for c in _dry["categories"])
+check("a dry discussion produces no atmospheric-river, prolonged-rain or heavy-rain flags",
+      sum(c["sentence_count"] for c in _dry["categories"]
+          if c["id"] in ("atmospheric_river", "prolonged_rain", "heavy_rain")) == 0,
+      str([(c["id"], c["sentence_count"]) for c in _dry["categories"]]))
+check("a bare AR never matches when the discussion never spells the term out",
+      all("AR" not in str(s["matched_patterns"]) or "atmospheric river" in _DRY.lower()
+          for c in _dry["categories"] for s in c["sentences"]),
+      "a bare AR was accepted without the spelled-out term")
+check("when nothing is found the scan says so, and says it is not a seasonal claim",
+      _dry_hits == 0 and bool(_dry["none_found_statement"])
+      and "not evidence that the season will be dry" in _dry["none_found_statement"],
+      str(_dry["none_found_statement"])[:200])
+check("when something is found there is no none-found statement",
+      _scan["none_found_statement"] is None, str(_scan["none_found_statement"]))
+
+_empty = climo.afd_language_scan({"text": "", "source_url": None, "id": None})
+check("no fetched discussion text is reported as not scanned, with a reason",
+      _empty["scanned"] is False and bool(_empty["reason"]), str(_empty))
+check("no fetched discussion text publishes no categories at all",
+      _empty["categories"] == [] and _empty["any_language_found"] is False, str(_empty))
+_none = climo.afd_language_scan(None)
+check("a missing AFD product does not raise",
+      _none["scanned"] is False, str(_none.get("scanned")))
+
+section("== Census reverse geocode (climo.parse_census_geographies)")
+
+_fx_path = os.path.join(HERE, "fixtures", "census_geocoder_94122.json")
+_fx = json.loads(open(_fx_path, encoding="utf-8").read())
+_geo = climo.parse_census_geographies(_fx)
+check("the real Census response names the county subdivision",
+      _geo and _geo["county_subdivision"] == "Sunset CCD", str(_geo))
+check("the real Census response names the county and place",
+      _geo["county"] == "San Francisco County" and _geo["place"] == "San Francisco city",
+      str({k: _geo[k] for k in ("county", "place")}))
+check("the real Census response gives tract and block GEOIDs",
+      _geo["census_tract_geoid"] == "06075032601"
+      and _geo["census_block_geoid"] == "060750326013006",
+      str({k: _geo[k] for k in ("census_tract_geoid", "census_block_geoid")}))
+check("Census GEOIDs nest: county is a prefix of subdivision, tract and block",
+      _geo["county_subdivision_geoid"].startswith(_geo["county_geoid"])
+      and _geo["census_tract_geoid"].startswith(_geo["county_geoid"])
+      and _geo["census_block_geoid"].startswith(_geo["census_tract_geoid"]),
+      str(_geo))
+check("the geography types actually returned are listed for review",
+      "County Subdivisions" in _geo["geography_types_returned"],
+      str(_geo["geography_types_returned"]))
+check("an empty payload yields None rather than a guess",
+      climo.parse_census_geographies({}) is None
+      and climo.parse_census_geographies(None) is None, "empty payload produced a value")
+check("a payload with no usable geography yields None",
+      climo.parse_census_geographies({"result": {"geographies": {}}}) is None
+      and climo.parse_census_geographies(
+          {"result": {"geographies": {"States": [{"NAME": "California"}]}}}) is None,
+      "a state-only payload produced a value")
+check("a geography is read by name, so a re-ordered response still parses",
+      climo.parse_census_geographies({"result": {"geographies": {
+          "County Subdivisions": [{"BASENAME": "Sunset", "NAME": "Sunset CCD",
+                                   "GEOID": "0607593267"}]}}})["county_subdivision"] == "Sunset CCD",
+      "name lookup failed")
 
 # --------------------------------------------------------------------------- #
 
