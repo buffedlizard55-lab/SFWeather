@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T19:59:27Z",
+  "generated_utc": "2026-09-18T20:01:50Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -10,13 +10,11 @@
   ],
   "summary": {
     "total": 48,
-    "passed": 47,
+    "passed": 48,
     "failed": 0,
-    "warnings": 1,
+    "warnings": 0,
     "failed_checks": [],
-    "warning_checks": [
-      "docs-current-dates-traceable"
-    ]
+    "warning_checks": []
   },
   "checks": [
     {
@@ -681,15 +679,10 @@
     {
       "id": "docs-current-dates-traceable",
       "title": "Any date in the documentation that could be read as the current NWS forecast horizon is a date this run actually published",
-      "status": "warn",
-      "detail": "1 documentation date(s) near this run match no date this dataset publishes: [{'file': 'VERIFICATION.md', 'date': '2026-09-29'}]",
+      "status": "pass",
+      "detail": "no documentation date near 2026-09-18 is absent from the 134 date(s) this dataset publishes (forecast window, scoreboard days, CPC issuances, run date)",
       "evidence": {
-        "stale": [
-          {
-            "file": "VERIFICATION.md",
-            "date": "2026-09-29"
-          }
-        ],
+        "stale": [],
         "published_date_count": 134,
         "published_dates_sample": [
           "2026-08-20",

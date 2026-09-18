@@ -368,6 +368,18 @@ def _d2(tmp):
     return _repo_copy_with(mutate_readme=mutate)(tmp)
 
 
+@case("README quotes a horizon date inside a code span (a fixture literal, not a claim)",
+      "pass", "docs-current-dates-traceable")
+def _d3(tmp):
+    # The falsification harnesses have to name dates no run publishes; writing
+    # that down must not read as documentation drift.  Prose dates still warn
+    # (case _d2) - the difference is the code span, not the date.
+    def mutate(path):
+        s = path.read_text()
+        path.write_text(s + "\n\nThe harness uses `2026-09-29` as its stale-horizon fixture.\n")
+    return _repo_copy_with(mutate_readme=mutate)(tmp)
+
+
 def main():
     failures = []
     for name, expect, check_id, build in CASES:

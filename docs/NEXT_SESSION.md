@@ -48,7 +48,7 @@ guard can fail). GitHub Pages serves `main` from the repository root; the
    not corrected** — a number in prose cannot be re-derived by the ledger, so it
    will contradict the dataset again.
 5. **Falsification harnesses committed and wired into CI**:
-   `tests/falsify_guards.py` (15 ledger cases) and `tests/falsify_smoke.py`
+   `tests/falsify_guards.py` (19 ledger cases) and `tests/falsify_smoke.py`
    (8 render cases). Two of my own new render guards were caught by them on the
    first run (bug 47), and after the data refresh the ledger harness caught
    *itself*: two cases had quietly become no-ops because the refreshed dataset

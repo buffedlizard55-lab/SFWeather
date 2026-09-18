@@ -1581,6 +1581,15 @@ def main() -> int:
             doc_files += [(p.name, p.read_text(encoding="utf-8"))
                           for p in sorted(docs_dir.glob("*.md"))]
         for name, text in doc_files:
+            # A date inside a code span is a literal quoted from a fixture, an
+            # identifier or a filename - not a claim about the world.  The
+            # falsification harnesses necessarily name dates that no run
+            # publishes (`2026-09-29` is the "stale horizon" fixture), and
+            # documenting that must not read as drift.  Stripping code spans
+            # keeps prose honest without making the check unable to talk about
+            # its own tests.  The falsification case appends bare prose, so it
+            # still warns for the right reason.
+            text = _re_docs.sub(r"`[^`\n]*`", " ", text)
             for m in _re_docs.finditer(r"\b(\d{4}-\d{2}-\d{2})\b", text):
                 try:
                     when = dt.date.fromisoformat(m.group(1))
