@@ -15,7 +15,8 @@ const FILES = {
   quality: 'data/quality_report.json',
   storms: 'data/storm_events.json',
   landlord: 'data/landlord.json',
-  verify: 'data/verify.json'
+  verify: 'data/verify.json',
+  digest: 'data/digest.json'
 };
 
 const state = { data: {}, month: '2026-10', dialogDay: null };
@@ -1072,6 +1073,30 @@ function renderAfdLanguage(cal) {
   box.append(el('p', { class: 'fine' }, [
     el('strong', { text: 'Verbatim rule: ' }), document.createTextNode(a.verbatim_rule || DASH)
   ]));
+
+  /* Issuance history: "the last discussion to mention X was ...".  A history
+   * of what NWS wrote -- quotations only, same as the live scan -- never a
+   * forecast and never attached to a scoreboard day. */
+  const hist = a.history || {};
+  const lm = hist.last_mention || {};
+  if (Object.keys(lm).length) {
+    box.append(el('h4', { text: 'When each pattern was last mentioned' }));
+    box.append(el('p', { class: 'fine', text:
+      `${hist.n_issuances || 0} issuance(s) on file. ` + (hist.note || '') }));
+    box.append(table(
+      [{ label: 'Pattern' }, { label: 'Last discussion mentioning it' }, { label: 'In tonight\u2019s discussion' }],
+      Object.values(lm).map(b => [
+        b.label || DASH,
+        b.last_issuance_time || 'never on file',
+        el('span', {
+          class: 'pill ' + ((b.current_sentence_count || 0) > 0 ? 'pill-warn' : 'pill-ok'),
+          text: (b.current_sentence_count || 0) > 0
+            ? `${b.current_sentence_count} sentence(s)` : 'not tonight'
+        })
+      ])));
+    box.append(el('p', { class: 'fine' }, ['Full history: ',
+      link('data/afd_history.json', 'afd_history.json')]));
+  }
 }
 
 function renderNow(nws, cal) {
@@ -1549,6 +1574,27 @@ function openDay(d) {
     body.append(el('p', { class: 'fine', text:
       'These are probabilities for the whole period, not for this day. Where an outlook is ' +
       'available from more than one issuance date, the most recent is shown.' }));
+  }
+
+  /* Per-field deep links: the exact official row/file behind each headline
+   * number, so a reader can re-derive it without hunting through this
+   * project's code.  The claim ledger fails the run if a tier's day lacks
+   * the expected deep-link keys. */
+  const dl = d.deep_links || {};
+  const dlRows = [
+    ['High / low', 'temp'], ['Humidity', 'humidity'], ['Chance of rain', 'rain_chance'],
+    ['Rain amount', 'rain_amount'], ['Max wind', 'wind'], ['Max gust', 'gust'],
+    ['NOAA\u2019s published normals', 'published_normals'],
+    ['Human-readable forecast', 'human']
+  ].filter(([, k]) => dl[k] && dl[k].url);
+  if (dlRows.length) {
+    body.append(el('h4', { text: 'Verify each number yourself' }));
+    body.append(table([{ label: 'Field' }, { label: 'Official row / file' }, { label: 'How to read it' }],
+      dlRows.map(([label, k]) => [
+        label,
+        link(dl[k].url, dl[k].label || dl[k].url),
+        el('span', { class: 'fine', text: dl[k].hint || '' })
+      ])));
   }
 
   body.append(el('h4', { text: 'Sources for this day' }));
@@ -2108,41 +2154,108 @@ function renderCpcBacktest() {
   return fetch('data/cpc_backtest.json').then(r => r.ok ? r.json() : null).then(bt => {
     if (!bt) {
       host.append(el('div', { class: 'callout callout-info' }, [
-        el('h3', { text: 'Not yet built \\u2014 data-source limitation, flagged' }),
+        el('h3', { text: 'Back-test file missing this run' }),
         el('p', { class: 'fine', text:
-          'CPC\\u2019s live GIS server at ftp.cpc.ncep.noaa.gov only hosts the current month\\u2019s ' +
-          'issuance of seasprcp_YYYYMM.zip / seastemp_YYYYMM.zip. To back-test, the pipeline ' +
-          'must fetch every past issuance (mid-month, third-Thursday, 0.5-month lead going back ' +
-          'to 1995) from CPC\\u2019s static archive or from the IRI Data Library, sample each at ' +
-          '37.7605N / -122.4839W, and compare the above/below/EC category with the observed ' +
-          'Oct\\u2013Jan (and OND/NDJ/DJF/JFM) precipitation total from GHCN-Daily at USW00023272.' }),
-        el('p', { class: 'fine', text:
-          'Until those archived issuances are downloaded and stored under data/cpc_archive/, ' +
-          'this card honestly reports \\u201cpending back-fill\\u201d rather than guessing a ' +
-          'hit-rate. The sampling + comparison code path is the same code used for the live ' +
-          'CPC section (pipeline/lib_shape.py point-in-polygon against CPC polygons), so ' +
-          'plugging in the archive files is a data-fetch task, not a new-method task.' }),
-        el('p', { class: 'fine', text: 'Required next: bulk-fetch historical seasprcp issuances from CPC/IRI and add them to the provenance allow-list (verify_sources.py already allows ftp.cpc.ncep.noaa.gov, but IRI lives on iridl.ldeo.columbia.edu and must be vetted separately).' })
+          'pipeline/cpc_backtest.py writes data/cpc_backtest.json on every scheduled run. ' +
+          'Until it has, no hit-rate is published here.' })
       ]));
       return;
     }
-    const rows = bt.summary || [];
-    if (!rows.length) {
-      host.append(el('p', { class: 'empty', text: 'Back-test file present but contains no scored seasons yet.' }));
+    /* Pending-backfill is the honest normal state: the live GIS server keeps
+     * only recent months, so historical seasprcp_YYYYMM.zip files usually 404.
+     * The file says so itself (status + reason), with links to the official
+     * Oct-1995 archive and to CPC's own verifications for manual review. */
+    if (bt.status === 'pending-backfill' || !(bt.rows || []).length) {
+      host.append(el('div', { class: 'callout callout-info' }, [
+        el('h3', { text: 'Pending back-fill -- no hit-rate yet, flagged' }),
+        el('p', { class: 'fine', text: bt.reason || 'No historical archive was retrievable this run.' }),
+        el('p', { class: 'fine', text:
+          'Method, ready and waiting: sample each historical August seasprcp issuance at the ' +
+          '94122 centroid with the same point-in-polygon code as the live outlooks, and score ' +
+          'the sampled Above/Below/EC category against the observed GHCN-Daily OND/NDJ/DJF/JFM ' +
+          'total. EC outlooks are unscored, never counted as hits or misses.' }),
+        el('p', { class: 'fine', text:
+          'The IRI Data Library was considered as an archive source and rejected: it is a ' +
+          'Columbia academic mirror, not an official NOAA operational product, it serves HTTP ' +
+          '(this project requires HTTPS), and its CPC tree holds monitoring datasets, not the ' +
+          'outlook polygons. The official CPC archive is the only accepted source.' })
+      ]));
+      const links = [];
+      if (bt.archive_index) links.push(link(bt.archive_index, 'official CPC long-lead archive (Oct 1995 on)'));
+      if (bt.verifications) links.push(link(bt.verifications, 'CPC\u2019s own seasonal verifications (CONUS-wide)'));
+      if (links.length) host.append(el('p', { class: 'fine' }, ['For manual review: ',
+        ...links.flatMap((l, i) => i ? [' \u00b7 ', l] : [l])]));
+      const att = bt.issuances_attempted || [];
+      if (att.length) {
+        host.append(el('p', { class: 'fine', text:
+          `${att.length} historical issuance(s) attempted this run, ` +
+          `${bt.n_archives_retrieved || 0} retrieved.` }));
+        host.append(table(
+          [{ label: 'Issuance' }, { label: 'Result' }],
+          att.slice(-12).map(a => [a.issuance_ym || DASH,
+            a.ok ? 'retrieved' : `not retained (${a.status || a.error || 'fetch failed'})`])));
+      }
       return;
     }
+    const s = bt.summary || {};
     host.append(el('p', { class: 'fine', text: bt.note || '' }));
+    host.append(el('p', { class: 'fine' }, [
+      el('strong', { text: 'Hit-rate over scored (non-EC) rows: ' }),
+      document.createTextNode(s.hit_rate_pct == null ? DASH : `${s.hit_rate_pct}% ` +
+        `(${s.hits} of ${s.n_rows_scored} rows; ${s.n_rows_unscored_ec} EC row(s) unscored)`)
+    ]));
+    if (s.by_category && Object.keys(s.by_category).length) {
+      host.append(table(
+        [{ label: 'CPC category' }, { label: 'Scored', num: true }, { label: 'Hits', num: true },
+         { label: 'Hit-rate', num: true }],
+        Object.entries(s.by_category).map(([cat, b]) => [cat, b.scored, b.hits,
+          b.hit_rate_pct == null ? DASH : b.hit_rate_pct + '%'])));
+    }
     host.append(table(
-      [{ label: 'Season' }, { label: 'CPC issued tilt' }, { label: 'CPC probability' },
-       { label: 'Observed tercile at 94122' }, { label: 'Hit?' }],
-      rows.map(r => [r.season, r.tilt || DASH,
+      [{ label: 'Season' }, { label: 'CPC category' }, { label: 'CPC probability' },
+       { label: 'Observed total' }, { label: 'Observed tercile' }, { label: 'Hit?' }],
+      (bt.rows || []).map(r => [r.season || DASH, r.category_label || r.category || DASH,
         r.probability == null ? DASH : r.probability + '%',
+        r.observed_total_in == null ? DASH : Number(r.observed_total_in).toFixed(2) + ' in',
         r.observed_tercile || DASH,
         el('span', { class: 'pill pill-' + (r.hit ? 'ok' : r.hit === false ? 'fail' : 'warn'),
-          text: r.hit == null ? 'n/a' : (r.hit ? 'hit' : 'miss') })])));
+          text: r.hit == null ? 'unscored' : (r.hit ? 'hit' : 'miss') })])));
+    host.append(el('p', { class: 'fine', text: bt.method || '' }));
   }).catch(err => {
     host.append(el('p', { class: 'fine', text: 'Could not read cpc_backtest.json: ' + err.message }));
   });
+}
+
+function renderDigest(digest) {
+  const host = $('#digest-body');
+  if (!host) return;
+  if (!digest) {
+    host.append(el('p', { class: 'empty', text:
+      'No digest was produced in this run (pipeline/build_digest.py writes data/digest.json + data/alerts.xml).' }));
+    return;
+  }
+  const c = digest.counts || {};
+  host.append(el('p', { class: 'fine', text:
+    `Built ${digest.generated_utc || DASH} \u00b7 ${c.nws_alerts || 0} active alert(s) ` +
+    `\u00b7 ${c.high_pop_days || 0} NWS-forecast day(s) at or above the ${digest.pop_threshold_pct || 50}% rain-chance threshold.` }));
+  const items = [...(digest.nws_alerts || []), ...(digest.high_pop_days || [])];
+  if (!items.length) {
+    host.append(el('div', { class: 'callout callout-ok' }, [
+      el('p', { text: 'Quiet: no active NWS alerts for CAZ006 and no NWS-forecast day reaches the rain-chance threshold.' })
+    ]));
+  } else {
+    host.append(table(
+      [{ label: 'Type' }, { label: 'Entry' }, { label: 'Source' }],
+      items.map(it => [
+        it.kind === 'nws-alert' ? 'NWS alert' : 'High rain chance',
+        el('span', {}, [
+          el('strong', { text: it.title || DASH }),
+          it.description ? el('div', { class: 'fine', text: it.description }) : null
+        ].filter(Boolean)),
+        it.link ? linkShort(it.link, 40) : DASH
+      ])));
+  }
+  host.append(el('p', { class: 'fine', text: digest.privacy || '' }));
 }
 
 /* ------------------------------------------------------------ verification */
@@ -2309,14 +2422,15 @@ async function boot() {
   if (state.booted) return;
   state.booted = true;
   try {
-    const [run, calendar, nws, prov, quality, storms, landlord, verify] = await Promise.all([
+    const [run, calendar, nws, prov, quality, storms, landlord, verify, digest] = await Promise.all([
       loadJSON('run'), loadJSON('calendar'), loadJSON('nws'),
       loadJSON('provenance'), loadJSON('quality'),
       loadJSON('storms').catch(() => null),
       loadJSON('landlord').catch(() => null),
-      loadJSON('verify').catch(() => null)
+      loadJSON('verify').catch(() => null),
+      loadJSON('digest').catch(() => null)
     ]);
-    Object.assign(state.data, { run, calendar, nws, prov, quality, storms, landlord, verify });
+    Object.assign(state.data, { run, calendar, nws, prov, quality, storms, landlord, verify, digest });
 
     const idx = MONTHS.findIndex(m => (calendar.days || []).some(d => d.date.startsWith(m.key) && d.tier === 'nws'));
     state.month = idx >= 0 ? MONTHS[idx].key : MONTHS[0].key;
@@ -2328,6 +2442,7 @@ async function boot() {
     renderSeason(calendar);
     renderNow(nws, calendar);
     renderAfdLanguage(calendar);
+    renderDigest(digest);
     renderCalendar(calendar);
     renderDuration(calendar);
     renderWind(calendar, landlord);

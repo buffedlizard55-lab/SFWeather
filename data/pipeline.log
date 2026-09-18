@@ -13,9 +13,10 @@ SFWeather pipeline - 2026-09-18
       record coverage: STALE archive(s) -> wind=2025-08-27 (387 d), isd_hourly=2025-08-27 (387 d)
 
 === summary ===
-  fetches: 139 ok / 0 failed / 4 absent by design
-  irregularities: 4
+  fetches: 141 ok / 0 failed / 4 absent by design
+  irregularities: 5
     [info] nws: Some hourly forecast fields are null in the NWS gridded forecast for this grid cell.
     [warning] nws: No HWO products returned for office MTR.
+    [info] isd: ISD history shows 72494023234 ending 20250827 with no same-name successor row: the 2025-08-27 stop is the retired-dataset end, not an identifier change. Successors are GHCNh (hourly) and SSODv2 (daily
     [info] storm_events: NCEI's Storm Events file lost 12 character(s) before this project fetched it (U+FFFD is already present in the published file). Those characters were removed from the narrative text and are not guesse
-    [warning] coverage: At least one NCEI archive this project reads is more than 180 days behind the run date. Every published statistic is a 1991-2020 statistic and is unaffected; the flag exists so nothing claims to descr
+    [warning] coverage: At least one NCEI archive this project reads is more than 180 days behind the run date (GSOD/ISD were retired by NCEI on 2025-08-29; successors are SSODv2/GHCNh — see data/ghcnh_probe.json and data/is

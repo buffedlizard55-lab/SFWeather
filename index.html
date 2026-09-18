@@ -20,6 +20,7 @@
     </div>
     <nav class="site-nav" aria-label="Sections">
       <a href="#landlord">Landlord summary</a>
+      <a href="#digest">Storm-watch feed</a>
       <a href="#reality">Reality check</a>
       <a href="#season">Season outlook</a>
       <a href="#calendar">Day-by-day</a>
@@ -247,6 +248,19 @@
         <div id="nws-alerts"></div>
         <p class="fine">Source: <a href="https://api.weather.gov/alerts/active?zone=CAZ006" target="_blank" rel="noopener">api.weather.gov/alerts/active?zone=CAZ006</a></p>
       </div>
+      <div class="card" id="digest">
+        <h3>Storm-watch feed &mdash; alerts plus high rain-chance days, as RSS</h3>
+        <p class="fine">One entry per active NWS alert for CAZ006 and per NWS-forecast day whose
+          rain chance reaches the published threshold. Rebuilt nightly from the same official NWS feeds as the
+          cards above &mdash; never from climatology, and nothing is ever attached to a date the
+          NWS forecast does not cover. <strong>Opt-in only:</strong> subscribe with your own
+          feed reader; this project stores no address, sends no email, and collects no
+          personal data. The feed is a static file &mdash; subscription happens entirely between
+          you and your reader.</p>
+        <p class="fine">Subscribe: <a href="data/alerts.xml" rel="alternate" type="application/rss+xml">data/alerts.xml</a>
+          &middot; machine-readable: <a href="data/digest.json">data/digest.json</a></p>
+        <div id="digest-body"></div>
+      </div>
       <div class="card">
         <h3>NWS Area Forecast Discussion (verbatim)</h3>
         <p class="fine">The forecasters’ own reasoning, published by NWS San Francisco Bay
@@ -460,7 +474,7 @@
             coverage is now published per season, and three of the 30 seasons it is averaged
             over are missing 1–4 of the 123 dates.</li>
           <li><strong>NWS forecast verification loop — scoring pipeline live, page card added.</strong> The history file, scoring code and page card (<a href="#nws-verification">NWS verification</a>) all exist; the first scored pairs appear once observed days accumulate past the current NWS horizon (the card says so explicitly while the count is 0).</li>
-          <li><strong>CPC back-testing — page card added, data back-fill required.</strong> The <a href="#cpc-backtest">CPC back-test card</a> now explains exactly what blocks the hit-rate (CPC's live server only exposes the current month; historical <code>seasprcp_YYYYMM.zip</code> archives must be bulk-fetched from a vetted static source, then sampled with the same point-in-polygon code used for live outlooks). See <code>docs/NEXT_SESSION.md</code> §2.1.</li>
+          <li><strong>CPC back-testing — pipeline built, archive back-fill still open.</strong> The nightly job now attempts every historical August <code>seasprcp_YYYYMM.zip</code> issuance (1995–2020) and samples any it retrieves with the same point-in-polygon code used for live outlooks, but CPC's live server retains only recent months, so the <a href="#cpc-backtest">CPC back-test card</a> reports pending-backfill with the attempt table until per-issuance URLs inside the official Oct-1995 archive are followed. The IRI mirror was vetted and rejected as a source. See <code>docs/NEXT_SESSION.md</code> §2.1.</li>
           <li><strong>Atmospheric river awareness — done.</strong> Storm-pattern language is scanned out of the NWS Area Forecast Discussion and quoted verbatim; no date or amount is ever attached to a quotation. Remaining gap: the scan counts language, it cannot yet say how many days a discussion covers.</li>
           <li><strong>Humidity for climatology days</strong> is not an observed NOAA relative-humidity
             normal. Where available, it is a labelled per-calendar-date derivation from official NCEI

@@ -501,3 +501,70 @@ catches. That boundary is written in the harness so it is not rediscovered.
   geocode step. The first CI run that repopulates `run.json` (or records a
   `geography` irregularity) resolves it; the check is written to accept either
   outcome and reject only the silent one.
+
+---
+
+## Session 8 — 18 September 2026 (pass 8): CPC back-test pipeline, GSOD/ISD retirement, deep links, AFD history, digest
+
+This pass implemented five of the six open items from `docs/NEXT_SESSION.md` §2
+(the sixth, CFSv2/NMME model guidance, stays explicitly unbuilt per its own
+heavy-caveat rule — and a new ledger check, `model-guidance-separated`, now
+fails the run if model guidance ever leaks into the scoreboard tiers). Six new
+ledger checks cover the new artefacts (see standings).
+
+### Bugs found in this pass (and fixed)
+
+| # | What was wrong | Root cause | Fix |
+| --- | --- | --- | --- |
+| 52 | `data/afd_history.json` recorded every category with a null key, and the last-mention table could never resolve | `afd_language_scan()` names the field `id`, but `update_afd_history()`, `afd_last_mention()`, the calendar builder and the ledger check all read `key` | All four read `id` with a `key` fallback; the bad history file was deleted and rebuilt; a regression test pins a scan using `id` and a legacy entry using `key` |
+| 53 | The CPC back-test card expected `summary` to be an array of rows; the writer produces `{status, rows, summary}` | Card and writer were written against different imagined schemas and never run together | The renderer was rewritten for the real schema (hit-rate + by-category table + per-row table, pending-backfill callout with attempt table); smoke guard 27 pins card/file consistency |
+| 54 | The digest renderer read `it.url` / `it.summary` / `nws_alert` | Item schema is `link` / `description` / `nws-alert` (RSS vocabulary) | Renderer corrected to the real keys before first render |
+
+### Decisions with evidence
+
+| Decision | Evidence |
+| --- | --- |
+| GSOD/ISD stop at 2025-08-27 because NCEI **retired** both archives on 2025-08-29 — not a station-ID change, not a lag | HadISD final release `v342_202508p`; GSODR retirement docs; NOAA community notice that SSOD replaces GSOD and GHCNh replaces ISD. Coverage notes now say "retired"; each run probes GHCNh/SSODv2 |
+| IRI Data Library **rejected** as a CPC archive source | Serves HTTP only (project requires HTTPS); a Columbia academic mirror, not an official NOAA operational product; its `SOURCES/.NOAA/.NCEP/.CPC/` tree holds monitoring datasets, not outlook polygons. Documented in `docs/DATA_SOURCES.md` §3, kept off `ALLOWED_HOSTS` |
+| Email digest **not offered** | Requires storing addresses and running a sender; a static site cannot do either honestly. RSS + JSON only, opt-in, no tracking |
+
+### Standings after this pass
+
+* `pipeline/verify_claims.py`: **59 checks** (53 at the start of the pass, +6:
+  `cpc-backtest-sampling-method`, `deep-links-traceable`, `afd-history-consistent`,
+  `digest-rss-traceable`, `model-guidance-separated`, `successor-probe-present`),
+  19 claims.
+* `tests/test_parsers.py`: **360 assertions** (+24: CPC scoring incl. EC-unscored,
+  AFD history append/dedupe/cap, digest triggers + RSS well-formedness/escaping,
+  deep-link key sets + official-host rule).
+* `tests/smoke.js`: guards **24**–**27** added (digest card vs `digest.json`;
+  AFD last-mention rendering; day-dialog deep links on official hosts;
+  back-test card vs `cpc_backtest.json`).
+* New workflow steps: `cpc_backtest.py` (after the calendar build) and
+  `build_digest.py` (after the landlord summary), both before the claim ledger
+  so their outputs are verified before publication.
+
+### Pass 2 (same session): bug/edge-case review of the Pass 1 diff
+
+| # | What was wrong | Root cause | Fix |
+| --- | --- | --- | --- |
+| 55 | `main.fetch_isd_history()` called `climo.search_isd_history_for_station`, which does not exist — the nightly run would have crashed with `AttributeError` | The fetch path needs the network, so it never executed locally | Call `climo.search_isd_history`; new tests execute both fetch functions end to end with a stubbed transport |
+| 56 | The successor search reported a still-open buoy (operating since 2020) as KSFO's successor id | A "still open" fallback ignored BEGIN dates | Successor must BEGIN after the stop; the fallback is gone, with a comment recording why |
+| 57 | The back-test's fetches (GHCN re-fetch + archive attempts) and sampling warnings died with its process: scored rows would have had no recorded fetch and the run counts would no longer recount | `cpc_backtest.py` runs after `main.py` wrote the run files, in a fresh process with an empty manifest | `merge_run_manifests()` folds the step's manifest + irregularities back into `provenance.json`, `run.json`, `quality_report.json` and `summary.txt`, on both exit paths; tested against a miniature run directory |
+| 58 | The ledger hard-coded the 50% POP threshold the builder publishes as a constant | Copy-paste of the value instead of the import | The ledger imports `POP_THRESHOLD_PCT` from `build_digest` |
+| 59 | JFM outlooks were scored against the *following* year's observed rain | A fixed "Jan/Feb/Mar belong to year+1" rule, wrong for a season that starts in January | Months at/after the season's first month belong to the named year; year-boundary tests pin OND/NDJ/JFM |
+| 60 | NWS days' human-forecast deep link was silently dropped from the day dialog | The dialog's link list had no `human` row | Row added (NWS days show 7 links, climatology days 7) |
+| 61 | Stripping one day's deep links still passed `deep-links-traceable` | The legacy-dataset leniency tested `days[0]` only | Leniency now requires *no* day to carry links; 10 new falsification cases pin all six new checks (33 total) |
+| 62 | If a mid-pipeline step crashed, the commit step read the *stale* `verify.json` (usually a pass) and published unverified data | The gate checked the verdict but not whether every step ran | The gate additionally requires all seven `*_EXIT=0` lines in `run_diagnostics.txt`; verified against full and crashed runs |
+| 63 | The GHCNh probe fetched `ghcnh-station-list.txt` (404) and searched only the first 200 KB, where no US id can appear | Unverified URL guess; a truncation that assumed alphabetical irrelevance | Probed the live host: the list is `.csv` (pinned by test); the SFO check searches the full text |
+| 64 | A non-string DBF `Cat` value would have crashed the back-test on `.strip()` | Unchecked type from the shapefile row | `str(...)` coercion before stripping |
+
+Minor hardening in the same pass: removed a dead variable, validated
+`normals_period` before unpacking, made the digest refuse a non-numeric POP
+rather than guessing, required the tier-appropriate 7th deep link and a
+recorded fetch behind an ok GHCNh probe, and de-literalised the threshold in
+the site's static prose.
+
+Standings after Pass 2: `tests/test_parsers.py` **377 assertions** (+17),
+`tests/falsify_guards.py` **33 cases** (+10), ledger still **59/59**.
+

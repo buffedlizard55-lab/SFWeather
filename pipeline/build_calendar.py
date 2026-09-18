@@ -106,8 +106,10 @@ def daily_from_hourly(periods, tz_name="America/Los_Angeles"):
             continue
         key = t.astimezone(tz).date().isoformat()
         d = days.setdefault(key, {"temps": [], "rh": [], "wind": [], "gust": [],
-                                  "pop": [], "qpf_mm": 0.0, "hours": 0, "qpf_known": False})
+                                  "pop": [], "qpf_mm": 0.0, "hours": 0, "qpf_known": False,
+                                  "start_times": []})
         d["hours"] += 1
+        d["start_times"].append(st)
         if p.get("temperature_f") is not None:
             d["temps"].append(p["temperature_f"])
         if p.get("rh_pct") is not None:
@@ -434,6 +436,78 @@ def collect_cpc(cpc, default_year):
     return deduped
 
 
+def deep_links_for_nws_day(*, iso, hourly_url, gridpoint_url, human_url, start_times):
+    """One-click manual-verification links for an NWS-forecast day.
+
+    Each field points at the exact official element it was aggregated from:
+    hourly fields name the NWS hourly ``startTime`` values that fell in the
+    local day (open the API URL, search the timestamp); gust/QPF name the
+    gridpoint series and its ``validTime`` intervals.  Nothing is averaged away
+    — the hints say what to search for.
+    """
+    first = (sorted(start_times or [])[:1] or [None])[0]
+    last = (sorted(start_times or [])[-1:] or [None])[0]
+    span = f"{first} … {last}" if first and last else iso
+    hourly_hint = (f"open the NWS hourly product and search startTime {span} "
+                   f"({len(start_times or [])} grid hour(s) fall in local day {iso})")
+    grid_hint = (f"open the NWS gridpoint product, find the windGust / "
+                 f"quantitativePrecipitation series, and read the validTime intervals "
+                 f"covering local day {iso}")
+    return {
+        "temp": {"url": hourly_url, "label": "NWS hourly temperature",
+                 "hint": hourly_hint},
+        "humidity": {"url": hourly_url, "label": "NWS hourly relativeHumidity",
+                     "hint": hourly_hint},
+        "rain_chance": {"url": hourly_url, "label": "NWS hourly probabilityOfPrecipitation",
+                        "hint": hourly_hint + "; daily chance is the max over those hours"},
+        "rain_amount": {"url": gridpoint_url, "label": "NWS gridpoint quantitativePrecipitation",
+                        "hint": grid_hint + "; accumulations crossing local midnight are split by hours"},
+        "wind": {"url": hourly_url, "label": "NWS hourly windSpeed",
+                 "hint": hourly_hint + "; daily wind is the max over those hours"},
+        "gust": {"url": gridpoint_url, "label": "NWS gridpoint windGust",
+                 "hint": grid_hint + "; daily gust is the max over those hours"},
+        "human": {"url": human_url, "label": "NWS human-readable forecast",
+                  "hint": f"weather.gov text forecast for the 94122 point (same cycle)"},
+    }
+
+
+def deep_links_for_climo_day(*, mmdd, month, day, ghcn_url, ghcn_station,
+                             gsod_base_url, gsod_station, humidity_url,
+                             daily_normals_url, normals_period=(1991, 2020)):
+    """One-click manual-verification links for a climatology day.
+
+    GHCN-Daily is one wide CSV (one row per date): the hint names the DATE row
+    and the PRCP/TMAX/TMIN columns to read.  GSOD is one file per year: the
+    hint names the annual-file pattern and the MXSPD/GUST columns.  Humidity
+    names the hourly-normals month/day/hour rows.  A reader with these three
+    URLs and the hints can re-derive the day without downloading anything else.
+    """
+    y0, y1 = normals_period
+    return {
+        "temp": {"url": ghcn_url, "label": f"GHCN-Daily {ghcn_station} row",
+                 "hint": (f"wide CSV, one row per DATE: read TMAX/TMIN on rows "
+                          f"{y0}-{mmdd} … {y1}-{mmdd}; day high/low are the means")},
+        "humidity": {"url": humidity_url, "label": "NCEI hourly normals (temp/dewpoint)",
+                     "hint": (f"rows with month={month} day={day} (all 24 hours); "
+                              "RH is derived per row by the Magnus formula")},
+        "rain_chance": {"url": ghcn_url, "label": f"GHCN-Daily {ghcn_station} row",
+                        "hint": (f"wide CSV: count rows {y0}-{mmdd} … {y1}-{mmdd} with "
+                                 "PRCP ≥ 0.01 in, divide by seasons with a value")},
+        "rain_amount": {"url": ghcn_url, "label": f"GHCN-Daily {ghcn_station} row",
+                        "hint": (f"wide CSV: mean of PRCP on rows {y0}-{mmdd} … {y1}-{mmdd}, "
+                                 "dry days included")},
+        "wind": {"url": gsod_base_url, "label": f"GSOD {gsod_station} annual files",
+                 "hint": (f"one file per year: {gsod_station}.csv under "
+                          f"{y0}/ … {y1}/; read MXSPD on each {mmdd} row (UTC days)")},
+        "gust": {"url": gsod_base_url, "label": f"GSOD {gsod_station} annual files",
+                 "hint": (f"one file per year: {gsod_station}.csv under "
+                          f"{y0}/ … {y1}/; read GUST on each {mmdd} row (UTC days)")},
+        "published_normals": {"url": daily_normals_url,
+                              "label": "NCEI published daily normals row",
+                              "hint": f"row for {mmdd}: DLY-TMAX-NORMAL / DLY-TMIN-NORMAL / DLY-PRCP-PCTALL-*"},
+    }
+
+
 def main():
     run = load("run.json")
     nws = load("nws.json")
@@ -593,11 +667,15 @@ def main():
                 "NWS hourly gridded probability of precipitation: highest of the hours "
                 "falling in this local day") if n["pop"] else None
             entry["hours_covered"] = n["hours"]
+            entry["nws_hourly_start_times"] = sorted(n.get("start_times") or [])
             entry["sources"] = [
                 {"label": "NWS hourly gridded forecast (api.weather.gov)", "url": hourly_url},
                 {"label": "NWS gridpoint data - windGust and QPF series (api.weather.gov)", "url": gridpoint_url},
                 {"label": "NWS 7-day forecast for this point (weather.gov)", "url": human_url},
             ]
+            entry["deep_links"] = deep_links_for_nws_day(
+                iso=iso, hourly_url=hourly_url, gridpoint_url=gridpoint_url,
+                human_url=human_url, start_times=n.get("start_times"))
         else:
             entry["tier"] = "climatology"
             entry["tier_label"] = "1991-2020 observed climatology"
@@ -675,6 +753,21 @@ def main():
                 {"label": f"NCEI GSOD {meta.get('wind_station', {}).get('id', '')}",
                  "url": meta.get("wind_station", {}).get("url")},
             ]
+            try:
+                _period = tuple(run.get("normals_period", [1991, 2020]))
+                if len(_period) != 2 or not all(isinstance(y, int) for y in _period):
+                    raise ValueError("normals_period is not a [y0, y1] pair")
+            except Exception:
+                _period = (1991, 2020)
+            entry["deep_links"] = deep_links_for_climo_day(
+                mmdd=mmdd, month=d.month, day=d.day,
+                ghcn_url=meta.get("precip_station", {}).get("url"),
+                ghcn_station=meta.get("precip_station", {}).get("id", ""),
+                gsod_base_url=meta.get("wind_station", {}).get("url"),
+                gsod_station=meta.get("wind_station", {}).get("id", ""),
+                humidity_url=(humidity_normals or {}).get("url"),
+                daily_normals_url=(published_daily_normals or {}).get("url"),
+                normals_period=_period)
 
         # ---- NOAA's published daily normals for this calendar date ----------
         # Read straight out of the official NCEI file. Where this project also
@@ -848,6 +941,40 @@ def main():
     # quotations, never numbers, and never attaches a quotation to a calendar
     # date - see climo.afd_language_scan() for the rule set.
     afd_language = climo_lib.afd_language_scan((nws.get("products") or {}).get("AFD"))
+    # ---- AFD issuance history: "the last discussion to mention X was …" ----
+    # Each night's discussion is appended (deduped by issuance_time) so the AFD
+    # card can say when a phrase was last written by a forecaster.  This is a
+    # history of what NWS wrote, not a forecast, and it never promotes a day's
+    # tier.  Quotations only — the same rule as the live scan.
+    try:
+        _hist_path = DATA / "afd_history.json"
+        _existing_hist = json.loads(_hist_path.read_text()) if _hist_path.exists() else []
+        _updated_hist = climo_lib.update_afd_history(
+            _existing_hist, (nws.get("products") or {}).get("AFD"), afd_language)
+        _hist_path.write_text(json.dumps(_updated_hist, indent=2, default=str))
+        _last_mention = {}
+        for _c in (afd_language.get("categories") or []):
+            _key = _c.get("id") or _c.get("key")
+            if _key:
+                _last_mention[_key] = {
+                    "label": _c.get("label"),
+                    "last_issuance_time": climo_lib.afd_last_mention(_updated_hist, _key),
+                    "current_sentence_count": _c.get("sentence_count", 0),
+                }
+        afd_language["history"] = {
+            "n_issuances": len(_updated_hist),
+            "history_file": "data/afd_history.json",
+            "last_mention": _last_mention,
+            "note": ("History of what NWS forecasters wrote in the Area Forecast "
+                     "Discussion, newest last. Quotations only; no date or amount is "
+                     "ever attached to a quotation."),
+        }
+    except Exception as exc:  # noqa: BLE001 - history must not block the build
+        print(f"  afd history warning: {exc}")
+        afd_language.setdefault("history", {
+            "n_issuances": 0, "history_file": "data/afd_history.json",
+            "last_mention": {}, "note": "History unavailable this run.",
+        })
 
     current_forecast = {
         "generated_utc": (nws.get("forecast_hourly") or {}).get("generated_at"),

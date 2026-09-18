@@ -1,0 +1,986 @@
+{
+  "generated_utc": "2026-09-18T23:18:49Z",
+  "status": "scored",
+  "reason": null,
+  "archive_index": "https://www.cpc.ncep.noaa.gov/products/archives/long_lead/llarc.ind.php",
+  "verifications": "https://www.cpc.ncep.noaa.gov/products/predictions/long_range/tools/briefing/seas_veri.grid.php",
+  "method": "Sample each historical August seasprcp issuance at the 94122 centroid; compare the sampled Above/Below/EC category against the observed GHCN-Daily OND/NDJ/DJF/JFM total assigned to a tercile of its own 1991\u20132020 distribution. EC outlooks are unscored (None), never counted as hits or misses.",
+  "normals_period": [
+    1991,
+    2020
+  ],
+  "station_id": "USW00023272",
+  "station_url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
+  "tercile_breaks_in": {
+    "OND": {
+      "low_in": 6.076333333333333,
+      "high_in": 10.216666666666665,
+      "n_seasons": 30
+    },
+    "NDJ": {
+      "low_in": 9.269,
+      "high_in": 14.295333333333332,
+      "n_seasons": 30
+    },
+    "DJF": {
+      "low_in": 12.072,
+      "high_in": 15.514000000000001,
+      "n_seasons": 29
+    },
+    "JFM": {
+      "low_in": 9.579666666666666,
+      "high_in": 13.905333333333333,
+      "n_seasons": 29
+    }
+  },
+  "issuances_attempted": [
+    {
+      "issuance_ym": "199508",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_199508.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "199508",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_199508.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "199608",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_199608.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "199608",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_199608.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "199708",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_199708.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "199708",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_199708.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "199808",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_199808.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "199808",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_199808.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "199908",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_199908.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "199908",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_199908.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200008",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_200008.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200008",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_200008.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200108",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_200108.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200108",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_200108.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200208",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_200208.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200208",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_200208.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200308",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_200308.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200308",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_200308.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200408",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_200408.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200408",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_200408.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200508",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_200508.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200508",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_200508.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200608",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_200608.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200608",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_200608.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200708",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_200708.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200708",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_200708.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200808",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_200808.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200808",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_200808.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200908",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_200908.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "200908",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_200908.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "201008",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201008.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "201008",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_201008.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "201108",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201108.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "201108",
+      "url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_201108.zip",
+      "ok": false,
+      "status": 404,
+      "error": "HTTP 404 Not Found"
+    },
+    {
+      "issuance_ym": "201208",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201208.zip",
+      "ok": true,
+      "status": null,
+      "error": null
+    },
+    {
+      "issuance_ym": "201308",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201308.zip",
+      "ok": true,
+      "status": null,
+      "error": null
+    },
+    {
+      "issuance_ym": "201408",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201408.zip",
+      "ok": true,
+      "status": null,
+      "error": null
+    },
+    {
+      "issuance_ym": "201508",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201508.zip",
+      "ok": true,
+      "status": null,
+      "error": null
+    },
+    {
+      "issuance_ym": "201608",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201608.zip",
+      "ok": true,
+      "status": null,
+      "error": null
+    },
+    {
+      "issuance_ym": "201708",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201708.zip",
+      "ok": true,
+      "status": null,
+      "error": null
+    },
+    {
+      "issuance_ym": "201808",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201808.zip",
+      "ok": true,
+      "status": null,
+      "error": null
+    },
+    {
+      "issuance_ym": "201908",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201908.zip",
+      "ok": true,
+      "status": null,
+      "error": null
+    },
+    {
+      "issuance_ym": "202008",
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202008.zip",
+      "ok": true,
+      "status": null,
+      "error": null
+    }
+  ],
+  "n_archives_retrieved": 9,
+  "rows": [
+    {
+      "issuance_ym": "201208",
+      "season": "OND 2012",
+      "abbrev": "OND",
+      "season_year": 2012,
+      "lead": 2,
+      "stem": "lead2_OND_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": 13.083,
+      "observed_tercile": "Above",
+      "tercile_breaks_in": {
+        "low": 6.076333333333333,
+        "high": 10.216666666666665
+      },
+      "hit": null,
+      "polygon_index": 6,
+      "polygon_bbox_lon_lat": [
+        -178.2176,
+        18.9218,
+        -66.9693,
+        70.303
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20120816",
+        "Valid_Seas": "OND 2012",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201208.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201208",
+      "season": "JFM 2013",
+      "abbrev": "JFM",
+      "season_year": 2013,
+      "lead": 5,
+      "stem": "lead5_JFM_prcp",
+      "category": "Above",
+      "category_label": "Above median",
+      "probability": 33.0,
+      "observed_total_in": 2.315,
+      "observed_tercile": "Below",
+      "tercile_breaks_in": {
+        "low": 9.579666666666666,
+        "high": 13.905333333333333
+      },
+      "hit": false,
+      "polygon_index": 0,
+      "polygon_bbox_lon_lat": [
+        -124.3926,
+        28.9397,
+        -75.0718,
+        41.8954
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20120816",
+        "Valid_Seas": "JFM 2013",
+        "Prob": 33.0,
+        "Cat": "Above"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201208.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201308",
+      "season": "OND 2013",
+      "abbrev": "OND",
+      "season_year": 2013,
+      "lead": 2,
+      "stem": "lead2_OND_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": 1.65,
+      "observed_tercile": "Below",
+      "tercile_breaks_in": {
+        "low": 6.076333333333333,
+        "high": 10.216666666666665
+      },
+      "hit": null,
+      "polygon_index": 4,
+      "polygon_bbox_lon_lat": [
+        -178.2176,
+        18.9218,
+        -66.9693,
+        71.4062
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20130815",
+        "Valid_Seas": "OND 2013",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201308.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201308",
+      "season": "JFM 2014",
+      "abbrev": "JFM",
+      "season_year": 2014,
+      "lead": 5,
+      "stem": "lead5_JFM_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": 8.835,
+      "observed_tercile": "Below",
+      "tercile_breaks_in": {
+        "low": 9.579666666666666,
+        "high": 13.905333333333333
+      },
+      "hit": null,
+      "polygon_index": 2,
+      "polygon_bbox_lon_lat": [
+        -178.2176,
+        18.9218,
+        -66.9693,
+        71.4062
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20130815",
+        "Valid_Seas": "JFM 2014",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201308.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201408",
+      "season": "OND 2014",
+      "abbrev": "OND",
+      "season_year": 2014,
+      "lead": 2,
+      "stem": "lead2_OND_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": 14.465,
+      "observed_tercile": "Above",
+      "tercile_breaks_in": {
+        "low": 6.076333333333333,
+        "high": 10.216666666666665
+      },
+      "hit": null,
+      "polygon_index": 8,
+      "polygon_bbox_lon_lat": [
+        -178.2176,
+        18.9218,
+        -66.9693,
+        71.4062
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20140821",
+        "Valid_Seas": "OND 2014",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201408.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201408",
+      "season": "JFM 2015",
+      "abbrev": "JFM",
+      "season_year": 2015,
+      "lead": 5,
+      "stem": "lead5_JFM_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": 1.591,
+      "observed_tercile": "Below",
+      "tercile_breaks_in": {
+        "low": 9.579666666666666,
+        "high": 13.905333333333333
+      },
+      "hit": null,
+      "polygon_index": 8,
+      "polygon_bbox_lon_lat": [
+        -178.2176,
+        18.9218,
+        -66.9693,
+        71.4062
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20140821",
+        "Valid_Seas": "JFM 2015",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201408.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201508",
+      "season": "OND 2015",
+      "abbrev": "OND",
+      "season_year": 2015,
+      "lead": 2,
+      "stem": "lead2_OND_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": 6.61,
+      "observed_tercile": "Near-normal",
+      "tercile_breaks_in": {
+        "low": 6.076333333333333,
+        "high": 10.216666666666665
+      },
+      "hit": null,
+      "polygon_index": 8,
+      "polygon_bbox_lon_lat": [
+        -178.2176,
+        18.9218,
+        -66.9693,
+        71.4062
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20150820",
+        "Valid_Seas": "OND 2015",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201508.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201508",
+      "season": "JFM 2016",
+      "abbrev": "JFM",
+      "season_year": 2016,
+      "lead": 5,
+      "stem": "lead5_JFM_prcp",
+      "category": "Above",
+      "category_label": "Above median",
+      "probability": 33.0,
+      "observed_total_in": 14.764,
+      "observed_tercile": "Above",
+      "tercile_breaks_in": {
+        "low": 9.579666666666666,
+        "high": 13.905333333333333
+      },
+      "hit": true,
+      "polygon_index": 0,
+      "polygon_bbox_lon_lat": [
+        -123.769,
+        32.1408,
+        -74.0878,
+        40.8075
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20150820",
+        "Valid_Seas": "JFM 2016",
+        "Prob": 33.0,
+        "Cat": "Above"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201508.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201608",
+      "season": "OND 2016",
+      "abbrev": "OND",
+      "season_year": 2016,
+      "lead": 2,
+      "stem": "lead2_OND_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": 9.047,
+      "observed_tercile": "Near-normal",
+      "tercile_breaks_in": {
+        "low": 6.076333333333333,
+        "high": 10.216666666666665
+      },
+      "hit": null,
+      "polygon_index": 6,
+      "polygon_bbox_lon_lat": [
+        -178.2176,
+        18.9218,
+        -66.9693,
+        71.4062
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20160818",
+        "Valid_Seas": "OND 2016",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201608.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201608",
+      "season": "JFM 2017",
+      "abbrev": "JFM",
+      "season_year": 2017,
+      "lead": 5,
+      "stem": "lead5_JFM_prcp",
+      "category": "Below",
+      "category_label": "Below median",
+      "probability": 33.0,
+      "observed_total_in": 20.945,
+      "observed_tercile": "Above",
+      "tercile_breaks_in": {
+        "low": 9.579666666666666,
+        "high": 13.905333333333333
+      },
+      "hit": false,
+      "polygon_index": 6,
+      "polygon_bbox_lon_lat": [
+        -123.3105,
+        31.0375,
+        -74.1705,
+        41.9893
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20160818",
+        "Valid_Seas": "JFM 2017",
+        "Prob": 33.0,
+        "Cat": "Below"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201608.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201708",
+      "season": "OND 2017",
+      "abbrev": "OND",
+      "season_year": 2017,
+      "lead": 2,
+      "stem": "lead2_OND_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": 3.295,
+      "observed_tercile": "Below",
+      "tercile_breaks_in": {
+        "low": 6.076333333333333,
+        "high": 10.216666666666665
+      },
+      "hit": null,
+      "polygon_index": 4,
+      "polygon_bbox_lon_lat": [
+        -178.2176,
+        18.9218,
+        -66.9693,
+        71.4062
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20170817",
+        "Valid_Seas": "OND 2017",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201708.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201708",
+      "season": "JFM 2018",
+      "abbrev": "JFM",
+      "season_year": 2018,
+      "lead": 5,
+      "stem": "lead5_JFM_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": null,
+      "observed_tercile": null,
+      "tercile_breaks_in": {
+        "low": 9.579666666666666,
+        "high": 13.905333333333333
+      },
+      "hit": null,
+      "polygon_index": 2,
+      "polygon_bbox_lon_lat": [
+        -178.2176,
+        18.9218,
+        -66.9693,
+        71.4062
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20170817",
+        "Valid_Seas": "JFM 2018",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201708.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201808",
+      "season": "OND 2018",
+      "abbrev": "OND",
+      "season_year": 2018,
+      "lead": 2,
+      "stem": "lead2_OND_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": 5.953,
+      "observed_tercile": "Below",
+      "tercile_breaks_in": {
+        "low": 6.076333333333333,
+        "high": 10.216666666666665
+      },
+      "hit": null,
+      "polygon_index": 7,
+      "polygon_bbox_lon_lat": [
+        -178.2176,
+        18.9218,
+        -66.9693,
+        58.5547
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20180816",
+        "Valid_Seas": "OND 2018",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201808.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201808",
+      "season": "JFM 2019",
+      "abbrev": "JFM",
+      "season_year": 2019,
+      "lead": 5,
+      "stem": "lead5_JFM_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": 17.382,
+      "observed_tercile": "Above",
+      "tercile_breaks_in": {
+        "low": 9.579666666666666,
+        "high": 13.905333333333333
+      },
+      "hit": null,
+      "polygon_index": 10,
+      "polygon_bbox_lon_lat": [
+        -178.2176,
+        18.9218,
+        -66.9693,
+        70.8451
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20180816",
+        "Valid_Seas": "JFM 2019",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201808.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201908",
+      "season": "OND 2019",
+      "abbrev": "OND",
+      "season_year": 2019,
+      "lead": 2,
+      "stem": "lead2_OND_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": 6.398,
+      "observed_tercile": "Near-normal",
+      "tercile_breaks_in": {
+        "low": 6.076333333333333,
+        "high": 10.216666666666665
+      },
+      "hit": null,
+      "polygon_index": 8,
+      "polygon_bbox_lon_lat": [
+        -160.2424,
+        18.9218,
+        -77.8229,
+        59.8016
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20190815",
+        "Valid_Seas": "OND 2019",
+        "Prob": 33.0,
+        "Cat": "EC"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201908.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "201908",
+      "season": "JFM 2020",
+      "abbrev": "JFM",
+      "season_year": 2020,
+      "lead": 5,
+      "stem": "lead5_JFM_prcp",
+      "category": "Below",
+      "category_label": "Below median",
+      "probability": 33.0,
+      "observed_total_in": 3.898,
+      "observed_tercile": "Below",
+      "tercile_breaks_in": {
+        "low": 9.579666666666666,
+        "high": 13.905333333333333
+      },
+      "hit": true,
+      "polygon_index": 4,
+      "polygon_bbox_lon_lat": [
+        -123.7083,
+        32.5358,
+        -114.4597,
+        39.4138
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20190815",
+        "Valid_Seas": "JFM 2020",
+        "Prob": 33.0,
+        "Cat": "Below"
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_201908.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "202008",
+      "season": "OND 2020",
+      "abbrev": "OND",
+      "season_year": 2020,
+      "lead": 2,
+      "stem": "lead2_OND_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": 2.571,
+      "observed_tercile": "Below",
+      "tercile_breaks_in": {
+        "low": 6.076333333333333,
+        "high": 10.216666666666665
+      },
+      "hit": null,
+      "polygon_index": 6,
+      "polygon_bbox_lon_lat": [
+        -178.2176,
+        18.9218,
+        -66.9693,
+        69.6936
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20200820",
+        "Valid_Seas": "OND 2020",
+        "Prob": 33.0,
+        "Cat": "EC",
+        "InPoly_FID": 0,
+        "SmoPgnFlag": 0
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202008.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    },
+    {
+      "issuance_ym": "202008",
+      "season": "JFM 2021",
+      "abbrev": "JFM",
+      "season_year": 2021,
+      "lead": 5,
+      "stem": "lead5_JFM_prcp",
+      "category": "EC",
+      "category_label": "Equal chances",
+      "probability": 33.0,
+      "observed_total_in": 6.157,
+      "observed_tercile": "Below",
+      "tercile_breaks_in": {
+        "low": 9.579666666666666,
+        "high": 13.905333333333333
+      },
+      "hit": null,
+      "polygon_index": 6,
+      "polygon_bbox_lon_lat": [
+        -178.2176,
+        18.9218,
+        -66.9693,
+        71.4062
+      ],
+      "used_nearest_polygon": false,
+      "raw_dbf_row": {
+        "Fcst_Date": "20200820",
+        "Valid_Seas": "JFM 2021",
+        "Prob": 33.0,
+        "Cat": "EC",
+        "InPoly_FID": 0,
+        "SmoPgnFlag": 0
+      },
+      "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202008.zip",
+      "sampling": "lib_shape.point_in_polygon at the 94122 centroid (same code path as live CPC outlooks)"
+    }
+  ],
+  "summary": {
+    "n_issuances_scored": 4,
+    "n_rows_scored": 4,
+    "n_rows_unscored_ec": 14,
+    "hits": 2,
+    "misses": 2,
+    "hit_rate_pct": 50.0,
+    "by_category": {
+      "Above median": {
+        "scored": 2,
+        "hits": 1,
+        "hit_rate_pct": 50.0
+      },
+      "Below median": {
+        "scored": 2,
+        "hits": 1,
+        "hit_rate_pct": 50.0
+      }
+    },
+    "by_lead": {
+      "5": {
+        "scored": 4,
+        "hits": 2,
+        "hit_rate_pct": 50.0
+      }
+    }
+  },
+  "note": "Hit-rate is over scored (non-EC) rows only. CPC outlooks are regional probabilities for a 3-month period, never daily values; the polygon index and bounding box are published per row so each sample can be checked against the official map."
+}
