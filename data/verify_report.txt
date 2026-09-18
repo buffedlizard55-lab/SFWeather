@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-18T19:06:09Z
+generated_utc: 2026-09-18T19:47:20Z
 
-checks: 47 passed, 0 failed, 0 warning(s)  (of 47)
+checks: 47 passed, 0 failed, 1 warning(s)  (of 48)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         141 recorded fetches (140 unique URLs)
@@ -97,6 +97,8 @@ checks: 47 passed, 0 failed, 0 warning(s)  (of 47)
         all README table figures matched a published value
 [PASS] docs-current-dates-traceable: Any date in the documentation that could be read as the current NWS forecast horizon is a date this run actually published
         no documentation date near 2026-09-18 contradicts the published window ['2026-08-20', '2026-09-11', '2026-09-17', '2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27', '2026-10-01', '2026-10-09']
+[WARN] failed-fetches-explained: Every fetch that did not return HTTP 200 is explained in the quality report, naming what it cost the dataset - not merely counted in the source manifest
+        2 failed fetch(es) appear in the manifest but are not explained in the quality report: ['https://api.weather.gov/stations/OAMC1/observations/latest', 'https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW0002']
 
 claims recorded: 18
 
