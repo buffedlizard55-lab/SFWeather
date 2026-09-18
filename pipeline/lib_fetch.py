@@ -56,6 +56,46 @@ def decode_text(body, encodings=CSV_ENCODINGS):
     return body.decode(encodings[-1], "replace"), encodings[-1] + "+replace"
 
 
+#: Characters that are, by definition, already-destroyed content.  U+FFFD is
+#: the Unicode replacement character - a publisher's file that contains one has
+#: already lost the original character before this project saw the bytes, and no
+#: amount of re-decoding brings it back.  NUL carries no content and breaks
+#: consumers.
+#:
+#: This project does not guess at what the lost character was (NCEI's Storm
+#: Events file for 2022 contains U+FFFD where a typographic inch mark belongs in
+#: the 31 Dec 2022 narrative; replacing it with a double quote would be a guess
+#: dressed up as a repair).  It removes the characters and publishes how many
+#: were removed, so the text a reader sees is verbatim-minus-the-lost-glyphs and
+#: the loss is disclosed rather than hidden.
+UNREPRESENTABLE = "\ufffd\u0000"
+
+
+def strip_unrepresentable(text):
+    """Remove already-lost characters from published text.
+
+    Returns ``(clean_text, removed_count, contexts)`` where ``contexts`` holds
+    up to five short verbatim snippets around each removal, so a reviewer can
+    see exactly which sentence was affected and check it against the source file.
+    """
+    if not text:
+        return text, 0, []
+    if not any(ch in text for ch in UNREPRESENTABLE):
+        return text, 0, []
+    removed, contexts = 0, []
+    out = []
+    for ch in text:
+        if ch in UNREPRESENTABLE:
+            removed += 1
+            continue
+        out.append(ch)
+    clean = "".join(out)
+    for i, ch in enumerate(text):
+        if ch in UNREPRESENTABLE and len(contexts) < 5:
+            contexts.append(text[max(0, i - 40):i + 40])
+    return clean, removed, contexts
+
+
 class FetchResult:
     """Outcome of one HTTP GET."""
 

@@ -1025,6 +1025,27 @@ check("undecodable bytes fall back rather than raising",
       isinstance(_txt, str) and _enc.endswith(("cp1252", "latin-1+replace")),
       "encoding=%s" % _enc)
 
+# NCEI's Storm Events CSV for 2022 is valid UTF-8 and already contains U+FFFD,
+# so no decoder can recover the original glyph.  The pipeline removes those
+# characters and publishes the count instead of guessing at them.  This pins the
+# exact sentence from the real file.
+_lost = ('San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of '
+         'December 31st, just 0.08\ufffd less than 1st place (11/5/1994) with 5.54\ufffd.')
+_clean, _n, _ctx = lib_fetch.strip_unrepresentable(_lost)
+check("an already-lost publisher character is removed, not guessed at",
+      _n == 5 and "\ufffd" not in _clean and "5.46 in" in _clean and "0.08 less" in _clean,
+      "removed=%s clean=%r" % (_n, _clean))
+check("the removal keeps the rest of the sentence verbatim",
+      _clean.startswith("San Francisco Downtown site hit 5.46 in the 24 hours of December")
+      and "(11/5/1994) with 5.54." in _clean, _clean[-60:])
+check("the removal publishes where it happened",
+      len(_ctx) == 5 and all("5.46" in c or "0.08" in c or "5.54" in c for c in _ctx),
+      str(_ctx[:1]))
+check("clean text is returned untouched and reported as zero removals",
+      lib_fetch.strip_unrepresentable("ordinary text") == ("ordinary text", 0, []), "")
+check("an empty body is handled without error",
+      lib_fetch.strip_unrepresentable("") == ("", 0, []), "")
+
 # --------------------------------------------------------------------------- #
 print("\n== CPC category vs probability (the 33% baseline)")
 

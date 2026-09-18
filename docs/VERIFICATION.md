@@ -367,3 +367,37 @@ the page, which is the mechanism for that half of the review. Any figure traced 
 a raw file is checkable there in one step: open the URL in the ledger row, download
 the file, and compare against the value the row prints.
 
+## Follow-up: the U+FFFD in NCEI's Storm Events file is NCEI's
+
+The first attempt at bug 40 assumed this project's decoder was at fault (the
+pipeline had been using `errors="replace"`). It was not, or not only:
+
+* `lib_fetch.decode_text()` prefers strict UTF-8 and reports which encoding it
+  used. The 18 Sep run recorded **no encoding fallback** for any Storm Events
+  file, i.e. the bytes NCEI serves are valid UTF-8.
+* Valid UTF-8 that contains U+FFFD means the replacement character is *in the
+  published file* — NCEI's own conversion from CP1252 already destroyed the
+  glyph. No decoder can recover it.
+
+The character cannot be restored without guessing, and this project does not
+guess. So the pipeline now:
+
+1. removes U+FFFD and NUL from the narrative fields
+   (`lib_fetch.strip_unrepresentable`, unit-tested against the exact sentence
+   from the real file);
+2. publishes `storm_events.json` → `text_integrity` with the count, the affected
+   fields and event ids, up to five verbatim snippets around each removal, and
+   the reason;
+3. records an `info` irregularity saying the same thing, so it appears on the
+   site rather than only in the JSON;
+4. keeps the hard ledger check that **no U+FFFD may be published at all**, plus a
+   new one (`publisher-text-loss-disclosed`) requiring that any removal is
+   counted, located, attributed to the publisher, and reported — and that the
+   attribution is backed by `encoding_fallback_used == False`. A disclosure that
+   blames the publisher while this project's decoder was the cause fails the
+   check.
+
+The sentence a reader sees is therefore
+`…hit 5.46 in the 24 hours of December 31st, just 0.08 less than 1st place
+(11/5/1994) with 5.54.` — verbatim minus the three glyphs NCEI had already lost.
+

@@ -1200,6 +1200,37 @@ def main() -> int:
                   else f"{len(corrupted)} dataset(s) carry U+FFFD"),
                  evidence=corrupted[:5])
 
+    # --------------------------- 12f. disclosed loss of publisher characters
+    # The Storm Events file NCEI serves already contains U+FFFD, so the pipeline
+    # removes those characters and records how many.  Removing text is a
+    # publishable act: the dataset has to say what was lost and where, and the
+    # quality report has to carry the same thing, or the site is quietly
+    # editing an official document.
+    ti = storms.get("text_integrity") or {}
+    removed = ti.get("characters_removed")
+    loss_problems = []
+    if removed:
+        if not ti.get("fields_affected"):
+            loss_problems.append("characters were removed but no field is named")
+        if not ti.get("reason"):
+            loss_problems.append("characters were removed with no stated reason")
+        sev = ti.get("encoding_fallback_used")
+        if sev is not False:
+            loss_problems.append(
+                "the disclosure claims the loss is in the publisher's file, but "
+                f"encoding_fallback_used is {sev!r} - this project's decoder may be the cause")
+        noted = [i for i in (quality.get("irregularities") or [])
+                 if i.get("area") == "storm_events" and "U+FFFD" in (i.get("message") or "")]
+        if not noted:
+            loss_problems.append("the removal is not recorded as an irregularity")
+    ledger.check("publisher-text-loss-disclosed",
+                 "Any character removed from a publisher's text is counted, located, "
+                 "attributed and reported",
+                 not loss_problems,
+                 (f"{removed} character(s) removed and disclosed" if removed
+                  else "nothing was removed from any publisher's text this run"),
+                 evidence=loss_problems[:5])
+
     # ------------------------------------------------ 13. claim source evidence
     # A claim may be mathematically correct yet still be unsafe to publish if
     # its cited file was not actually retrieved with enough evidence to review.
