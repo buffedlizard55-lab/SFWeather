@@ -24,24 +24,24 @@
     "source_url": "https://api.weather.gov/points/37.7605,-122.4839"
   },
   "forecast_daily": {
-    "updated": "2026-09-18T20:26:33+00:00",
-    "generated_at": "2026-09-18T20:36:42+00:00",
-    "valid_times": "2026-09-18T14:00:00+00:00/P7DT11H",
+    "updated": "2026-09-18T18:27:04+00:00",
+    "generated_at": "2026-09-18T19:55:14+00:00",
+    "valid_times": "2026-09-18T12:00:00+00:00/P7DT13H",
     "elevation_m": 45.1104,
     "periods": [
       {
         "number": 1,
         "name": "This Afternoon",
-        "start_time": "2026-09-18T13:00:00-07:00",
+        "start_time": "2026-09-18T12:00:00-07:00",
         "end_time": "2026-09-18T18:00:00-07:00",
         "is_daytime": true,
         "temperature_f": 65,
         "temperature_unit": "F",
-        "wind_speed": "12 to 15 mph",
+        "wind_speed": "9 to 15 mph",
         "wind_direction": "W",
         "icon": "https://api.weather.gov/icons/land/day/sct?size=medium",
         "short_forecast": "Mostly Sunny",
-        "detailed_forecast": "Mostly sunny. High near 65, with temperatures falling to around 63 in the afternoon. West wind 12 to 15 mph, with gusts as high as 20 mph.",
+        "detailed_forecast": "Mostly sunny. High near 65, with temperatures falling to around 63 in the afternoon. West wind 9 to 15 mph, with gusts as high as 20 mph.",
         "pop_pct": 0,
         "dewpoint_f": null,
         "relative_humidity_pct": null
@@ -272,10 +272,23 @@
     "human_url": "https://forecast.weather.gov/MapClick.php?lat=37.760459&lon=-122.483894&unit=0&lg=english&FcstType=text&TextType=1"
   },
   "forecast_hourly": {
-    "updated": "2026-09-18T20:26:33+00:00",
-    "generated_at": "2026-09-18T20:36:42+00:00",
+    "updated": "2026-09-18T18:27:04+00:00",
+    "generated_at": "2026-09-18T19:55:15+00:00",
     "elevation_m": 45.1104,
     "periods": [
+      {
+        "start_time": "2026-09-18T12:00:00-07:00",
+        "end_time": "2026-09-18T13:00:00-07:00",
+        "temperature_f": 63,
+        "dewpoint_f": 15.555555555555555,
+        "rh_pct": 91,
+        "wind_speed": "9 mph",
+        "wind_gust": null,
+        "wind_direction": "W",
+        "pop_pct": 0,
+        "qpf_mm": null,
+        "short_forecast": "Mostly Sunny"
+      },
       {
         "start_time": "2026-09-18T13:00:00-07:00",
         "end_time": "2026-09-18T14:00:00-07:00",
@@ -2284,19 +2297,6 @@
         "temperature_f": 62,
         "dewpoint_f": 13.88888888888889,
         "rh_pct": 83,
-        "wind_speed": "7 mph",
-        "wind_gust": null,
-        "wind_direction": "WSW",
-        "pop_pct": 0,
-        "qpf_mm": null,
-        "short_forecast": "Mostly Cloudy"
-      },
-      {
-        "start_time": "2026-09-25T00:00:00-07:00",
-        "end_time": "2026-09-25T01:00:00-07:00",
-        "temperature_f": 62,
-        "dewpoint_f": 13.88888888888889,
-        "rh_pct": 84,
         "wind_speed": "7 mph",
         "wind_gust": null,
         "wind_direction": "WSW",
@@ -5049,7 +5049,7 @@
     "count": 0,
     "test_count": 0,
     "count_including_tests": 0,
-    "updated": "2026-09-18T20:36:45+00:00",
+    "updated": "2026-09-18T20:39:19+00:00",
     "events": [],
     "source_url": "https://api.weather.gov/alerts/active?zone=CAZ006",
     "human_url": "https://www.weather.gov/mtr"
