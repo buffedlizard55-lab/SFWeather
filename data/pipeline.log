@@ -5,13 +5,13 @@ SFWeather pipeline - 2026-09-18
 [3/7] CPC outlooks
 [4/7] ENSO / ONI
 [5/7] NCEI climatology archives
-      GHCN USW00023272: 38570 station-days parsed; range 1921-01-01 .. 2026-09-13
-      sample record: 1973-10-20 -> {'PRCP': 5.0, 'TMAX': 206.0, 'TMIN': 139.0, 'SNOW': None, 'SNWD': None}
+      GHCN USW00023272: 38572 station-days parsed; range 1921-01-01 .. 2026-09-15
+      sample record: 1973-10-21 -> {'PRCP': 8.0, 'TMAX': 206.0, 'TMIN': 156.0, 'SNOW': None, 'SNWD': None}
 [6/7] computing rainy-season climatology
 [7/7] Storm Events + writing outputs
 
 === summary ===
-  fetches: 103 ok / 2 failed
+  fetches: 138 ok / 2 failed
   irregularities: 3
     [info] nws: Some hourly forecast fields are null in the NWS gridded forecast for this grid cell.
     [warning] nws: No HWO products returned for office MTR.

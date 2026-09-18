@@ -1,5 +1,5 @@
 SFWeather - rainy season digest
-generated_utc: 2026-09-18T04:14:41Z
+generated_utc: 2026-09-18T12:48:58Z
 target: 94122  centroid 37.7605, -122.4839  (verified=True) source=U.S. Census Bureau Gazetteer file (internal point / centroid)
 
 STATIONS
@@ -36,7 +36,7 @@ OCT-JAN TOTAL RAINFALL BY ENSO PHASE (inches)
 WETTEST Oct-Jan seasons: 1997-1998 22.82in, 1994-1995 22.49in, 1996-1997 20.99in, 2001-2002 18.59in, 2016-2017 18.47in
 DRIEST  Oct-Jan seasons: 2013-2014 1.71in, 2020-2021 5.39in, 2011-2012 5.93in, 2008-2009 6.38in, 1991-1992 7.27in
 
-FETCHES: 103 ok / 2 failed
+FETCHES: 138 ok / 2 failed
 IRREGULARITIES: 3
   [info] nws: Some hourly forecast fields are null in the NWS gridded forecast for this grid cell.
   [warning] nws: No HWO products returned for office MTR.

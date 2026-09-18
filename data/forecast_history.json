@@ -1,18 +1,9 @@
 [
   {
     "issuance_date": "2026-09-18",
-    "generated_utc": "2026-09-18T04:10:47+00:00",
-    "forecast_updated": "2026-09-18T03:51:56+00:00",
+    "generated_utc": "2026-09-18T12:46:29+00:00",
+    "forecast_updated": "2026-09-18T08:26:22+00:00",
     "days": [
-      {
-        "target_date": "2026-09-17",
-        "high_f": 60,
-        "low_f": 59,
-        "pop_pct": 0,
-        "qpf_in": 0.0,
-        "wind_max_mph": 7.0,
-        "gust_max_mph": 11.5
-      },
       {
         "target_date": "2026-09-18",
         "high_f": 64,
@@ -26,7 +17,7 @@
         "target_date": "2026-09-19",
         "high_f": 66,
         "low_f": 58,
-        "pop_pct": 1,
+        "pop_pct": 0,
         "qpf_in": 0.0,
         "wind_max_mph": 14.0,
         "gust_max_mph": 18.4
@@ -69,11 +60,11 @@
       },
       {
         "target_date": "2026-09-24",
-        "high_f": 61,
+        "high_f": 70,
         "low_f": 59,
         "pop_pct": 0,
         "qpf_in": 0.0,
-        "wind_max_mph": 7.0,
+        "wind_max_mph": 10.0,
         "gust_max_mph": 16.1
       }
     ]
