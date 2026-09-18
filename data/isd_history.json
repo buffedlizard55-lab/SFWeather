@@ -1,0 +1,34 @@
+{
+  "url": "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv",
+  "sha256": "1994747ab4af1b97e63adb434b4d0d022f2daee76f0c144ea9ab46be2d906604",
+  "retrieved_utc": "2026-09-18T23:12:40Z",
+  "station_id": "72494023234",
+  "n_rows": 29661,
+  "station": {
+    "usaf": "724940",
+    "wban": "23234",
+    "usaf_wban": "724940-23234",
+    "station_id": "72494023234",
+    "name": "SAN FRANCISCO INTERNATIONAL AIRPORT",
+    "ctry": "US",
+    "lat": "+37.620",
+    "lon": "-122.366",
+    "elev_m": "+0003.2",
+    "begin": "19730101",
+    "end": "20250827"
+  },
+  "n_same_name": 9,
+  "same_name_ids": [
+    "72494023234",
+    "74509799999",
+    "98437099999",
+    "99205099999",
+    "99264099999",
+    "99401699999",
+    "99801199999",
+    "99847999999",
+    "99999923234"
+  ],
+  "successor": null,
+  "verdict": "station-found-no-successor"
+}
