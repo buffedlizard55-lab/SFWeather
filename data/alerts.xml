@@ -4,7 +4,7 @@
 <title>SFWeather 94122 — NWS alerts &amp; high-POP days</title>
 <link>https://buffedlizard55-lab.github.io/SFWeather/</link>
 <description>Opt-in digest: NWS alerts for CAZ006 and days in the 7-day window with POP ≥ 50%. Opt-in only: subscribe with your own feed reader; this project stores no address, sends no email, and collects no personal data. The feed is a static file — subscription happens entirely between you and your reader.</description>
-<lastBuildDate>Fri, 18 Sep 2026 23:13:09 +0000</lastBuildDate>
+<lastBuildDate>Fri, 18 Sep 2026 23:28:02 +0000</lastBuildDate>
 <generator>SFWeather pipeline/build_digest.py</generator>
 </channel>
 </rss>
