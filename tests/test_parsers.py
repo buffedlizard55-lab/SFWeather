@@ -1817,6 +1817,57 @@ check("a geography is read by name, so a re-ordered response still parses",
       "name lookup failed")
 
 # --------------------------------------------------------------------------- #
+# Failed fetches must be explained, not just counted (main.flag_failed_fetches)
+#
+# The site already discloses a failed fetch in the status banner and in the
+# Sources table ("failed only" filter, HTTP status badge).  What it cannot do
+# there is name the consequence, so each failure also has to land in the quality
+# report.  main() needs the network, which is why this is a separate function.
+# --------------------------------------------------------------------------- #
+
+section("== failed fetches are flagged as irregularities")
+
+pipeline_main.IRREGULARITIES.clear()
+_manifest = [
+    {"url": "https://api.weather.gov/stations/OAMC1/observations/latest",
+     "http_status": 404, "ok": False, "note": "Latest official observation from station OAMC1"},
+    {"url": "https://www.ncei.noaa.gov/good.csv", "http_status": 200, "ok": True,
+     "sha256": "a" * 64, "note": "a fetch that worked"},
+    {"url": "https://www.ncei.noaa.gov/normals-hourly/USW00023272.csv",
+     "http_status": None, "ok": False, "error": "read timeout",
+     "note": "NCEI 1991-2020 Hourly Climate Normals"},
+    {"url": "https://api.weather.gov/ok-too", "http_status": 200, "ok": True},
+]
+_flagged = pipeline_main.flag_failed_fetches(_manifest)
+check("every non-200 / not-ok fetch is flagged and nothing else is",
+      len(_flagged) == 2, str(len(_flagged)))
+check("each flagged fetch becomes one irregularity",
+      len(pipeline_main.IRREGULARITIES) == 2, str(len(pipeline_main.IRREGULARITIES)))
+check("failed-fetch irregularities are warnings in the fetch area",
+      all(i["severity"] == "warning" and i["area"] == "fetch"
+          for i in pipeline_main.IRREGULARITIES),
+      str([(i["severity"], i["area"]) for i in pipeline_main.IRREGULARITIES]))
+check("the message names the status and the source, and says nothing was inferred",
+      all("404" in i["message"] or "no response" in i["message"] for i in pipeline_main.IRREGULARITIES)
+      and all("Nothing was inferred" in i["message"] for i in pipeline_main.IRREGULARITIES),
+      str(pipeline_main.IRREGULARITIES[0]["message"])[:160])
+check("the evidence carries the URL, status, note, error and retrieval time",
+      all(set(i["evidence"]) == {"url", "http_status", "note", "error", "retrieved_utc"}
+          for i in pipeline_main.IRREGULARITIES),
+      str(sorted(pipeline_main.IRREGULARITIES[0]["evidence"])))
+check("a timeout with no HTTP status is still a failure",
+      pipeline_main.fetch_failed({"url": "x", "http_status": None, "ok": False}) is True, "")
+check("a missing status on an ok=True entry is not treated as a failure",
+      pipeline_main.fetch_failed({"url": "x", "ok": True}) is False, "")
+check("junk entries do not raise and are not failures",
+      pipeline_main.fetch_failed(None) is False and pipeline_main.fetch_failed("x") is False
+      and pipeline_main.fetch_failed({}) is False, "")
+check("an empty manifest flags nothing",
+      pipeline_main.flag_failed_fetches([]) == []
+      and pipeline_main.flag_failed_fetches(None) == [], "")
+pipeline_main.IRREGULARITIES.clear()
+
+# --------------------------------------------------------------------------- #
 
 passed = sum(1 for _n, ok, _d in RESULTS if ok)
 failed = [(n, d) for n, ok, d in RESULTS if not ok]

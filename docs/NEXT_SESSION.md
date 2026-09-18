@@ -12,7 +12,7 @@ official, free, no-key sources; nothing here depends on commercial data.
 per-field basis behind every headline number; the landlord dashboard and its
 executive bottom line; the current-forecast panel; a new *Area Forecast Discussion
 language* card quoting NWS forecasters verbatim; a *Location* card naming the
-forecast point from the Census geographer; the verification ledger at **47 checks
+forecast point from the Census geographer; the verification ledger at **48 checks
 / 18 recorded claims**; and three committed test harnesses (316 offline
 assertions, jsdom render guards, and falsification harnesses that prove each
 guard can fail). GitHub Pages serves `main` from the repository root; the

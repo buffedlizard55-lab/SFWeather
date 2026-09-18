@@ -1594,6 +1594,49 @@ def main() -> int:
         severity="warning",
         evidence={"stale": stale_dates[:10], "window_dates": sorted(window_dates)})
 
+    # ------------------------------- 16. failed fetches are explained, not just counted
+    # The site already discloses a failed fetch twice over: the status banner
+    # counts them and the Sources table has a "failed only" filter with the HTTP
+    # status badge on each row.  What it cannot do is explain the consequence,
+    # because that is a judgement the pipeline makes when it falls back.  So a
+    # failure must also appear in the quality report, where the fallback is
+    # named.  This is a warning: a 404 on one nearby station or one alternative
+    # normals file is a documented fallback, not a reason to stop publishing -
+    # and a failure serious enough to break the build has already raised an
+    # error of its own at the step that depended on it.
+    failed_fetches = [e for e in (prov.get("entries") or [])
+                      if isinstance(e, dict) and
+                      (e.get("ok") is False or (e.get("http_status") or 200) != 200)]
+    irr_text = json.dumps(quality.get("irregularities") or [], default=str).lower()
+    unexplained = []
+    for e in failed_fetches:
+        url = str(e.get("url") or "")
+        # Match on the URL, or on the fetch note, or on the distinctive last
+        # path segment (a station id or a filename), so the irregularity does not
+        # have to quote the URL character for character.
+        needles = [url]
+        if e.get("note"):
+            needles.append(str(e["note"]))
+        tail = [p for p in url.rstrip("/").split("/") if p]
+        if tail:
+            needles.append(tail[-1])
+        if not any(n and n.lower() in irr_text for n in needles):
+            unexplained.append({"url": url, "http_status": e.get("http_status"),
+                                "note": e.get("note")})
+    ledger.check(
+        "failed-fetches-explained",
+        "Every fetch that did not return HTTP 200 is explained in the quality "
+        "report, naming what it cost the dataset - not merely counted in the "
+        "source manifest",
+        not unexplained,
+        (f"{len(unexplained)} failed fetch(es) appear in the manifest but are not "
+         f"explained in the quality report: "
+         f"{[u['url'][:70] for u in unexplained]}") if unexplained else
+        (f"{len(failed_fetches)} failed fetch(es), all explained in the quality report"
+         if failed_fetches else "no fetch failed this run"),
+        severity="warning",
+        evidence={"failed_fetches": len(failed_fetches), "unexplained": unexplained})
+
     # ------------------------------------------------------------- write out
     summary = ledger.summary()
     payload = {

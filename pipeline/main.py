@@ -95,6 +95,45 @@ def note_irregularity(severity, area, message, evidence=None):
     })
 
 
+def fetch_failed(entry):
+    """True when a provenance entry records a fetch that did not succeed."""
+    if not isinstance(entry, dict):
+        return False
+    return entry.get("ok") is False or (entry.get("http_status") or 200) != 200
+
+
+def flag_failed_fetches(manifest):
+    """Record an irregularity for every failed fetch, and return them.
+
+    The site already discloses a failure twice over: the status banner counts
+    failed fetches and the Sources table has a "failed only" filter with the HTTP
+    status badge on each row.  What neither can do is name the *consequence*,
+    because that is a judgement made where the fallback is chosen.  So each
+    failure also lands in ``quality_report.json``, which the site renders as
+    *Irregularities*, saying plainly that nothing was inferred in its place.
+
+    Kept as a separate function rather than an inline loop so it can be unit
+    tested offline against a synthetic manifest - ``main()`` needs the network.
+    """
+    flagged = [e for e in (manifest or []) if fetch_failed(e)]
+    for entry in flagged:
+        note_irregularity(
+            "warning", "fetch",
+            f"A source fetch did not return HTTP 200 "
+            f"({entry.get('http_status') or 'no response'}): "
+            f"{entry.get('note') or entry.get('url')}. Nothing was inferred in "
+            f"its place; whatever depends on it either used a documented "
+            f"fallback or is absent from this run's dataset.",
+            evidence={
+                "url": entry.get("url"),
+                "http_status": entry.get("http_status"),
+                "note": entry.get("note"),
+                "error": entry.get("error"),
+                "retrieved_utc": entry.get("retrieved_utc"),
+            })
+    return flagged
+
+
 def record(res, **kwargs):
     MANIFEST.append(res.provenance(**kwargs))
     return res
@@ -1739,6 +1778,18 @@ def main():
         "note": "Every value in this repository comes from one of the URLs below.",
         "entries": MANIFEST,
     })
+
+    # Every failed fetch is recorded as an irregularity, not just as a row in the
+    # manifest.  The site already discloses failures (the status banner counts
+    # them and the Sources table has a "failed only" filter with status badges),
+    # but a reviewer reading *Irregularities* should not have to go and work out
+    # which fetch failed and what it cost the dataset.  Severity is a warning
+    # rather than an error: a 404 on one nearby station's observations or on one
+    # alternative normals file is a documented fallback, not a reason to stop
+    # publishing - and if a failure is severe enough to break the build, the
+    # step that depended on it has already raised an error of its own.
+    flag_failed_fetches(MANIFEST)
+
     write_json(outdir / "quality_report.json", {
         "generated_utc": fetchlib.iso_utc(),
         "counts": {
