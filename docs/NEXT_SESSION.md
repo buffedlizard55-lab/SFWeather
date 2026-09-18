@@ -1,12 +1,70 @@
-# Next session — handoff, open work and limitations
+# Next session — handoff
 
-Read this first. It says what is done, what is verified, what is still open, and
-which official endpoint each open item depends on. Everything below refers to
-official, free, no-key sources; nothing here depends on commercial data.
+## 1. State at the end of session 7 (18 Sep 2026 — hour-by-hour wind+rain, fetch accounting)
+
+**Read these first:** `docs/METHODS.md` §18–§20 (the hourly statistic, expected
+absences, one-definition rule), `docs/LIMITATIONS.md` (the hourly record),
+`docs/VERIFICATION.md` (the pass-7 bug table).
+
+**Ledger:** 53 checks, 19 claims.  On the committed data the only non-pass row is
+the `fetch-failures-flagged` **warning** — the four fetches it lists are the
+routine 404s that the next pipeline run classifies as `expected_absences`, after
+which the row disappears.  Everything else passes.
+
+**Tests:** `tests/test_parsers.py` 336/336 · `tests/falsify_guards.py` 23 cases ·
+`tests/falsify_smoke.py` 13 cases · `npm test` (jsdom smoke) passes ·
+`pipeline/verify_sources.py` passes.
+
+### What changed in this session
+
+1. **The hour-by-hour wind+rain statistic is published.**  NCEI ISD
+   global-hourly (station 72494023234, KSFO) is aggregated into local dates and
+   seasons; the landlord card, the bottom line, the action checklist and the wind
+   section now lead with *rain and >= 20 kt wind in the same hour* (mean 7.9 days
+   a season over 30 seasons, 29.5 simultaneous hours) instead of the whole-day
+   pairing (11.1 days).  Both methods are published, each labelled with what it
+   measures, and the same-station whole-day row exists to separate the pairing
+   effect from the station effect.  The two whole-day constructions agree, so the
+   gap is the pairing rule — and the bottom line says so, computed at build time.
+2. **Rules attached to the new number:** a season is used only inside the same
+   1991–2020 window AND with >= 95 % of the 123 Oct 1 – Jan 31 dates reported;
+   excluded seasons are named with their coverage; an absent measurement is never
+   a zero (the same-station row says "not published in this run's hourly
+   dataset"); hours from multi-hour `AA1` reports are disclosed separately.
+3. **`record_coverage` in `run.json`.**  The newest row actually fetched from each
+   NCEI archive, its age in days and its URL, plus `stale_archives` for anything
+   more than 180 days behind.  This exposed that the GSOD and ISD annual files for
+   this station stop at **2025-08-27** while GHCN-Daily is current.  Nothing
+   published depends on those months (every statistic is 1991–2020), and the site
+   now says so instead of leaving it to be assumed.
+4. **Fetch accounting.**  `failed_fetches` no longer absorbs the four routine
+   404s; they are published as `expected_absences`, each with a reason the ledger
+   re-checks against its own URL, and a real failure is named by URL on the status
+   line.
+5. **One definition per published quantity (bug 49).**  The same phrase
+   "flood-type storm reports" carried 98 in one card and 99 in another.  Fixed,
+   and `storm-events-counts-recompute` now re-derives every published Storm Events
+   count from the county file.
+6. **Docs updated:** README's typical-season table leads with the hourly figure,
+   `docs/LANDLORD_GUIDE.md` points at the site card instead of restating numbers,
+   `docs/METHODS.md` §18–20 and `docs/LIMITATIONS.md` cover the new statistic and
+   its limits.
+
+### Known state to expect on the next run
+
+* The ISD/GSOD archives for this station still end 2025-08-27; the coverage block
+  will keep flagging `wind` and `isd_hourly` as stale.  That is correct.
+* `data/isd_hourly_summary.json` currently carries 35 seasons; the 1990-91 season
+  is partial (only January is inside the window because the annual files start in
+  1991) and seasons after 2020-21 are outside the comparison window, so **30** are
+  used.  If the CI run changes that count, re-read the exclusion list rather than
+  the headline.
+* The AFD card stays sparse until the forecast turns wet; that is the scanner
+  working.
 
 ---
 
-## 1. State at the end of this session (18 Sep 2026, session 6 — the executive-summary session)
+### Session 6 (18 Sep 2026) — the executive-summary session
 
 **What is live:** unchanged in shape — the nightly pipeline, the Oct 2026 – Jan
 2027 scoreboard, the landlord dashboard, the current-forecast panel, the
@@ -211,41 +269,26 @@ lives in `climo.implausible_normals_value()` and is unit-tested.
 
 ## 2. Open work, in priority order
 
-### 0. Finish what this session opened — mostly done, two items left
-**Done on the 04:05 UTC run:** the ledger is **41 of 41** with 0 warnings; the
-severity counters are in the committed data; the character-loss disclosure works
-and `no-replacement-characters` passes.
+### 0. Finish what this session opened
+1. **Watch the first CI run after this branch lands.**  It should produce
+   `run.json` with `expected_absences: 4` and `failed_fetches: 0`, at which point
+   `fetch-failures-flagged` disappears and the ledger reads 53/53.  If it does
+   not, read `data/quality_report.json` before touching the check.
+2. **`data/summary.txt`** now carries the hourly line; confirm it appears in the
+   next run's digest and that the whole-day line is still labelled as such.
+3. **Decide whether the four-method bottom-line picture** (hourly 7.9 /
+   same-station whole-day 11.1 / cross-station whole-day 11.1 / heavy 2.2) is
+   clearer as one merged row or as the current four.  The agreement sentence makes
+   the reason explicit either way.
 
-**The result that came back is the best evidence on the site** — the project's own
-count and NOAA's own published expectation agree to within **0.06 days per
-season** across all four thresholds NOAA publishes (0.50 in: 8.40 vs 8.39;
-1.00 in: 3.20 vs 3.26; 2.00 in: 0.50 vs 0.51; 4.00 in: 0.00 vs 0.02). A second
-cross-check landed too: NCEI's Storm Events narrative for 31 Dec 2022 says the
-5.46 in that day was "0.08 less than 1st place (11/5/1994) with 5.54", and the
-GHCN-derived record independently reports `max_daily_prcp_in = 5.54 in` in
-season 1994-1995.
-
-**Still open:**
-1. Re-run `bash /tmp/negsmoke.sh`-style falsification against the *refreshed*
-   data for `severity-counters-arithmetic` (it now has real per-season values to
-   compare, so removing a per-season counter must fail the check) and for
-   `threshold-table-recomputable` with the real published probabilities.
-2. Decide whether the four-method picture in the bottom line (3.19 expected /
-   3.20 counted / 3.26 NOAA-published, all for "days ≥ 1.00 in") is clearer as
-   one merged row. It is currently three rows with explicit method labels.
-**Effort:** an hour.
-
-### 1. Hourly ISD wind → hour-by-hour simultaneous wind and rain
-**Why:** the joint wind+rain statistic currently pairs a local-day rain total with a
-UTC-day wind figure (GSOD is 00–24Z ≈ 16:00–16:00 Pacific). This is the largest
-remaining accuracy gap for the landlord's "wind and rain at the same time" question.
-**Source:** `https://www.ncei.noaa.gov/data/global-hourly/access/{year}/{station}.csv`
-(free, no key, station `72494023234`).
-**Work:** fetch Oct–Jan hours for 1991–2025, convert to `America/Los_Angeles`, count
-hours where precipitation > 0 and wind ≥ 20 kt coincide, and publish that **next to**
-the current daily approximation until the two are shown to agree. Keep raw hourly
-files out of the repository (aggregates only); give it its own job and timeout.
-**Effort:** ~1 day plus runtime.
+### 1. ~~Hourly ISD wind → hour-by-hour simultaneous wind and rain~~ — DONE 18 Sep 2026
+The hourly statistic is published and is the headline for the landlord's "wind and
+rain at the same time" question (`docs/METHODS.md` §18).  What is still open is
+**why the station's ISD/GSOD record ends 2025-08-27**: either NCEI stopped
+archiving it or the identifier changed.  Chase that next (the GSOD README, the
+station's `isd-history.csv` row, and whether a successor identifier exists); if a
+successor does, the pipeline can stitch it on and the wind record becomes current
+again.  Everything published keeps working either way.
 
 ### 2. NWS forecast verification loop
 **Why:** accountability, and the forecast is already fetched every night.
@@ -261,26 +304,67 @@ sampled probability category with the observed GHCN total at 94122 and publish h
 rates. A 5–10 year back-test is possible immediately from archived issuances.
 **Effort:** ~1–2 days.
 
-### 4. Atmospheric-river flag from the NWS Area Forecast Discussion
-**Why:** ARs drive most high-impact California rain and are the best available signal
-for "days of straight rain"; the AFD is already fetched verbatim.
-**Work:** match AR language, attach date-coded mentions to the days they refer to, and
-show the quoted sentence with its source. Never turn a mention into a number.
-**Effort:** ~0.5 day.
+### 4. ~~Atmospheric-river flag from the NWS Area Forecast Discussion~~ — DONE 18 Sep 2026
+**Shipped:** `climo.afd_language_scan()` scans six categories (atmospheric river,
+prolonged rain, heavy rain/flooding, strong wind, an explicit rainfall amount,
+wind+rain in one sentence) across the fetched discussion, and the site renders the
+result as the *Area Forecast Discussion language* card in `#now`. Section-aware
+parsing, `MARINE`/`AVIATION`/`FIRE WEATHER` excluded and published as excluded,
+preamble not scanned, furniture dropped and counted, bullets split, counts and
+lists produced by one matching pass. Ledger checks `afd-language-verbatim` and
+`afd-language-quotations-only`; render guard 19; 19 offline unit assertions;
+methods in `docs/METHODS.md` §14; scope in `docs/LIMITATIONS.md` §15.
 
-### 5. A nearer wind record than SFO
-SFO is 11.9 mi away and more exposed, so every wind number is an upper bound. Assess
-`SFOC1` and other ISD stations in the city; if a usable overlap exists, publish a
-documented ratio (labelled an estimate) alongside — never instead of — the raw SFO
-numbers.
+**The one part of the original plan that was deliberately NOT built:** "attach
+date-coded mentions to the days they refer to". Doing that would turn a
+qualitative statement about a forecast area into a per-day claim for 94122 — the
+exact fabrication this project exists to avoid — and no rule could reliably infer
+which day a sentence refers to ("Friday into the weekend" spans a tier boundary
+that moves). The scanner therefore publishes the sentence, its section and its
+matched patterns, and nothing else. If a future session wants dates, it must read
+them from NWS's own `validTimes`, never from prose.
 
-### 6. Per-field provenance in the day dialog (partly done)
+**Still open, cheap:** an archive of scanned discussions (`data/afd_history.json`,
+one entry per issuance) so the card can say "the last discussion to mention an
+atmospheric river was issued on …". That is a *history of what NWS wrote*, not a
+forecast, and would make the card useful in January rather than only today.
+
+### 5. A nearer wind record than SFO — ASSESSED 18 Sep 2026, no better source exists
+Checked every station the NWS point metadata returns for this coordinate, with
+great-circle distances and which elements each feed actually carries:
+`SFOC1` San Francisco Downtown 3.67 mi (**no precipitation and no wind in the
+feed**), `DW7094` Mill Valley 11.07 mi, `KSFO` 11.88 mi, `MDEC1` Middle Peak
+12.75 mi, `OAMC1` Oakland Museum 12.8 mi, `DW3169` Oakland 14.17 mi. Nothing
+nearer than the pair already used (GHCN downtown 3.2 mi for rain/temperature,
+GSOD SFO 11.9 mi for wind) provides **both** elements from an official archive.
+
+So the honest position stands and is documented rather than papered over: wind is
+an upper bound for 94122 (`docs/LIMITATIONS.md` §2), and every wind/gust basis
+string says so in the day dialog. **Reopen only if** an official ISD-lite or
+MESOWEST station appears inside the Sunset with a multi-decade archive; a ratio
+derived from a 3-year overlap would be an estimate dressed as a measurement.
+
+**Still worth doing, different shape:** publish the SFO-vs-downtown *rain* ratio
+that the record does support (two long archives, same city) as a labelled
+estimate, so a reader can see how much of the SFO wind upper bound is exposure
+and how much is distance. That needs ISD hourly (`docs/NEXT_SESSION.md` item 1).
+
+### 6. Per-field provenance in the day dialog (basis strings DONE, deep links open)
 **Done 17 Sep 2026:** humidity, gust and rain amount each publish the basis actually
 used (`humidity_basis`, `gust_basis`, `rain_amount_basis`) and the dialog shows it.
-**Still open:** temperature, wind and rain chance carry no per-field basis, and none of
-the six links to the exact *element of the exact file* (e.g. the `PRCP` column of the
-`2026-12-14` row of `USW00023272.csv`). Cheap, and it makes the manual line-by-line
-check faster.
+**Done 18 Sep 2026:** temperature, wind and rain chance now carry a per-field basis
+on **both** tiers, so all 123 scoreboard days and all current-forecast days name the
+station, the variable, the season count and the unit conversion behind every one of
+the six headline fields. At HEAD, `temp_basis`, `wind_basis` and `gust_basis` were
+empty on all 123 climatology days while the days published values — that was bug 43.
+Enforced by ledger check `day-field-basis-complete` (fails the run) and render
+guard 20 (fails the page), both falsified.
+
+**Still open:** none of the six links to the exact *element of the exact file* (e.g.
+the `PRCP` column of the `2026-12-14` row of `USW00023272.csv`). Cheap and high
+value for manual review: emit a per-field deep link (GHCN CSV row anchor, GSOD
+`{station}-{yyyy}.csv` URL, NWS hourly `startTime`) and render it beside the basis.
+**Effort:** a couple of hours.
 
 ### 7. Multi-ZIP support and a digest
 The pipeline is already parameterised by coordinate; multi-ZIP is mostly front-end
@@ -353,5 +437,5 @@ gh run watch <run-id> --exit-status
 * GSOD README (units) — <https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt>
 * Monthly normals `USW00023272` — <https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv>
 * Hourly normals (humidity source) — <https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv>
-* ISD hourly archive (open item 1) — <https://www.ncei.noaa.gov/data/global-hourly/access/>
+* ISD hourly archive (the hour-by-hour wind+rain source since session 8) — <https://www.ncei.noaa.gov/data/global-hourly/access/>
 * Storm Events — <https://www.ncdc.noaa.gov/stormevents/>

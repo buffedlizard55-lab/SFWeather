@@ -197,7 +197,12 @@ function renderDataStatus(cal, quality, prov, verify) {
   const ageHours = Number.isFinite(generated) ? (now - generated) / 3600000 : null;
   const maxAgeHours = 36;
   const fetches = (prov && prov.entries) || [];
-  const failed = fetches.filter(e => e && e.ok === false).length;
+  // A fetch that failed is a fetch that was supposed to work.  An expected
+  // absence -- the current year's annual NCEI file before the provider publishes
+  // it, a station with no observations endpoint -- is reported on its own line,
+  // because folding it into the failure count hides a real outage.
+  const failed = fetches.filter(e => e && e.ok === false && !e.expected_absent).length;
+  const absent = fetches.filter(e => e && e.ok === false && e.expected_absent).length;
   const irregularities = (quality && quality.irregularities) || [];
   const qualityErrors = Number((quality && quality.counts && quality.counts.errors) || 0);
   const verifyFailed = Number((verify && verify.summary && verify.summary.failed) || 0);
@@ -224,7 +229,14 @@ function renderDataStatus(cal, quality, prov, verify) {
     headline = `Official data snapshot is ${ageHours.toFixed(1)} hours old`;
     detail = `Fetched/build timestamp: ${timestamp} UTC. The nightly job is expected to refresh this page; for life-safety decisions use weather.gov directly.`;
   }
-  const summary = `${fetches.length} recorded source fetches · ${failed} failed fetch${failed === 1 ? '' : 'es'} · ${irregularities.length} flagged irregularit${irregularities.length === 1 ? 'y' : 'ies'} · ${verifyFailed} failed claim check${verifyFailed === 1 ? '' : 's'}`;
+  let summary = `${fetches.length} recorded source fetches · ${failed} failed fetch${failed === 1 ? '' : 'es'}`
+    + (absent ? ` · ${absent} absent by design (not-yet-published annual file or station without an observations endpoint)` : '')
+    + ` · ${irregularities.length} flagged irregularit${irregularities.length === 1 ? 'y' : 'ies'} · ${verifyFailed} failed claim check${verifyFailed === 1 ? '' : 's'}`;
+  if (failed > 0) {
+    const which = fetches.filter(e => e && e.ok === false && !e.expected_absent)
+      .map(e => String(e.url || '').replace(/^https?:\/\//, '')).slice(0, 3);
+    summary += ` — review: ${which.join(', ')}`;
+  }
   box.append(el('div', { class: classes }, [
     el('strong', { text: headline }),
     el('span', { class: 'data-status-detail', text: detail }),
@@ -393,10 +405,17 @@ function renderLandlord(ll, cal) {
       sub: exec.longest_streak ? `Max ${n(exec.longest_streak.max, 0)} days on record · ${exec.streak_probability?.ge_7_days?.pct || DASH}% seasons have ≥7 days, ${exec.streak_probability?.ge_10_days?.pct || DASH}% have ≥10 days` : '',
     },
     {
+      // Headline value is the hour-by-hour count when the run has it, because
+      // "at the same time" is an hourly statement.  The whole-day figure stays
+      // in the subtitle rather than disappearing.
       cls: 'wind',
       title: 'Wind + rain together',
-      value: exec.wind_and_rain ? `${n(exec.wind_and_rain.mean, 1)} days/season` : DASH,
-      sub: exec.wind_and_rain ? `At SFO (upper bound for Sunset). Median ${n(exec.wind_and_rain.median, 0)} · Max ${n(exec.wind_and_rain.max, 0)} · Heavy (≥0.5 in + gust ≥35 kt): ${n(exec.heavy_wind_and_rain?.mean, 1)} days avg` : '',
+      value: (exec.wind_and_rain_hourly?.available && exec.wind_and_rain_hourly?.days_with_a_simultaneous_hour?.mean !== undefined
+        ? `${n(exec.wind_and_rain_hourly.days_with_a_simultaneous_hour.mean, 1)} days/season`
+        : (exec.wind_and_rain ? `${n(exec.wind_and_rain.mean, 1)} days/season` : DASH)),
+      sub: exec.wind_and_rain_hourly?.available
+        ? `Same-hour co-occurrence at SFO (upper bound for Sunset) · Median ${n(exec.wind_and_rain_hourly.days_with_a_simultaneous_hour?.median, 0)} · Max ${n(exec.wind_and_rain_hourly.days_with_a_simultaneous_hour?.max, 0)} · whole-day pairing: ${n(exec.wind_and_rain?.mean, 1)} days avg`
+        : (exec.wind_and_rain ? `At SFO (upper bound for Sunset). Median ${n(exec.wind_and_rain.median, 0)} · Max ${n(exec.wind_and_rain.max, 0)} · Heavy (≥0.5 in + gust ≥35 kt): ${n(exec.heavy_wind_and_rain?.mean, 1)} days avg` : ''),
     },
     {
       cls: 'gust',
@@ -467,13 +486,51 @@ function renderLandlord(ll, cal) {
     `A 7-day wet run happens in ${sp.ge_7_days?.pct || DASH}% of years — close to a coin flip. ` +
     `Plan gutters, roof drains, and tenant comms for week-long rain.`;
 
-  // Wind+rain
-  $('#landlord-windrain').append(el('table', { class: 'kv' }, [
-    ['Wind+rain days/season (≥20kt + ≥0.01in)', `mean ${n(exec.wind_and_rain?.mean, 1)} · median ${n(exec.wind_and_rain?.median, 0)} · max ${n(exec.wind_and_rain?.max, 0)}`],
-    ['Heavy wind+rain (≥35kt gust + ≥0.5in)', `mean ${n(exec.heavy_wind_and_rain?.mean, 1)} · median ${n(exec.heavy_wind_and_rain?.median, 0)} · max ${n(exec.heavy_wind_and_rain?.max, 0)}`],
-    ['Season max gust (SFO, upper bound)', `mean ${n(exec.max_gust?.mean, 0)} mph · median ${n(exec.max_gust?.median, 0)} mph · max ${n(exec.max_gust?.max, 0)} mph`],
-    ['Source', 'NCEI GSOD 72494023234 (KSFO) + GHCN-Daily USW00023272 — wind at SFO is windier than Sunset, so treat as upper bound']
-  ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
+  // Wind+rain.  Two methods are published side by side: the hour-by-hour
+  // co-occurrence (the one that actually means "at the same time") and the
+  // whole-day pairing this page used before it.  Neither replaces the other;
+  // an unavailable figure says so instead of rendering as a zero.
+  const hwr = exec.wind_and_rain_hourly || {};
+  const hDays = hwr.days_with_a_simultaneous_hour || {};
+  const hHours = hwr.simultaneous_hours_per_season || {};
+  const hPair = hwr.days_daily_pair_same_station || {};
+  const windRainRows = [];
+  if (hwr.available) {
+    windRainRows.push([
+      'Wind+rain days/season — same HOUR (hour-by-hour record, SFO)',
+      `mean ${n(hDays.mean, 1)} · median ${n(hDays.median, 0)} · max ${n(hDays.max, 0)} over ${n(hwr.n_seasons_used, 0)} seasons (${hwr.season_window || DASH})`]);
+    windRainRows.push([
+      'Simultaneous wind+rain hours/season',
+      `mean ${n(hHours.mean, 1)} · median ${n(hHours.median, 0)} · max ${n(hHours.max, 0)}`]);
+    windRainRows.push([
+      'Wind+rain days/season — same DAY, same station (for comparison)',
+      hwr.same_station_daily_fields_available
+        ? `mean ${n(hPair.mean, 1)} · median ${n(hPair.median, 0)} · max ${n(hPair.max, 0)}`
+        : "not published in this run's hourly dataset"]);
+  }
+  windRainRows.push([
+    'Wind+rain days/season — same DAY, downtown gauge + SFO wind',
+    `mean ${n(exec.wind_and_rain?.mean, 1)} · median ${n(exec.wind_and_rain?.median, 0)} · max ${n(exec.wind_and_rain?.max, 0)}`]);
+  windRainRows.push([
+    'Heavy wind+rain (≥35kt gust + ≥0.5in, whole days)',
+    `mean ${n(exec.heavy_wind_and_rain?.mean, 1)} · median ${n(exec.heavy_wind_and_rain?.median, 0)} · max ${n(exec.heavy_wind_and_rain?.max, 0)}`]);
+  windRainRows.push([
+    'Season max gust (SFO, upper bound)',
+    `mean ${n(exec.max_gust?.mean, 0)} mph · median ${n(exec.max_gust?.median, 0)} mph · max ${n(exec.max_gust?.max, 0)} mph`]);
+  windRainRows.push([
+    'Source',
+    hwr.available
+      ? 'NCEI ISD hourly 72494023234 (KSFO) for the hourly figure, GSOD 72494023234 + GHCN-Daily USW00023272 for the whole-day figures — wind at SFO is windier than Sunset, so treat as upper bound'
+      : 'NCEI GSOD 72494023234 (KSFO) + GHCN-Daily USW00023272 — wind at SFO is windier than Sunset, so treat as upper bound']);
+  $('#landlord-windrain').append(el('table', { class: 'kv' }, windRainRows.map(([k, v]) =>
+    el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
+  if (hwr.available && hwr.method) {
+    $('#landlord-windrain').append(el('p', { class: 'fine', text:
+      `Hour-by-hour definition: ${hwr.method} Days are local calendar days (${hwr.timezone || 'America/Los_Angeles'}).` }));
+  }
+  (hwr.notes || []).forEach(note => {
+    $('#landlord-windrain').append(el('p', { class: 'fine', text: 'Note: ' + note }));
+  });
 
   // CPC
   const cpcRecs = ll.cpc_outlooks_relevant || [];
@@ -650,19 +707,47 @@ function renderReality(cal) {
 
 function renderLocation(run) {
   const c = (run.target || {}).centroid || {};
+  /* Official geography evidence for the single point every number refers to.
+   * The Census county subdivision is what names the district; "Inner/Outer
+   * Sunset" is a local split with no federal boundary, and the naming_note that
+   * says so comes from the data rather than being typed here. */
+  const g = c.census_geographies || null;
+  const geoRows = g ? [
+    ['County subdivision (Census)', g.county_subdivision
+      ? `${g.county_subdivision} · GEOID ${g.county_subdivision_geoid || DASH}` : null],
+    ['County', g.county ? `${g.county} · GEOID ${g.county_geoid || DASH}` : null],
+    ['Incorporated place', g.place ? `${g.place} · GEOID ${g.place_geoid || DASH}` : null],
+    ['Census tract', g.census_tract
+      ? `${g.census_tract} · GEOID ${g.census_tract_geoid || DASH}` : null],
+    ['Census block', g.census_block_geoid || null],
+    ['Congressional district', g.congressional_district || null],
+    ['Urban area', g.urban_area || null],
+    ['Geography source', link(g.url, 'U.S. Census Bureau geocoder — reverse lookup of this point')]
+  ] : [
+    ['County subdivision (Census)',
+      'not retrieved this run — see Data quality; nothing was inferred in its place']
+  ];
   $('#tbl-location').append(kvTable([
     ['ZIP code', (run.target || {}).zip || '94122'],
+    ['Area label used here', (run.target || {}).label || null],
     ['Latitude', c.lat === undefined ? null : c.lat.toFixed(4) + '\u00b0 N'],
     ['Longitude', c.lon === undefined ? null : c.lon.toFixed(4) + '\u00b0 W'],
     ['Land area', c.land_area_sqmi === undefined ? null : c.land_area_sqmi + ' sq mi'],
+    ['Water area', c.water_area_sqmi === undefined ? null : c.water_area_sqmi + ' sq mi'],
     ['Source', link(c.url, 'U.S. Census Bureau Gazetteer' + (c.gazetteer_year ? ' (' + c.gazetteer_year + ')' : ''))],
-    ['Verified against Census', c.verified ? 'Yes' : 'No \u2014 fallback value, see data quality']
+    ['Verified against Census', c.verified ? 'Yes' : 'No \u2014 fallback value, see data quality'],
+    ...geoRows
   ]));
   $('#location-note').textContent =
     'The coordinate is the Census Bureau\u2019s internal point (centroid) for ZIP Code Tabulation Area ' +
     '94122, downloaded and matched in the build rather than typed in. San Francisco has sharp ' +
     'microclimates, so a single point cannot represent the whole ZIP, but it is an official, ' +
-    'reproducible choice.';
+    'reproducible choice.' + (g && g.naming_note ? ' ' + g.naming_note : '');
+  if (g && g.geography_types_returned && g.geography_types_returned.length) {
+    $('#location-note').append(el('span', { class: 'src-url', text:
+      ' Geographies returned by the Census for this point: ' +
+      g.geography_types_returned.join('; ') + '.' }));
+  }
 
   const st = (state.data.calendar || {}).stations || {};
   const pt = st.precip_temp || {}, wd = st.wind || {};
@@ -905,6 +990,88 @@ function renderSeason(cal) {
     link(d.human_url || d.url, d.url)
   ])));
   if (!discs.length) $('#discussions').append(el('p', { class: 'empty', text: 'No CPC discussion passed the staleness check in this run.' }));
+}
+
+/** Storm-pattern language in NWS's own Area Forecast Discussion.
+ *
+ *  Every line rendered here is a verbatim quotation produced by
+ *  climo.afd_language_scan() and re-checked against the fetched product text by
+ *  the claim ledger.  Nothing in this function derives a number, attaches a date
+ *  to a quotation, or paraphrases: the scan publishes the sentence, the section
+ *  it came from and the phrase that matched, and that is all that is shown.
+ */
+function renderAfdLanguage(cal) {
+  const box = $('#afd-language');
+  if (!box) return;
+  const a = (cal || {}).afd_language;
+  if (!a) {
+    box.append(el('p', { class: 'empty', text:
+      'The Area Forecast Discussion scan is not present in this dataset.' }));
+    return;
+  }
+  if (!a.scanned) {
+    box.append(el('p', { class: 'empty', text:
+      'Not scanned this run: ' + (a.reason || 'no reason recorded') + '.' }));
+    if (a.source_url) box.append(el('p', { class: 'fine' }, [link(a.source_url, 'NWS product endpoint')]));
+    return;
+  }
+
+  box.append(el('p', { class: 'fine' }, [
+    el('strong', { text: 'Discussion issued ' }),
+    document.createTextNode(a.issuance_time || DASH),
+    document.createTextNode(` \u00b7 ${a.sentences_scanned} sentences scanned across ` +
+      `${(a.sections_scanned || []).length} land-forecast section(s)` +
+      ` (${(a.sections_scanned || []).join(', ') || 'none'}) \u00b7 ` +
+      `${(a.sections_excluded_this_run || []).length} section(s) excluded: ` +
+      `${(a.sections_excluded_this_run || []).join(', ') || 'none'} \u00b7 ` +
+      `${a.furniture_sentences_dropped} product-furniture line(s) dropped \u00b7 `),
+    link(a.source_url, 'open the discussion at NWS'),
+    document.createTextNode(` \u00b7 ${a.text_chars} characters fetched`)
+  ]));
+
+  const cats = a.categories || [];
+  box.append(table(
+    [{ label: 'Pattern' }, { label: 'Sentences flagged', num: true }, { label: 'Why a landlord cares' }],
+    cats.map(c => [
+      el('span', { class: 'afd-cat', text: c.label }),
+      el('span', {
+        class: 'pill ' + (c.sentence_count > 0 ? 'pill-warn' : 'pill-ok'),
+        text: c.sentence_count > 0 ? `${c.sentence_count} found` : 'none found'
+      }),
+      el('span', { class: 'fine', text: c.why_it_matters })
+    ]),
+    { empty: 'No categories were scanned.' }));
+
+  const flagged = cats.filter(c => (c.sentences || []).length);
+  if (!flagged.length) {
+    box.append(el('div', { class: 'callout callout-info' }, [
+      el('p', { text: a.none_found_statement || 'No listed phrase was found in this discussion.' })
+    ]));
+  } else {
+    flagged.forEach(c => {
+      box.append(el('h4', { class: 'afd-heading', text: c.label }));
+      (c.sentences || []).forEach(s => {
+        box.append(el('div', { class: 'quote' }, [
+          el('div', { class: 'afd-quote', text: '\u201c' + s.sentence + '\u201d' }),
+          el('div', { class: 'fine' }, [
+            document.createTextNode(`Section: ${s.section} \u00b7 matched: ` +
+              (s.matched_patterns || []).join(', '))
+          ])
+        ]));
+      });
+      if (c.note) box.append(el('p', { class: 'fine', text: c.note }));
+    });
+  }
+
+  box.append(el('p', { class: 'fine' }, [
+    el('strong', { text: 'Scope: ' }), document.createTextNode(a.scope_caveat || DASH)
+  ]));
+  box.append(el('p', { class: 'fine' }, [
+    el('strong', { text: 'How to read this: ' }), document.createTextNode(a.usage_note || DASH)
+  ]));
+  box.append(el('p', { class: 'fine' }, [
+    el('strong', { text: 'Verbatim rule: ' }), document.createTextNode(a.verbatim_rule || DASH)
+  ]));
 }
 
 function renderNow(nws, cal) {
@@ -1227,23 +1394,31 @@ function openDay(d) {
   ]));
 
   body.append(el('h4', { text: 'Headline numbers' }));
+  /* Every field names the basis it used.  withBasis() is the single place that
+   * pattern is written, so a field cannot quietly lose its provenance line:
+   * a value with no basis string renders as the value alone, and the claim
+   * ledger fails the run if any of the six is missing from the data. */
+  const withBasis = (value, basis, absentMessage) => {
+    if (value === null || value === undefined) {
+      return el('span', { class: 'fine', text: absentMessage || DASH });
+    }
+    return el('span', {}, [document.createTextNode(String(value)),
+      basis ? el('span', { class: 'fine', text: ' \u00b7 ' + basis }) : null].filter(Boolean));
+  };
   body.append(el('table', { class: 'kv' }, [
-    ['High / low', `${n(d.high_f, 0)}\u00b0F / ${n(d.low_f, 0)}\u00b0F`],
-    ['Humidity (mean)', d.humidity_pct === null
-      ? el('span', { class: 'fine', text: 'not available from official normals' })
-      : el('span', {}, [document.createTextNode(pct(d.humidity_pct, 0)),
-          d.humidity_basis ? el('span', { class: 'fine', text: ' \u00b7 ' + d.humidity_basis }) : null].filter(Boolean))],
-    [isForecast ? 'Chance of rain (max hourly POP)' : 'Chance of rain (1991–2020)', pct(d.rain_chance_pct, 0)],
+    ['High / low', withBasis(`${n(d.high_f, 0)}\u00b0F / ${n(d.low_f, 0)}\u00b0F`, d.temp_basis)],
+    ['Humidity (mean)', withBasis(d.humidity_pct === null ? null : pct(d.humidity_pct, 0),
+      d.humidity_basis, 'not available from official normals')],
+    [isForecast ? 'Chance of rain (max hourly POP)' : 'Chance of rain (1991–2020)',
+      withBasis(d.rain_chance_pct === null ? null : pct(d.rain_chance_pct, 0),
+        d.rain_chance_basis)],
     [isForecast ? 'Rain amount' : 'Rain amount (1991–2020 mean)',
-      d.rain_amount_in === null
-        ? el('span', { class: 'fine', text: 'no official QPF published for this day' })
-        : el('span', {}, [document.createTextNode(Number(d.rain_amount_in).toFixed(2) + ' in'),
-            d.rain_amount_basis ? el('span', { class: 'fine', text: ' \u00b7 ' + d.rain_amount_basis }) : null].filter(Boolean))],
-    ['Max wind', d.wind_max_mph === null ? null : n(d.wind_max_mph, 0) + ' mph'],
-    ['Max gust', d.gust_max_mph === null
-      ? el('span', { class: 'fine', text: 'no official gust published for this day' })
-      : el('span', {}, [document.createTextNode(n(d.gust_max_mph, 0) + ' mph'),
-          d.gust_basis ? el('span', { class: 'fine', text: ' \u00b7 ' + d.gust_basis }) : null].filter(Boolean))]
+      withBasis(d.rain_amount_in === null ? null : Number(d.rain_amount_in).toFixed(2) + ' in',
+        d.rain_amount_basis, 'no official QPF published for this day')],
+    ['Max wind', withBasis(d.wind_max_mph === null ? null : n(d.wind_max_mph, 0) + ' mph',
+      d.wind_basis)],
+    ['Max gust', withBasis(d.gust_max_mph === null ? null : n(d.gust_max_mph, 0) + ' mph',
+      d.gust_basis, 'no official gust published for this day')]
   ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), kvCell(v)]))));
 
   const c = d.climo || {};
@@ -1447,7 +1622,7 @@ function severityLine(d) {
   return `mean ${n(d.mean, 1)} of ${n(d.max, 0)} days in the worst season${band}`;
 }
 
-function renderWind(cal) {
+function renderWind(cal, landlord) {
   const days = cal.days || [];
   const dist = cal.season_summary || {};
   const jr = dist.wind_and_rain_days || {}, hj = dist.heavy_wind_and_rain_days || {}, mg = dist.max_gust_mph || {};
@@ -1457,16 +1632,28 @@ function renderWind(cal) {
     return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   };
 
+  const hwr = ((landlord || {}).executive_summary || {}).wind_and_rain_hourly || {};
+  const hDays = hwr.days_with_a_simultaneous_hour || {};
+  const hHours = hwr.simultaneous_hours_per_season || {};
+  const hRows = [];
+  if (hwr.available) {
+    hRows.push(['Wind+rain days per season (same HOUR, SFO hourly record)',
+      `mean ${n(hDays.mean, 1)} \u00b7 median ${n(hDays.median, 1)} \u00b7 max ${n(hDays.max, 0)} over ${n(hwr.n_seasons_used, 0)} seasons`]);
+    hRows.push(['Simultaneous wind+rain hours per season',
+      `mean ${n(hHours.mean, 1)} \u00b7 median ${n(hHours.median, 1)} \u00b7 max ${n(hHours.max, 0)}`]);
+  }
   $('#wind-table').append(el('table', { class: 'kv' }, [
     ['Average daily max wind (SFO)', n(avg('normal_max_sustained_mph'), 1) + ' mph'],
     ['Average daily max gust (SFO)', n(avg('normal_max_gust_mph'), 1) + ' mph'],
-    ['Wind+rain days per season', `mean ${n(jr.mean, 1)} \u00b7 median ${n(jr.median, 1)} \u00b7 max ${n(jr.max, 0)}`],
+    ...hRows,
+    ['Wind+rain days per season (same DAY, whole-day pairing)', `mean ${n(jr.mean, 1)} \u00b7 median ${n(jr.median, 1)} \u00b7 max ${n(jr.max, 0)}`],
     ['Heavy wind+rain days per season', `mean ${n(hj.mean, 1)} \u00b7 median ${n(hj.median, 1)} \u00b7 max ${n(hj.max, 0)}`],
     ['Strongest gust of the season', `mean ${n(mg.mean, 0)} mph \u00b7 median ${n(mg.median, 0)} mph \u00b7 max ${n(mg.max, 0)} mph`],
     ['Days per season with sustained wind ≥ 30 kt', severityLine(dist.wind_days_ge_30kt)],
     ['Days per season with a gust ≥ 40 kt', severityLine(dist.gust_days_ge_40kt)],
     ['Days per season with a gust ≥ 50 kt', severityLine(dist.gust_days_ge_50kt)],
     ['Definition: wind+rain day', (cal.definitions || {}).wind_and_rain_day || DASH],
+    ['Definition: simultaneous wind+rain hour', ((landlord || {}).executive_summary || {}).wind_and_rain_hourly?.method || DASH],
     ['Definition: heavy wind+rain day', (cal.definitions || {}).heavy_wind_and_rain_day || DASH]
   ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
 
@@ -1785,10 +1972,46 @@ function renderPublishedNormals(cal) {
   if (cmp.note) box.append(el('p', { class: 'fine', text: cmp.note }));
 }
 
-function renderQuality(q) {
+function renderQuality(q, run) {
   const items = q.irregularities || [];
   const c = q.counts || {};
   const host = $('#quality-report');
+
+  // How far each NCEI archive behind these numbers actually reaches.  Published
+  // because an archive can stop updating quietly: a stale file cannot support a
+  // statement about current conditions, and the reader should not have to guess
+  // which of these is current.
+  const cov = (run || {}).record_coverage;
+  if (cov && (cov.archives || []).length) {
+    host.append(el('h3', { text: 'How current each source archive is' }));
+    host.append(el('p', { class: 'fine', text:
+      `Newest row this project fetched from each archive, as of ${cov.as_of || DASH}. ` +
+      'Every published statistic is a 1991\u20132020 statistic and does not depend on these ' +
+      'dates; they are here so nothing on this page is read as describing conditions today.' }));
+    host.append(el('table', { class: 'kv' }, cov.archives.map(a => el('tr', {}, [
+      el('th', { text: a.label || a.area }),
+      el('td', {}, [
+        document.createTextNode(`newest row ${a.last_date || 'not retrieved'}` +
+          (a.age_days === null || a.age_days === undefined ? '' : ` (${a.age_days} day(s) before this run)`) + ' '),
+        a.url ? link(a.url, 'source file') : null
+      ])
+    ]))));
+    const stale = cov.stale_archives || [];
+    if (stale.length) {
+      // Name the archives the way the table above names them, not by the raw
+      // area key, so the flag points at a row the reader can actually find.
+      const labelFor = area => {
+        const row = (cov.archives || []).find(a => a.area === area);
+        return row ? (row.label || area) : area;
+      };
+      host.append(el('p', { class: 'fine', id: 'quality-stale-flag', text:
+        `Flagged: ${stale.map(labelFor).join('; ')} ` +
+        (stale.length > 1 ? 'are' : 'is') + ' more than 180 days behind the run date. ' +
+        'That is published rather than hidden \u2014 it limits any claim about *recent* ' +
+        'conditions, not the 1991\u20132020 statistics.' }));
+    }
+  }
+
   host.append(el('p', { class: 'fine', text:
     `${c.total || 0} flag(s): ${c.errors || 0} error, ${c.warnings || 0} warning, ${c.info || 0} info. ` +
     (q.generated_utc ? 'Generated ' + q.generated_utc : '') }));
@@ -2005,14 +2228,15 @@ async function boot() {
     renderLocation(run);
     renderSeason(calendar);
     renderNow(nws, calendar);
+    renderAfdLanguage(calendar);
     renderCalendar(calendar);
     renderDuration(calendar);
-    renderWind(calendar);
+    renderWind(calendar, landlord);
     renderStorms(storms, calendar);
     renderSources(prov);
     renderVerify(verify, prov);
     renderPublishedNormals(calendar);
-    renderQuality(quality);
+    renderQuality(quality, run);
     renderCaveats(calendar);
     wireExports();
 

@@ -505,6 +505,196 @@ setTimeout(() => {
     }
   });
 
+  // 19. The NWS Area Forecast Discussion card must render the scan the ledger
+  //     verified: the sentence count it claims, a quote block for every
+  //     published sentence, the scope caveat, and a link to the product.
+  //     A card that silently renders nothing would hide the only qualitative
+  //     storm language the site publishes.
+  {
+    const calJson = JSON.parse(fs.readFileSync(path.join(repo, 'data/calendar.json'), 'utf8'));
+    const afd = calJson.afd_language || null;
+    const card = doc.querySelector('#afd-language');
+    if (!afd) {
+      problems.push('calendar.json has no afd_language block');
+    } else if (!card) {
+      problems.push('#afd-language card missing from the page');
+    } else {
+      const t = card.textContent;
+      const nSentences = (afd.categories || []).reduce((n, c) => n + (c.sentences || []).length, 0);
+      if (t.length < 200) problems.push('AFD card rendered almost nothing: ' + t.slice(0, 120));
+      if (/\bundefined\b|\bNaN\b/.test(t)) problems.push('AFD card renders undefined/NaN');
+      if (!String(afd.sentences_scanned).length || !t.includes(String(afd.sentences_scanned))) {
+        problems.push('AFD card does not state how many sentences were scanned (' +
+          afd.sentences_scanned + ')');
+      }
+      if (!card.querySelector('a[href^="https://"]')) {
+        problems.push('AFD card has no link to the NWS product it quotes');
+      }
+      // Every published sentence must appear on the page, inside a quote block.
+      const quotes = Array.from(card.querySelectorAll('.quote')).map(q => q.textContent.trim());
+      const missing = (afd.categories || [])
+        .flatMap(c => (c.sentences || []).map(s => s.sentence))
+        .filter(s => !quotes.some(q => q.includes(s.trim())));
+      if (missing.length) {
+        problems.push('AFD card omits ' + missing.length + ' of ' + nSentences +
+          ' published sentences: ' + missing[0].slice(0, 90));
+      }
+      if (!quotes.length && nSentences) {
+        problems.push('AFD card published no quote blocks although ' + nSentences + ' sentences exist');
+      }
+      // The caveats are published in the data as strings; the card must render
+      // each of them, not merely mention the word "scope".  A renderer that
+      // read the wrong key would otherwise look correct.
+      ['scope_caveat', 'usage_note', 'verbatim_rule'].forEach(k => {
+        const want = (afd[k] || '').trim();
+        if (want.length < 20) {
+          problems.push('afd_language.' + k + ' is missing or too short in the data');
+        } else if (!t.includes(want.slice(0, 60))) {
+          problems.push('AFD card does not render afd_language.' + k + ': ' + want.slice(0, 70));
+        }
+      });
+      // The scan is qualitative by contract: a date or a rainfall amount
+      // attached to a quotation would be an invention rendered as NWS's words.
+      const invented = (afd.categories || []).flatMap(c => (c.sentences || []).flatMap(s =>
+        Object.keys(s).filter(k => !['section', 'sentence', 'matched_patterns'].includes(k))));
+      if (invented.length) {
+        problems.push('an AFD quotation carries a non-quotation key: ' + invented[0]);
+      }
+    }
+  }
+
+  // 20. Every headline number in the day dialog must name the basis it was
+  //     computed from.  The ledger enforces this on the data; this enforces it
+  //     on what a landlord actually reads.
+  {
+    const cell = doc.querySelector('.day[data-date]');
+    if (cell) {
+      cell.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      const dlg = text('#day-dialog-body');
+      const headline = doc.querySelector('#day-dialog-body table.kv');
+      const rows = headline ? Array.from(headline.querySelectorAll('tr')) : [];
+      const ABSENT = /\u2014|not available|no official/i;
+      rows.forEach(tr => {
+        const label = ((tr.cells[0] || {}).textContent || '').trim();
+        const value = ((tr.cells[1] || {}).textContent || '').trim();
+        if (!label || ABSENT.test(value)) return;   // no value, so no basis is owed
+        const fine = tr.querySelector('.fine');
+        if (!fine || fine.textContent.trim().length < 8) {
+          problems.push('day dialog shows "' + label + '" with no basis: ' +
+            tr.textContent.replace(/\s+/g, ' ').slice(0, 140));
+        }
+      });
+      // All six headline fields the brief asks for must be present to check.
+      const allLabels = rows.map(tr => ((tr.cells[0] || {}).textContent || '')).join('|');
+      ['High / low', 'Humidity', 'Chance of rain', 'Rain amount', 'Max wind', 'Max gust']
+        .forEach(k => { if (!allLabels.includes(k)) problems.push('day dialog headline table missing row: ' + k); });
+      if (!rows.length) problems.push('day dialog rendered no headline rows to check for basis');
+      if (!dlg) problems.push('day dialog empty while checking basis');
+    }
+  }
+
+  // 21. The hour-by-hour wind+rain block: the headline figure must be the one in
+  //     the data, the comparison row must not vanish, and an unavailable figure
+  //     must say so rather than render as a zero.
+  {
+    const hwr = ((landlordJson.executive_summary || {}).wind_and_rain_hourly) || {};
+    const card = text('#landlord-windrain');
+    const board = text('#wind-table');
+    if (hwr.available) {
+      const mean = (hwr.days_with_a_simultaneous_hour || {}).mean;
+      if (mean === undefined) {
+        problems.push('hourly block reports available with no days mean in the data');
+      } else {
+        const want = Number(mean).toFixed(1);
+        if (!card.includes('same HOUR') || !card.includes(`mean ${want}`)) {
+          problems.push('landlord wind+rain card does not render the hourly mean ' + want);
+        }
+        if (!board.includes('same HOUR')) {
+          problems.push('wind section does not render the hourly figure');
+        }
+      }
+      // The whole-day figure this page published first must still be on the page.
+      if (!card.includes('downtown gauge + SFO wind')) {
+        problems.push('the whole-day cross-station figure is gone from the card');
+      }
+      // "At the same time" is an hourly statement: the card must define the hour
+      // it counts, not merely print a number.
+      const method = (hwr.method || '').trim();
+      if (method.length < 20 || !card.includes(method.slice(0, 50))) {
+        problems.push('the hourly card does not publish the rule it counted by');
+      }
+      // Multi-hour accumulations are disclosed in the confidence line.
+      const conf = ((landlordJson.executive_summary.bottom_line || [])
+        .find(r => r.key === 'wind_and_rain') || {}).confidence || '';
+      if (hwr.simultaneous_hours_from_multi_hour_reports > 0
+          && !/longer than one hour/.test(conf + ' ' + card)) {
+        problems.push('multi-hour precipitation reports are counted but not disclosed');
+      }
+    } else if (!card.includes('not published')) {
+      problems.push('hourly block unavailable but the card does not say so');
+    }
+  }
+
+  // 22. Archive recency: if the run publishes it, the page must show every
+  //     archive with its date, and must flag the stale ones by name.
+  {
+    let runFile = {};
+    try {
+      runFile = JSON.parse(fs.readFileSync(path.join(repo, 'data/run.json'), 'utf8'));
+    } catch (e) {
+      problems.push('data/run.json could not be read for the archive-recency guard');
+    }
+    const cov = runFile.record_coverage || {};
+    const quality = text('#quality-report');
+    if ((cov.archives || []).length) {
+      cov.archives.forEach(a => {
+        if (a.last_date && !quality.includes(a.last_date)) {
+          problems.push('archive recency not rendered for ' + a.area + ' (' + a.last_date + ')');
+        }
+      });
+      const flag = text('#quality-stale-flag');
+      if (!flag) {
+        problems.push('run publishes stale archives but no stale-archive flag is rendered');
+      }
+      (cov.stale_archives || []).forEach(area => {
+        const row = (cov.archives || []).find(a => a.area === area) || {};
+        const label = row.label || area;
+        if (!flag.includes(label)) {
+          problems.push('the stale-archive flag does not name ' + area +
+            ' (expected its label "' + label + '" in: ' + flag.slice(0, 120) + ')');
+        }
+      });
+    }
+  }
+
+  // 23. The status line must not call an expected absence a failure: the counts
+  //     it prints are recomputed here from the provenance manifest itself.
+  {
+    let prov = { entries: [] };
+    try {
+      prov = JSON.parse(fs.readFileSync(path.join(repo, 'data/provenance.json'), 'utf8'));
+    } catch (e) {
+      problems.push('data/provenance.json could not be read for the fetch-count guard');
+    }
+    const entries = prov.entries || [];
+    const realFailures = entries.filter(e => e.ok === false && !e.expected_absent);
+    const absences = entries.filter(e => e.ok === false && e.expected_absent);
+    const meta = text('#data-status');
+    if (entries.length) {
+      if (!meta.includes(String(entries.length) + ' recorded source fetches')) {
+        problems.push('the status line does not report the manifest size');
+      }
+      if (!meta.includes(String(realFailures.length) + ' failed fetch')) {
+        problems.push('the status line does not report ' + realFailures.length +
+          ' real failure(s); it says: ' + meta.slice(0, 200));
+      }
+      if (absences.length && !/absent by design/.test(meta)) {
+        problems.push('the status line hides ' + absences.length +
+          ' expected absence(s) instead of publishing them');
+      }
+    }
+  }
+
   if (problems.length) {
     console.error('SMOKE TEST FAILED');
     problems.forEach(p => console.error(' - ' + p));

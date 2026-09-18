@@ -18,10 +18,13 @@ source file and re-checked before it is allowed onto the page.
 
 **Nobody can tell you today whether it will rain on 14 January 2027.** No official
 product forecasts a specific day that far out. The NWS publishes a daily forecast
-whose official `validTimes` is **7 days 11 hours** (`P7DT11H`) — as of this run,
-17 Sep 2026 14:00 UTC through 25 Sep 2026 01:00 UTC, which touches **8 local
-calendar days, 17–24 September 2026**, the last of them with only 2 forecast
-hours. Beyond that, the official products are *probabilities for a period*
+whose official `validTimes` is about **7 days** — the exact window, and how many
+local calendar days it touches, is read from the fetched product on every run and
+shown on the site (`calendar.json` → `nws_window`, and the *Today's real forecast*
+panel). The first and last local days of that window are partial, because the
+hourly grid starts and ends mid-day; each day publishes its own covered-hour
+count rather than looking like a full day. Beyond that window, the official
+products are *probabilities for a period*
 (6–10 days, 8–14 days, weeks 3–4, a month, a 3-month season), never a number for
 one named day.
 
@@ -71,7 +74,7 @@ expectation over the observed distribution, not a prediction for 2026-27.
 | How much rain in the season? | mean **12.79 in**, median **13.26 in**; wettest 22.82 in (1997–98), driest 1.71 in (2013–14); 10th–90th percentile 6.38–18.59 in |
 | How many wet days? | mean **34.5** days (range 7–55) |
 | Will we get a long wet spell? | **96.7%** of seasons had a run of ≥3 consecutive wet days, **80.0%** ≥5 days, **53.3%** ≥7 days, **23.3%** ≥10 days. The longest run averaged 7.3 days (max 17) |
-| Rain *and* strong wind together? | mean **11.1 days per season** with rain and ≥20 kt wind at SFO, **2.2 days** with ≥0.50 in and a ≥35 kt gust; strongest gust of the season averages 53.8 mph (max 70 mph) |
+| Rain *and* strong wind together? | **Two methods, both published.** Counted *hour by hour* from the NCEI ISD archive at SFO, rain and ≥20 kt wind coincide on **7.9 days per season** (median 7, range 1–16 over 30 seasons; **29.5** simultaneous hours a season). Pairing a whole day's rain with a whole day's wind maximum — the method this page used first, and the reason the old headline was higher — gives **11.1 days** with the downtown rain gauge and SFO wind. The hour-by-hour figure is the headline because "at the same time" is an hourly statement; the whole-day figure stays on the page, labelled. **2.2 days** per season have ≥0.50 in and a ≥35 kt gust; strongest gust of the season averages 53.8 mph (max 70 mph) |
 | How severe do storms get? | Days per season at ≥1.00 in: **3.2** counted from the record vs **3.26** summed from NOAA's own published probabilities; gusts ≥40 kt: **2.4** days, ≥50 kt: 0.3, and **0.5 days** that are both ≥1.00 in *and* a ≥40 kt gust. No NWS warning category is applied — those criteria are per forecast zone — so severity is published as counts at plain thresholds, with **record values bound to the season that produced them** |
 | Do the two methods agree? | Yes, and the site computes that verdict rather than asserting it. Across the four thresholds NOAA publishes a percent-of-years value for, the project's own count and NOAA's published expectation agree to within **0.06 days per season**: 0.50 in → **8.40 vs 8.39**, 1.00 in → **3.20 vs 3.26**, 2.00 in → **0.50 vs 0.51**, 4.00 in → **0.00 vs 0.02**. Two derivations from two different NCEI files, on the same station |
 | Does El Niño matter? | In this record, El Niño seasons averaged **14.23 in** (n=11), neutral 13.31 in (n=7), La Niña 11.16 in (n=12) — wetter on average, with huge spread |
@@ -86,11 +89,38 @@ expectation over the observed distribution, not a prediction for 2026-27.
 | CPC historic-event probability | "During the October-December 2026 season, there is a 75% chance of a historic event…" (verbatim, same page) |
 | Independent cross-check | The project's own 3-month mean from the raw Niño-3.4 table gives 0.98 °C for AMJ 2026 against NOAA's published 0.95 °C — a 0.03 °C difference, published on the site |
 
-**Today's actual forecast** (the only real day-by-day forecast that exists): the
-8 local calendar days the NWS hourly grid reaches, with day/night values aggregated
-to local days — e.g. 17 Sep 2026: **65 °F / 59 °F**, humidity 91.6% (86–97%), rain
-chance 0%, max wind 8 mph, from 10 hourly grid values. These are the values on the
-site; they are re-derived from the same NWS grid file on every run.
+**What NWS forecasters are actually saying** — the *Area Forecast Discussion
+language* card quotes the forecasters' own discussion verbatim for six things a
+landlord asked about: an atmospheric river, prolonged rain, heavy rain or
+flooding, strong wind, an explicit rainfall amount, and wind and rain in the same
+sentence. The card publishes **quotations and nothing else** — no date, no
+amount, no probability is attached to any quote, because a discussion covers the
+whole MTR forecast area and its words are not a value for 94122. It states how
+many sentences were scanned, which sections were excluded (`MARINE`, `AVIATION`,
+`FIRE WEATHER`) and why, how many product-furniture lines were dropped, and links
+to the exact product it read. On a dry September discussion it says so plainly —
+and says that finding nothing is **not** evidence the season will be dry. Every
+quoted sentence is re-checked against the fetched text on each run; one that is
+not a verbatim substring fails the build.
+
+**Where the point is, per the Census** — the site calls this the Sunset District
+because the Census geographer places the published 94122 centroid in the county
+subdivision **Sunset CCD**, and the *Location* card shows the county, place,
+tract, block and congressional district the same lookup returned, with the
+lookup's URL, SHA-256 and the geography types actually returned. That is a
+statistical boundary, not a city neighbourhood line, and the card says so. If the
+lookup fails on a run, no name is printed at all — the card reports that the
+geography was not retrieved and the irregularity is recorded.
+
+**Today's actual forecast** (the only real day-by-day forecast that exists) is the
+*Today's real forecast* panel on the site: whatever local calendar days the NWS
+hourly grid reaches right now, with high/low, humidity (mean and range), rain
+chance, rain amount, wind and gusts per day, plus each day's covered-hour count
+and the basis every one of those fields was computed from. This README
+deliberately quotes **no** values from it: the window moves every few hours, so a
+number typed here would contradict the verified dataset within a day. The panel is
+re-derived from the same NWS grid file on every run, and the claim ledger checks
+that each day names its basis.
 
 **Where the numbers come from** — every one: [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md),
 and on the site under *Verification*, with the URL, HTTP status, byte count, SHA-256 and
@@ -103,16 +133,16 @@ retrieval time of the exact file.
 | Layer | What it does |
 | --- | --- |
 | `pipeline/verify_sources.py` | Fails the build if any host outside the official list is used. There is no path to a commercial or unofficial source. |
-| `pipeline/verify_claims.py` (39 checks) | Re-derives every headline number from the same file and checks the project's rules: no `NWS FORECAST` badge outside the official horizon, no invented daily value, no humidity presented as an observation when it is a derivation, no NOAA *test* message shown as a real alert, quotes are plain text with no HTML entities left in them, and every source URL printed on the site is traced to a recorded fetch; no published text carries a Unicode replacement character; every CPC polygon sitting on the 33.3% baseline is flagged as such wherever it appears; and every figure in the executive bottom line is found in the dataset it claims to read. **Each guard is falsified before it is kept** — a guard that cannot be made to fail by mutating a fixture copy of `data/` is treated as a bug in the guard. |
+| `pipeline/verify_claims.py` (47 checks) | Re-derives every headline number from the same file and checks the project's rules: no `NWS FORECAST` badge outside the official horizon, no invented daily value, no humidity presented as an observation when it is a derivation, no NOAA *test* message shown as a real alert, quotes are plain text with no HTML entities left in them, and every source URL printed on the site is traced to a recorded fetch; no published text carries a Unicode replacement character; every CPC polygon sitting on the 33.3% baseline is flagged as such wherever it appears; and every figure in the executive bottom line is found in the dataset it claims to read. New this pass: every quoted forecaster sentence must be a whitespace-collapsed substring of the fetched discussion text, no quotation may carry a date or an amount, the named Census geography must be traceable to a recorded fetch with nesting GEOIDs, and every published day-value must name its own basis. Warnings (not failures) also catch documentation drift: a figure quoted in the README that the dataset does not publish, or a date in the docs near the run date that this run never published. **Each guard is falsified before it is kept** — a guard that cannot be made to fail by mutating a fixture copy of `data/` is treated as a bug in the guard. The harnesses are committed: `tests/falsify_guards.py` (15 ledger cases) and `tests/falsify_smoke.py` (8 render cases), both run in CI. |
 | Workflow gate | `summary.failed > 0` → **the run publishes nothing**. It commits diagnostics only ("refresh NOT published") and the site keeps the last verified dataset. |
 | `data/provenance.json` | The full fetch log: every URL, status, size, SHA-256, timestamp. |
 | `data/verify.json` + `verify_report.txt` | The claim ledger as machine-readable JSON and as plain text. |
-| `tests/test_parsers.py` | 212 offline assertions (stdlib only, no network) on the parsing/derivation code and exact official-host allow-list — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, an end-to-end aggregation over a synthetic file with hand-computable expected values, the rule that a CPC explanation must describe the category actually displayed, the NWS gridpoint gust/QPF aggregation including the local-midnight accumulation split, and the maintenance cost-driver rules (expected-days summation, Storm Events damage parsing, ENSO display formatting, no claim without evidence). |
-| `tests/smoke.js` (`npm test`) | Renders the whole page in jsdom against the committed data and fails on an empty section, a broken day dialog or CSV export, a truncated source label, a mislabelled source link, a CPC note that does not explain its own category, an unlabelled rain/temperature outlook, an unrounded humidity, or a forecast day missing its gust or rain amount. |
+| `tests/test_parsers.py` | 316 offline assertions (stdlib only, no network) on the parsing/derivation code and exact official-host allow-list — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, an end-to-end aggregation over a synthetic file with hand-computable expected values, the rule that a CPC explanation must describe the category actually displayed, the NWS gridpoint gust/QPF aggregation including the local-midnight accumulation split, and the maintenance cost-driver rules (expected-days summation, Storm Events damage parsing, ENSO display formatting, no claim without evidence), the Area Forecast Discussion scanner (positive detection of all six storm-language categories, marine/aviation exclusion, product-furniture filtering, hyphen-wrap and bullet handling, the bare-`AR` gate, dry-discussion and missing-product behaviour, and the verbatim rule), and the Census reverse geocode against the recorded real response. |
+| `tests/smoke.js` (`npm test`) | Renders the whole page in jsdom against the committed data and fails on an empty section, a broken day dialog or CSV export, a truncated source label, a mislabelled source link, a CPC note that does not explain its own category, an unlabelled rain/temperature outlook, an unrounded humidity, a forecast day missing its gust or rain amount, an AFD card that omits a published quotation or a published caveat, a quotation carrying a date or amount, or a headline number in the day dialog with no stated basis. |
 
 **Every forecast day can be checked by hand:** open the day's dialog, follow the
-source link, and compare. The site's *Verification* section lists all 17 recorded
-claims (26 checks) with their evidence, and *Irregularities* lists anything the
+source link, and compare. The site's *Verification* section lists all 18 recorded
+claims (47 checks) with their evidence, and *Irregularities* lists anything the
 pipeline flagged rather than smoothed over.
 
 ---
@@ -123,7 +153,7 @@ pipeline flagged rather than smoothed over.
 | --- | --- |
 | ZIP boundary / centroid | [U.S. Census Gazetteer 2024](https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip) → ZCTA 94122 internal point 37.760459, −122.483894 (cross-checked with the [Census geocoder](https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json)) |
 | Daily/hourly forecast | NWS [gridpoints MTR 82,105](https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly) and [human-readable version](https://forecast.weather.gov/MapClick.php?lat=37.760459&lon=-122.483894&unit=0&lg=english&FcstType=text&TextType=1) |
-| Wind gusts and rain amounts in the forecast | NWS [raw gridpoint data](https://api.weather.gov/gridpoints/MTR/82,105) — the `windGust` and `quantitativePrecipitation` series. The hourly forecast product carries **neither** for this grid cell (0 of 156 periods on 17 Sep 2026), so these two fields come from here, and each day publishes the basis it actually used. |
+| Wind gusts and rain amounts in the forecast | NWS [raw gridpoint data](https://api.weather.gov/gridpoints/MTR/82,105) — the `windGust` and `quantitativePrecipitation` series. The hourly forecast product has carried **neither** for this grid cell (the pipeline counts the null periods each run and reports the count in `data/quality_report.json`), so these two fields come from here, and each day publishes the basis it actually used. |
 | Alerts, observations, forecaster discussion | NWS [alerts for CAZ006](https://api.weather.gov/alerts/active?zone=CAZ006), [station observations](https://api.weather.gov/stations/SFOC1/observations/latest), [Area Forecast Discussion](https://api.weather.gov/products/types/AFD/locations/MTR) |
 | 6–10 day, 8–14 day, weeks 3–4, monthly, seasonal outlooks | CPC [GIS shapefiles](https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/) (the containing polygon is sampled at the 94122 point and its index, bounding box and raw DBF row are published) |
 | ENSO number | CPC **official ONI product** — [oni.ascii.txt](https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt), read directly |
@@ -180,6 +210,9 @@ index.html                  the page
 data/                       committed datasets + provenance + verification ledger
 docs/                       VERIFICATION.md (claims audit), DATA_SOURCES.md, LIMITATIONS.md, NEXT_SESSION.md
 tests/                      test_parsers.py (offline), smoke.js (jsdom render)
+tests/fixtures/             recorded real official responses used by the offline tests
+tests/falsify_guards.py     proves each ledger guard can fail (15 mutated fixtures)
+tests/falsify_smoke.py      proves each render guard can fail (8 mutated copies)
 .github/workflows/          update-data.yml (nightly), site-test.yml (on push)
 ```
 
@@ -190,7 +223,10 @@ python3 pipeline/main.py --outdir data
 python3 pipeline/build_calendar.py
 python3 pipeline/landlord_summary.py
 python3 pipeline/verify_claims.py
-python3 tests/test_parsers.py       # offline unit tests
+python3 tests/test_parsers.py       # offline unit tests (316 assertions)
+python3 tests/falsify_guards.py     # ledger guards can fail (15 cases)
+npm test                            # render the page in jsdom (needs: npm install)
+python3 tests/falsify_smoke.py      # render guards can fail (8 cases)
 python3 -m http.server 8000         # open http://localhost:8000
 ```
 

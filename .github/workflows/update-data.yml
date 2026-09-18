@@ -22,7 +22,12 @@ permissions:
   contents: write
 
 concurrency:
-  group: update-noaa-data
+  # Scoped per ref.  A single global group meant a push on one branch could
+  # cancel the data refresh of another branch -- observed on 18 Sep 2026, when
+  # this branch's push run was cancelled by a "higher priority waiting request"
+  # from elsewhere and the branch kept the previous dataset.  Within one ref the
+  # newest push still supersedes the one before it, which is what we want.
+  group: update-noaa-data-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

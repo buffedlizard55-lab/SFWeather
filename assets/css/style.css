@@ -475,3 +475,15 @@ dialog form { padding: 0 22px 20px; }
 @media print {
   .bl-item, .off-cell { break-inside: avoid; }
 }
+
+/* ---------------------------------------------------- AFD language scan */
+/* Quotation-only card. The visual language is deliberately different from the
+ * numeric tables: these are NWS's own sentences, not measurements, so they are
+ * set as quotes with no numbers attached. */
+
+.afd-cat { font-weight: 600; }
+.afd-heading {
+  margin: 18px 0 4px; font-size: 14px; letter-spacing: .02em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+.afd-quote { font-size: 14px; line-height: 1.5; }

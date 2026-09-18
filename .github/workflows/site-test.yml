@@ -13,6 +13,8 @@ on:
       - 'tests/**'
       - 'pipeline/**'
       - 'package.json'
+      - 'README.md'
+      - 'docs/**'
       - '.github/workflows/site-test.yml'
   pull_request:
     paths:
@@ -21,6 +23,8 @@ on:
       - 'tests/**'
       - 'pipeline/**'
       - 'package.json'
+      - 'README.md'
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
@@ -39,6 +43,8 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Render the site headlessly and check it
         run: npm test
+      - name: Falsify the render guards (a guard that cannot fail is decoration)
+        run: python3 tests/falsify_smoke.py
       - name: Verify committed source provenance
         run: python3 pipeline/verify_sources.py
   parsers:
@@ -52,3 +58,5 @@ jobs:
           python-version: '3.11'
       - name: Parse and derive unit tests
         run: python3 tests/test_parsers.py
+      - name: Falsify the claim-ledger guards
+        run: python3 tests/falsify_guards.py

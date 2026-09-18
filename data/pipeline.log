@@ -1,6 +1,7 @@
 SFWeather pipeline - 2026-09-18
 [1/7] ZIP centroid (U.S. Census Bureau)
       94122 centroid: 37.7605, -122.4839 (verified)
+      Census geographies at that point: Sunset CCD / tract Census Tract 326.01 / San Francisco city, San Francisco County
 [2/7] NWS (api.weather.gov)
 [3/7] CPC outlooks
 [4/7] ENSO / ONI
@@ -9,10 +10,12 @@ SFWeather pipeline - 2026-09-18
       sample record: 1973-10-21 -> {'PRCP': 8.0, 'TMAX': 206.0, 'TMIN': 156.0, 'SNOW': None, 'SNWD': None}
 [6/7] computing rainy-season climatology
 [7/7] Storm Events + writing outputs
+      record coverage: STALE archive(s) -> wind=2025-08-27 (387 d), isd_hourly=2025-08-27 (387 d)
 
 === summary ===
-  fetches: 138 ok / 2 failed
-  irregularities: 3
+  fetches: 139 ok / 0 failed / 4 absent by design
+  irregularities: 4
     [info] nws: Some hourly forecast fields are null in the NWS gridded forecast for this grid cell.
     [warning] nws: No HWO products returned for office MTR.
     [info] storm_events: NCEI's Storm Events file lost 12 character(s) before this project fetched it (U+FFFD is already present in the published file). Those characters were removed from the narrative text and are not guesse
+    [warning] coverage: At least one NCEI archive this project reads is more than 180 days behind the run date. Every published statistic is a 1991-2020 statistic and is unaffected; the flag exists so nothing claims to descr

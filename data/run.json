@@ -1,9 +1,9 @@
 {
-  "generated_utc": "2026-09-18T17:46:28Z",
+  "generated_utc": "2026-09-18T19:55:55Z",
   "pipeline_version": "1.0",
   "target": {
     "zip": "94122",
-    "label": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset)",
+    "label": "San Francisco, CA 94122 (Sunset District \u2014 Inner and Outer Sunset)",
     "fallback_lat": 37.7599,
     "fallback_lon": -122.4849,
     "centroid": {
@@ -21,6 +21,39 @@
         "geoid": "GEOID",
         "lat": "INTPTLAT",
         "lon": "INTPTLONG"
+      },
+      "census_geographies": {
+        "county_subdivision": "Sunset CCD",
+        "county_subdivision_geoid": "0607593267",
+        "county": "San Francisco County",
+        "county_geoid": "06075",
+        "place": "San Francisco city",
+        "place_geoid": "0667000",
+        "census_tract": "Census Tract 326.01",
+        "census_tract_geoid": "06075032601",
+        "census_block_geoid": "060750326013006",
+        "congressional_district": "Congressional District 11",
+        "urban_area": "San Francisco--Oakland, CA Urban Area",
+        "geography_types_returned": [
+          "119th Congressional Districts",
+          "2020 Census Blocks",
+          "2024 State Legislative Districts - Lower",
+          "2024 State Legislative Districts - Upper",
+          "Census Tracts",
+          "Combined Statistical Areas",
+          "Counties",
+          "County Subdivisions",
+          "Incorporated Places",
+          "States",
+          "Urban Areas"
+        ],
+        "source": "U.S. Census Bureau geocoder (reverse lookup of the published ZCTA centroid)",
+        "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
+        "benchmark": "Public_AR_Current",
+        "vintage": "Current_Current",
+        "retrieved_utc": "2026-09-18T19:51:31Z",
+        "sha256": "b7b8df03b1365a8463fe07a95913f07e23627f52eff60daece1b6a8ea4f65fb7",
+        "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
     }
   },
@@ -32,10 +65,49 @@
     1991,
     2020
   ],
+  "record_coverage": {
+    "as_of": "2026-09-18",
+    "normals_period": [
+      1991,
+      2020
+    ],
+    "archives": [
+      {
+        "area": "rain_temp",
+        "label": "GHCN-Daily USW00023272 (rain, daily high/low)",
+        "last_date": "2026-09-15",
+        "age_days": 3,
+        "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
+        "note": "Daily summaries, so this is the most current of the three archives."
+      },
+      {
+        "area": "wind",
+        "label": "GSOD 72494023234 (daily wind and gusts, 00-24Z)",
+        "last_date": "2025-08-27",
+        "age_days": 387,
+        "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
+        "note": "Annual files; GSOD cannot be more current than the ISD hourly file it is derived from."
+      },
+      {
+        "area": "isd_hourly",
+        "label": "ISD hourly 72494023234 (hour-by-hour wind and precipitation)",
+        "last_date": "2025-08-27",
+        "age_days": 387,
+        "url": "https://www.ncei.noaa.gov/data/global-hourly/access/",
+        "note": "Annual files of hourly observations."
+      }
+    ],
+    "stale_archives": [
+      "wind",
+      "isd_hourly"
+    ],
+    "recent_enough_for_current_conditions": false
+  },
   "counts": {
-    "manifest_entries": 140,
-    "successful_fetches": 138,
-    "failed_fetches": 2,
-    "irregularities": 3
+    "manifest_entries": 143,
+    "successful_fetches": 139,
+    "failed_fetches": 0,
+    "expected_absences": 4,
+    "irregularities": 4
   }
 }

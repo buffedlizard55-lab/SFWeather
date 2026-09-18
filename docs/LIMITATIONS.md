@@ -110,8 +110,9 @@ want a commercial second opinion you must read it at the source.
 
 ### 12. Forecast gusts and rain amounts carry one allocation step
 The `/forecast/hourly` product returns **no `windGust` and no QPF** for grid
-`MTR 82,105` (0 of 156 periods on 17 Sep 2026), so those two fields come from the
-raw gridpoint series at the same point.
+`MTR 82,105` — the pipeline counts the null periods on every run and reports the
+count in `data/quality_report.json` rather than quoting a snapshot here — so those
+two fields come from the raw gridpoint series at the same point.
 
 * **Gusts** are an instantaneous value, so the daily figure is simply the maximum
   over the hours falling in that local day, converted km/h → mph. No modelling.
@@ -148,6 +149,42 @@ statement. The tile wording, the day dialog and the legend all keep the two apar
 and the smoke test refuses a climatology tile that uses the word "rain" (bug 39).
 Readers comparing a September-looking tile with a January one should know they are
 reading two different quantities.
+
+### 15. The Area Forecast Discussion is written for a whole forecast area, not for 94122
+The AFD scan quotes NWS forecasters verbatim, but the discussion covers the entire
+MTR forecast area — the Bay Area, the Central Coast, the Delta, the Sierra
+foothills and the coastal waters. A sentence like "strongest winds for the inland
+valleys and gaps/passes" is true *somewhere in that area* and says nothing about
+one ZIP code in the Sunset.
+
+* The card publishes a `scope_caveat` to that effect, and the site renders it
+  with the quotations rather than below them.
+* `MARINE`, `AVIATION` and `FIRE WEATHER` sections are excluded from the scan
+  (open-ocean and airport conditions are not a landlord's roof), and the
+  exclusion is published with its reason.
+* The scan publishes **no numbers**: no date, no rainfall amount, no probability.
+  A quoted amount stays inside quotation marks with its own words ("rainfall
+  totals of 3 inches possible along the coast range"), and the ledger fails the
+  run if a date or an amount is attached to any quotation.
+* Nothing in the scan promotes a day's tier. Days inside the official horizon
+  keep their NWS values; days outside it stay climatology.
+* The scan reflects the most recent discussion at the time of the run — usually
+  issued within the last 24 hours — and is re-run nightly. It is not an archive
+  of discussions.
+
+### 16. "Sunset District" is a Census name, not a city neighbourhood boundary
+The forecast point is called the Sunset District because the Census geographer
+places the published 94122 centroid inside the county subdivision **Sunset CCD**
+(GEOID `0607593267`). That is an official statistical boundary, and it is the
+evidence the site publishes.
+
+What it is **not**: a city-defined neighbourhood boundary. The City and County of
+San Francisco publishes analysis neighbourhoods (Inner Sunset, Outer Sunset,
+Parkside, …) whose edges differ from the Census subdivision, and the ZIP 94122
+itself spans more than one of them. So the site does not claim to cover "Outer
+Sunset" as a municipal unit; it covers the ZCTA centroid and names the geography
+the Census reports. If the geocoder is unreachable on a run, no name is printed —
+the card says the geography was not retrieved and the irregularity is recorded.
 
 ---
 
@@ -226,12 +263,14 @@ reading two different quantities.
 
 ## Storm-severity counters (added 18 Sep 2026)
 
-* **Every counter is a daily one.** `severe_wind_and_rain_days` pairs a rain total
-  and a gust from the **same GSOD daily row**, which is a UTC day (00–24Z, about
-  16:00–16:00 Pacific). Two events that a tenant experienced as simultaneous
-  within one local day can therefore fall on different GSOD dates, and two that
-  fell either side of a UTC midnight can be counted together. Hourly data would
-  fix this; it is listed as the top open item in `docs/NEXT_SESSION.md`.
+* **The severity counters are daily ones.** `severe_wind_and_rain_days` pairs a
+  rain total and a gust from the **same GSOD daily row**, which is a UTC day
+  (00–24Z, about 16:00–16:00 Pacific). Two events that a tenant experienced as
+  simultaneous within one local day can therefore fall on different GSOD dates,
+  and two that fell either side of a UTC midnight can be counted together. The
+  *wind-and-rain* headline no longer depends on this — it is now counted hour by
+  hour on local days from the ISD archive (see §"Wind and rain at the same time"
+  below) — but these storm-severity counters still do.
 * **No named warning category is applied.** "Days with a gust ≥ 40 kt" is not
   "High Wind Warning days". NWS writes those criteria per forecast zone and this
   project deliberately does not restate them, so the counters cannot be read as
@@ -248,3 +287,64 @@ reading two different quantities.
   (12 of 119 records). The site says so on the page instead of quietly omitting
   the column or summing it.
 
+
+
+## Wind and rain at the same time — what the hourly method does and does not fix (added 18 Sep 2026)
+
+* **It is still SFO, not the Sunset.** The hourly co-occurrence is measured at
+  `72494023234` (KSFO), 11.9 mi away and more exposed than the Sunset, so every
+  wind figure here remains an **upper bound** for 94122. What the hourly method
+  fixes is *when* the two happened, not *where* they were measured.
+* **A wind speed at the observation time is not a gust.** The hourly statistic
+  uses the sustained wind in the ISD `WND` field. Gusts are only published in the
+  GSOD daily file, so the "heavy" rows (≥0.50 in and a ≥35 kt gust) remain
+  whole-day pairings and are labelled as such.
+* **Some ISD precipitation reports cover more than one hour.** Those hours are
+  counted as hours with rain *and* disclosed separately
+  (`simultaneous_hours_from_multi_hour_reports`); they are not presented as
+  hour-by-hour measurements.
+* **Three of the 30 seasons used are missing 1–4 of the 123 dates** (2009-10,
+  2016-17, 2019-20). The minimum coverage is published with the statistic. The
+  1990-91 and 2024-25 seasons, and 2021-22 onwards, are excluded because they are
+  outside the 1991–2020 window the daily method uses; the exclusion list is on the
+  page.
+* **The hourly archive itself is not current.** NCEI's annual GSOD and ISD files
+  for this station end well before the run date (the GHCN-Daily file is current).
+  Every published statistic is a 1991–2020 statistic and is unaffected, but the
+  dates are now published (`run.json` → `record_coverage`) so that nothing here is
+  read as a statement about this week — and a stale archive is flagged as an
+  irregularity rather than passing silently.
+* **The two methods are not interchangeable.** The whole-day figure counts a day
+  if rain and wind each occurred somewhere in that day, which is why it is higher.
+  It is kept on the page, labelled, and the same-station whole-day row exists to
+  show how much of the gap is the pairing rule rather than the station.
+
+## The hourly record, and what it does and does not settle (added 18 Sep 2026 session 8)
+
+* **It is SFO, not the Sunset.** The hour-by-hour coincidence is measured at
+  station 72494023234 (KSFO), 11.9 mi away and more exposed.  Every wind figure
+  here stays an **upper bound** for 94122 — the hourly method fixes *when*, not
+  *where*.
+* **A sustained wind at the observation time is not a gust.**  The hourly
+  statistic uses the ISD `WND` speed.  Gusts exist only in the GSOD daily file, so
+  the "heavy" row (≥ 0.50 in and a gust ≥ 35 kt) is still a whole-day pairing and
+  is labelled as one.
+* **Some ISD precipitation reports cover more than one hour.**  Those hours are
+  counted and disclosed separately; they are not hour-by-hour measurements.
+* **Three of the 30 seasons used are missing 1–4 of the 123 dates** (2009-10,
+  2016-17, 2019-20); the thinnest coverage is published with the figure.  Seasons
+  outside the 1991–2020 window are excluded and named.
+* **The station's own hourly record is not current.**  NCEI's ISD and GSOD files
+  for this station end well before the run date while GHCN-Daily is current, so
+  the site publishes the newest row it actually fetched for each archive, its age
+  in days and its URL, and flags anything more than 180 days behind.  Every
+  published statistic is a 1991–2020 statistic and is unaffected — the flag exists
+  so nothing here is read as a statement about this week.
+* **The two methods are not interchangeable.**  The whole-day figure counts a day
+  if rain and wind each occurred somewhere in that day.  It is kept, labelled, and
+  the same-station row shows how much of the gap is the pairing rule.
+* **A missing fetch is published, not hidden.**  Fetches that are supposed to be
+  absent (a not-yet-published annual file, a station with no observations product)
+  are counted separately from failures and each must name a checkable reason; a
+  fetch that was supposed to work and did not is listed by URL on the status line
+  and recorded as a ledger warning.

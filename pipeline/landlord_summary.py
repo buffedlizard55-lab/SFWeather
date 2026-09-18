@@ -65,6 +65,186 @@ strength_label = climo.strength_label
 fmt_oni_c = climo.fmt_oni_c
 
 
+#: NCEI ISD hourly archive (free, no key).  Used for the hour-by-hour
+#: wind-and-rain statistic, which does not depend on the GSOD daily file.
+ISD_URL = "https://www.ncei.noaa.gov/data/global-hourly/access/"
+
+#: A season enters the hour-by-hour statistics only if the station reported on at
+#: least this share of the 123 Oct 1 - Jan 31 dates.  Seasons below it are listed
+#: in the published output with their coverage instead of being averaged in.
+HOURLY_SEASON_MIN_COVERAGE_PCT = 95.0
+
+#: NCEI Storm Events types this project counts as rain-related: flooding and
+#: flash flooding, the "Heavy Rain" type NWS files when rain is the hazard, and
+#: debris flow, which is the rain-driven slope failure a landlord's drainage and
+#: foundation question runs into.  Defined once because two cards used to count
+#: "flood-type" reports with two different sets, so the same page published 98
+#: and 99 for the same quantity.
+RAIN_RELATED_EVENT_TYPES = ("Flood", "Flash Flood", "Heavy Rain", "Debris Flow")
+
+
+def summarise_hourly_wind_rain(isd, period, daily_wind_rain, heavy_wind_rain,
+                               min_coverage_pct=HOURLY_SEASON_MIN_COVERAGE_PCT):
+    """Hour-by-hour wind-and-rain statistic from the NCEI ISD hourly archive.
+
+    Answers the landlord's "wind and rain at the same time" question with hours that
+    actually coincide, instead of pairing a whole local rain day with a whole daily
+    wind maximum.  Both are published: the hourly count, the same-station daily
+    pairing (which isolates how much of the difference comes from pairing whole
+    days), and the cross-station daily pairing this project published before.
+
+    ``period`` is the ``(start_year, end_year)`` season-year window shared with the
+    daily method, so the comparison is over the same seasons.  Nothing is invented:
+    every figure is a count over ``by_local_date`` entries the parser produced, and
+    the seasons that were left out are named with the reason.
+    """
+    if not isd or not isd.get("by_local_date"):
+        return {"available": False,
+                "reason": "No NCEI ISD hourly summary was produced by this run.",
+                "source": "NOAA NCEI Integrated Surface Database (ISD)",
+                "source_url": ISD_URL}
+    y0, y1 = period
+    by_season = {}
+    for local_date, d in isd["by_local_date"].items():
+        sy = climo.isd_season_year(local_date)
+        s = by_season.setdefault(sy, {
+            "season_year": sy, "season": f"{sy}-{sy + 1}", "dates_with_data": 0,
+            "days_simultaneous": 0, "days_daily_pair": 0, "days_rain": 0,
+            "days_wind_ge_threshold": 0, "simultaneous_hours": 0, "valid_hours": 0,
+        })
+        s["dates_with_data"] += 1
+        s["valid_hours"] += d.get("valid_hours") or 0
+        if (d.get("wind_rain_hours") or 0) > 0:
+            s["days_simultaneous"] += 1
+        s["simultaneous_hours"] += d.get("wind_rain_hours") or 0
+        if (d.get("prcp_in") or 0.0) > 0.0:
+            s["days_rain"] += 1
+        windy = (d.get("wind_max_kt") is not None
+                 and d["wind_max_kt"] >= climo.ISD_WIND_THRESHOLD_KT)
+        if windy:
+            s["days_wind_ge_threshold"] += 1
+        if windy and (d.get("prcp_in") or 0.0) > 0.0:
+            s["days_daily_pair"] += 1
+
+    # The same-station whole-day pairing needs the per-date wind maximum and daily
+    # precipitation total, which only the current aggregation writes.  If the
+    # committed summary predates them, the pairing is *unavailable*, not zero:
+    # publishing 0.0 would state that wind and rain never share a day at SFO.
+    same_station_fields = any(isinstance(d, dict) and "wind_max_kt" in d
+                              for d in isd["by_local_date"].values())
+
+    expected = isd.get("dates_expected_per_season") or climo.ISD_SEASON_DATES_EXPECTED
+    used, excluded = [], []
+    for sy in sorted(by_season):
+        s = by_season[sy]
+        cov = climo.pct(s["dates_with_data"], expected)
+        s = dict(s, dates_expected=expected, coverage_pct=cov)
+        if not (y0 <= sy <= y1):
+            s["excluded_because"] = (f"season {s['season']} is outside the "
+                                     f"{y0}-{y1} window the daily statistic uses")
+            excluded.append(s)
+        elif cov is not None and cov < min_coverage_pct:
+            s["excluded_because"] = (f"the station reported on only "
+                                     f"{s['dates_with_data']} of {expected} dates "
+                                     f"({cov}%)")
+            excluded.append(s)
+        else:
+            used.append(s)
+
+    if not used:
+        return {"available": False,
+                "reason": "The ISD hourly archive produced no season inside the "
+                          "comparison window with enough date coverage.",
+                "min_coverage_pct_required": min_coverage_pct,
+                "source": "NOAA NCEI Integrated Surface Database (ISD)",
+                "source_url": ISD_URL}
+
+    stats = lambda key: climo.summarise([s[key] for s in used])
+    days_sim = stats("days_simultaneous")
+    hours_sim = stats("simultaneous_hours")
+    days_pair = stats("days_daily_pair") if same_station_fields else None
+    days_rain = stats("days_rain") if same_station_fields else None
+    days_wind = stats("days_wind_ge_threshold") if same_station_fields else None
+    coverage = [s["coverage_pct"] for s in used if s["coverage_pct"] is not None]
+
+    multi_hour_hours = isd.get("simultaneous_hours_from_multi_hour_reports")
+    notes = []
+    if not same_station_fields:
+        notes.append(
+            "The committed hourly summary carries only the simultaneous-hour counts, so "
+            "the same-station whole-day pairing is reported as unavailable rather than "
+            "as zero. The next pipeline run writes the per-date wind maximum and daily "
+            "precipitation total and the comparison appears.")
+    if multi_hour_hours is None:
+        notes.append(
+            "The count of simultaneous hours coming from multi-hour precipitation "
+            "reports is not present in this run's hourly summary.")
+    if isd.get("latest_observation_utc"):
+        notes.append(
+            f"The hourly archive fetched by this run reaches "
+            f"{str(isd.get('latest_observation_utc'))[:10]} (UTC) at its newest.")
+    if isd.get("dates_expected_per_season") is None:
+        notes.append(
+            "The hourly summary predates the coverage fields; coverage is reported from "
+            f"the {expected}-date season definition used by this project's parser.")
+
+    def _diff(a, b):
+        try:
+            return round(float(a) - float(b), 2)
+        except (TypeError, ValueError):
+            return None
+
+    return {
+        "available": True,
+        "station_id": isd.get("station_id"),
+        "station_name": isd.get("station_name") or "SAN FRANCISCO INTERNATIONAL AIRPORT (KSFO)",
+        "source": isd.get("source") or "NOAA NCEI Integrated Surface Database (ISD)",
+        "source_url": ISD_URL,
+        "units_period": isd.get("units"),
+        "method": isd.get("method"),
+        "timezone": isd.get("timezone", "America/Los_Angeles"),
+        "wind_threshold_kt": isd.get("wind_threshold_kt", climo.ISD_WIND_THRESHOLD_KT),
+        "season_window": f"{y0}-{y0 + 1} .. {y1}-{y1 + 1}",
+        "n_seasons_used": len(used),
+        "hours_with_both_observations": isd.get("valid_joint_hours"),
+        "simultaneous_hours_total": isd.get("simultaneous_wind_rain_hours"),
+        "simultaneous_hours_from_multi_hour_reports":
+            isd.get("simultaneous_hours_from_multi_hour_reports"),
+        "days_with_a_simultaneous_hour": days_sim,
+        "simultaneous_hours_per_season": hours_sim,
+        # None (not 0.0) when the underlying per-date fields are absent: an absent
+        # measurement and a measured zero are different statements.
+        "same_station_daily_fields_available": same_station_fields,
+        "days_daily_pair_same_station": days_pair,
+        "days_rain_same_station": days_rain,
+        "days_wind_ge_threshold_same_station": days_wind,
+        "cross_station_daily_days": dict(daily_wind_rain or {}),
+        "heavy_cross_station_daily_days": dict(heavy_wind_rain or {}),
+        "difference_daily_minus_hourly_same_station":
+            _diff((days_pair or {}).get("mean"), days_sim.get("mean")),
+        "difference_cross_station_minus_hourly":
+            _diff((daily_wind_rain or {}).get("mean"), days_sim.get("mean")),
+        "coverage": {
+            "dates_expected_per_season": expected,
+            "min_coverage_pct_required": min_coverage_pct,
+            "seasons_used": len(used),
+            "min_coverage_pct": min(coverage) if coverage else None,
+            "seasons_below_full_coverage": [
+                {"season": s["season"], "dates_with_data": s["dates_with_data"],
+                 "coverage_pct": s["coverage_pct"]}
+                for s in used if s["coverage_pct"] is not None and s["coverage_pct"] < 100.0],
+            "seasons_excluded": [
+                {"season": s["season"], "dates_with_data": s["dates_with_data"],
+                 "coverage_pct": s["coverage_pct"],
+                 "excluded_because": s["excluded_because"]} for s in excluded],
+        },
+        "per_season": [{k: v for k, v in s.items() if k != "excluded_because"}
+                       for s in used],
+        "excluded_seasons": excluded,
+        "notes": notes,
+    }
+
+
 def expected_event_days(days, climo_key):
     """Expected number of days per season meeting a daily climatology test.
 
@@ -186,7 +366,7 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
                       wind_rain, heavy_wind_and_rain, max_gust, expected_days,
                       severity, latest_oni, oni_when, diagnostic_status,
                       tilt, storms, days_in_horizon, horizon_last_day,
-                      enso_strat=None):
+                      enso_strat=None, hourly_wind_rain=None):
     """The landlord's questions, answered in the order they were asked.
 
     Every value is copied from an already-verified structure; nothing here is
@@ -209,6 +389,9 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
 
     obs = "1991\u20132020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown)"
     obs_wind = "1991\u20132020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away)"
+    obs_hourly = ("hour-by-hour observed record, NOAA NCEI ISD hourly station 72494023234 "
+                  "(SFO ASLO, 11.9 mi away) \u2014 an hour counts when a single observation carries "
+                  "wind \u2265 20 kt and precipitation > 0")
     exp_basis = ("1991\u20132020 observed record \u2014 an expectation over those 30 seasons, "
                  "not a prediction for 2026-27")
 
@@ -336,29 +519,116 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
                      "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt"}],
     })
 
+    hourly = hourly_wind_rain or {}
+    hourly_days = g(hourly, "days_with_a_simultaneous_hour") or {}
+    hourly_hours = g(hourly, "simultaneous_hours_per_season") or {}
+    same_station_daily = g(hourly, "days_daily_pair_same_station") or {}
+    if hourly.get("available"):
+        hourly_window = hourly.get("season_window")
+        n_hourly = hourly.get("n_seasons_used")
+        coverage = g(hourly, "coverage") or {}
+        min_cov = g(coverage, "min_coverage_pct")
+        multi = g(hourly, "simultaneous_hours_from_multi_hour_reports")
+        if hourly.get("same_station_daily_fields_available"):
+            same_mean = same_station_daily.get("mean")
+            cross_mean = (wind_rain or {}).get("mean")
+            comparison_sentence = (
+                f"Pairing a whole day\u2019s rain with a whole day\u2019s wind maximum \u2014 a method "
+                f"that cannot tell rain in the morning from wind at night \u2014 gives "
+                f"{g(same_station_daily,'mean')} days on that same station and ")
+            after_comparison = ""
+            agreement_sentence = (
+                " The two whole-day constructions agree, so the gap to the hourly count is the "
+                "pairing rule, not the change of rain gauge."
+                if (same_mean is not None and cross_mean is not None
+                    and abs(float(same_mean) - float(cross_mean)) < 0.05) else "")
+        else:
+            comparison_sentence = ""
+            after_comparison = ("The same-station whole-day comparison is not published in this run\u2019s "
+                                "hourly dataset, so the hour-by-hour figure above is the one to use; for "
+                                "reference, the whole-day method gives ")
+            agreement_sentence = ""
+        hourly_answer = (
+            f"On the hour-by-hour record at SFO, rain and sustained wind \u2265 20 kt coincide on about "
+            f"{g(hourly_days,'mean')} days a season (median {g(hourly_days,'median')}, range "
+            f"{g(hourly_days,'min')}\u2013{g(hourly_days,'max')} over {n_hourly} seasons, {hourly_window}), "
+            f"which is about {g(hourly_hours,'mean')} simultaneous hours a season. "
+            + comparison_sentence + after_comparison
+            + f"{g(wind_rain,'mean')} days when the downtown rain gauge is paired with SFO wind (the figure "
+              "this page published before the hourly record was used)."
+            + agreement_sentence
+            + " Those are the days water is driven sideways under shingles, laps and window seals, and the "
+              "days fences fail. The SFO wind figure is an upper bound for the Sunset.")
+        hourly_numbers = [
+            {"label": "Days per season with a simultaneous wind+rain hour (hourly record)",
+             "value": (f"mean {g(hourly_days,'mean')} \u00b7 median {g(hourly_days,'median')} \u00b7 "
+                       f"min {g(hourly_days,'min')} \u00b7 max {g(hourly_days,'max')}")},
+            {"label": "Simultaneous wind+rain hours per season",
+             "value": (f"mean {g(hourly_hours,'mean')} \u00b7 median {g(hourly_hours,'median')} \u00b7 "
+                       f"max {g(hourly_hours,'max')}")},
+            {"label": "Days per season, same station, whole-day pairing (for comparison)",
+             "value": ((f"mean {g(same_station_daily,'mean')} \u00b7 median {g(same_station_daily,'median')} "
+                        f"\u00b7 max {g(same_station_daily,'max')}")
+                       if hourly.get("same_station_daily_fields_available")
+                       else "not published in this run's hourly dataset")},
+            {"label": "Days per season, whole-day pairing, downtown rain gauge + SFO wind",
+             "value": f"mean {g(wind_rain,'mean')} \u00b7 max {g(wind_rain,'max')}"},
+            {"label": "Heavy wind+rain days per season (\u2265 0.50 in and a gust \u2265 35 kt, whole-day pairing)",
+             "value": f"mean {g(heavy_wind_and_rain,'mean')} \u00b7 max {g(heavy_wind_and_rain,'max')}"},
+        ]
+        if multi is None:
+            multi_sentence = ("the multi-hour-accumulation count is not published in this run\u2019s "
+                              "hourly dataset")
+        elif multi:
+            multi_sentence = (f"{multi} of the {g(hourly,'simultaneous_hours_total')} counted hours came "
+                              "from reports whose precipitation period was longer than one hour, so those "
+                              "are multi-hour accumulations rather than hour-by-hour measurements")
+        else:
+            multi_sentence = "every counted hour came from a report covering a single hour"
+        hourly_confidence = (
+            f"n = {n_hourly} seasons; thinnest season covers {min_cov}% of the 123 Oct\u2013Jan dates; "
+            + multi_sentence
+            + "; the whole-day method pairs a local-day rain total with a UTC-day wind figure (00\u201324Z), "
+              "which is why it counts more days")
+        hourly_sources = [
+            {"label": "NCEI ISD hourly archive (station 72494023234, SFO)",
+             "url": ISD_URL},
+            {"label": "NCEI GSOD 72494023234 (KSFO)", "url": GSOD_URL},
+            {"label": "NCEI GHCN-Daily USW00023272", "url": GHCN_URL},
+        ]
+    else:
+        hourly_answer = (
+            f"Yes \u2014 on about {g(wind_rain,'mean')} days a season at SFO (\u2265 0.01 in of rain and sustained "
+            f"wind \u2265 20 kt), and on about {g(heavy_wind_and_rain,'mean')} heavy days (\u2265 0.50 in and a "
+            "gust \u2265 35 kt). Those are the days water is driven sideways under shingles, laps and window "
+            "seals, and the days fences fail. The SFO wind figure is an upper bound; the rain figure is the "
+            "downtown gauge. The hour-by-hour record could not be summarised this run "
+            f"({hourly.get('reason') or 'no reason recorded'}), so the whole-day figure is shown alone.")
+        hourly_numbers = [
+            {"label": "Wind+rain days per season (whole-day pairing)",
+             "value": f"mean {g(wind_rain,'mean')} \u00b7 max {g(wind_rain,'max')}"},
+            {"label": "Heavy wind+rain days per season",
+             "value": f"mean {g(heavy_wind_and_rain,'mean')} \u00b7 max {g(heavy_wind_and_rain,'max')}"},
+        ]
+        hourly_confidence = ("GSOD days are 00\u201324Z (about 16:00\u201316:00 local), so the joint statistic "
+                             "pairs a local-day rain total with a UTC-day wind figure \u2014 stated, not "
+                             "corrected. No hour-by-hour summary was available this run.")
+        hourly_sources = [{"label": "NCEI GSOD 72494023234 (KSFO)", "url": GSOD_URL},
+                          {"label": "NCEI GHCN-Daily USW00023272", "url": GHCN_URL}]
+
     out.append({
         "n": 5,
         "key": "wind_and_rain",
         "question": "Will wind and rain hit at the same time?",
-        "answer": (
-            f"Yes \u2014 on about {g(wind_rain,'mean')} days a season at SFO (\u2265 0.01 in of rain and sustained wind "
-            f"\u2265 20 kt), and on about {g(heavy_wind_and_rain,'mean')} heavy days (\u2265 0.50 in and a gust "
-            "\u2265 35 kt). Those are the days water is driven sideways under shingles, laps and window seals, and "
-            "the days fences fail. The SFO wind figure is an upper bound; the rain figure is the downtown gauge."),
-        "numbers": [
-            {"label": "Wind+rain days per season", "value": f"mean {g(wind_rain,'mean')} \u00b7 max {g(wind_rain,'max')}"},
-            {"label": "Heavy wind+rain days per season",
-             "value": f"mean {g(heavy_wind_and_rain,'mean')} \u00b7 max {g(heavy_wind_and_rain,'max')}"},
-        ],
-        "basis": obs + "; " + obs_wind,
-        "confidence": "GSOD days are 00\u201324Z (about 16:00\u201316:00 local), so the joint statistic pairs a "
-                      "local-day rain total with a UTC-day wind figure \u2014 stated, not corrected",
-        "sources": [{"label": "NCEI GSOD 72494023234 (KSFO)", "url": GSOD_URL},
-                    {"label": "NCEI GHCN-Daily USW00023272", "url": GHCN_URL}],
+        "answer": hourly_answer,
+        "numbers": hourly_numbers,
+        "basis": obs + "; " + obs_wind + "; " + obs_hourly,
+        "confidence": hourly_confidence,
+        "sources": hourly_sources,
     })
 
     storm_rows = (storms or {}).get("events") or []
-    flood_types = ("Flood", "Flash Flood", "Heavy Rain")
+    flood_types = RAIN_RELATED_EVENT_TYPES
     years = (storms or {}).get("years") or []
     span = f"{years[0]}\u2013{years[-1]}" if years else "the covered years"
     n_flood = sum(1 for e in storm_rows if (e.get("event_type") or "") in flood_types)
@@ -386,7 +656,8 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
     sev_answer = (
         (sev_sentence + " " if sev_bits else "")
         + f"NOAA's Storm Events Database holds {n_all} records for San Francisco County over {span}, of "
-        + f"which {n_flood} are flood-type. Its damage column is not usable as a cost estimate "
+        + f"which {n_flood} are rain-related ({', '.join(flood_types)}). "
+        + "Its damage column is not usable as a cost estimate "
         + ("\u2014 every non-zero value NCEI holds for this county is a token amount "
            f"({n_dmg} of {n_all} records carry one) \u2014 " if n_dmg else "\u2014 ")
         + "so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. "
@@ -394,7 +665,8 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
           "per forecast zone and this project does not restate them.")
     sev_numbers = [
         {"label": "Storm Events records, SF County", "value": f"{n_all} ({span})"},
-        {"label": "Flood-type records", "value": f"{n_flood}"},
+        {"label": "Rain-related records (Flood, Flash Flood, Heavy Rain, Debris Flow)",
+         "value": f"{n_flood} of {n_all}"},
         {"label": "Records with a non-zero damage figure",
          "value": ("not derived this run" if n_dmg is None else f"{n_dmg} of {n_all} \u2014 no dollar total published")},
     ]
@@ -482,7 +754,8 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
 
 
 def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
-                       diagnostic_status, relevant_cpc, storms, monthly):
+                       diagnostic_status, relevant_cpc, storms, monthly,
+                       hourly_wind_rain=None):
     """Ranked repair & maintenance cost drivers for the 94122 rainy season.
 
     Every number in ``evidence`` is copied from the verified datasets produced
@@ -535,7 +808,7 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
     flood_with_damage = None
     storm_years = None
     if storms and isinstance(storms.get("events"), list):
-        flood_types = {"Flood", "Flash Flood", "Heavy Rain", "Debris Flow"}
+        flood_types = RAIN_RELATED_EVENT_TYPES
         flood_count = sum(1 for e in storms["events"]
                           if (e or {}).get("event_type") in flood_types)
         flood_with_damage = sum(
@@ -559,7 +832,9 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
                 "value": f"{dec.get('max')} in / {(jan or {}).get('max')} in"})
         if flood_count is not None:
             evidence.append({
-                "label": f"Flood-type storm reports in SF County ({storm_years or 'archive years'})",
+                "label": (f"Rain-related storm reports in SF County "
+                          f"(Flood, Flash Flood, Heavy Rain, Debris Flow; "
+                          f"{storm_years or 'archive years'})"),
                 "value": (f"{flood_count} events in NOAA Storm Events "
                           "(reported events only - under-reporting is likely)")})
             if flood_with_damage is not None:
@@ -580,7 +855,33 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
     # 3. Wind + rain together ---------------------------------------------
     wr = dist.get("wind_and_rain_days") or {}
     hwr = dist.get("heavy_wind_and_rain_days") or {}
+    hourly = hourly_wind_rain or {}
+    h_days = (hourly.get("days_with_a_simultaneous_hour") or {})
+    h_pair = (hourly.get("days_daily_pair_same_station") or {})
+    hourly_src = [{"label": "NCEI ISD hourly archive (station 72494023234, SFO)",
+                   "url": ISD_URL}]
     if wr:
+        evidence = []
+        if hourly.get("available") and h_days:
+            evidence.append({
+                "label": "Days per season with a simultaneous wind ≥ 20 kt + rain hour "
+                         "(hour-by-hour record, SFO)",
+                "value": (f"mean {h_days.get('mean')} · median {h_days.get('median')} · "
+                          f"max {h_days.get('max')} over {hourly.get('n_seasons_used')} seasons")})
+            if h_pair and hourly.get("same_station_daily_fields_available"):
+                evidence.append({
+                    "label": "Days per season, whole-day pairing at the same station (for comparison)",
+                    "value": (f"mean {h_pair.get('mean')} · median {h_pair.get('median')} · "
+                              f"max {h_pair.get('max')}")})
+        evidence += [
+            {"label": "Days with rain ≥ 0.01 in and sustained wind ≥ 20 kt (whole-day pairing, "
+                      "downtown gauge + SFO wind)",
+             "value": (f"mean {wr.get('mean')} · median {wr.get('median')} · "
+                       f"max {wr.get('max')} per season")},
+            {"label": "Days with rain ≥ 0.50 in and a gust ≥ 35 kt",
+             "value": (f"mean {hwr.get('mean')} · median {hwr.get('median')} · "
+                       f"max {hwr.get('max')} per season")},
+        ]
         drivers.append({
             "driver": "Wind + rain together — wind-driven water intrusion",
             "why_it_costs": ("Wind pushes rain sideways under shingles, laps and window seals and "
@@ -589,16 +890,11 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
                              "recorded at SFO, 11.9 miles away (computed great-circle distance from the "
                              "94122 centroid, see climatology.meta.station_distance_mi) and "
                              "more exposed, so treat the "
-                             "counts as an upper bound for the Sunset."),
-            "evidence": [
-                {"label": "Days with rain ≥ 0.01 in and sustained wind ≥ 20 kt",
-                 "value": (f"mean {wr.get('mean')} · median {wr.get('median')} · "
-                           f"max {wr.get('max')} per season")},
-                {"label": "Days with rain ≥ 0.50 in and a gust ≥ 35 kt",
-                 "value": (f"mean {hwr.get('mean')} · median {hwr.get('median')} · "
-                           f"max {hwr.get('max')} per season")},
-            ],
-            "sources": gsod + ghcn,
+                             "counts as an upper bound for the Sunset. The headline count is the "
+                             "hour-by-hour one: rain and wind measured in the same hour, not rain "
+                             "and wind somewhere on the same day."),
+            "evidence": evidence,
+            "sources": (hourly_src if hourly.get("available") else []) + gsod + ghcn,
         })
 
     # 4. Peak gusts ---------------------------------------------------------
@@ -804,10 +1100,18 @@ def main():
     wet_days = dist.get("wet_days", {})
     longest_streak = dist.get("longest_wet_streak_days", {})
 
-    # 3. Wind and rain
+    # 3. Wind and rain.  Two methods, both published:
+    #    - the cross-station daily pairing that has always been on this page
+    #      (GHCN downtown rain day x GSOD SFO daily max wind, UTC day), and
+    #    - the hour-by-hour co-occurrence at SFO from the ISD hourly archive.
+    #    The hourly number is the one that actually answers "at the same time";
+    #    the daily number is kept and labelled, never quietly replaced.
     wind_rain = dist.get("wind_and_rain_days", {})
     heavy_wind_rain = dist.get("heavy_wind_and_rain_days", {})
     max_gust = dist.get("max_gust_mph", {})
+    isd = load("isd_hourly_summary.json")
+    hourly_wind_rain = summarise_hourly_wind_rain(
+        isd, tuple(run.get("normals_period", [1991, 2020])), wind_rain, heavy_wind_rain)
 
     # 4. ENSO context - NOAA's published ONI product is the headline value.
     enso_cal = calendar.get("enso", {}) or {}
@@ -895,8 +1199,32 @@ def main():
             "source_url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
         })
 
-    # Wind + rain
-    if wind_rain.get("mean"):
+    # Wind + rain.  The action item quotes the hour-by-hour count when it is
+    # available, because that is the one that means "at the same time".
+    hourly_days = (hourly_wind_rain or {}).get("days_with_a_simultaneous_hour") or {}
+    if hourly_days.get("mean") is not None:
+        action_items.append({
+            "category": "Wind + rain",
+            "priority": "high",
+            "title": (f"Expect {hourly_days.get('mean')} days per season when rain and sustained "
+                      "wind ≥ 20 kt happen in the same hour"),
+            "detail": (f"Hour-by-hour NCEI ISD record at SFO ASOS (more exposed than the Sunset, so an "
+                       f"upper bound for 94122): mean {hourly_days.get('mean')}, median "
+                       f"{hourly_days.get('median')}, max {hourly_days.get('max')} local dates per "
+                       f"Oct-Jan season carrying at least one hour with rain AND sustained wind ≥ 20 kt, "
+                       f"over {(hourly_wind_rain or {}).get('n_seasons_used')} seasons. "
+                       + (f"Pairing whole days instead (the method used before) gives mean "
+                          f"{((hourly_wind_rain or {}).get('days_daily_pair_same_station') or {}).get('mean')} "
+                          "days at the same station, and "
+                          if (hourly_wind_rain or {}).get("same_station_daily_fields_available") else "")
+                       + f"{wind_rain.get('mean')} days when the downtown "
+                       "rain gauge is paired with SFO wind. Heavy wind+rain (≥0.50 in AND gust ≥35 kt, "
+                       f"whole days): mean {heavy_wind_rain.get('mean')}, max "
+                       f"{heavy_wind_rain.get('max')} days."),
+            "source": "NCEI ISD hourly 72494023234 (KSFO) + GSOD + GHCN-Daily",
+            "source_url": ISD_URL,
+        })
+    elif wind_rain.get("mean"):
         action_items.append({
             "category": "Wind + rain",
             "priority": "high",
@@ -997,7 +1325,8 @@ def main():
     cost_drivers = build_cost_drivers(
         days=days, dist=dist, streak_prob=streak_prob, enso_strat=enso_strat,
         latest_oni=latest_oni, diagnostic_status=diagnostic_status,
-        relevant_cpc=relevant_cpc, storms=storms, monthly=monthly)
+        relevant_cpc=relevant_cpc, storms=storms, monthly=monthly,
+        hourly_wind_rain=hourly_wind_rain)
 
     # 8b. NOAA's own published daily normals for the same station ----------
     # The landlord's two headline rain questions have an *officially published*
@@ -1164,7 +1493,7 @@ def main():
         storms=storms,
         days_in_horizon=(calendar.get("nws_window") or {}).get("scoreboard_days_in_horizon"),
         horizon_last_day=(calendar.get("nws_window") or {}).get("last_day"),
-        enso_strat=enso_strat)
+        enso_strat=enso_strat, hourly_wind_rain=hourly_wind_rain)
 
     # Phase-aware ENSO sentence for the key finding: the tilt wording has to
     # follow the phase NOAA actually published, not a template that always
@@ -1183,6 +1512,20 @@ def main():
     else:
         enso_tilt = "NOAA's published ONI is the official ENSO state"
 
+    # Key-finding sentence for the wind-and-rain pair, built before the dict so the
+    # hourly figure is used when it exists and the whole-day figure is named either
+    # way.  Never a silent substitution: both numbers appear.
+    _hourly_days = ((hourly_wind_rain or {}).get("days_with_a_simultaneous_hour") or {})
+    if _hourly_days.get("mean") is not None:
+        wind_rain_sentence = (
+            f"Wind+rain together occurred {_hourly_days.get('mean')} days per season on average at "
+            f"SFO on the hour-by-hour record (upper bound for Sunset); pairing whole days instead "
+            f"gives {wind_rain.get('mean')} days. ")
+    else:
+        wind_rain_sentence = (
+            f"Wind+rain together occurred {wind_rain.get('mean')} days per season on average at SFO "
+            "(upper bound for Sunset). ")
+
     # Final landlord JSON
     landlord = {
         # This is a transform of the calendar/source snapshot, not a new
@@ -1199,6 +1542,13 @@ def main():
             "current_enso": dict(latest_oni,
                                  phase_label=phase_label(latest_oni.get("phase")),
                                  oni_c_fmt=fmt_oni_c(latest_oni.get("oni_c"))),
+            # Hour-by-hour wind-and-rain co-occurrence from the NCEI ISD archive,
+            # published next to the whole-day approximation it replaces as the
+            # headline: the two answer "at the same time" differently and both
+            # numbers stay on the page.
+            "wind_and_rain_hourly": hourly_wind_rain,
+            # How current each NCEI archive behind these numbers actually is.
+            "record_coverage": run.get("record_coverage"),
             "season_total_prcp": season_total,
             "oct_total": oct_total,
             "nov_total": nov_total,
@@ -1230,7 +1580,7 @@ def main():
                 f"Over 1991-2020, Oct-Jan averaged {season_total.get('mean')} in rain across {wet_days.get('mean')} wet days. "
                 f"{streak_prob.get('ge_7_days', {}).get('pct')}% of seasons had a 7+ day wet streak, "
                 f"{streak_prob.get('ge_10_days', {}).get('pct')}% had 10+ days. "
-                f"Wind+rain together occurred {wind_rain.get('mean')} days per season on average at SFO (upper bound for Sunset). "
+                f"{wind_rain_sentence}"
                 f"Current ENSO: {phase_label(latest_oni.get('phase'))} (official ONI {fmt_oni_c(latest_oni.get('oni_c'))}, {oni_when}) - "
                 f"{enso_tilt}"
                 + (f"; CPC status \"{diagnostic_status}\"" if diagnostic_status else "")

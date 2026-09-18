@@ -38,17 +38,32 @@ This is the anti-hallucination rule of the project, documented in `docs/METHODS.
 - Browser check: https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html
 - Verified: the pipeline downloads the ZIP, finds GEOID=94122, reads INTPTLAT/INTPTLONG, records which columns were used
 
-### What the official CPC outlooks say (as of Sep 2026)
+### What the official CPC outlooks say
 
-From the **NOAA CPC GIS shapefiles** sampled at 37.7605, -122.4839:
+**This file deliberately contains no CPC numbers.** An earlier version carried a
+hand-typed table of them, and it drifted: two temperature rows were written as
+"EC 33%" when the sampled shapefiles said *Above normal* at 33.0% — a named
+category sitting on the three-way baseline, which the site is required to label
+as such everywhere it appears. A Markdown file cannot be re-derived by the claim
+ledger, so any number typed into one will eventually contradict the verified
+dataset. The rule now is that prose points at the data and the data carries the
+numbers.
 
-| Period | Temp | Precip | Issued | Source |
-|--------|------|--------|--------|--------|
-| Oct 2026 (monthly update) | Above normal 40% | Equal chances 33% | 2026-09-17 | ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/monthlyupdate/monthupd_*_latest.zip |
-| OND 2026 (Oct-Nov-Dec) | Above normal 33% | Equal chances 33% | 2026-09-17 | ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip |
-| NDJ 2026-27 | EC 33% | Above median 33% | 2026-09-17 | same |
-| DJF 2026-27 | EC 33% | Above median 40% | 2026-09-17 | same |
-| JFM 2027 | Equal chances 33% | Above median 50% | 2026-09-17 | same |
+Read the current values here, in this order of authority:
+
+1. **On the site** — the card *"Official CPC outlooks that cover this rainy
+   season"* (landlord dashboard) and the table *"What the official CPC outlooks
+   say for this window"* (season outlook). Every row shows the period, the
+   variable (Rain / Temp), the category, the probability, the issuance date and
+   whether the probability sits on the 33.3% baseline.
+2. **In the dataset** — `data/landlord.json` → `cpc_outlooks_relevant` (one
+   record per sampled outlook, including the containing polygon index, its
+   bounding box and the raw DBF attribute row) and `data/cpc.json` for every
+   bundle fetched.
+3. **At the source** — the NOAA CPC GIS archives below, sampled at the published
+   centroid. The exact files used by the current run, with their HTTP status,
+   byte count and SHA-256, are listed in `data/provenance.json` and on the site
+   under *Sources*.
 
 **Maps**: archived in `assets/cpc/*.gif`, each linked to live CPC page:
 
@@ -76,7 +91,7 @@ Weekly Niño values in the 10 Sep diagnostic discussion: +1.8°C in Niño-3.4, +
 
 Week 3-4 discussion **11 Sep 2026**: “Relative SST anomalies in the equatorial Pacific are nearing +2.0°C, as the El Niño heads into strong territory.” Source: https://www.cpc.ncep.noaa.gov/products/predictions/WK34/
 
-**ONI** (Oceanic Niño Index, the official season-labelled 3-month running mean of ERSSTv5 Niño 3.4 anomalies — product: https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt) is latest published as **JJA 2026: +1.80°C, El Niño, strong**. The project's raw monthly Niño 3.4 table is a cross-check only; it is not the headline ONI value.
+**ONI** (Oceanic Niño Index, the official season-labelled 3-month running mean of ERSSTv5 Niño 3.4 anomalies — product: https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt) was **JJA 2026: +1.80°C, El Niño, strong** at the time this guide was written. That is a snapshot: NOAA republishes the ONI monthly, so the authoritative current value is the one the site renders from `data/enso.json` (which records the URL, SHA-256 and retrieval time of the file it read). The project's raw monthly Niño 3.4 table is a cross-check only; it is not the headline ONI value.
 
 **Why this matters for 94122**: El Niño tilts California winter toward wetter. In 1991-2020 record (Oct-Jan totals):
 
@@ -125,16 +140,34 @@ Source: same GHCN-Daily file.
 Wind from **NCEI GSOD 72494023234 (KSFO)**, 11.9 miles SE of 94122 (great-circle distance from the 94122 centroid, published as `climatology.meta.station_distance_mi.wind_ksfo` and recomputed every run), more open/exposed than Sunset — so treat as **upper bound** for 94122. Units: knots in CSV, converted mph ×1.15078 per GSOD README: https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt (README is authority, also notes GSOD days are UTC 00-24Z ≈ 16:00-16:00 local, so joint stat is approximation).
 
 - Average daily max sustained wind at SFO: **17.2 mph**; average daily max gust: **30.7 mph**
-- **11.1 days/season** with both rain (≥0.01 in) and sustained wind ≥20 kt (median 10, max 24)
 - **2.2 days/season** with heavy rain (≥0.50 in) AND gust ≥35 kt (median 2, max 8)
 - Strongest gust of season: mean **53.8 mph**, record **70 mph**
 
+**Wind and rain at the same time** is answered two ways, and the site publishes
+both rather than one:
+
+- **hour by hour** from **NCEI ISD global-hourly 72494023234 (KSFO)**: a local
+  date counts when at least one observation has both `wind ≥ 20 kt` and
+  precipitation > 0. This is the headline on the site's *Wind + rain together*
+  card, with its per-season coverage and the seasons excluded from it.
+- **whole day at a time** from GSOD + GHCN-Daily: a date counts when the day's
+  rain total and the day's wind maximum each cross the threshold — a looser
+  test that cannot tell rain in the morning from wind at night.
+
+The figures themselves are **not** repeated here (they are recomputed nightly and
+a number typed into this file would contradict them within a month — see the
+`readme-figures-traceable` guard). Read them from the site card or from
+`data/landlord.json` → `executive_summary.wind_and_rain_hourly`.
+
 Definitions used:
 - wet_day: calendar day ≥0.01 in
-- wind_and_rain_day: SFO max sustained ≥20 kt AND precip ≥0.01 in
-- heavy_wind_and_rain_day: SFO max gust ≥35 kt AND precip ≥0.50 in
+- wind_and_rain_hour: one ISD observation with sustained wind ≥20 kt and precipitation > 0
+- wind_and_rain_day: SFO max sustained ≥20 kt AND precip ≥0.01 in (whole-day pairing)
+- heavy_wind_and_rain_day: SFO max gust ≥35 kt AND precip ≥0.50 in (whole-day pairing)
 
-Source: https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/
+Sources:
+- Hourly: https://www.ncei.noaa.gov/data/global-hourly/access/ (per-year station files)
+- Daily: https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/
 
 ### Storm severity
 
@@ -170,9 +203,9 @@ Sources for climatology days:
 
 1. **Gutters, downspouts, roof drains** — Expect 12.79 in mean seasonal total, but up to 22.82 in in wettest El Niño year (1997-98). December mean 4.78 in, January 4.47 in. Clean before Oct 1.
 2. **Week-long rain plan** — 53.3% of seasons have ≥7-day wet streak, 23.3% have ≥10 days. Longest recorded 17 days. Tenant communication for extended wet periods, check for leaks.
-3. **Wind+rain combo** — 11.1 days/season average with rain + ≥20 kt sustained at SFO (upper bound). Heavy combo 2.2 days/season. Secure loose items, check trees, fences.
+3. **Wind+rain combo** — the site's *Wind + rain together* card gives the hour-by-hour count (rain and ≥20 kt in the same hour) and, beside it, the whole-day count this guide used to quote. All of it is measured at SFO, an upper bound for the Sunset. Secure loose items, check trees and fences.
 4. **Gusts** — Season max gust mean 53.8 mph, record 70 mph at SFO. Sunset less, but use as upper bound for insurance/planning.
-5. **ENSO tilt** — Current El Niño (official ONI +1.80°C for JJA 2026, strong) tilts toward wetter, but does not determine local rain. CPC JFM 2027 favors above-median precipitation at 50% probability (issued 2026-09-17). Spread remains wide: El Niño mean 14.23 in vs La Niña 11.16 in, with substantial min/max overlap.
+5. **ENSO tilt** — Read the current ENSO state and the current CPC probabilities on the site (*ENSO — the single biggest driver of a San Francisco winter* and *What the official CPC outlooks say for this window*); they are republished nightly from NOAA's own products and this file does not duplicate them, because a number typed here would contradict the verified dataset within a month. What is stable and safe to plan from is the observed record: in 1991-2020, El Niño seasons averaged 14.23 in and La Niña seasons 11.16 in over Oct-Jan, with substantial min/max overlap — a tilt, not a verdict.
 6. **No daily forecast beyond 7 days** — Don't trust any site showing specific rain amount for Jan 15 2027 today. Use climatology as planning baseline, and watch NWS 7-day as season approaches — dashboard auto-promotes days to real forecast nightly.
 7. **Use official sources for life-safety** — For warnings, use https://www.weather.gov/mtr and https://api.weather.gov/alerts/active?zone=CAZ006 directly.
 

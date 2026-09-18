@@ -38,7 +38,13 @@ import climo                          # noqa: E402
 
 TARGET = {
     "zip": "94122",
-    "label": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset)",
+    # "Sunset District" is what the U.S. Census Bureau's own county-subdivision
+    # geography calls the area the published centroid falls in (see
+    # fetch_census_geographies).  "Outer Sunset" is a local name for the western
+    # half of the district and has no federal boundary, so it is not asserted in
+    # the label; the exact coordinate and the official geography are published
+    # instead.
+    "label": "San Francisco, CA 94122 (Sunset District — Inner and Outer Sunset)",
     "fallback_lat": 37.7599,      # replaced by the Census ZCTA centroid below
     "fallback_lon": -122.4849,
 }
@@ -57,6 +63,9 @@ GSOD_STATIONS = [
     ("72494023234", "SAN FRANCISCO INTERNATIONAL AIRPORT (KSFO)"),
     ("72494023272", "SAN FRANCISCO DOWNTOWN (KSFO alt id)"),
 ]
+#: The wind station this project publishes against (the first entry above).  Named
+#: once so the ISD summary, the GSOD summary and the site cannot drift apart.
+GSOD_WIND_NAME = GSOD_STATIONS[0][1]
 
 CPC_GIS_BASE = "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst"
 CPC_WWW_BASE = "https://www.cpc.ncep.noaa.gov"
@@ -89,8 +98,49 @@ def note_irregularity(severity, area, message, evidence=None):
     })
 
 
-def record(res, **kwargs):
-    MANIFEST.append(res.provenance(**kwargs))
+def count_fetches(manifest):
+    """Classify manifest entries: succeeded, really failed, absent by design.
+
+    Kept as a function so ``run.json``, the ledger and the tests all compute the
+    three numbers the same way.  An expected absence is never a failure: counting
+    a not-yet-published annual file as one would mask a station that stopped
+    answering.
+    """
+    ok = sum(1 for m in manifest if m.get("ok"))
+    absent = sum(1 for m in manifest if not m.get("ok") and m.get("expected_absent"))
+    failed = sum(1 for m in manifest if not m.get("ok") and not m.get("expected_absent"))
+    return {"manifest_entries": len(manifest), "successful_fetches": ok,
+            "failed_fetches": failed, "expected_absences": absent}
+
+
+#: The only reasons a missing fetch may be labelled an expected absence.  Naming
+#: them is what stops a real outage being reclassified as routine: the ledger
+#: re-checks each label against the URL (see verify_claims.py), so marking a
+#: station that stopped answering as "expected" fails the run instead of
+#: silencing it.
+EXPECTED_ABSENCE_RULES = (
+    "annual-file-not-yet-published",       # NCEI publishes an annual file after the year ends
+    "station-without-observations-product",  # NWS lists the station but publishes no observations/latest
+    "candidate-station-without-the-product",  # NCEI publishes hourly normals for some candidates only
+)
+
+
+def record(res, expected_absent=None, **kwargs):
+    """Append a fetch to the manifest.
+
+    ``expected_absent`` may name one of :data:`EXPECTED_ABSENCE_RULES`.  Those
+    entries are recorded (never hidden) and reported separately from failures,
+    because counting a not-yet-published annual file as a failure would make a
+    real failure -- an archive that stopped answering -- invisible in the total.
+    The label is only ever attached to a fetch that actually failed; a 200 is a
+    200.
+    """
+    entry = res.provenance(**kwargs)
+    if expected_absent and not entry.get("ok"):
+        if expected_absent not in EXPECTED_ABSENCE_RULES:
+            raise ValueError(f"unknown expected-absence rule: {expected_absent!r}")
+        entry["expected_absent"] = expected_absent
+    MANIFEST.append(entry)
     return res
 
 
@@ -219,6 +269,65 @@ def fetch_zip_centroid():
                       {"url": url})
     return {"lat": TARGET["fallback_lat"], "lon": TARGET["fallback_lon"],
             "source": "fallback (ZIP not present in Gazetteer)", "verified": False, "url": url}
+
+
+def fetch_census_geographies(lat, lon):
+    """Reverse-geocode the ZCTA centroid with the Census geocoder (official).
+
+    Why this exists: the Gazetteer gives one coordinate and an area, which is
+    enough to forecast a point but says nothing about *which part of San
+    Francisco* that point is in.  The Census geocoder returns the official
+    geographies that contain it - the county subdivision, whose Census name for
+    this ZIP is "Sunset CCD" - plus the county, place, tract, block and
+    legislative districts.  That is the evidence behind naming the district on
+    the site instead of asserting a neighbourhood from memory.
+
+    A failed lookup is a warning, never a fatal error: the site then simply does
+    not publish the field.  It is never inferred from the ZIP code.
+    """
+    url = ("https://geocoding.geo.census.gov/geocoder/geographies/coordinates"
+           f"?x={lon:.6f}&y={lat:.6f}"
+           "&benchmark=Public_AR_Current&vintage=Current_Current&format=json")
+    obj, res = fetchlib.get_json(url)
+    record(res, note=("U.S. Census Bureau geocoder - official geographies containing "
+                      "the 94122 centroid (county subdivision, tract, block)"))
+    if obj is None:
+        note_irregularity(
+            "warning", "geography",
+            "The Census reverse-geocode request failed, so the official geography "
+            "evidence for the forecast point is absent this run. Nothing was "
+            "inferred in its place.",
+            {"url": url, "status": res.status, "error": res.error})
+        return None
+
+    parsed = climo.parse_census_geographies(obj)
+    if not parsed:
+        note_irregularity(
+            "warning", "geography",
+            "The Census reverse-geocode response contained no county subdivision, "
+            "county or tract for the 94122 centroid; the field is omitted rather "
+            "than guessed.",
+            {"url": url, "geography_types": sorted(
+                (((obj.get("result") or {}).get("geographies")) or {}).keys())})
+        return None
+
+    parsed.update({
+        "source": ("U.S. Census Bureau geocoder (reverse lookup of the published "
+                   "ZCTA centroid)"),
+        "url": url,
+        "benchmark": "Public_AR_Current",
+        "vintage": "Current_Current",
+        "retrieved_utc": res.retrieved_utc,
+        "sha256": res.sha256,
+        "naming_note": (
+            "The county subdivision the Census returns for this point is its "
+            "official name for the Sunset District. \"Outer Sunset\" and \"Inner "
+            "Sunset\" are local names for the western and eastern halves of the "
+            "district and have no federal boundary, so this project publishes the "
+            "official geography and the exact coordinate instead of asserting one "
+            "of them."),
+    })
+    return parsed
 
 
 # ==========================================================================
@@ -356,7 +465,14 @@ def fetch_nws(lat, lon):
                 continue
             obs_url = f"{base}/stations/{sid}/observations/latest"
             obs, ores = fetchlib.get_json(obs_url)
-            record(ores, note=f"Latest official observation from station {sid}")
+            # Not every station the grid cell lists publishes an observations/latest
+            # product; NWS answers 404 for those.  That is the provider's normal
+            # state, so it is recorded as an expected absence with its reason rather
+            # than counted as a failed fetch (a real outage must not hide in that
+            # total), and the reason is re-checked by the ledger.
+            record(ores, note=f"Latest official observation from station {sid}",
+                   expected_absent=("station-without-observations-product"
+                                    if ores.status == 404 else None))
             entry = {
                 "station_id": sid,
                 "name": sp.get("name"),
@@ -1113,7 +1229,11 @@ def fetch_gsod(years):
             url = (f"https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
                    f"{year}/{sid}.csv")
             res = fetchlib.get(url, timeout=300)
-            record(res, note=f"NCEI GSOD {year}: {sid}")
+            # NCEI publishes an annual file only once the year is complete, so a 404
+            # on the current year is the provider's normal state, not a failure.
+            record(res, note=f"NCEI GSOD {year}: {sid}",
+                   expected_absent=("annual-file-not-yet-published"
+                                    if year >= dt.date.today().year else None))
             statuses.append({"year": year, "status": res.status, "ok": res.ok})
             if res.ok and res.body:
                 for r in climo.parse_gsod(res.text()):
@@ -1129,7 +1249,7 @@ def fetch_gsod(years):
     return None
 
 
-def fetch_isd_hourly_summary(years, station_id="72494023234"):
+def fetch_isd_hourly_summary(years, station_id="72494023234", station_name=None):
     """Fetch NCEI Integrated Surface Database (ISD) global-hourly data for SFO ASOS.
 
     Downloads hourly observations for station 72494023234 (KSFO) across the requested
@@ -1139,16 +1259,20 @@ def fetch_isd_hourly_summary(years, station_id="72494023234"):
     compact); only the computed joint-frequency summary is returned.
     """
     all_records = []
+    season_records = 0
     statuses = []
     base_url = "https://www.ncei.noaa.gov/data/global-hourly/access/"
     for year in years:
         url = f"{base_url}{year}/{station_id}.csv"
         res = fetchlib.get(url, timeout=300)
-        record(res, note=f"NCEI ISD global-hourly {year}: {station_id}")
+        record(res, note=f"NCEI ISD global-hourly {year}: {station_id}",
+               expected_absent=("annual-file-not-yet-published"
+                                if year >= dt.date.today().year else None))
         statuses.append({"year": year, "status": res.status, "ok": res.ok})
         if res.ok and res.body:
             records = climo.parse_isd_hourly(res.text())
             all_records.extend(records)
+            season_records += sum(1 for r in records if r.get("in_season"))
 
     if not all_records:
         note_irregularity("warning", "isd",
@@ -1159,11 +1283,92 @@ def fetch_isd_hourly_summary(years, station_id="72494023234"):
 
     summary = climo.aggregate_isd_hourly_wind_and_rain(all_records)
     summary["station_id"] = station_id
+    summary["station_name"] = station_name or "SAN FRANCISCO INTERNATIONAL AIRPORT (KSFO)"
     summary["years_requested"] = [years[0], years[-1]]
     summary["base_url"] = base_url
     summary["per_year"] = statuses
     summary["source"] = f"NOAA NCEI Integrated Surface Database (ISD) station {station_id}"
+    summary["timezone"] = "America/Los_Angeles"
+    summary["season_window"] = "Oct 1 - Jan 31, local time"
+    # Recency of the station's own record, straight from the parsed rows: the last
+    # observation timestamp in the fetched files and the last in-season local date.
+    # Published so a reader can see how current the hourly archive is without
+    # assuming it keeps up with the daily products.
+    stamps = sorted(r["timestamp_utc"] for r in all_records if r.get("timestamp_utc"))
+    summary["observations_parsed"] = len(all_records)
+    summary["season_observations_parsed"] = season_records
+    summary["latest_observation_utc"] = stamps[-1] if stamps else None
+    summary["earliest_observation_utc"] = stamps[0] if stamps else None
+    in_season_dates = sorted(summary["by_local_date"])
+    summary["latest_season_local_date"] = in_season_dates[-1] if in_season_dates else None
+    summary["units"] = {
+        "wind": "knots (knot = 1 nautical mile per hour), from the ISD WND speed "
+                "field in tenths of a metre per second converted with 1 m/s = 1.943844 kt",
+        "rain": "inches, from the ISD AA1 liquid-precipitation depth in tenths of a "
+                "millimetre divided by 25.4",
+        "day": "local calendar day in America/Los_Angeles (the season window is local)",
+    }
+    summary["method"] = (
+        "An hour counts when one observation carries both a usable wind speed and "
+        "usable liquid precipitation, and at that observation wind >= "
+        f"{climo.ISD_WIND_THRESHOLD_KT:g} kt while precipitation > 0. "
+        "A local date counts when at least one such hour falls on it.")
     return summary
+
+
+def build_record_coverage(*, ghcn, gsod, isd, today, normals_period):
+    """How far each NCEI archive actually reaches, and how old its newest row is.
+
+    This exists because a station archive can quietly stop: the wind archive in
+    this project ends long before the run date, and nothing on the page would have
+    said so.  Every published statistic is a 1991-2020 statistic and is unaffected;
+    what is affected is any claim about *recent* conditions, so the recency is
+    published next to the numbers rather than left to be assumed.
+    """
+    out = {"as_of": today.isoformat(), "normals_period": list(normals_period),
+           "archives": []}
+
+    def add(area, label, last_date, url, note):
+        age_days = None
+        if last_date:
+            try:
+                age_days = (today - dt.date.fromisoformat(str(last_date)[:10])).days
+            except ValueError:
+                age_days = None
+        out["archives"].append({
+            "area": area, "label": label, "last_date": last_date,
+            "age_days": age_days, "url": url, "note": note,
+        })
+
+    ghcn_last = None
+    if ghcn and ghcn.get("data"):
+        ghcn_last = sorted(ghcn["data"])[-1]
+    add("rain_temp", f"GHCN-Daily {ghcn.get('station_id') if ghcn else 'USW00023272'} "
+                     "(rain, daily high/low)",
+        ghcn_last, "https://www.ncei.noaa.gov/data/global-historical-climatology-"
+                   "network-daily/access/USW00023272.csv",
+        "Daily summaries, so this is the most current of the three archives.")
+
+    gsod_last = None
+    if gsod and gsod.get("data"):
+        gsod_last = sorted(gsod["data"])[-1]
+    add("wind", f"GSOD {gsod.get('station_id') if gsod else '72494023234'} (daily wind "
+                "and gusts, 00-24Z)",
+        gsod_last, "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
+        "Annual files; GSOD cannot be more current than the ISD hourly file it is "
+        "derived from.")
+
+    isd_last = (isd or {}).get("latest_observation_utc")
+    add("isd_hourly", f"ISD hourly {(isd or {}).get('station_id', '72494023234')} "
+                      "(hour-by-hour wind and precipitation)",
+        str(isd_last)[:10] if isd_last else None,
+        "https://www.ncei.noaa.gov/data/global-hourly/access/",
+        "Annual files of hourly observations.")
+
+    stale = [a for a in out["archives"] if a["age_days"] is None or a["age_days"] > 180]
+    out["stale_archives"] = [a["area"] for a in stale]
+    out["recent_enough_for_current_conditions"] = not stale
+    return out
 
 
 def fetch_daily_normals():
@@ -1284,7 +1489,12 @@ def fetch_humidity_normals():
     for sid, name in GHCN_CANDIDATES:
         url = f"https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/{sid}.csv"
         res = fetchlib.get(url, timeout=300)
-        record(res, note=f"NCEI 1991-2020 Hourly Climate Normals: {sid}")
+        # These are candidate stations in preference order and NCEI publishes the
+        # hourly-normals product for only some of them, so a 404 on a candidate is
+        # the expected answer, not a fetch failure.
+        record(res, note=f"NCEI 1991-2020 Hourly Climate Normals: {sid}",
+               expected_absent=("candidate-station-without-the-product"
+                                if res.status == 404 else None))
         if not (res.ok and res.body):
             continue
         text = res.text()
@@ -1508,6 +1718,20 @@ def main():
     lat, lon = centroid["lat"], centroid["lon"]
     log(f"      94122 centroid: {lat:.4f}, {lon:.4f} ({'verified' if centroid.get('verified') else 'FALLBACK'})")
 
+    # Official geography evidence for the point being forecast: which county
+    # subdivision, tract and block the centroid falls in.  Attached to the
+    # centroid so it travels with the target into run.json, calendar.json and
+    # landlord.json without a second source of truth.
+    census_geo = fetch_census_geographies(lat, lon)
+    if census_geo:
+        centroid["census_geographies"] = census_geo
+        log(f"      Census geographies at that point: "
+            f"{census_geo.get('county_subdivision') or 'n/a'} / "
+            f"tract {census_geo.get('census_tract') or 'n/a'} / "
+            f"{census_geo.get('place') or 'n/a'}, {census_geo.get('county') or 'n/a'}")
+    else:
+        log("      Census geographies: not retrieved this run (flagged)")
+
     log("[2/7] NWS (api.weather.gov)")
     nws = fetch_nws(lat, lon)
 
@@ -1532,9 +1756,12 @@ def main():
                               "rain climatology is unavailable.",
                               {"station": ghcn["station_id"], "url": ghcn["url"],
                                "bytes": ghcn["bytes"]})
-    gsod_years = list(range(1991, today.year))
+    # Fetch through the current calendar year: the 1991-2020 statistics below are
+    # restricted to the normals period either way, but the newest rows are what
+    # tells a reader whether an archive is still being updated.
+    gsod_years = list(range(1991, today.year + 1))
     gsod = fetch_gsod(gsod_years)
-    isd_summary = fetch_isd_hourly_summary(gsod_years)
+    isd_summary = fetch_isd_hourly_summary(gsod_years, station_name=GSOD_WIND_NAME)
     normals = fetch_daily_normals()
     monthly_normals = fetch_monthly_normals()
     humidity_normals = fetch_humidity_normals()
@@ -1626,16 +1853,35 @@ def main():
     log("[7/7] Storm Events + writing outputs")
     storm = fetch_storm_events(set(range(today.year - 12, today.year + 1)))
 
+    coverage = build_record_coverage(ghcn=ghcn, gsod=gsod, isd=isd_summary,
+                                     today=today, normals_period=NORMALS_PERIOD)
+    stale = [a for a in coverage["archives"] if a["area"] in coverage["stale_archives"]]
+    if stale:
+        note_irregularity(
+            "warning", "coverage",
+            "At least one NCEI archive this project reads is more than 180 days behind "
+            "the run date. Every published statistic is a 1991-2020 statistic and is "
+            "unaffected; the flag exists so nothing claims to describe *current* "
+            "conditions from a stale archive.",
+            {"archives": [{"area": a["area"], "last_date": a["last_date"],
+                           "age_days": a["age_days"], "url": a["url"]} for a in stale]})
+        log("      record coverage: STALE archive(s) -> "
+            + ", ".join(f"{a['area']}={a['last_date']} ({a['age_days']} d)"
+                        for a in stale))
+
     run = {
         "generated_utc": fetchlib.iso_utc(),
         "pipeline_version": "1.0",
         "target": {**TARGET, "centroid": centroid},
         "season": SEASON,
         "normals_period": list(NORMALS_PERIOD),
+        "record_coverage": coverage,
         "counts": {
-            "manifest_entries": len(MANIFEST),
-            "successful_fetches": sum(1 for m in MANIFEST if m["ok"]),
-            "failed_fetches": sum(1 for m in MANIFEST if not m["ok"]),
+            # A real failure is a fetch that was supposed to work and did not.
+            # Expected absences (a not-yet-published annual file, a station with no
+            # observations endpoint) are published on their own line so one real
+            # failure cannot hide inside a pile of routine 404s.
+            **count_fetches(MANIFEST),
             "irregularities": len(IRREGULARITIES),
         },
     }
@@ -1725,9 +1971,28 @@ def main():
         jr = dist.get("wind_and_rain_days") or {}
         hj = dist.get("heavy_wind_and_rain_days") or {}
         mg = dist.get("max_gust_mph") or {}
+        if isd_summary:
+            # The hour-by-hour figure is the one that means "at the same time";
+            # the whole-day figure below is kept because it is what the site
+            # published before and both are advertised on the page.
+            hourly_days = {}
+            for s in isd_summary.get("per_season") or []:
+                sy = s.get("season_year")
+                if isinstance(sy, int) and NORMALS_PERIOD[0] <= sy <= NORMALS_PERIOD[1]:
+                    hourly_days.setdefault("days", []).append(s.get("days_simultaneous"))
+                    hourly_days.setdefault("hours", []).append(s.get("wind_rain_hours"))
+            days = [v for v in hourly_days.get("days", []) if v is not None]
+            hours = [v for v in hourly_days.get("hours", []) if v is not None]
+            if days and hours:
+                lines.append(
+                    "WIND+RAIN the same HOUR per season (SFO ISD hourly, >=20kt & >0 in one "
+                    f"observation): days with at least one such hour mean "
+                    f"{climo.summarise(days)['mean']}  median {climo.summarise(days)['median']}  "
+                    f"max {max(days)}; simultaneous hours mean {climo.summarise(hours)['mean']}  "
+                    f"median {climo.summarise(hours)['median']}  over {len(days)} season(s)")
         if jr:
-            lines.append(f"WIND+RAIN DAYS per season (SFO, >=20kt & >=0.01in): mean {jr['mean']}  "
-                         f"median {jr['median']}  max {jr['max']}")
+            lines.append(f"WIND+RAIN DAYS per season, whole-day pairing (SFO, >=20kt & >=0.01in): "
+                         f"mean {jr['mean']}  median {jr['median']}  max {jr['max']}")
         if hj:
             lines.append(f"HEAVY wind+rain days (>=35kt gust & >=0.50in): mean {hj['mean']}  "
                          f"median {hj['median']}  max {hj['max']}")
@@ -1754,14 +2019,19 @@ def main():
     if ds:
         lines.append("DRIEST  Oct-Jan seasons: " + ", ".join(f"{w['season']} {w['total_prcp_in']}in" for w in ds))
         lines.append("")
-    lines.append(f"FETCHES: {run['counts']['successful_fetches']} ok / {run['counts']['failed_fetches']} failed")
+    lines.append(f"FETCHES: {run['counts']['successful_fetches']} ok / "
+                 f"{run['counts']['failed_fetches']} failed / "
+                 f"{run['counts'].get('expected_absences', 0)} absent by design "
+                 f"(a not-yet-published annual file, a station without an "
+                 f"observations endpoint)")
     lines.append(f"IRREGULARITIES: {run['counts']['irregularities']}")
     for i in IRREGULARITIES:
         lines.append(f"  [{i['severity']}] {i['area']}: {i['message']}")
     (outdir / "summary.txt").write_text("\n".join(lines) + "\n")
 
     log(f"  fetches: {run['counts']['successful_fetches']} ok / "
-        f"{run['counts']['failed_fetches']} failed")
+        f"{run['counts']['failed_fetches']} failed / "
+        f"{run['counts'].get('expected_absences', 0)} absent by design")
     log(f"  irregularities: {run['counts']['irregularities']}")
     for i in IRREGULARITIES:
         log(f"    [{i['severity']}] {i['area']}: {i['message'][:200]}")

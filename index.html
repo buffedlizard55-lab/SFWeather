@@ -217,6 +217,17 @@
         <div id="now-current"></div>
         <p class="fine"><button class="btn btn-sm" type="button" id="export-current">Download this forecast as CSV</button></p>
       </div>
+      <div class="card">
+        <h3>What the forecasters are actually saying — storm-pattern language in the NWS discussion</h3>
+        <p class="fine">The Area Forecast Discussion is NWS’s own reasoning, fetched verbatim every
+          night. This card scans its land-forecast sections for the phrases that matter to a
+          landlord — an atmospheric river, prolonged rain, heavy rain, strong wind, an explicit
+          rainfall amount, and wind plus rain in the same sentence — and quotes them.
+          <strong>These are quotations, never numbers.</strong> Nothing here is attached to a
+          scoreboard day, because a discussion sentence carries no calendar date and this project
+          will not invent one.</p>
+        <div id="afd-language"></div>
+      </div>
       <div class="grid grid-2">
         <div class="card">
           <h3>NWS 7-day forecast</h3>
@@ -403,16 +414,29 @@
         </ol>
         <h3>What still needs work</h3>
         <ul class="limits">
-          <li><strong>Hourly ISD wind</strong> to match wind days to local calendar days and detect simultaneous wind+rain hour by hour (currently day-level approximation).</li>
+          <li><strong>Hourly ISD wind — done, and it changed a headline number.</strong> The
+            simultaneous wind+rain statistic is now counted hour by hour from the NCEI ISD
+            archive (station 72494023234) instead of pairing a whole rain day with a whole
+            day’s wind. The whole-day method counts more days than can actually coincide, and
+            both figures are published side by side. Remaining gap: the hourly archive’s own
+            coverage is now published per season, and three of the 30 seasons it is averaged
+            over are missing 1–4 of the 123 dates.</li>
           <li><strong>CPC back-testing</strong> — score past CPC outlooks against what actually happened at 94122 to say “when CPC tips above-median for OND here, it verified X% of the time”.</li>
-          <li><strong>Atmospheric river awareness</strong> — parse AR language from NWS Area Forecast Discussion (already fetched) to add signal for long-duration events.</li>
-          <li><strong>NWS forecast verification</strong> — store each night’s forecast and score vs observations.</li>
+          <li><strong>Atmospheric river awareness — done.</strong> Storm-pattern language is now scanned out of the NWS Area Forecast Discussion and quoted verbatim; no date or amount is ever attached to a quotation. Remaining gap: the scan counts language, it cannot yet say how many days a discussion covers.</li>
+          <li><strong>NWS forecast verification</strong> — store each night’s forecast and score vs observations. The history file and scoring code exist; the first scored pairs appear once observed days accumulate past the current NWS horizon.</li>
           <li><strong>Humidity for climatology days</strong> is not an observed NOAA relative-humidity
             normal. Where available, it is a labelled per-calendar-date derivation from official NCEI
             hourly temperature and dew-point normals (Magnus formula); if that source is unavailable,
             the field remains empty.</li>
           <li><strong>Wind record still comes from SFO</strong> (KSFO), 11.9 miles away: the closest
             long daily wind record. Hourly ISD at a nearer site would tighten it.</li>
+          <li><strong>The wind and hourly archives themselves are not current.</strong> NCEI's
+            annual GSOD and ISD files for this station end on 27 Aug 2025 while the daily
+            rain/temperature record runs to this month. Every statistic here is a 1991–2020
+            statistic and none of them depends on the missing months, but nothing on this page
+            may be read as describing <em>recent</em> conditions from those archives — so the
+            newest row fetched from each one, its age and its URL are published under
+            <a href="#quality">Data quality</a>.</li>
           <li>See full list in <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/LIMITATIONS.md" target="_blank" rel="noopener">LIMITATIONS.md</a></li>
         </ul>
       </div>
