@@ -1247,6 +1247,24 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
 
         wet_flags = [1 if (p is not None and p >= 0.01) else 0 for p in prcp_series]
 
+        # -- severity: how hard, not just how often -----------------------
+        # Thresholds are stated as plain inches / knots; no official
+        # warning-criteria label is applied, because those criteria are
+        # written per forecast zone and this project will not restate them.
+        #
+        # The inch thresholds are exactly the ones NOAA NCEI publishes a
+        # percent-of-years value for in the daily climate normals file
+        # (DLY-PRCP-PCTALL-GE***HI: 0.01, 0.10, 0.25, 0.50, 1.00, 2.00, 4.00,
+        # 6.00 in).  Keeping this project's own count on the same thresholds is
+        # what lets the site print the two methods side by side and re-derive
+        # each one from its own source file.
+        wet_days_ge_1in = sum(1 for p in prcp_series if p is not None and p >= 1.00)
+        wet_days_ge_2in = sum(1 for p in prcp_series if p is not None and p >= 2.00)
+        wet_days_ge_050in = sum(1 for p in prcp_series if p is not None and p >= 0.50)
+        wet_days_ge_400in = sum(1 for p in prcp_series if p is not None and p >= 4.00)
+        daily_vals = [p for p in prcp_series if p is not None]
+        max_daily_prcp_in = max(daily_vals) if daily_vals else None
+
         # consecutive wet-day runs
         runs, cur = [], 0
         for f in wet_flags:
@@ -1277,7 +1295,8 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
 
         total = sum(p for p in prcp_series if p is not None)
         # wind + rain days for this season (SFO ASOS)
-        jr, heavy_jr, max_gust = 0, 0, None
+        jr, heavy_jr, severe_jr, max_gust, max_wind = 0, 0, 0, None, None
+        wind_days_ge_30kt, gust_days_ge_40kt, gust_days_ge_50kt = 0, 0, 0
         for iso in dates:
             s = gsod_by_date.get(iso)
             if not s:
@@ -1287,8 +1306,24 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
                 jr += 1
             if p is not None and g is not None and p >= 0.50 and g >= 35.0:
                 heavy_jr += 1
+            # The strict tier the landlord cares about: a day that is both a
+            # 1-inch rain day and a 40-knot-gust day at the same station.  Both
+            # ends come from the same GSOD daily row, so "at the same time"
+            # means "within the same UTC day" - an approximation the site
+            # states rather than hides.
+            if p is not None and g is not None and p >= 1.00 and g >= 40.0:
+                severe_jr += 1
+            if w is not None and w >= 30.0:
+                wind_days_ge_30kt += 1
+            if g is not None:
+                if g >= 40.0:
+                    gust_days_ge_40kt += 1
+                if g >= 50.0:
+                    gust_days_ge_50kt += 1
             if g is not None and (max_gust is None or g > max_gust):
                 max_gust = g
+            if w is not None and (max_wind is None or w > max_wind):
+                max_wind = w
 
         # ENSO phase: prefer NOAA's published season-labelled ONI (mean of the
         # official OND / NDJ / DJF values covering this rainy season).  The
@@ -1317,8 +1352,18 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
             "streaks_ge_7": sum(1 for r in runs if r >= 7),
             "streaks_ge_10": sum(1 for r in runs if r >= 10),
             "monthly_prcp_in": monthly,
+            "wet_days_ge_1in": wet_days_ge_1in,
+            "wet_days_ge_2in": wet_days_ge_2in,
+            "wet_days_ge_050in": wet_days_ge_050in,
+            "wet_days_ge_400in": wet_days_ge_400in,
+            "max_daily_prcp_in": _f(max_daily_prcp_in, 2) if max_daily_prcp_in is not None else None,
             "wind_and_rain_days": jr,
             "heavy_wind_and_rain_days": heavy_jr,
+            "severe_wind_and_rain_days": severe_jr,
+            "max_wind_mph": _f(max_wind * KT_TO_MPH, 1) if max_wind is not None else None,
+            "wind_days_ge_30kt": wind_days_ge_30kt,
+            "gust_days_ge_40kt": gust_days_ge_40kt,
+            "gust_days_ge_50kt": gust_days_ge_50kt,
             "max_gust_kt": _f(max_gust, 1) if max_gust is not None else None,
             "max_gust_mph": _f(max_gust * KT_TO_MPH, 1) if max_gust is not None else None,
             "oni_ond": _f(oni, 2),
@@ -1342,8 +1387,30 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
             by_phase[s["enso_phase"]].append(s["total_prcp_in"])
 
     n_seasons = len(seasons)
+
+    # Record values, each bound to the season that produced it so the reader
+    # can find the date in the same GHCN/GSOD files this project fetched.
+    def _record(key, field=None):
+        vals = [s for s in seasons if s.get(key) is not None]
+        if not vals:
+            return None
+        best = max(vals, key=lambda s: s[key])
+        return {"season": best["season"], "value": best[key]}
+
+    severity_record = {
+        "max_daily_prcp_in": _record("max_daily_prcp_in"),
+        "max_gust_mph": _record("max_gust_mph"),
+        "max_wind_mph": _record("max_wind_mph"),
+        "most_wet_days_ge_1in": _record("wet_days_ge_1in"),
+        "most_wet_days_ge_2in": _record("wet_days_ge_2in"),
+        "most_days_gust_ge_40kt": _record("gust_days_ge_40kt"),
+        "most_days_gust_ge_50kt": _record("gust_days_ge_50kt"),
+        "most_severe_wind_and_rain_days": _record("severe_wind_and_rain_days"),
+    }
+
     return {
         "seasons": seasons,
+        "severity_record": severity_record,
         "distribution": {
             "season_total_prcp_in": summarise(totals, 2),
             "october_total_prcp_in": summarise(oct_tot, 2),
@@ -1355,6 +1422,21 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
             "wind_and_rain_days": summarise([s["wind_and_rain_days"] for s in seasons], 1),
             "heavy_wind_and_rain_days": summarise([s["heavy_wind_and_rain_days"] for s in seasons], 1),
             "max_gust_mph": summarise([s["max_gust_mph"] for s in seasons], 1),
+            # Severity counters.  Each is "days per season at or above this
+            # plain threshold", never a named warning category.
+            "wet_days_ge_050in": summarise([s["wet_days_ge_050in"] for s in seasons], 1),
+            "wet_days_ge_1in": summarise([s["wet_days_ge_1in"] for s in seasons], 1),
+            "wet_days_ge_2in": summarise([s["wet_days_ge_2in"] for s in seasons], 1),
+            "wet_days_ge_400in": summarise([s["wet_days_ge_400in"] for s in seasons], 1),
+            "max_daily_prcp_in": summarise(
+                [s["max_daily_prcp_in"] for s in seasons if s["max_daily_prcp_in"] is not None], 2),
+            "wind_days_ge_30kt": summarise([s["wind_days_ge_30kt"] for s in seasons], 1),
+            "gust_days_ge_40kt": summarise([s["gust_days_ge_40kt"] for s in seasons], 1),
+            "gust_days_ge_50kt": summarise([s["gust_days_ge_50kt"] for s in seasons], 1),
+            "severe_wind_and_rain_days": summarise(
+                [s["severe_wind_and_rain_days"] for s in seasons], 1),
+            "max_wind_mph": summarise(
+                [s["max_wind_mph"] for s in seasons if s["max_wind_mph"] is not None], 1),
         },
         "probability_of_at_least_one_streak": {
             "ge_3_days": {"seasons": sum(1 for s in seasons if s["streaks_ge_3"] >= 1),

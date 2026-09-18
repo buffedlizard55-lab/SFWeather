@@ -223,3 +223,28 @@ reading two different quantities.
 * The workflow commits data with `[skip ci]` so it cannot trigger itself.
 * The site is static; if `data/` is missing it shows an explicit error banner rather
   than rendering blanks.
+
+## Storm-severity counters (added 18 Sep 2026)
+
+* **Every counter is a daily one.** `severe_wind_and_rain_days` pairs a rain total
+  and a gust from the **same GSOD daily row**, which is a UTC day (00–24Z, about
+  16:00–16:00 Pacific). Two events that a tenant experienced as simultaneous
+  within one local day can therefore fall on different GSOD dates, and two that
+  fell either side of a UTC midnight can be counted together. Hourly data would
+  fix this; it is listed as the top open item in `docs/NEXT_SESSION.md`.
+* **No named warning category is applied.** "Days with a gust ≥ 40 kt" is not
+  "High Wind Warning days". NWS writes those criteria per forecast zone and this
+  project deliberately does not restate them, so the counters cannot be read as
+  an official severity classification.
+* **The wind counters are SFO's.** The rain counters are the downtown gauge
+  `USW00023272`; the wind counters are KSFO `72494023234`, 11.9 mi away and more
+  exposed. Joint counters therefore mix two stations: an upper bound on wind, a
+  downtown rain total.
+* **The ≥ 4.00 in row is thin.** One day in 30 seasons. Project 0.00 vs NOAA 0.02
+  is a difference of one event in the record, not a disagreement; NOAA's
+  per-date values are smoothed across years by construction.
+* **The published damage column is unusable as a cost figure.** Every non-zero
+  property-damage value NCEI holds for San Francisco County is a token amount
+  (12 of 119 records). The site says so on the page instead of quietly omitting
+  the column or summing it.
+

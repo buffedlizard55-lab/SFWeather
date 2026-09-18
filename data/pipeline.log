@@ -12,6 +12,7 @@ SFWeather pipeline - 2026-09-18
 
 === summary ===
   fetches: 103 ok / 2 failed
-  irregularities: 2
+  irregularities: 3
     [info] nws: Some hourly forecast fields are null in the NWS gridded forecast for this grid cell.
     [warning] nws: No HWO products returned for office MTR.
+    [info] storm_events: NCEI's Storm Events file lost 12 character(s) before this project fetched it (U+FFFD is already present in the published file). Those characters were removed from the narrative text and are not guesse

@@ -1,10 +1,10 @@
 {
-  "generated_utc": "2026-09-18T03:15:25Z",
+  "generated_utc": "2026-09-18T04:09:33Z",
   "counts": {
-    "total": 2,
+    "total": 3,
     "errors": 0,
     "warnings": 1,
-    "info": 1
+    "info": 2
   },
   "irregularities": [
     {
@@ -24,6 +24,32 @@
       "message": "No HWO products returned for office MTR.",
       "evidence": {
         "url": "https://api.weather.gov/products/types/HWO/locations/MTR"
+      }
+    },
+    {
+      "severity": "info",
+      "area": "storm_events",
+      "message": "NCEI's Storm Events file lost 12 character(s) before this project fetched it (U+FFFD is already present in the published file). Those characters were removed from the narrative text and are not guessed at; the count, the fields and the surrounding text are published in data/storm_events.json under text_integrity.",
+      "evidence": {
+        "characters_removed": 12,
+        "fields_affected": [
+          {
+            "event_id": "1079727",
+            "field": "event_narrative",
+            "removed": 12,
+            "file": "StormEvents_details-ftp_v1.0_d2022_c20260625.csv.gz",
+            "encoding_used": "utf-8"
+          }
+        ],
+        "encoding_fallback_used": false,
+        "files_with_an_encoding_fallback": [],
+        "contexts": [
+          "San Francisco Downtown site hit 5.46<U+FFFD><U+FFFD><U+FFFD> in the 24 hours of December 31st. Th",
+          "San Francisco Downtown site hit 5.46<U+FFFD><U+FFFD><U+FFFD> in the 24 hours of December 31st. Thi",
+          "San Francisco Downtown site hit 5.46<U+FFFD><U+FFFD><U+FFFD> in the 24 hours of December 31st. This",
+          " second wettest day on record, just 0.08<U+FFFD><U+FFFD><U+FFFD> less than 1st place (11/5/1994) with",
+          "second wettest day on record, just 0.08<U+FFFD><U+FFFD><U+FFFD> less than 1st place (11/5/1994) with "
+        ]
       }
     }
   ]

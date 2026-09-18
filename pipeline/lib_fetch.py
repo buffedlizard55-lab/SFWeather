@@ -30,6 +30,81 @@ DEFAULT_TIMEOUT = 120
 _RETRIES = 3
 
 
+# Encodings to try, in order, for publishers whose CSV exports are not
+# consistently UTF-8.  NCEI's Storm Events detail files are the known case:
+# curly quotes and degree signs appear as single CP1252 bytes.
+CSV_ENCODINGS = ("utf-8", "cp1252", "latin-1")
+
+
+def decode_text(body, encodings=CSV_ENCODINGS):
+    """Decode a publisher's text body, preferring strict UTF-8.
+
+    Returns ``(text, encoding_used)``.  Decoding with ``errors="replace"``
+    straight away - which this pipeline used to do - silently turns every
+    non-UTF-8 byte into U+FFFD and commits the corrupted text to the dataset.
+    Trying UTF-8 strictly first, then the publisher's legacy encoding, keeps
+    the published characters intact; the caller records which encoding was
+    used so the substitution is never hidden.
+    """
+    if body is None:
+        return "", "none"
+    for enc in encodings:
+        try:
+            return body.decode(enc), enc
+        except (UnicodeDecodeError, LookupError):
+            continue
+    return body.decode(encodings[-1], "replace"), encodings[-1] + "+replace"
+
+
+#: Characters that are, by definition, already-destroyed content.  U+FFFD is
+#: the Unicode replacement character - a publisher's file that contains one has
+#: already lost the original character before this project saw the bytes, and no
+#: amount of re-decoding brings it back.  NUL carries no content and breaks
+#: consumers.
+#:
+#: This project does not guess at what the lost character was (NCEI's Storm
+#: Events file for 2022 contains U+FFFD where a typographic inch mark belongs in
+#: the 31 Dec 2022 narrative; replacing it with a double quote would be a guess
+#: dressed up as a repair).  It removes the characters and publishes how many
+#: were removed, so the text a reader sees is verbatim-minus-the-lost-glyphs and
+#: the loss is disclosed rather than hidden.
+UNREPRESENTABLE = "\ufffd\u0000"
+
+
+def strip_unrepresentable(text):
+    """Remove already-lost characters from published text.
+
+    Returns ``(clean_text, removed_count, contexts)`` where ``contexts`` holds
+    up to five short verbatim snippets around each removal, so a reviewer can
+    see exactly which sentence was affected and check it against the source file.
+    """
+    if not text:
+        return text, 0, []
+    if not any(ch in text for ch in UNREPRESENTABLE):
+        return text, 0, []
+    removed, contexts = 0, []
+    out = []
+    for ch in text:
+        if ch in UNREPRESENTABLE:
+            removed += 1
+            continue
+        out.append(ch)
+    clean = "".join(out)
+    # The snippets that document the loss are written with a VISIBLE marker
+    # rather than the raw character.  Two reasons: the ledger check that nothing
+    # published contains U+FFFD stays absolute (no exception carve-out for the
+    # evidence block, which would be a hole big enough to drive the original bug
+    # through), and a reader of the JSON sees "<U+FFFD>" instead of a glyph that
+    # renders as a black diamond in half the terminals on earth.
+    for i, ch in enumerate(text):
+        if ch in UNREPRESENTABLE and len(contexts) < 5:
+            snippet = text[max(0, i - 40):i + 40]
+            for bad in UNREPRESENTABLE:
+                snippet = snippet.replace(bad, "<U+%04X>" % ord(bad))
+            contexts.append(snippet)
+    return clean, removed, contexts
+
+
 class FetchResult:
     """Outcome of one HTTP GET."""
 

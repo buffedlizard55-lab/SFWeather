@@ -6,7 +6,59 @@ official, free, no-key sources; nothing here depends on commercial data.
 
 ---
 
-## 1. State at the end of this session (17 Sep 2026, second working session)
+## 1. State at the end of this session (18 Sep 2026, session 6 — the executive-summary session)
+
+**What is live:** unchanged in shape — the nightly pipeline, the Oct 2026 – Jan
+2027 scoreboard, the landlord dashboard, the current-forecast panel, the
+verification ledger, and the headless tests. GitHub Pages serves `main` from the
+repository root; the `Update NOAA data` workflow refreshes `data/` on every push
+and nightly at 07:15 UTC.
+
+### What changed in this session
+
+1. **A real executive summary now leads the dashboard.** New card *"The bottom
+   line — your six questions, answered in order"* (`landlord.json` →
+   `executive_summary.bottom_line`, rendered by `renderBottomLine`): rain amount,
+   rain duration, hard-rain days, wind, wind+rain together, storm severity. Each
+   answer carries its numbers, a stated basis (observed record vs official
+   outlook), a confidence line, and the official links. An answer with no source
+   link is *withheld and marked*, not shown unsourced.
+2. **Official-outlook strip** beside it (`executive_summary.official_outlook`):
+   current ENSO state + Alert System Status + discussion link; how many CPC
+   long-lead periods covering Oct–Jan carry a tilt above the 33.3% baseline; the
+   observed record *conditioned on the same ENSO phase*; and how many scoreboard
+   days are inside the real NWS horizon.
+3. **Storm severity, quantified without borrowing a warning category.** New
+   per-season counters from the same GHCN/GSOD files: days ≥0.50 / 1.00 / 2.00 /
+   4.00 in (the exact thresholds NOAA NCEI publishes a percent-of-years value
+   for), sustained wind ≥30 kt, gusts ≥40 / 50 kt, and
+   `severe_wind_and_rain_days` (≥1.00 in **and** a gust ≥40 kt on the same date).
+   Published as distributions plus records bound to the season that produced them.
+4. **A counted-vs-NOAA-published table** for heavy-rain days per season, so the
+   project's own count and NOAA's own published expectation appear side by side
+   on the same thresholds instead of asking anyone to trust one of them.
+5. **Two real pipeline bugs and six bugs in the project's own guards** found by
+   mutating fixture copies and requiring each new guard to *fail* (VERIFICATION.md
+   bugs 40–47). Notably: NCEI's Storm Events CSVs are CP1252 and were being
+   decoded with `errors="replace"`, which had committed `5.46\ufffd\ufffd\ufffd in`
+   into the published narrative; and a number row whose value was blank
+   *disappeared* from the executive summary instead of rendering as an em dash.
+6. **Ledger 32 → 39 checks; `test_parsers.py` 170 → 212; smoke guards +4.**
+7. **CPC baseline honesty enforced in both directions** — a polygon whose
+   probability sits on the 33.3% three-way baseline may not be rendered as a
+   tilt, and nothing may be flagged as a baseline case that is not one. The rule
+   now applies identically in the landlord table, the main CPC season table and
+   the day dialog.
+
+### Still open from this session
+
+* The committed `data/` in this branch was refreshed by the workflow triggered by
+  the push. `severity-counters-arithmetic` starts comparing real per-season
+  values on that run; before it, the counters were absent and the check sat in
+  its deferred branch.
+* `data/storm_events.json` is only clean once the *fixed* fetch runs. Until that
+  refresh lands, `no-replacement-characters` correctly reports one dataset.
+* **Session 5 (17 Sep 2026, second working session)**
 
 **What is live:** the nightly pipeline, the Oct 2026 – Jan 2027 scoreboard, the
 landlord dashboard, the current-forecast panel, the verification ledger, and the
@@ -158,6 +210,30 @@ companion - a guard that cannot fire is worse than no guard, so the range rule n
 lives in `climo.implausible_normals_value()` and is unit-tested.
 
 ## 2. Open work, in priority order
+
+### 0. Finish what this session opened — mostly done, two items left
+**Done on the 04:05 UTC run:** the ledger is **41 of 41** with 0 warnings; the
+severity counters are in the committed data; the character-loss disclosure works
+and `no-replacement-characters` passes.
+
+**The result that came back is the best evidence on the site** — the project's own
+count and NOAA's own published expectation agree to within **0.06 days per
+season** across all four thresholds NOAA publishes (0.50 in: 8.40 vs 8.39;
+1.00 in: 3.20 vs 3.26; 2.00 in: 0.50 vs 0.51; 4.00 in: 0.00 vs 0.02). A second
+cross-check landed too: NCEI's Storm Events narrative for 31 Dec 2022 says the
+5.46 in that day was "0.08 less than 1st place (11/5/1994) with 5.54", and the
+GHCN-derived record independently reports `max_daily_prcp_in = 5.54 in` in
+season 1994-1995.
+
+**Still open:**
+1. Re-run `bash /tmp/negsmoke.sh`-style falsification against the *refreshed*
+   data for `severity-counters-arithmetic` (it now has real per-season values to
+   compare, so removing a per-season counter must fail the check) and for
+   `threshold-table-recomputable` with the real published probabilities.
+2. Decide whether the four-method picture in the bottom line (3.19 expected /
+   3.20 counted / 3.26 NOAA-published, all for "days ≥ 1.00 in") is clearer as
+   one merged row. It is currently three rows with explicit method labels.
+**Effort:** an hour.
 
 ### 1. Hourly ISD wind → hour-by-hour simultaneous wind and rain
 **Why:** the joint wind+rain statistic currently pairs a local-day rain total with a

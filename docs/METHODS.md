@@ -241,3 +241,83 @@ requires all 366 dates and raises an irregularity if any are missing.
 
 The workflow treats a non-zero exit as a hard stop: diagnostics are committed, the
 datasets are not, so the site keeps the last verified numbers.
+
+## 11. Storm severity: counts at plain thresholds, never a warning category
+
+"Severe" is a word with an official meaning in the United States — NWS issues
+Wind Advisories, High Wind Warnings and Flood Warnings against criteria written
+per forecast zone. Those criteria are not restated anywhere in this project,
+because restating them from a secondary source is exactly how a site ends up
+telling a landlord there was a "High Wind Warning day" when there was not.
+
+What the project publishes instead is a set of **counts of days at a plain
+numeric threshold**, each one re-derivable from the station file it came from:
+
+| Counter | Threshold | Source file |
+| --- | --- | --- |
+| `wet_days_ge_050in` | ≥ 0.50 in of liquid precipitation | GHCN-Daily USW00023272 |
+| `wet_days_ge_1in` | ≥ 1.00 in | GHCN-Daily USW00023272 |
+| `wet_days_ge_2in` | ≥ 2.00 in | GHCN-Daily USW00023272 |
+| `wet_days_ge_400in` | ≥ 4.00 in | GHCN-Daily USW00023272 |
+| `wind_days_ge_30kt` | daily maximum sustained wind ≥ 30 kt | GSOD 72494023234 (KSFO) |
+| `gust_days_ge_40kt` | daily maximum gust ≥ 40 kt | GSOD 72494023234 (KSFO) |
+| `gust_days_ge_50kt` | daily maximum gust ≥ 50 kt | GSOD 72494023234 (KSFO) |
+| `severe_wind_and_rain_days` | ≥ 1.00 in **and** a gust ≥ 40 kt on the same date | both |
+
+The four precipitation thresholds are not arbitrary: they are exactly the
+thresholds NOAA NCEI publishes a percent-of-years value for in the 1991-2020
+daily normals (`DLY-PRCP-PCTALL-GE050HI`, `GE100HI`, `GE200HI`, `GE400HI`, plus
+`GE001HI`, `GE010HI`, `GE025HI`, `GE600HI`). Putting this project's own count on
+the same thresholds is what makes the **two-method table** possible: the site
+shows "days per season at ≥ X in, counted from the record" next to "days per
+season at ≥ X in, summed from NOAA's own published probabilities" for every
+threshold both methods cover. Agreement is evidence; disagreement is published
+too, not reconciled away.
+
+`severe_wind_and_rain_days` is the strict joint tier the brief asked for
+(simultaneous wind and rain), one step harder than the looser
+`heavy_wind_and_rain_days` (≥ 0.50 in and a gust ≥ 35 kt). Both are computed
+from **GSOD daily rows**, so "at the same time" means "within the same UTC day
+(00–24Z, about 16:00–16:00 local)". That limitation is stated on the page and in
+`docs/LIMITATIONS.md` rather than hidden; hourly data would be needed to do
+better and is listed as open work.
+
+## 12. The only bridge between the outlook and the cost question
+
+The brief asks what the *forecast* implies for repair and maintenance cost. The
+honest answer is limited, and the site keeps the two halves apart:
+
+* **Official outlook** — the current ENSO state and status (CPC ENSO Diagnostic
+  Discussion), the CPC long-lead probability for each period covering Oct 2026 –
+  Jan 2027, and how many scoreboard days sit inside the real NWS forecast
+  horizon. A period probability is never converted into a daily one.
+* **Conditional record** (`official_outlook.enso_conditioned_record`) — the
+  observed Oct 1 – Jan 31 totals of the seasons in the 1991-2020 record whose
+  *published CPC ONI* placed them in the same phase as the current state,
+  with the spread (min / median / max) and the other phases shown for contrast.
+  It is computed from `enso_stratified_season_total_prcp_in`, which is itself
+  derived from the ONI season means, so it is re-derivable end to end.
+
+The card labels this "a conditional average of what happened, not a forecast for
+2026-27", and the ledger checks that the sentence is present and that the block
+is `None` — never a zero-filled table — when the record has no seasons in that
+phase.
+
+## 13. CPC probabilities at the 33.3% baseline
+
+CPC publishes whole percentages. Its three-way long-lead split has a
+climatological baseline of exactly 100/3 = 33.3%, so a polygon whose probability
+reads 33.0% is **not** a tilt — even when CPC's own `Cat` field says `Above` or
+`Below`. Presenting that as "Above median (33%)" would overstate the signal.
+
+The pipeline therefore flags every record whose probability is within 0.5
+percentage points of 33.3% while its category is directional, publishes the
+flag (`probability_at_climatological_baseline`) plus a plain-language
+`baseline_note`, and renders a "at the 33% baseline" badge wherever the record
+appears — the landlord CPC table, the main CPC season table and the day dialog.
+`cpc_tilt_summary` counts tilted periods separately from baseline periods, so
+"3 of 8 periods carry a tilt" cannot silently become "8 of 8".
+
+Two ledger checks police it in both directions: no directional-baseline record
+may be unflagged, and nothing may be flagged as a baseline case that is not one.
+

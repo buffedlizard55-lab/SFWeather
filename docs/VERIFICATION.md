@@ -313,3 +313,119 @@ reached on only some code paths would have been silent.
    `data/provenance.json` lists every fetch of the run (~104 on the last run).
 5. Anything the pipeline could not resolve cleanly is listed on the site as an
    **irregularity** rather than being dropped.
+
+## Bugs found in the 18 Sep 2026 session (pass 5)
+
+These were found by auditing the rendering and the verification layer rather
+than the fetching layer — the theme of this pass is *guards that cannot fail*.
+
+| # | Symptom | Root cause | Fix |
+| --- | --- | --- | --- |
+| 40 | The new `no-replacement-characters` ledger check was written and immediately failed on the committed data | It was right: `storm_events.json` carried `5.46\ufffd\ufffd\ufffd in` in the 31 Dec 2022 narrative. NCEI's Storm Events CSVs are CP1252 and were being decoded with `errors="replace"` | `lib_fetch.decode_text()` tries strict UTF-8 first and falls back to the publisher's legacy encoding, recording which was used as an irregularity. The check now stays in the ledger so an encoding regression cannot be committed again |
+| 41 | `bottom-line-numbers-traceable` passed when a quoted figure was deliberately corrupted from 12.79 in to 19.42 in | The candidate set included `f"{v:.0f}"` and the test was a plain substring search, so 12.79 "matched" the **13** inside an unrelated 13.26 | Candidates are now matched as standalone numbers with `(?<![\d.])…(?![\d.])`. The same defect was in the U+FFFD sweep, which used `json.dumps` without `ensure_ascii=False` and so searched for a character that was always escaped |
+| 42 | `no-replacement-characters` still passed after the `ensure_ascii` fix, and the mutation harness reported every broken fixture as "pass" | The verifier had crashed (a function removed by an earlier edit was still being called), so the harness was reading the **previous** run's `verify.json` — a stale all-pass file | The harness deletes `verify.json` from each fixture and now raises if the verifier did not write a new one |
+| 43 | A blanked-out figure in the executive summary simply **disappeared** from the page, leaving the answer looking complete | `renderBottomLine` filtered out any number row whose value was null | Rows are kept and render as an em dash; a smoke guard compares the rendered row count against the data, so a vanished row is now a test failure |
+| 44 | The smoke guards for "CPC baseline is labelled" and "severity counters are rendered" never fired on any mutation | Both derived their expectation from the very field under test (the baseline flag; a non-null mean), so removing the flag also removed the reason to check it | The CPC guard now derives the expectation from CPC's raw `Cat`/`Prob` fields; the wind guard keys on the *presence* of the counter and asserts the em-dash behaviour for a null mean, plus an `app.js` mutation that removes the row entirely |
+| 45 | A stale `days_covered` key would have read as `undefined` and printed "0 day(s)" with no test catching it | `nws_window.days_covered` was renamed to `scoreboard_days_in_horizon` but nothing pinned the rename | A smoke guard fails if the old key is present without the new one; a ledger check fails if *either* file publishes a bare `days_covered` again |
+| 46 | `Days ≥ 0.01 in per season` read **"not derived"** in the expected-days table although the wet-day count was already published | Two names for one quantity (`wet_days.mean` and a missing `ge_010in_days`), and the table only looked for one of them | The row now reads the published wet-day mean; `published_expected` was renamed from `days_covered` to `dates_compared` so the two meanings cannot collide again |
+| 47 | The day dialog's CPC table printed `Above median (33%)` with no baseline caveat, although both CPC tables on the same page flagged it | The dialog had its own copy of the category formatting | The dialog now uses the same `cpcCategoryCell()` helper as the other two tables |
+
+### What the new guards found by themselves
+
+Writing the guards first and then trying to defeat them is what produced bugs 41,
+43, 44 and 45. Each guard was falsified by mutating a fixture copy of `data/`
+(or of `app.js`) and confirming the test **fails**; a guard that could not be
+made to fail was treated as a bug in the guard, not as evidence of correctness.
+`severity-counters-arithmetic` is the one guard still in its deferred branch: the
+committed datasets predate the severity counters, so it reports "not yet
+produced" and will start comparing real values on the next pipeline run.
+
+## Independent re-check of the official claims (18 Sep 2026)
+
+The sandbox cannot reach NOAA directly (see the environment note at the top), so
+the re-check below was done by retrieving the official pages through a separate
+read-only web client, independent of the pipeline that produced the datasets.
+This is the manual-review path the brief asks for: open the link, find the text.
+
+| Claim on the site | Official page | What it says now | Verdict |
+| --- | --- | --- | --- |
+| ENSO Alert System Status is **El Niño Advisory** | [CPC ENSO Diagnostic Discussion](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml) | "ENSO Alert System Status: **El Niño Advisory**", issued **10 September 2026** | matches |
+| The discussion says "El Niño is strengthening, with a greater than 90% chance of a very strong event during the Northern Hemisphere fall and winter 2026-27" | same page, Synopsis | verbatim, including the closing summary sentence | matches (quote is exact) |
+| "During the October-December 2026 season, there is a 75% chance of a historic event" | same page | verbatim: "…a 75% chance of a historic event that would exceed the strength of previous El Niño events dating back to 1950 (+2.5°C or more for a 3-month RONI value)" | matches (quote is exact) |
+| Niño-3.4 / Niño-3 / Niño-1+2 anomalies are +1.8 / +2.5 / +3.4 °C | same page | "+1.8°C in Niño-3.4, +2.5°C in Niño-3, and +3.4°C in Niño-1+2" | matches |
+| The next discussion is due 8 October 2026 | same page | "The next ENSO Diagnostics Discussion is scheduled for 8 October 2026." | matches |
+| The CPC long-lead shapefiles the site samples are the current issuance | [CPC GIS data page](https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/) | the 6-10 day index lists `610prcp_20260917.zip` / `610temp_20260917.zip` as the latest, i.e. the 17 Sep issuance the site records | matches |
+
+### What this does and does not establish
+
+It establishes that the *official text* the site quotes and links is the text the
+agency is publishing today, and that the issuance dates the site records are the
+current ones. It does **not** re-fetch and re-parse the GHCN/GSOD/NCEI files —
+those are large binary/CSV products and the pipeline's own SHA-256, byte count and
+retrieval time for each one are recorded in `data/provenance.json` and listed on
+the page, which is the mechanism for that half of the review. Any figure traced to
+a raw file is checkable there in one step: open the URL in the ledger row, download
+the file, and compare against the value the row prints.
+
+## Follow-up: the U+FFFD in NCEI's Storm Events file is NCEI's
+
+The first attempt at bug 40 assumed this project's decoder was at fault (the
+pipeline had been using `errors="replace"`). It was not, or not only:
+
+* `lib_fetch.decode_text()` prefers strict UTF-8 and reports which encoding it
+  used. The 18 Sep run recorded **no encoding fallback** for any Storm Events
+  file, i.e. the bytes NCEI serves are valid UTF-8.
+* Valid UTF-8 that contains U+FFFD means the replacement character is *in the
+  published file* — NCEI's own conversion from CP1252 already destroyed the
+  glyph. No decoder can recover it.
+
+The character cannot be restored without guessing, and this project does not
+guess. So the pipeline now:
+
+1. removes U+FFFD and NUL from the narrative fields
+   (`lib_fetch.strip_unrepresentable`, unit-tested against the exact sentence
+   from the real file);
+2. publishes `storm_events.json` → `text_integrity` with the count, the affected
+   fields and event ids, up to five verbatim snippets around each removal, and
+   the reason;
+3. records an `info` irregularity saying the same thing, so it appears on the
+   site rather than only in the JSON;
+4. keeps the hard ledger check that **no U+FFFD may be published at all**, plus a
+   new one (`publisher-text-loss-disclosed`) requiring that any removal is
+   counted, located, attributed to the publisher, and reported — and that the
+   attribution is backed by `encoding_fallback_used == False`. A disclosure that
+   blames the publisher while this project's decoder was the cause fails the
+   check.
+
+The sentence a reader sees is therefore
+`…hit 5.46 in the 24 hours of December 31st, just 0.08 less than 1st place
+(11/5/1994) with 5.54.` — verbatim minus the three glyphs NCEI had already lost.
+
+## Validation result: two independent NOAA products agree on storm severity
+
+The severity work was built so that every claim could be checked against a second
+official product rather than against this project's own arithmetic. The 18 Sep
+2026 run produced the first real comparison, and it is the strongest piece of
+evidence on the site:
+
+| Threshold | Method A: this project counting days in `USW00023272` | Method B: sum of NOAA's published per-date percent-of-years (`DLY-PRCP-PCTALL-GE***HI`) | Difference |
+| --- | --- | --- | --- |
+| ≥ 0.50 in | 8.40 days/season (peak 17) | 8.39 days/season | **+0.01** |
+| ≥ 1.00 in | 3.20 (peak 7, 1996-97) | 3.26 | **−0.06** |
+| ≥ 2.00 in | 0.50 (peak 2) | 0.51 | **−0.01** |
+| ≥ 4.00 in | 0.00 (peak 1) | 0.02 | **−0.02** |
+
+Two different files, two different derivations, same station — within 0.06 days
+per season everywhere. The site prints this table and quotes the verdict, and the
+`two-method-verdict-recomputable` ledger check re-derives the verdict from the
+differences, so the sentence cannot outlive the numbers that justified it.
+
+### A second, independent cross-check
+
+NCEI's Storm Events narrative for 31 December 2022 records "5.46 in in the
+24 hours … just 0.08 less than 1st place (11/5/1994) with 5.54". The GHCN-derived
+severity record reports `max_daily_prcp_in = 5.54 in`, season **1994-1995** —
+i.e. the GHCN file's own wettest day in the window is the 5 November 1994 event,
+0.08 in above the 2022 event, exactly as NCEI's storm narrative says. Two
+different NCEI products, fetched separately, agree on both the value and the gap.
+

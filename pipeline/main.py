@@ -155,7 +155,8 @@ def fetch_zip_centroid():
     import zipfile, io, csv
     with zipfile.ZipFile(io.BytesIO(res.body)) as zf:
         name = next((n for n in zf.namelist() if n.lower().endswith(".txt")), zf.namelist()[0])
-        raw = zf.read(name).decode("utf-8-sig", "replace")
+        raw, _enc = fetchlib.decode_text(zf.read(name))
+        raw = raw.lstrip("\ufeff")  # the file may carry a UTF-8 BOM
 
     # The Census Gazetteer files are tab-delimited with CRLF endings, so header
     # names and values must be stripped (the last column otherwise arrives as
@@ -1319,6 +1320,16 @@ def fetch_storm_events(years):
         by_year[y] = (fname, cdate)
 
     events, files_used = [], []
+    #: Characters the publisher's file had already lost, per field.  Published
+    #: next to the events so the removal is visible instead of silent.
+    text_loss = {"characters_removed": 0, "fields_affected": [], "contexts": [],
+                 "reason": ("The NCEI Storm Events CSV for these years is valid UTF-8 and "
+                            "already contains U+FFFD (the Unicode replacement character), so "
+                            "the original glyph was lost before this project fetched the file. "
+                            "It is removed rather than guessed at; the surrounding text is "
+                            "verbatim."),
+                 "encoding_fallback_used": None,
+                 "files_with_an_encoding_fallback": []}
     for year in sorted(by_year, reverse=True):
         if year not in years:
             continue
@@ -1336,7 +1347,26 @@ def fetch_storm_events(years):
             note_irregularity("warning", "storm_events",
                               f"Could not decompress Storm Events file {fname}: {exc}", {})
             continue
-        reader = _csv.DictReader(_io.StringIO(raw.decode("utf-8", "replace")))
+        # NCEI's Storm Events CSVs are not reliably UTF-8.  Decoding them with
+        # errors="replace" (as this pipeline used to) turned every CP1252 byte
+        # into U+FFFD, so quotes such as 5.46" arrived in the dataset as
+        # "5.46\ufffd\ufffd\ufffd".  Try UTF-8 strictly first and fall back to the
+        # publisher's legacy encoding, recording which one was used.
+        raw_text, raw_encoding = fetchlib.decode_text(raw)
+        if raw_encoding != "utf-8":
+            text_loss["encoding_fallback_used"] = True
+            text_loss["files_with_an_encoding_fallback"].append(
+                {"file": fname, "encoding_used": raw_encoding})
+        elif text_loss["encoding_fallback_used"] is None:
+            text_loss["encoding_fallback_used"] = False
+        if raw_encoding != "utf-8":
+            note_irregularity(
+                "warning", "storm_events",
+                f"Storm Events file {fname} is not valid UTF-8; decoded as "
+                f"{raw_encoding} so the published characters (curly quotes, degree "
+                "signs) survive instead of becoming replacement characters.",
+                {"file": fname, "encoding_used": raw_encoding})
+        reader = _csv.DictReader(_io.StringIO(raw_text))
         for row in reader:
             cz = (row.get("CZ_FIPS") or "").strip()
             cz_name = (row.get("CZ_NAME") or "").strip()
@@ -1368,15 +1398,50 @@ def fetch_storm_events(years):
                 "event_narrative": (row.get("EVENT_NARRATIVE") or "")[:900],
                 "episode_narrative": (row.get("EPISODE_NARRATIVE") or "")[:900],
             })
+            # The publisher's own CSV is valid UTF-8 and already contains U+FFFD
+            # (verified: decode_text() reported no encoding fallback for these
+            # files, so the replacement characters are in the bytes NCEI serves,
+            # not introduced here).  They cannot be recovered and will not be
+            # guessed at, so they are removed and the loss is published.
+            for _field in ("event_narrative", "episode_narrative"):
+                _clean, _removed, _ctx = fetchlib.strip_unrepresentable(events[-1][_field])
+                if _removed:
+                    events[-1][_field] = _clean
+                    text_loss["characters_removed"] += _removed
+                    # The encoding actually used for THIS file is recorded per
+                    # removal: it is the evidence that the lost glyph was already
+                    # gone in the bytes NCEI served rather than destroyed by this
+                    # project's decoder, and the ledger checks exactly that.
+                    text_loss["fields_affected"].append(
+                        {"event_id": events[-1]["event_id"], "field": _field,
+                         "removed": _removed, "file": fname,
+                         "encoding_used": raw_encoding})
+                    for _c in _ctx:
+                        if len(text_loss["contexts"]) < 5:
+                            text_loss["contexts"].append(_c)
     if not events:
         note_irregularity("warning", "storm_events",
                           "Storm Events files were reachable but no rows matched San "
                           "Francisco County in the requested years.",
                           {"years": sorted(years), "files": files_used[:3]})
     events.sort(key=lambda e: (e.get("begin_date") or ""), reverse=True)
+    if text_loss["characters_removed"]:
+        note_irregularity(
+            "info", "storm_events",
+            f"NCEI's Storm Events file lost {text_loss['characters_removed']} character(s) "
+            "before this project fetched it (U+FFFD is already present in the published "
+            "file). Those characters were removed from the narrative text and are not "
+            "guessed at; the count, the fields and the surrounding text are published in "
+            "data/storm_events.json under text_integrity.",
+            {"characters_removed": text_loss["characters_removed"],
+             "fields_affected": text_loss["fields_affected"][:5],
+             "encoding_fallback_used": text_loss["encoding_fallback_used"],
+             "files_with_an_encoding_fallback": text_loss["files_with_an_encoding_fallback"],
+             "contexts": text_loss["contexts"]})
     return {"county": "San Francisco County, CA (FIPS 06075)",
             "years": sorted(years), "files_used": files_used,
             "n_events": len(events), "events": events[:400],
+            "text_integrity": text_loss,
             "source": "NOAA NCEI Storm Events Database",
             "human_url": "https://www.ncdc.noaa.gov/stormevents/"}
 

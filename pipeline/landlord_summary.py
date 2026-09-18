@@ -122,6 +122,363 @@ GHCN_URL = ("https://www.ncei.noaa.gov/data/"
 GSOD_URL = "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
 STORM_URL = "https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/"
 ONI_URL = "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
+NORMALS_URL = "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv"
+ENSODISC_URL = ("https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/"
+                "enso_advisory/ensodisc.shtml")
+
+#: The climatological baseline for CPC's three-way long-lead split.  CPC's own
+#: polygons carry 33% for "no tilt"; 100/3 is the exact baseline.
+CPC_BASELINE_PCT = 100.0 / 3.0
+
+
+def cpc_tilt_summary(records):
+    """Summarise the CPC precipitation outlooks that cover this season.
+
+    Returns only counts and the published numbers - it never converts a
+    period probability into a daily one, and it separates records whose
+    probability sits on the climatological baseline from records that carry a
+    real tilt.  A period with ``Cat="Above"`` and ``Prob=33.0`` is counted as
+    "at the baseline", not as an above-median signal.
+    """
+    rows = [r for r in (records or []) if r.get("variable") == "prcp" and r.get("prob") is not None]
+    if not rows:
+        return None
+    tilted, baseline = [], []
+    for r in sorted(rows, key=lambda r: (r.get("valid_season") or "")):
+        try:
+            prob = float(r["prob"])
+        except (TypeError, ValueError):
+            continue
+        cat = (r.get("category") or "").upper()
+        entry = {"period": r.get("valid_season"), "issued": r.get("issued"),
+                 "category_label": r.get("category_label"),
+                 "category_raw": r.get("category"),
+                 "probability_pct": prob,
+                 "at_baseline": abs(prob - CPC_BASELINE_PCT) < 0.5,
+                 "source_url": r.get("url")}
+        (baseline if entry["at_baseline"] else tilted).append(entry)
+    best = None
+    if tilted:
+        best = max(tilted, key=lambda e: e["probability_pct"])
+    return {
+        "periods_covering_this_season": len(rows),
+        "periods_with_a_tilt": len(tilted),
+        "periods_at_climatological_baseline": len(baseline),
+        "highest_probability": best,
+        "rows": sorted(rows, key=lambda r: (r.get("valid_season") or "")) and
+                [{"period": r.get("valid_season"), "issued": r.get("issued"),
+                  "variable": r.get("variable"),
+                  "category_label": r.get("category_label"),
+                  "category_raw": r.get("category"),
+                  "probability_pct": r.get("prob")} for r in
+                 sorted(rows, key=lambda r: (r.get("valid_season") or ""))],
+        "baseline_pct": round(CPC_BASELINE_PCT, 1),
+        "method": ("Counted from the CPC long-lead polygons this project sampled at the "
+                   "94122 point. CPC publishes whole percentages, so a probability that "
+                   "rounds to 33% is counted as sitting on the climatological baseline "
+                   "(100/3 = 33.3%) and is not reported as a tilt, even when CPC's "
+                   "category field says Above/Below."),
+        "source_url": ("https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/"),
+    }
+
+
+def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
+                      wind_rain, heavy_wind_and_rain, max_gust, expected_days,
+                      severity, latest_oni, oni_when, diagnostic_status,
+                      tilt, storms, days_in_horizon, horizon_last_day,
+                      enso_strat=None):
+    """The landlord's questions, answered in the order they were asked.
+
+    Every value is copied from an already-verified structure; nothing here is
+    a new derivation.  Each answer carries the basis it rests on, so a reader
+    can see at a glance whether a number is an observation, an expectation
+    over the observed distribution, or an official period probability - and
+    never a daily forecast, because none exists this far out.
+    """
+    def g(d, k):
+        """Nested lookup that tolerates a key that exists but is None.
+
+        ``(d or {}).get(k, {})`` returns None when the key is present with a
+        None value, which then blows up on the next .get().  The severity
+        blocks are legitimately absent until the fetching pipeline has run, so
+        every read here has to survive that.
+        """
+        if not isinstance(d, dict):
+            return None
+        return d.get(k)
+
+    obs = "1991\u20132020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown)"
+    obs_wind = "1991\u20132020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away)"
+    exp_basis = ("1991\u20132020 observed record \u2014 an expectation over those 30 seasons, "
+                 "not a prediction for 2026-27")
+
+    out = []
+
+    out.append({
+        "n": 1,
+        "key": "rain_amount",
+        "question": "How much rain should I expect over the season?",
+        "answer": (
+            f"Plan on about {g(season_total,'mean')} in for Oct 1 \u2013 Jan 31. "
+            f"The median season is {g(season_total,'median')} in; the record range across 30 seasons is "
+            f"{g(season_total,'min')}\u2013{g(season_total,'max')} in, and the driest 10% of seasons were at or "
+            f"below {g(season_total,'p10')} in while the wettest 10% were at or above {g(season_total,'p90')} in. "
+            "Budget off the mean, hold reserves against the p90."),
+        "numbers": [
+            {"label": "Season total, mean", "value": f"{g(season_total,'mean')} in"},
+            {"label": "Season total, median", "value": f"{g(season_total,'median')} in"},
+            {"label": "p10 \u2013 p90", "value": f"{g(season_total,'p10')} \u2013 {g(season_total,'p90')} in"},
+            {"label": "Wettest / driest", "value": f"{g(season_total,'max')} in / {g(season_total,'min')} in"},
+        ],
+        "basis": obs,
+        "confidence": f"n = {g(season_total,'n')} seasons",
+        "sources": [{"label": "NCEI GHCN-Daily USW00023272", "url": GHCN_URL}],
+    })
+
+    out.append({
+        "n": 2,
+        "key": "rain_duration",
+        "question": "Will it rain for days or weeks straight?",
+        "answer": (
+            f"A long wet spell is the normal case, not the exception: {g(streak_prob.get('ge_3_days',{}),'pct')}% of "
+            f"seasons had a run of 3+ consecutive wet days, {g(streak_prob.get('ge_5_days',{}),'pct')}% had 5+ days, "
+            f"{g(streak_prob.get('ge_7_days',{}),'pct')}% had 7+ days and {g(streak_prob.get('ge_10_days',{}),'pct')}% "
+            f"had 10+ days. The longest run averages {g(longest_streak,'mean')} days and has reached "
+            f"{g(longest_streak,'max')} days. A week-long spell is roughly a coin flip \u2014 worth pre-emptive "
+            "gutter, roof-drain and tenant-communication plans."),
+        "numbers": [
+            {"label": "Any 3+ day wet run", "value": f"{g(streak_prob.get('ge_3_days',{}),'pct')}% of seasons"},
+            {"label": "Any 5+ day wet run", "value": f"{g(streak_prob.get('ge_5_days',{}),'pct')}% of seasons"},
+            {"label": "Any 7+ day wet run", "value": f"{g(streak_prob.get('ge_7_days',{}),'pct')}% of seasons"},
+            {"label": "Any 10+ day wet run", "value": f"{g(streak_prob.get('ge_10_days',{}),'pct')}% of seasons"},
+            {"label": "Longest run", "value": f"mean {g(longest_streak,'mean')} d \u00b7 max {g(longest_streak,'max')} d"},
+        ],
+        "basis": obs + " \u2014 wet day = \u2265 0.01 in of liquid precipitation, run counted inside Oct 1 \u2013 Jan 31",
+        "confidence": f"n = {g(longest_streak,'n')} seasons",
+        "sources": [{"label": "NCEI GHCN-Daily USW00023272", "url": GHCN_URL}],
+    })
+
+    # The threshold table is the honest way to talk about "storm severity":
+    # NOAA publishes a percent-of-years value for eight precipitation
+    # thresholds, and this project counts days at four of them from the same
+    # station, so both numbers can be shown and checked.  A threshold with a
+    # zero count in 30 seasons is left at 0.0 rather than dressed up as rare.
+    thr = [(t.get("threshold_in"), t) for t in (g(severity, "threshold_comparison") or [])]
+    thr_rows = []
+    for inches, t in thr:
+        proj = g(t, "project_mean_days")
+        noaa = g(t, "noaa_expected_days")
+        if proj is None and noaa is None:
+            continue
+        thr_rows.append({
+            "label": f"Days \u2265 {inches:.2f} in per season, method A (counted) vs method B (NOAA published)",
+            "value": (f"{proj} vs {noaa}"
+                      if proj is not None and noaa is not None
+                      else (f"{proj} counted" if proj is not None else f"{noaa} NOAA published")),
+        })
+    out.append({
+        "n": 3,
+        "key": "heavy_rain_days",
+        "question": "How many hard-rain days will there be?",
+        "answer": (
+            f"Expect about {g(expected_days,'ge_025in_days')} days with \u2265 0.25 in and about "
+            f"{g(expected_days,'ge_100in_days')} days with \u2265 1.00 in per season. Those are the days that "
+            "overwhelm area drains, garage thresholds and ground-floor entryways. The counts are sums of the "
+            "per-date observed probabilities, so they are an expectation over the 30-season record. "
+            + (f"NOAA's own published per-date probabilities give {g(g(severity,'published_expected'),'ge_025in_days')} "
+               f"and {g(g(severity,'published_expected'),'ge_100in_days')} days. "
+               + (g(g(severity, 'two_method_agreement'), 'statement') + " "
+                  if g(g(severity, 'two_method_agreement'), 'statement') else ""))),
+        "numbers": [
+            {"label": "Days \u2265 0.25 in per season, method A (sum of this project's per-date probabilities)",
+             "value": f"{g(expected_days,'ge_025in_days')} days"},
+            {"label": "Days \u2265 1.00 in per season, method A",
+             "value": f"{g(expected_days,'ge_100in_days')} days"},
+            {"label": "Days \u2265 0.25 in / \u2265 1.00 in, method B (NOAA's published probabilities)",
+             "value": f"{g(g(severity,'published_expected'),'ge_025in_days')} / "
+                      f"{g(g(severity,'published_expected'),'ge_100in_days')} days"},
+            {"label": "Wettest single day on record in the window",
+             "value": (f"{g(g(severity, 'record_daily_prcp_in'), 'value')} in "
+                       f"({g(g(severity, 'record_daily_prcp_in'), 'season')})"
+                       if g(g(severity, "record_daily_prcp_in"), "value") is not None
+                       else "not derived this run")},
+        ] + thr_rows,
+        "basis": exp_basis,
+        "confidence": "linearity of expectation over 123 dates",
+        "sources": [{"label": "NCEI GHCN-Daily USW00023272", "url": GHCN_URL},
+                    {"label": "NCEI 1991\u20132020 daily normals (NOAA's own probabilities)",
+                     "url": NORMALS_URL}],
+    })
+
+    out.append({
+        "n": 4,
+        "key": "wind",
+        "question": "How windy will it get?",
+        "answer": (
+            f"The strongest gust of the season averages {g(max_gust,'mean')} mph at SFO and has reached "
+            f"{g(max_gust,'max')} mph in this record. Wind is measured at SFO, which is 11.9 mi away and more "
+            "exposed than the Sunset, so treat these as an upper bound for the ZIP. The strongest gusts are a "
+            "tree-limb, fence and loose-material risk with the shortest warning."),
+        "numbers": [
+            {"label": "Season max gust, mean", "value": f"{g(max_gust,'mean')} mph"},
+            {"label": "Season max gust, record", "value": f"{g(max_gust,'max')} mph"},
+            {"label": "Days with sustained wind \u2265 30 kt",
+             "value": (f"mean {float(g(g(severity,'wind_days_ge_30kt'),'mean')):.1f} per season"
+                       if g(g(severity, 'wind_days_ge_30kt'), 'mean') is not None else "not derived this run")},
+            {"label": "Days with a gust \u2265 50 kt",
+             "value": (f"mean {float(g(g(severity,'gust_days_ge_50kt'),'mean')):.1f} per season"
+                       if g(g(severity, 'gust_days_ge_50kt'), 'mean') is not None else "not derived this run")},
+        ],
+        "basis": obs_wind,
+        "confidence": f"n = {g(max_gust,'n')} seasons; upper bound for 94122",
+        "sources": [{"label": "NCEI GSOD 72494023234 (KSFO)", "url": GSOD_URL},
+                    {"label": "GSOD units README", "url":
+                     "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt"}],
+    })
+
+    out.append({
+        "n": 5,
+        "key": "wind_and_rain",
+        "question": "Will wind and rain hit at the same time?",
+        "answer": (
+            f"Yes \u2014 on about {g(wind_rain,'mean')} days a season at SFO (\u2265 0.01 in of rain and sustained wind "
+            f"\u2265 20 kt), and on about {g(heavy_wind_and_rain,'mean')} heavy days (\u2265 0.50 in and a gust "
+            "\u2265 35 kt). Those are the days water is driven sideways under shingles, laps and window seals, and "
+            "the days fences fail. The SFO wind figure is an upper bound; the rain figure is the downtown gauge."),
+        "numbers": [
+            {"label": "Wind+rain days per season", "value": f"mean {g(wind_rain,'mean')} \u00b7 max {g(wind_rain,'max')}"},
+            {"label": "Heavy wind+rain days per season",
+             "value": f"mean {g(heavy_wind_and_rain,'mean')} \u00b7 max {g(heavy_wind_and_rain,'max')}"},
+        ],
+        "basis": obs + "; " + obs_wind,
+        "confidence": "GSOD days are 00\u201324Z (about 16:00\u201316:00 local), so the joint statistic pairs a "
+                      "local-day rain total with a UTC-day wind figure \u2014 stated, not corrected",
+        "sources": [{"label": "NCEI GSOD 72494023234 (KSFO)", "url": GSOD_URL},
+                    {"label": "NCEI GHCN-Daily USW00023272", "url": GHCN_URL}],
+    })
+
+    storm_rows = (storms or {}).get("events") or []
+    flood_types = ("Flood", "Flash Flood", "Heavy Rain")
+    years = (storms or {}).get("years") or []
+    span = f"{years[0]}\u2013{years[-1]}" if years else "the covered years"
+    n_flood = sum(1 for e in storm_rows if (e.get("event_type") or "") in flood_types)
+    n_all = (storms or {}).get("n_events")
+    n_dmg = (storms or {}).get("n_with_damage")
+
+    # The severity answer is built from counts this project derived itself, not
+    # from the damage field: NCEI's property-damage column for this county holds
+    # token values, so "how much did it cost" cannot be answered from it.  What
+    # can be answered is how often the record shows a day hard enough to matter.
+    sev_w1 = g(g(severity, "wet_days_ge_1in"), "mean")
+    sev_w1_rec = g(g(severity, "record_days_ge_1in"), "value")
+    sev_w1_rec_season = g(g(severity, "record_days_ge_1in"), "season")
+    sev_gust = g(g(severity, "gust_days_ge_40kt"), "mean")
+    sev_severe = g(g(severity, "severe_wind_and_rain_days"), "mean")
+    sev_severe_rec = g(g(severity, "record_severe_wind_and_rain_days"), "value")
+    sev_bits = []
+    if sev_w1 is not None:
+        sev_bits.append(f"{sev_w1} days a season at \u2265 1.00 in of rain")
+    if sev_gust is not None:
+        sev_bits.append(f"{sev_gust} days with a gust \u2265 40 kt")
+    if sev_severe is not None:
+        sev_bits.append(f"{sev_severe} days that are both")
+    sev_sentence = ("On the station record, the season averages " + ", ".join(sev_bits) + ".")
+    sev_answer = (
+        (sev_sentence + " " if sev_bits else "")
+        + f"NOAA's Storm Events Database holds {n_all} records for San Francisco County over {span}, of "
+        + f"which {n_flood} are flood-type. Its damage column is not usable as a cost estimate "
+        + ("\u2014 every non-zero value NCEI holds for this county is a token amount "
+           f"({n_dmg} of {n_all} records carry one) \u2014 " if n_dmg else "\u2014 ")
+        + "so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. "
+        + "No named warning category (Advisory / Warning / High Wind) is applied: those criteria are written "
+          "per forecast zone and this project does not restate them.")
+    sev_numbers = [
+        {"label": "Storm Events records, SF County", "value": f"{n_all} ({span})"},
+        {"label": "Flood-type records", "value": f"{n_flood}"},
+        {"label": "Records with a non-zero damage figure",
+         "value": ("not derived this run" if n_dmg is None else f"{n_dmg} of {n_all} \u2014 no dollar total published")},
+    ]
+    if sev_w1 is not None:
+        sev_numbers.append({
+            "label": "Days per season at \u2265 1.00 in",
+            "value": (f"mean {sev_w1}" + (f" \u00b7 peak {sev_w1_rec} in {sev_w1_rec_season}"
+                                          if sev_w1_rec is not None else ""))})
+    if sev_gust is not None:
+        sev_numbers.append({"label": "Days per season with a gust \u2265 40 kt",
+                            "value": f"mean {sev_gust}"})
+    if sev_severe is not None:
+        sev_numbers.append({
+            "label": "Days per season both \u2265 1.00 in and a gust \u2265 40 kt",
+            "value": (f"mean {sev_severe}" + (f" \u00b7 peak {sev_severe_rec}"
+                                              if sev_severe_rec is not None else ""))})
+
+    out.append({
+        "n": 6,
+        "key": "storm_severity",
+        "question": "How severe have the storms actually been here?",
+        "answer": sev_answer,
+        "numbers": sev_numbers,
+        "basis": "NOAA NCEI Storm Events Database, reported events only \u2014 under-reporting is likely",
+        "confidence": "counts derived from the station record; no dollar estimate is made",
+        "sources": [{"label": "NCEI Storm Events Database", "url":
+                     "https://www.ncdc.noaa.gov/stormevents/"},
+                    {"label": "NCEI Storm Events CSV files", "url": STORM_URL},
+                    {"label": "NCEI GSOD 72494023234 (KSFO wind)", "url": GSOD_URL}],
+    })
+
+    # What the official seasonal outlook adds, kept strictly separate from the
+    # observed record above.
+    official = {
+        "enso": {
+            "state": f"{latest_oni.get('phase_label') or phase_label(latest_oni.get('phase'))} "
+                     f"({fmt_oni_c(latest_oni.get('oni_c'))}, {oni_when})"
+                     if latest_oni else None,
+            "alert_status": diagnostic_status,
+            "source_url": ENSODISC_URL,
+        },
+        "cpc_tilt": tilt,
+        "daily_forecast": {
+            "days_in_this_scoreboard_with_a_real_forecast": days_in_horizon,
+            "official_horizon_ends": horizon_last_day,
+        },
+    }
+
+    # The only bridge this project is entitled to draw between "the official
+    # outlook says X" and "that costs Y": the same 30 seasons, split by the
+    # ENSO phase NOAA published for them.  It is a conditional average over the
+    # observed record, not a forecast, and it is labelled that way.
+    phase = (latest_oni or {}).get("phase")
+    strat = (enso_strat or {}).get(phase) if phase else None
+    other = {p: v for p, v in (enso_strat or {}).items() if p != phase}
+    if strat and strat.get("mean") is not None:
+        entry = {
+            "phase": phase,
+            "phase_label": (latest_oni or {}).get("phase_label") or phase_label(phase),
+            "seasons_in_phase": strat.get("n"),
+            "mean_in": strat.get("mean"),
+            "median_in": strat.get("median"),
+            "min_in": strat.get("min"),
+            "max_in": strat.get("max"),
+            "how_to_read": (
+                "Mean Oct 1 \u2013 Jan 31 precipitation over the seasons in the 1991-2020 record "
+                "whose published CPC ONI placed them in this same phase. This is a conditional "
+                "average of what happened, NOT a forecast for 2026-27, and the spread inside the "
+                "phase is as informative as the mean."),
+            "contrast": [
+                {"phase": p, "phase_label": v.get("phase_label") or phase_label(p),
+                 "seasons": v.get("n"), "mean_in": v.get("mean")}
+                for p, v in sorted(other.items(), key=lambda kv: -(kv[1].get("mean") or 0))
+            ],
+            "source_url": ONI_URL,
+            "phase_source_url": ENSODISC_URL,
+        }
+        official["enso_conditioned_record"] = entry
+    else:
+        official["enso_conditioned_record"] = None
+    return out, official
+
+
+
 
 
 def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
@@ -596,8 +953,10 @@ def main():
             action_items.append({
                 "category": "Official CPC outlook",
                 "priority": "medium",
-                "title": f"CPC {rec.get('valid_season')}: {rec.get('category_label')} ({prob_txt}) - {rec.get('variable')}",
-                "detail": f"Issued {rec.get('issued')}, forecast date {rec.get('fcst_date')}. This is a probability for the whole 3-month period, not a daily forecast. Category: {rec.get('category_label')} {prob_detail}. {variable_note}",
+                "title": f"CPC {rec.get('valid_season')}: {rec.get('category_label')} ({prob_txt}) - {rec.get('variable')}"
+                         + (" - at the climatological baseline" if rec.get("probability_at_climatological_baseline") else ""),
+                "detail": f"Issued {rec.get('issued')}, forecast date {rec.get('fcst_date')}. This is a probability for the whole 3-month period, not a daily forecast. Category: {rec.get('category_label')} {prob_detail}. {variable_note}"
+                          + (f" Note: {rec.get('baseline_note')}" if rec.get("baseline_note") else ""),
                 "source": rec.get("url"),
                 "source_url": rec.get("url")
             })
@@ -660,10 +1019,14 @@ def main():
         "comparison": calendar.get("daily_normals_comparison"),
     }
     pub_expected = {}
-    for key, label in (("p_pcp_ge_0p25in_pct", "ge_025in_days"),
+    for key, label in (("p_pcp_ge_0p01in_pct", "ge_001in_days"),
+                       ("p_pcp_ge_0p10in_pct", "ge_010in_days"),
+                       ("p_pcp_ge_0p25in_pct", "ge_025in_days"),
+                       ("p_pcp_ge_0p50in_pct", "ge_050in_days"),
                        ("p_pcp_ge_1p00in_pct", "ge_100in_days"),
-                       ("p_pcp_ge_0p01in_pct", "ge_010in_days"),
-                       ("p_pcp_ge_0p50in_pct", "ge_050in_days")):
+                       ("p_pcp_ge_2p00in_pct", "ge_200in_days"),
+                       ("p_pcp_ge_4p00in_pct", "ge_400in_days"),
+                       ("p_pcp_ge_6p00in_pct", "ge_600in_days")):
         total = 0.0
         seen = 0
         for d in days:
@@ -676,7 +1039,11 @@ def main():
         if seen:
             pub_expected[label] = round(total, 2)
     if pub_expected:
-        pub_expected["days_covered"] = len(days)
+        # Named ``dates_compared``, not ``days_covered``: this project used to
+        # publish a *different* ``days_covered`` in nws_window meaning "scoreboard
+        # days carrying a real NWS forecast", and two unrelated quantities with
+        # one name is how a reader ends up quoting the wrong one.
+        pub_expected["dates_compared"] = len(days)
         pub_expected["method"] = (
             "Sum of NOAA's own published per-date probabilities (DLY-PRCP-PCTALL-"
             "GE***HI) over the 123 dates of the window - the same linearity-of-"
@@ -685,6 +1052,119 @@ def main():
         published_official["published_expected_days"] = pub_expected
     official_daily_normals = published_official if published_official.get("comparison") \
         or pub_expected else None
+
+    # 8c. The landlord's six questions, answered in order -----------------
+    # Severity counters come from the same GHCN/GSOD files as everything else;
+    # the record values are the per-season maxima bound to their season.
+    severity_dist = {
+        k: dist.get(k) for k in (
+            "wet_days_ge_050in", "wet_days_ge_1in", "wet_days_ge_2in",
+            "wet_days_ge_400in", "max_daily_prcp_in", "wind_days_ge_30kt",
+            "gust_days_ge_40kt", "gust_days_ge_50kt", "max_wind_mph",
+            "severe_wind_and_rain_days",
+        ) if dist.get(k) is not None
+    }
+
+    # The project's own count and NOAA's published expectation, on the same
+    # threshold, side by side.  NOAA publishes a percent-of-years value for
+    # exactly these eight precipitation thresholds, and this project counts
+    # days at four of them from the same station's daily file - so the reader
+    # can see both methods rather than having to trust one.
+    _threshold_pairs = (
+        (0.50, "wet_days_ge_050in", "ge_050in_days"),
+        (1.00, "wet_days_ge_1in", "ge_100in_days"),
+        (2.00, "wet_days_ge_2in", "ge_200in_days"),
+        (4.00, "wet_days_ge_400in", "ge_400in_days"),
+    )
+    threshold_comparison = []
+    for inches, proj_key, noaa_key in _threshold_pairs:
+        proj = dist.get(proj_key)
+        noaa = pub_expected.get(noaa_key)
+        if proj is None and noaa is None:
+            continue
+        proj_mean = (proj or {}).get("mean")
+        entry = {
+            "threshold_in": inches,
+            "project_mean_days": proj_mean,
+            "project_max_days": (proj or {}).get("max"),
+            "noaa_expected_days": noaa,
+            "difference_days": (round(proj_mean - noaa, 2)
+                                if (proj_mean is not None and noaa is not None) else None),
+            "project_method": ("mean of the 30 seasons' counts of days at or above this "
+                               "threshold, from the station's daily precipitation file"),
+            "noaa_method": ("sum of NOAA's own published per-date percent-of-years value "
+                            "(DLY-PRCP-PCTALL-GE***HI) over the 123 dates"),
+        }
+        threshold_comparison.append(entry)
+
+    # Whether the claim "the two methods agree" is allowed to be made is decided
+    # here, from the numbers, not written into the prose by hand: if the
+    # differences had come out large the site would have to say that instead.
+    _diffs = [abs(t["difference_days"]) for t in threshold_comparison
+              if t.get("difference_days") is not None]
+    two_method_agreement = None
+    if _diffs:
+        _worst = max(_diffs)
+        two_method_agreement = {
+            "thresholds_compared": len(_diffs),
+            "largest_difference_days": round(_worst, 2),
+            "agree_within_a_tenth": _worst <= 0.10,
+            "statement": (f"The two independent methods agree to within {_worst:.2f} day(s) "
+                          f"per season across {len(_diffs)} thresholds."
+                          if _worst <= 0.10 else
+                          f"The two independent methods differ by up to {_worst:.2f} day(s) "
+                          f"per season across {len(_diffs)} thresholds; both are published "
+                          "as-is and neither is adjusted."),
+            "source_note": ("One method counts days in this station's daily file; the other "
+                            "sums NOAA's own published per-date probabilities. They share a "
+                            "station but not a derivation."),
+        }
+    severity_record = calendar.get("severity_record", {}) or {}
+    severity = {
+        **severity_dist,
+        "record_daily_prcp_in": severity_record.get("max_daily_prcp_in"),
+        "record_gust": severity_record.get("max_gust_mph"),
+        "record_sustained_wind": severity_record.get("max_wind_mph"),
+        "record_days_ge_1in": severity_record.get("most_wet_days_ge_1in"),
+        "record_days_gust_ge_40kt": severity_record.get("most_days_gust_ge_40kt"),
+        "record_severe_wind_and_rain_days": severity_record.get(
+            "most_severe_wind_and_rain_days"),
+        "threshold_comparison": threshold_comparison,
+        "two_method_agreement": two_method_agreement,
+        "published_expected": pub_expected,
+        "sources": [
+            {"label": "NCEI GHCN-Daily USW00023272", "url": GHCN_URL},
+            {"label": "NCEI GSOD 72494023234 (KSFO)", "url": GSOD_URL},
+        ],
+        "thresholds_note": (
+            "Every counter is 'days per season at or above this plain threshold' in the "
+            "units published by NCEI. No named warning category (Advisory/Warning) is "
+            "applied, because those criteria are written per forecast zone and this "
+            "project does not restate them."
+        ),
+    }
+    # How many Storm Events rows carry a non-zero damage figure.  Recorded so
+    # the executive summary can state it instead of pointing elsewhere.
+    def _damage_usd(v):
+        return parse_damage_usd(v)
+
+    storm_events = (storms or {}).get("events") or []
+    if storm_events:
+        storms = dict(storms)
+        storms["n_with_damage"] = sum(
+            1 for e in storm_events if (_damage_usd(e.get("damage_property")) or 0) > 0)
+
+    cpc_tilt = cpc_tilt_summary(relevant_cpc)
+    bottom_line, official_outlook = build_bottom_line(
+        season_total=season_total, wet_days=wet_days, streak_prob=streak_prob,
+        longest_streak=longest_streak, wind_rain=wind_rain,
+        heavy_wind_and_rain=heavy_wind_rain, max_gust=max_gust,
+        expected_days=expected_days, severity=severity, latest_oni=latest_oni,
+        oni_when=oni_when, diagnostic_status=diagnostic_status, tilt=cpc_tilt,
+        storms=storms,
+        days_in_horizon=(calendar.get("nws_window") or {}).get("scoreboard_days_in_horizon"),
+        horizon_last_day=(calendar.get("nws_window") or {}).get("last_day"),
+        enso_strat=enso_strat)
 
     # Phase-aware ENSO sentence for the key finding: the tilt wording has to
     # follow the phase NOAA actually published, not a template that always
@@ -732,6 +1212,18 @@ def main():
             "max_gust": max_gust,
             "enso_stratified": enso_strat,
             "expected_days": expected_days,
+            # The landlord's six questions, answered in the order asked, each
+            # with the basis it rests on and the official file to check it in.
+            # This is the block the page leads with.
+            "bottom_line": bottom_line,
+            "bottom_line_note": (
+                "Each answer states the basis it rests on. Anything labelled "
+                "1991\u20132020 observed record is an observation or an expectation over "
+                "those 30 seasons; anything under 'Official outlook' is an official "
+                "probability for a whole period. No row is a forecast for a named day "
+                "\u2014 no official product issues one more than about a week ahead."),
+            "official_outlook": official_outlook,
+            "severity": severity,
             "cost_drivers": cost_drivers,
             "cost_drivers_note": COST_DRIVERS_NOTE,
             "key_finding": (

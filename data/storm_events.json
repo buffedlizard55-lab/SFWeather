@@ -243,7 +243,7 @@
       "damage_crops": "0.00K",
       "injuries_direct": "0",
       "deaths_direct": "0",
-      "event_narrative": "San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. This makes it the second wettest day on record, just 0.08\ufffd\ufffd\ufffd less than 1st place (11/5/1994) with 5.54\ufffd\ufffd\ufffd||This also was 46.8% of the monthly rainfall (11.66\ufffd\ufffd\ufffd).",
+      "event_narrative": "San Francisco Downtown site hit 5.46 in the 24 hours of December 31st. This makes it the second wettest day on record, just 0.08 less than 1st place (11/5/1994) with 5.54||This also was 46.8% of the monthly rainfall (11.66).",
       "episode_narrative": "An atmospheric river impacted the Bay Area on December 31st, resulting in significant rainfall across the San Francisco Bay Area. Initial forecasts called for the most intense rainband to progressively move south towards the Central Coast as the day went on. However, the morning of the 31st, a surface low developed west of San Francisco, and the river stalled over the Bay Area. This resulted in significant rainfall totals for many Bay Area sites. Most notably, downtown San Francisco received 5.46 inches of rain on the 31st, the second wettest day on record. The Oakland Museum received its wettest day since records began in 1970, with 4.75 inches of rain."
     },
     {
@@ -2134,6 +2134,28 @@
       "episode_narrative": "An upper level system with a strong cold front moved through the Bay Area at the turn of the month with precipitation beginning late the evening of the 28th. This system brought widespread rainfall causing localized roadway flooding, strong winds, lightning, and small hail. Gusts in the mountains reached 60 mph and hail was seen up to 1/2 an inch. The bulk of the precipitation and subsequent impacts were seen in early March."
     }
   ],
+  "text_integrity": {
+    "characters_removed": 12,
+    "fields_affected": [
+      {
+        "event_id": "1079727",
+        "field": "event_narrative",
+        "removed": 12,
+        "file": "StormEvents_details-ftp_v1.0_d2022_c20260625.csv.gz",
+        "encoding_used": "utf-8"
+      }
+    ],
+    "contexts": [
+      "San Francisco Downtown site hit 5.46<U+FFFD><U+FFFD><U+FFFD> in the 24 hours of December 31st. Th",
+      "San Francisco Downtown site hit 5.46<U+FFFD><U+FFFD><U+FFFD> in the 24 hours of December 31st. Thi",
+      "San Francisco Downtown site hit 5.46<U+FFFD><U+FFFD><U+FFFD> in the 24 hours of December 31st. This",
+      " second wettest day on record, just 0.08<U+FFFD><U+FFFD><U+FFFD> less than 1st place (11/5/1994) with",
+      "second wettest day on record, just 0.08<U+FFFD><U+FFFD><U+FFFD> less than 1st place (11/5/1994) with "
+    ],
+    "reason": "The NCEI Storm Events CSV for these years is valid UTF-8 and already contains U+FFFD (the Unicode replacement character), so the original glyph was lost before this project fetched the file. It is removed rather than guessed at; the surrounding text is verbatim.",
+    "encoding_fallback_used": false,
+    "files_with_an_encoding_fallback": []
+  },
   "source": "NOAA NCEI Storm Events Database",
   "human_url": "https://www.ncdc.noaa.gov/stormevents/"
 }

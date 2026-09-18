@@ -234,6 +234,141 @@ function renderDataStatus(cal, quality, prov, verify) {
 
 /* --------------------------------------------------------------- landlord */
 
+/** The bottom line: the landlord's six questions, answered in the order asked.
+ *
+ *  Each answer is a block with the question as its heading, the answer as a
+ *  sentence, the numbers behind it, the basis those numbers rest on, and the
+ *  official file to check them in.  An answer with no source link is refused
+ *  rather than rendered - the same rule the cost drivers follow.
+ */
+function renderBottomLine(ll) {
+  const host = $('#landlord-bottom-line');
+  if (!host) return;
+  const exec = (ll && ll.executive_summary) || {};
+  const note = $('#landlord-bottom-line-note');
+  if (note) {
+    note.textContent = exec.bottom_line_note ||
+      'Each answer states the basis it rests on. Nothing here is a forecast for a named day.';
+  }
+  const rows = exec.bottom_line || [];
+  if (!rows.length) {
+    host.append(el('p', { class: 'empty', text: 'Executive summary unavailable in this run.' }));
+    return;
+  }
+  host.append(...rows.map(r => {
+    // Rows are kept even when a value is missing and rendered as an em dash.
+    // Dropping the row instead would hide the hole: a blanked-out figure would
+    // simply vanish and the answer would still look complete.
+    const numbers = (r.numbers || []).filter(x => x && x.label);
+    const srcs = (r.sources || []).filter(s => s && s.url);
+    const body = [
+      el('p', { class: 'bl-answer', text: r.answer || '' }),
+      numbers.length
+        ? el('table', { class: 'kv bl-numbers' }, numbers.map(x =>
+            el('tr', {}, [el('th', { text: x.label }),
+                          el('td', { text: (x.value === null || x.value === undefined)
+                            ? DASH : String(x.value) })])))
+        : null,
+      el('p', { class: 'fine bl-basis' }, [
+        el('strong', { text: 'Basis: ' }), document.createTextNode(r.basis || DASH),
+        r.confidence ? el('span', { class: 'bl-conf', text: ' \u00b7 ' + r.confidence }) : null
+      ])
+    ];
+    if (!srcs.length) {
+      body.push(el('p', { class: 'fine bl-warn',
+        text: 'No official source link is attached to this answer, so it is withheld.' }));
+      return el('div', { class: 'bl-item bl-item-unsourced' }, [
+        el('h4', { text: `${r.n}. ${r.question || ''}` }), ...body
+      ]);
+    }
+    body.push(el('p', { class: 'fine bl-source' }, [
+      el('strong', { text: 'Check it: ' }),
+      ...srcs.flatMap((s, i) => [
+        i ? document.createTextNode(' \u00b7 ') : null,
+        link(s.url, s.label || s.url)
+      ])
+    ]));
+    return el('div', { class: 'bl-item' }, [
+      el('h4', {}, [
+        el('span', { class: 'bl-n', text: String(r.n || '') + '. ' }),
+        document.createTextNode(r.question || '')
+      ]),
+      ...body
+    ]);
+  }));
+
+  // The official seasonal outlook, kept visibly separate from the observed
+  // record above: an outlook is a probability for a whole period.
+  const outlook = exec.official_outlook || {};
+  const strip = $('#landlord-official');
+  if (!strip) return;
+  const cells = [];
+  const enso = outlook.enso || {};
+  if (enso.state) {
+    cells.push(el('div', { class: 'off-cell' }, [
+      el('div', { class: 'off-label', text: 'Official ENSO state' }),
+      el('div', { class: 'off-value', text: enso.state }),
+      enso.alert_status ? el('div', { class: 'off-sub', text: 'Alert System Status: ' + enso.alert_status }) : null,
+      el('div', { class: 'off-sub' }, [link(enso.source_url, 'CPC ENSO Diagnostic Discussion')])
+    ]));
+  }
+  const tilt = outlook.cpc_tilt;
+  if (tilt) {
+    cells.push(el('div', { class: 'off-cell' }, [
+      el('div', { class: 'off-label', text: 'Official CPC precipitation outlooks covering Oct 2026 \u2013 Jan 2027' }),
+      el('div', { class: 'off-value',
+        text: `${tilt.periods_with_a_tilt} of ${tilt.periods_covering_this_season} periods carry a tilt above the ` +
+              `${tilt.baseline_pct}% baseline` }),
+      tilt.highest_probability
+        ? el('div', { class: 'off-sub',
+            text: `Strongest: ${tilt.highest_probability.period} \u2014 ` +
+                  `${tilt.highest_probability.category_label} at ${tilt.highest_probability.probability_pct}% ` +
+                  `(issued ${tilt.highest_probability.issued})` })
+        : null,
+      el('div', { class: 'off-sub',
+        text: `${tilt.periods_at_climatological_baseline} period(s) sit on the baseline and are not counted as a tilt. ` +
+              'These are probabilities for whole periods, never for a day.' })
+    ]));
+  }
+  // The one legitimate bridge between "the official outlook says X" and "that
+  // costs Y": the same 30 seasons, split by the ENSO phase NOAA published for
+  // them.  It is a conditional average of what happened, and the cell says so
+  // - it never presents the average as the outlook for this season.
+  const cond = outlook.enso_conditioned_record;
+  if (cond && cond.mean_in !== null && cond.mean_in !== undefined) {
+    const contrast = (cond.contrast || [])
+      .filter(c => c.mean_in !== null && c.mean_in !== undefined)
+      .map(c => `${c.phase_label || c.phase} ${n(c.mean_in, 2)} in (${c.seasons})`)
+      .join(' · ');
+    cells.push(el('div', { class: 'off-cell' }, [
+      el('div', { class: 'off-label', text: 'What past seasons in this same ENSO phase delivered' }),
+      el('div', { class: 'off-value',
+        text: `${n(cond.mean_in, 2)} in average` }),
+      el('div', { class: 'off-sub',
+        text: `${cond.seasons_in_phase} of the 30 seasons in the record sat in ` +
+              `${cond.phase_label || cond.phase}; their Oct 1 \u2013 Jan 31 totals ranged ` +
+              `${n(cond.min_in, 2)} \u2013 ${n(cond.max_in, 2)} in (median ${n(cond.median_in, 2)}). ` +
+              (contrast ? `Other phases: ${contrast}. ` : '') +
+              'A conditional average of what happened, not a forecast for 2026-27.' }),
+      el('div', { class: 'off-sub' }, [
+        link(cond.source_url, 'CPC ONI (phase assignment)'), document.createTextNode(' \u00b7 '),
+        link(cond.phase_source_url, 'CPC ENSO Diagnostic Discussion (current state)')
+      ])
+    ]));
+  }
+  const horizon = outlook.daily_forecast || {};
+  if (horizon.official_horizon_ends !== undefined) {
+    cells.push(el('div', { class: 'off-cell' }, [
+      el('div', { class: 'off-label', text: 'Real day-by-day forecast available today' }),
+      el('div', { class: 'off-value', text: `through ${horizon.official_horizon_ends || DASH}` }),
+      el('div', { class: 'off-sub',
+        text: `${horizon.days_in_this_scoreboard_with_a_real_forecast || 0} of the 123 scoreboard days ` +
+              'are inside it, so far. Beyond that, this site shows observed climatology and says so.' })
+    ]));
+  }
+  if (cells.length) strip.append(...cells);
+}
+
 function renderLandlord(ll, cal) {
   if (!ll || !ll.executive_summary) {
     $('#landlord').append(el('p', { class: 'empty', text: 'Landlord summary unavailable in this run.' }));
@@ -241,6 +376,7 @@ function renderLandlord(ll, cal) {
   }
   const exec = ll.executive_summary;
   $('#landlord-key-finding').textContent = exec.key_finding || '';
+  renderBottomLine(ll);
 
   // Stats cards
   const stats = [
@@ -346,13 +482,25 @@ function renderLandlord(ll, cal) {
     cpcRecs.map(r => [
       r.valid_season || DASH,
       r.variable === 'temp' ? 'Temp' : r.variable === 'prcp' ? 'Precip' : DASH,
-      r.category_label || DASH,
-      r.prob !== undefined ? r.prob + '%' : DASH,
+      r.category_label ? cpcCategoryCell(r) : DASH,
+      r.prob !== undefined && r.prob !== null ? r.prob + '%' : DASH,
       r.issued || DASH,
       link(r.url, 'CPC shapefile')
     ]),
     { empty: 'No CPC outlooks for Oct 2026-Jan 2027 could be sampled at this location in this run.' }
   ));
+  // The DBF's category field and its probability do not always agree: several
+  // CPC polygons carry Cat="Above" with Prob=33.0, and 33% is the baseline for
+  // a three-way split.  Say so on the page instead of presenting a no-tilt
+  // value as a tilt.
+  if (cpcRecs.some(r => r.probability_at_climatological_baseline)) {
+    $('#landlord-cpc').append(el('p', { class: 'fine', text:
+      'Rows marked “at the 33% baseline” carry a category of Above/Below in CPC’s ' +
+      'attribute table but a probability equal to the climatological baseline for a ' +
+      'three-way split (100 ÷ 3 = 33.3%). Read those as no tilt. The raw category and ' +
+      'probability are shown exactly as CPC published them, and the raw DBF row for ' +
+      'each sample ships in the dataset so the two can be compared.' }));
+  }
 
   // High-risk dates
   const high = ll.high_risk_dates || [];
@@ -450,7 +598,7 @@ function renderCostDrivers(ll) {
 
 function renderReality(cal) {
   const win = cal.nws_window || {};
-  const covered = win.days_covered || 0;
+  const covered = win.scoreboard_days_in_horizon || 0;
   const total = (cal.days || []).length;
   // Say how long the official horizon is, not how many scoreboard days fall
   // inside it: today that count is 0 (the horizon ends before 1 October), and
@@ -626,7 +774,21 @@ function renderSeason(cal) {
     const prcp = seasonal.find(r => r.valid_season === w && r.variable === 'prcp');
     const temp = seasonal.find(r => r.valid_season === w && r.variable === 'temp');
     if (!prcp && !temp) return;
-    const fmt = r => r ? `${r.category_label} (${r.prob}%)` + (r.used_nearest_polygon ? ' \u26a0' : '') : DASH;
+    // A record whose probability sits on CPC's 33.3% three-way baseline is
+    // labelled as such here too, so the same value cannot read as a tilt in
+    // one table and as no-tilt in another.
+    const fmt = r => {
+      if (!r) return DASH;
+      const node = el('span', {}, [
+        document.createTextNode(`${r.category_label} (${r.prob}%)`),
+        r.used_nearest_polygon ? document.createTextNode(' \u26a0') : null
+      ]);
+      if (!r.probability_at_climatological_baseline) return node;
+      return el('span', { title: r.baseline_note || '' }, [
+        node, document.createTextNode(' '),
+        el('span', { class: 'badge badge-warn', text: 'at the 33% baseline' })
+      ]);
+    };
     rows.push([
       periodCell(w, prcp, temp),
       fmt(temp), fmt(prcp),
@@ -1203,7 +1365,10 @@ function openDay(d) {
         r.valid_season || (r.start_date ? `${r.start_date} \u2192 ${r.end_date}` : DASH),
         r.issued || DASH,
         r.variable === 'temp' ? 'Temperature' : r.variable === 'prcp' ? 'Precipitation' : DASH,
-        `${r.category_label} (${r.prob}%)` + (r.used_nearest_polygon ? ' \u26a0' : ''),
+        // Same baseline-aware cell as the two CPC tables above, so a 33%
+        // "Above" polygon is labelled identically wherever it appears.
+        el('span', {}, [cpcCategoryCell(r),
+          document.createTextNode(` (${r.prob}%)` + (r.used_nearest_polygon ? ' \u26a0' : ''))]),
         linkShort(r.url, 40)
       ])));
     body.append(el('p', { class: 'fine', text:
@@ -1252,6 +1417,36 @@ function renderDuration(cal) {
   }
 }
 
+/** CPC category with the baseline caveat attached where it applies. */
+function cpcCategoryCell(r) {
+  const label = r.category_label || DASH;
+  if (!r.probability_at_climatological_baseline) return document.createTextNode(label);
+  const note = r.baseline_note ||
+    'category field says ' + label + ' but the probability is the 33.3% baseline';
+  return el('span', { title: note }, [
+    document.createTextNode(label + ' '),
+    el('span', { class: 'badge badge-warn', text: 'at the 33% baseline' })
+  ]);
+}
+
+/** "mean X · p10–p90 Y–Z per season", or an em dash when the run did not
+ *  compute it.  Severity counters are days per season at or above a plain
+ *  threshold; no NWS warning category is implied by any of them. */
+function noteMissingAgreementVerdict() {
+  // Not an error - an older snapshot simply has no verdict - but it must not
+  // read as "the methods agree" by omission, so the page says so instead.
+  const host = $('#storm-summary');
+  if (host) host.append(el('p', { class: 'fine bl-warn',
+    text: 'This snapshot does not carry a computed agreement verdict for the two methods.' }));
+}
+
+function severityLine(d) {
+  if (!d || d.mean === null || d.mean === undefined) return DASH;
+  const band = (d.p10 !== undefined && d.p90 !== undefined)
+    ? ` \u00b7 p10\u2013p90 ${n(d.p10, 1)}\u2013${n(d.p90, 1)}` : '';
+  return `mean ${n(d.mean, 1)} of ${n(d.max, 0)} days in the worst season${band}`;
+}
+
 function renderWind(cal) {
   const days = cal.days || [];
   const dist = cal.season_summary || {};
@@ -1268,9 +1463,21 @@ function renderWind(cal) {
     ['Wind+rain days per season', `mean ${n(jr.mean, 1)} \u00b7 median ${n(jr.median, 1)} \u00b7 max ${n(jr.max, 0)}`],
     ['Heavy wind+rain days per season', `mean ${n(hj.mean, 1)} \u00b7 median ${n(hj.median, 1)} \u00b7 max ${n(hj.max, 0)}`],
     ['Strongest gust of the season', `mean ${n(mg.mean, 0)} mph \u00b7 median ${n(mg.median, 0)} mph \u00b7 max ${n(mg.max, 0)} mph`],
+    ['Days per season with sustained wind ≥ 30 kt', severityLine(dist.wind_days_ge_30kt)],
+    ['Days per season with a gust ≥ 40 kt', severityLine(dist.gust_days_ge_40kt)],
+    ['Days per season with a gust ≥ 50 kt', severityLine(dist.gust_days_ge_50kt)],
     ['Definition: wind+rain day', (cal.definitions || {}).wind_and_rain_day || DASH],
     ['Definition: heavy wind+rain day', (cal.definitions || {}).heavy_wind_and_rain_day || DASH]
   ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
+
+  // The most extreme wind day on record in the window, named by the season it
+  // fell in, so the count above can be checked against the source file.
+  const rg = cal.severity_record || {};
+  if (rg.max_gust_mph && rg.max_gust_mph.season) {
+    $('#wind-table').append(el('p', { class: 'fine', text:
+      `Most extreme gust on record in the window: ${n(rg.max_gust_mph.value, 1)} mph, ` +
+      `season ${rg.max_gust_mph.season} (GSOD daily maximum at SFO; upper bound for 94122).` }));
+  }
 
   const top = days.slice()
     .filter(d => (d.climo || {}).max_gust_on_record_mph)
@@ -1287,7 +1494,7 @@ function renderWind(cal) {
     ]), { empty: 'Gust climatology unavailable.' }));
 }
 
-function renderStorms(s) {
+function renderStorms(s, cal) {
   if (!s || !s.county) {
     $('#storm-summary').append(el('p', { class: 'empty', text: 'Storm Events data unavailable in this run.' }));
     return;
@@ -1306,6 +1513,80 @@ function renderStorms(s) {
     $('#storm-summary').append(el('h4', { text: 'Events by type' }));
     $('#storm-summary').append(table([{ label: 'Event type' }, { label: 'Count', num: true }],
       rows.map(([k, v]) => [k, v])));
+  }
+
+  // Severity counters, from the same two NCEI files as every other number on
+  // this page.  They count days at or above a plain threshold; they are not a
+  // restatement of any NWS warning criterion.
+  const dist = cal.season_summary || {};
+  const rec = cal.severity_record || {};
+  const anySeverity = ['wet_days_ge_050in', 'wet_days_ge_1in', 'wet_days_ge_2in',
+    'wet_days_ge_400in', 'severe_wind_and_rain_days'].some(k => dist[k]);
+  if (anySeverity) {
+    $('#storm-summary').append(el('h4', { text: 'How hard it rains, from the daily record' }));
+    const sevRows = [
+      ['Days per season with ≥ 0.50 in', severityLine(dist.wet_days_ge_050in)],
+      ['Days per season with ≥ 1.00 in', severityLine(dist.wet_days_ge_1in)],
+      ['Days per season with ≥ 2.00 in', severityLine(dist.wet_days_ge_2in)],
+      ['Days per season with ≥ 4.00 in', severityLine(dist.wet_days_ge_400in)],
+      ['Wettest single day in the 30-season window',
+        rec.max_daily_prcp_in
+          ? `${n(rec.max_daily_prcp_in.value, 2)} in (season ${rec.max_daily_prcp_in.season})` : DASH]
+    ];
+    if (dist.severe_wind_and_rain_days) {
+      sevRows.push(['Days per season that are BOTH ≥ 1.00 in and a gust ≥ 40 kt',
+        severityLine(dist.severe_wind_and_rain_days)]);
+      const recSevere = rec.most_severe_wind_and_rain_days;
+      if (recSevere && recSevere.value !== undefined) {
+        sevRows.push(['Most such days in one season',
+          `${recSevere.value} in ${recSevere.season}` +
+          (rec.most_days_gust_ge_50kt
+            ? ` · most ≥ 50 kt gust days: ${rec.most_days_gust_ge_50kt.value} in ${rec.most_days_gust_ge_50kt.season}`
+            : '')]);
+      }
+    }
+    sevRows.push(['Thresholds',
+      'Plain NCEI thresholds in inches of liquid precipitation and knots of wind, both read from ' +
+      'the same station files as everything else here. No NWS warning category is applied - those ' +
+      'criteria are written per forecast zone and this project does not restate them.']);
+    $('#storm-summary').append(el('table', { class: 'kv' }, sevRows
+      .map(([k, v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
+  }
+
+  // The two methods, side by side, for every precipitation threshold NOAA
+  // publishes a percent-of-years value for.  This is the block a sceptical
+  // reader should read first: it shows the project's own count and NOAA's own
+  // published expectation agreeing (or not) on the same threshold, at the same
+  // station, rather than asking anyone to trust one of them.
+  const llSev = (((state.data.landlord || {}).executive_summary) || {}).severity || {};
+  const cmp = llSev.threshold_comparison || [];
+  if (cmp.length) {
+    $('#storm-summary').append(el('h4', { text: 'Heavy-rain days per season — counted vs NOAA-published' }));
+    const num = (v, d) => (v === null || v === undefined ? DASH : n(v, d));
+    $('#storm-summary').append(table(
+      [{ label: 'Threshold' }, { label: 'Method A: counted in the record', num: true },
+       { label: 'Method B: NOAA published', num: true }, { label: 'A − B', num: true },
+       { label: 'Peak season (method A)', num: true }],
+      cmp.map(t => [
+        `≥ ${Number(t.threshold_in).toFixed(2)} in`,
+        num(t.project_mean_days, 2), num(t.noaa_expected_days, 2),
+        (t.difference_days === null || t.difference_days === undefined) ? DASH
+          : (t.difference_days > 0 ? '+' : '') + Number(t.difference_days).toFixed(2),
+        num(t.project_max_days, 0)
+      ])));
+    // The verdict on whether the two methods agree is computed in the pipeline
+    // from the differences themselves and quoted here verbatim - so the page
+    // cannot claim agreement on a day the numbers stop agreeing.
+    const agree = llSev.two_method_agreement || {};
+    $('#storm-summary').append(el('p', { class: 'fine', text:
+      'Both columns answer the same question — how many days a season reach this threshold — from two ' +
+      'independent NOAA products: this project counting daily values in the station record, and the sum of ' +
+      "NOAA's own published percent-of-years value for each calendar date (DLY-PRCP-PCTALL-GE***HI in the " +
+      '1991-2020 daily normals). ' + (agree.statement ? agree.statement + ' ' : '') +
+      (agree.source_note ? agree.source_note : '') }));
+    if (agree.statement === undefined) {
+      noteMissingAgreementVerdict();
+    }
   }
 
   // NCEI writes damage as a number plus a magnitude suffix (K / M / B).  The old
@@ -1472,13 +1753,26 @@ function renderPublishedNormals(cal) {
   const pe = landlord && landlord.published_expected_days;
   if (pe) {
     box.append(el('h4', { text: 'Expected heavy-rain days per season \u2014 both methods' }));
-    const derived = ((state.data.landlord || {}).executive_summary || {}).expected_days || {};
+    const exec = ((state.data.landlord || {}).executive_summary) || {};
+    const derived = exec.expected_days || {};
+    const sevBlk = exec.severity || {};
+    const thrFor = inches => (sevBlk.threshold_comparison || [])
+      .find(t => Number(t.threshold_in) === inches) || {};
+    // Four of these rows now have a project-side counterpart on exactly the
+    // same threshold, taken from the severity counters.  The 0.01 in row is the
+    // wet-day count, which the climatology already publishes: it read "not
+    // derived" for as long as the two names for the same quantity were not
+    // joined up.
+    const wetDays = ((state.data.calendar || {}).season_summary || {}).wet_days || {};
     box.append(table(
       [{ label: 'Quantity' }, { label: 'From NOAA\u2019s published probabilities', num: true },
        { label: 'From this project\u2019s own count', num: true }, { label: 'Difference', num: true }],
-      [['Days \u2265 0.25 in per season', pe.ge_025in_days, derived.ge_025in_days],
+      [['Days \u2265 0.01 in per season', pe.ge_010in_days, wetDays.mean],
+       ['Days \u2265 0.25 in per season', pe.ge_025in_days, derived.ge_025in_days],
+       ['Days \u2265 0.50 in per season', pe.ge_050in_days, thrFor(0.5).project_mean_days],
        ['Days \u2265 1.00 in per season', pe.ge_100in_days, derived.ge_100in_days],
-       ['Days \u2265 0.01 in per season', pe.ge_010in_days, null]]
+       ['Days \u2265 2.00 in per season', pe.ge_200in_days, thrFor(2).project_mean_days],
+       ['Days \u2265 4.00 in per season', pe.ge_400in_days, thrFor(4).project_mean_days]]
         .filter(r => r[1] !== null && r[1] !== undefined)
         .map(r => [r[0], r[1], r[2] === null || r[2] === undefined ? 'not derived' : r[2],
           (r[2] === null || r[2] === undefined) ? DASH
@@ -1714,7 +2008,7 @@ async function boot() {
     renderCalendar(calendar);
     renderDuration(calendar);
     renderWind(calendar);
-    renderStorms(storms);
+    renderStorms(storms, calendar);
     renderSources(prov);
     renderVerify(verify, prov);
     renderPublishedNormals(calendar);

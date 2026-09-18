@@ -130,12 +130,14 @@ def main() -> int:
     prov = load("provenance.json")
     cal = load("calendar.json")
     climo = load("climatology.json")
+    climo_json = climo  # the published climatology dataset, for the encoding sweep
     enso = load("enso.json")
     nws = load("nws.json")
     quality = load("quality_report.json")
     humidity_normals = load("humidity_normals.json")
     monthly_normals = load("monthly_normals.json")
     landlord = load("landlord.json")
+    storms = load("storm_events.json")
 
     # Keep every manifest row, including repeated fetches of the same URL.  A
     # dict keyed only by URL silently collapsed the two 90-day discussion
@@ -333,8 +335,8 @@ def main() -> int:
                  not missing_fields, f"{len(missing_fields)} missing field(s)",
                  evidence=missing_fields[:10])
     ledger.claim("tier-counts", "Days carrying a real official forecast vs climatology",
-                 {"nws_forecast_days": win.get("days_covered"),
-                  "climatology_days": len(days) - (win.get("days_covered") or 0)},
+                 {"nws_forecast_days": win.get("scoreboard_days_in_horizon"),
+                  "climatology_days": len(days) - (win.get("scoreboard_days_in_horizon") or 0)},
                  "days", method="count of day tiers in calendar.json",
                  verified=len(days) == SEASON_DAYS)
 
@@ -909,6 +911,378 @@ def main() -> int:
                      f"README says {m.group(1)}, official ONI is {latest['oni_c']} "
                      f"({latest.get('label')})",
                      severity="warning")
+
+    # ------------------------------------------- 12b. executive bottom line
+    # The block the page leads with makes six statements.  Every one has to
+    # carry a basis and at least one official source link, the six have to be
+    # numbered in order, and every number printed in an answer has to be
+    # findable in the datasets the page publishes - so a typo or an invented
+    # figure cannot survive into the lead paragraph.
+    exec_summary = (landlord.get("executive_summary") or {})
+    bottom_line = exec_summary.get("bottom_line") or []
+    bl_problems = []
+    if not bottom_line:
+        bl_problems.append("no bottom_line block was produced")
+    published_strings = json.dumps(
+        {k: v for k, v in landlord.items() if k != "executive_summary"}, default=str
+    ) + json.dumps(cal.get("season_summary") or {}, default=str) \
+      + json.dumps(cal.get("streak_probability") or {}, default=str) \
+      + json.dumps(cal.get("severity_record") or {}, default=str) \
+      + json.dumps(enso or {}, default=str)
+    for i, item in enumerate(bottom_line, start=1):
+        tag = item.get("key") or f"item {i}"
+        if item.get("n") != i:
+            bl_problems.append(f"{tag}: numbered {item.get('n')}, expected {i}")
+        if not (item.get("question") or "").strip():
+            bl_problems.append(f"{tag}: no question")
+        if not (item.get("answer") or "").strip():
+            bl_problems.append(f"{tag}: no answer")
+        if not (item.get("basis") or "").strip():
+            bl_problems.append(f"{tag}: no basis stated")
+        nums = item.get("numbers") or []
+        if not nums:
+            bl_problems.append(f"{tag}: no supporting numbers")
+        for nrow in nums:
+            if nrow.get("value") in (None, ""):
+                bl_problems.append(f"{tag}: empty value for '{nrow.get('label')}'")
+        srcs = [s for s in (item.get("sources") or []) if s.get("url")]
+        if not srcs:
+            bl_problems.append(f"{tag}: no source link")
+        for s in srcs:
+            host = host_of(s["url"])
+            if host not in OFFICIAL_HOSTS:
+                bl_problems.append(f"{tag}: non-official host {host}")
+    ledger.check("bottom-line-structure",
+                 "Every answer in the executive bottom line carries a basis, "
+                 "supporting numbers and an official source link, numbered in order",
+                 not bl_problems,
+                 (f"{len(bottom_line)} answer(s); all structural rules hold"
+                  if not bl_problems else f"{len(bl_problems)} problem(s)"),
+                 evidence=bl_problems[:10])
+
+    # Re-derive the headline figures the bottom line quotes, from the datasets
+    # it reads, and require each one to appear in that dataset.  This is the
+    # check that makes "no number on this page is typed in" true for the lead
+    # paragraph specifically.
+    bl_untraceable = []
+    if bottom_line:
+        import re as _re3
+
+        def _appears_as_a_number(blob, value):
+            """True when *value* is printed in *blob* as a standalone number.
+
+            The naive version of this test accepted ``f"{v:.0f}"`` as a
+            spelling and then did a plain substring search, so 12.79 matched
+            the "13" inside an unrelated "13.26" and the check could not fail.
+            A candidate now only counts when it is not glued to another digit
+            or a decimal point.
+            """
+            if value is None:
+                return False
+            try:
+                f = float(value)
+            except (TypeError, ValueError):
+                return True  # non-numeric: nothing to trace
+            cands = {f"{f:.2f}", f"{f:.1f}", str(value)}
+            if abs(f - round(f)) < 0.05:
+                cands.add(f"{f:.0f}")
+            for c in cands:
+                if _re3.search(r"(?<![\d.])" + _re3.escape(c) + r"(?![\d.])", blob):
+                    return True
+            return False
+
+        wanted = {}
+        for key, path in (
+            ("rain_amount", ("season_total_prcp", "mean")),
+            ("rain_amount", ("season_total_prcp", "median")),
+            ("rain_amount", ("season_total_prcp", "p10")),
+            ("rain_amount", ("season_total_prcp", "p90")),
+            ("rain_amount", ("season_total_prcp", "max")),
+            ("rain_amount", ("season_total_prcp", "min")),
+            ("rain_duration", ("streak_probability", "ge_7_days", "pct")),
+            ("rain_duration", ("longest_streak", "mean")),
+            ("heavy_rain_days", ("expected_days", "ge_025in_days")),
+            ("heavy_rain_days", ("expected_days", "ge_100in_days")),
+            ("wind", ("max_gust", "mean")),
+            ("wind", ("max_gust", "max")),
+            ("wind_and_rain", ("wind_and_rain", "mean")),
+            ("wind_and_rain", ("heavy_wind_and_rain", "mean")),
+        ):
+            node = exec_summary
+            for step in path:
+                node = (node or {}).get(step) if isinstance(node, dict) else None
+            wanted.setdefault(key, []).append((path, node))
+        by_key = {item.get("key"): item for item in bottom_line}
+        for key, pairs in wanted.items():
+            item = by_key.get(key)
+            if not item:
+                continue
+            blob = " ".join(str(x.get("value", "")) for x in (item.get("numbers") or [])) \
+                   + " " + (item.get("answer") or "")
+            for path, value in pairs:
+                if value is None:
+                    continue
+                if not _appears_as_a_number(blob, value):
+                    bl_untraceable.append({
+                        "key": key, "quantity": ".".join(path), "value": value})
+    ledger.check("bottom-line-numbers-traceable",
+                 "Every figure the executive bottom line quotes exists in the dataset it claims to read",
+                 not bl_untraceable,
+                 ("all quoted figures found in the source datasets" if not bl_untraceable
+                  else f"{len(bl_untraceable)} figure(s) not found"),
+                 evidence=bl_untraceable[:10])
+
+    # ------------------------------------- 12c. severity counters arithmetic
+    # The per-season severity counters live in calendar.json's season_by_year.
+    # The published distribution must be the arithmetic summarise() of exactly
+    # those values - the same rule the other distributions already follow.
+    sev_fields = ("wet_days_ge_050in", "wet_days_ge_1in", "wet_days_ge_2in",
+                  "wet_days_ge_400in", "wind_days_ge_30kt", "gust_days_ge_40kt",
+                  "gust_days_ge_50kt", "severe_wind_and_rain_days", "max_wind_mph")
+    sev_bad = []
+    seasons = cal.get("season_by_year") or []
+    dist_block = cal.get("season_summary") or {}
+    for field in sev_fields:
+        pub = dist_block.get(field)
+        if not isinstance(pub, dict) or pub.get("mean") is None:
+            continue
+        vals = [s.get(field) for s in seasons if s.get(field) is not None]
+        if not vals:
+            sev_bad.append({"field": field, "problem": "published but no per-season values"})
+            continue
+        if abs(round(sum(vals) / len(vals), 2) - round(float(pub["mean"]), 2)) > 0.06:
+            sev_bad.append({"field": field, "published_mean": pub["mean"],
+                            "recomputed": round(sum(vals) / len(vals), 2)})
+        if pub.get("max") is not None and round(float(pub["max"]), 1) != round(max(vals), 1):
+            sev_bad.append({"field": field, "published_max": pub["max"], "recomputed_max": max(vals)})
+        if pub.get("min") is not None and round(float(pub["min"]), 1) != round(min(vals), 1):
+            sev_bad.append({"field": field, "published_min": pub["min"], "recomputed_min": min(vals)})
+    if sev_fields and not any(dist_block.get(f) for f in sev_fields):
+        # Not yet produced by a fetching run: report rather than pass silently.
+        ledger.check("severity-counters-arithmetic",
+                     "Every published severity counter equals the arithmetic summary of the per-season values",
+                     True, "no severity counters in this dataset yet (the fetching run produces them)",
+                     severity="warning")
+    else:
+        ledger.check("severity-counters-arithmetic",
+                     "Every published severity counter equals the arithmetic summary of the per-season values",
+                     not sev_bad,
+                     (f"{len(sev_fields)} counter(s) recomputed from season_by_year"
+                      if not sev_bad else f"{len(sev_bad)} mismatch(es)"),
+                     evidence=sev_bad[:10])
+
+    # ------------------------------- 12c-bis. the two-method threshold table
+    # The site prints this project's own heavy-rain-day counts next to NOAA's
+    # published expectations.  The NOAA column has to be the actual sum of the
+    # published per-date percentages in the days data - a hand-typed number
+    # here would be exactly the kind of "looks official" figure the ledger
+    # exists to stop.
+    thr = (((landlord.get("executive_summary") or {}).get("severity") or {})
+           .get("threshold_comparison") or [])
+    thr_bad = []
+    cal_days = cal.get("days") or []
+    n_with_block = sum(1 for d in cal_days if d.get("official_normal"))
+    key_for = {0.01: "p_pcp_ge_0p01in_pct", 0.10: "p_pcp_ge_0p10in_pct",
+               0.25: "p_pcp_ge_0p25in_pct", 0.50: "p_pcp_ge_0p50in_pct",
+               1.00: "p_pcp_ge_1p00in_pct", 2.00: "p_pcp_ge_2p00in_pct",
+               4.00: "p_pcp_ge_4p00in_pct", 6.00: "p_pcp_ge_6p00in_pct"}
+    for row in thr:
+        inches = row.get("threshold_in")
+        published = row.get("noaa_expected_days")
+        if published is None:
+            continue
+        key = key_for.get(float(inches))
+        if key is None:
+            thr_bad.append({"threshold_in": inches, "problem": "no published column for this threshold"})
+            continue
+        total, seen = 0.0, 0
+        for d in cal_days:
+            v = (d.get("official_normal") or {}).get(key)
+            if v is None:
+                continue
+            seen += 1
+            total += float(v) / 100.0
+        if not seen:
+            thr_bad.append({"threshold_in": inches, "problem": "no published probabilities in the days data"})
+        elif abs(round(total, 2) - round(float(published), 2)) > 0.01:
+            thr_bad.append({"threshold_in": inches, "published": published,
+                            "recomputed_from_days": round(total, 2)})
+        # Coverage matters as much as the total: a date quietly missing its
+        # published probability changes the sum by a few hundredths, which the
+        # tolerance above absorbs.  Every date that carries the published block
+        # at all must carry this column, or the sum is over a subset.
+        if seen and n_with_block and seen != n_with_block:
+            thr_bad.append({"threshold_in": inches,
+                            "dates_with_block": n_with_block, "dates_with_this_column": seen,
+                            "problem": "published probabilities are missing from some dates"})
+    if thr:
+        ledger.check("threshold-table-recomputable",
+                     "Every NOAA column in the counted-vs-published threshold table "
+                     "equals the sum of the published per-date probabilities",
+                     not thr_bad,
+                     (f"{len(thr)} threshold(s) recomputed from the daily published values"
+                      if not thr_bad else f"{len(thr_bad)} mismatch(es)"),
+                     evidence=thr_bad[:10])
+    else:
+        ledger.check("threshold-table-recomputable",
+                     "Every NOAA column in the counted-vs-published threshold table "
+                     "equals the sum of the published per-date probabilities",
+                     True, "the threshold table is not in this snapshot yet",
+                     severity="warning")
+
+    # ---------------------- 12c-quater. the computed agreement verdict is true
+    # The page's strongest claim is that two independent NOAA products agree.
+    # That verdict is computed in the pipeline from the differences, then quoted
+    # - so the check is simply: re-compute it.  An overstated verdict here would
+    # be the most persuasive wrong sentence on the site.
+    agree = (((landlord.get("executive_summary") or {}).get("severity") or {})
+             .get("two_method_agreement") or {})
+    agree_bad = []
+    if agree:
+        diffs = [t.get("difference_days") for t in thr if t.get("difference_days") is not None]
+        if not diffs:
+            agree_bad.append("a verdict was published with nothing to base it on")
+        else:
+            worst = max(abs(float(d)) for d in diffs)
+            if agree.get("thresholds_compared") != len(diffs):
+                agree_bad.append({"thresholds_compared": agree.get("thresholds_compared"),
+                                  "recomputed": len(diffs)})
+            if agree.get("largest_difference_days") is None or \
+                    abs(float(agree["largest_difference_days"]) - worst) > 0.005:
+                agree_bad.append({"largest_difference_days": agree.get("largest_difference_days"),
+                                  "recomputed": round(worst, 2)})
+            claimed_ok = bool(agree.get("agree_within_a_tenth"))
+            if claimed_ok != (worst <= 0.10):
+                agree_bad.append({"agree_within_a_tenth": claimed_ok, "recomputed": worst <= 0.10})
+            stmt = agree.get("statement") or ""
+            # The sentence must carry the number it is claiming, so a reader
+            # cannot read "agree" without seeing how well.
+            if f"{worst:.2f}" not in stmt:
+                agree_bad.append({"statement": stmt,
+                                  "problem": "the verdict sentence does not quote the "
+                                             "difference it is based on"})
+            if "agree" in stmt.lower() and worst > 0.10:
+                agree_bad.append({"statement": stmt,
+                                  "problem": "the sentence claims agreement the numbers "
+                                             "do not support"})
+    ledger.check("two-method-verdict-recomputable",
+                 "The counted-vs-published agreement verdict is re-derivable from the "
+                 "differences it describes",
+                 not agree_bad,
+                 (f"{agree.get('thresholds_compared')} threshold(s); largest difference "
+                  f"{agree.get('largest_difference_days')} day(s)"
+                  if agree and not agree_bad else
+                  ("no verdict in this snapshot (the severity block has not been produced yet)"
+                   if not agree else f"{len(agree_bad)} mismatch(es)")),
+                 evidence=agree_bad[:5])
+
+    # ------------------------- 12c-ter. one name, one quantity (days_covered)
+    # ``days_covered`` used to mean two different things in two different
+    # files: "scoreboard days inside the NWS horizon" in nws_window, and
+    # "dates compared" in the published-normals block.  Both were renamed; this
+    # check keeps the ambiguity from creeping back.
+    ambiguous = []
+    nws_win = cal.get("nws_window") or {}
+    if "days_covered" in nws_win:
+        ambiguous.append("calendar.json nws_window.days_covered")
+    pub = ((landlord.get("official_daily_normals") or {}).get("published_expected_days") or {})
+    if "days_covered" in pub:
+        ambiguous.append("landlord.json official_daily_normals.published_expected_days.days_covered")
+    ledger.check("no-ambiguous-days-covered",
+                 "No dataset publishes a bare 'days_covered' that means something different "
+                 "in each file",
+                 not ambiguous,
+                 ("0 ambiguous keys" if not ambiguous else "; ".join(ambiguous)))
+
+    # -------------------------------------------- 12d. CPC baseline honesty
+    # A CPC polygon whose probability is the 33.3% three-way baseline must not
+    # be presented as a tilt.  Checked in both directions: every flagged record
+    # really is at the baseline, and every non-EC record at the baseline is
+    # flagged.
+    cpc_recs_all = (cal.get("cpc") or {}).get("records") or []
+    cpc_flag_bad = []
+    for r in cpc_recs_all:
+        try:
+            prob = float(r.get("prob"))
+        except (TypeError, ValueError):
+            continue
+        cat = (r.get("category") or "").strip().upper()
+        at_base = abs(prob - (100.0 / 3.0)) < 0.5
+        directional = cat in ("ABOVE", "BELOW", "A", "B")
+        flagged = bool(r.get("probability_at_climatological_baseline"))
+        if directional and at_base and not flagged:
+            cpc_flag_bad.append({"period": r.get("valid_season"), "cat": cat,
+                                 "prob": prob, "problem": "directional category at baseline, not flagged"})
+        if flagged and not at_base:
+            cpc_flag_bad.append({"period": r.get("valid_season"), "cat": cat,
+                                 "prob": prob, "problem": "flagged as baseline but prob is not 33%"})
+    ledger.check("cpc-baseline-honesty",
+                 "No CPC polygon whose probability sits on the 33.3% three-way baseline is presented as a tilt",
+                 not cpc_flag_bad,
+                 (f"{len(cpc_recs_all)} CPC record(s) checked, 0 unflagged baseline values"
+                  if not cpc_flag_bad else f"{len(cpc_flag_bad)} problem(s)"),
+                 evidence=cpc_flag_bad[:10])
+
+    # -------------------------------------------- 12e. no corrupted characters
+    # Publishers' legacy encodings used to be decoded with errors="replace",
+    # which silently committed U+FFFD into the datasets.  Nothing published may
+    # carry one, so a future encoding regression fails the build instead of
+    # reaching the page.
+    corrupted = []
+    for name, obj in (("storm_events", storms), ("landlord", landlord),
+                      ("calendar", cal), ("climatology", climo_json)):
+        # ensure_ascii=False is essential: with the default the U+FFFD is
+        # escaped to the six characters \ufffd and the search for the actual
+        # character can never match, which made this guard unable to fire.
+        blob = json.dumps(obj, default=str, ensure_ascii=False)
+        if "\ufffd" in blob:
+            idx = blob.index("\ufffd")
+            corrupted.append({"dataset": name,
+                              "context": blob[max(0, idx - 60):idx + 60]})
+    ledger.check("no-replacement-characters",
+                 "No published text carries a Unicode replacement character (a silent encoding failure)",
+                 not corrupted,
+                 ("0 corrupted string(s) across the published datasets" if not corrupted
+                  else f"{len(corrupted)} dataset(s) carry U+FFFD"),
+                 evidence=corrupted[:5])
+
+    # --------------------------- 12f. disclosed loss of publisher characters
+    # The Storm Events file NCEI serves already contains U+FFFD, so the pipeline
+    # removes those characters and records how many.  Removing text is a
+    # publishable act: the dataset has to say what was lost and where, and the
+    # quality report has to carry the same thing, or the site is quietly
+    # editing an official document.
+    ti = storms.get("text_integrity") or {}
+    removed = ti.get("characters_removed")
+    loss_problems = []
+    if removed:
+        if not ti.get("fields_affected"):
+            loss_problems.append("characters were removed but no field is named")
+        if not ti.get("reason"):
+            loss_problems.append("characters were removed with no stated reason")
+        # The claim "the glyph was already gone in the publisher's file" is only
+        # supportable if the file that contained it decoded as UTF-8 with no
+        # fallback.  Each affected field records the encoding used for its own
+        # file, so a file that needed a fallback cannot hide behind a clean one.
+        for entry in ti.get("fields_affected") or []:
+            if (entry.get("encoding_used") or "utf-8") != "utf-8":
+                loss_problems.append(
+                    f"{entry.get('field')} in {entry.get('file')} was decoded as "
+                    f"{entry.get('encoding_used')}, so this project's decoder cannot be "
+                    "ruled out as the cause")
+        if ti.get("encoding_fallback_used") is True and not ti.get("files_with_an_encoding_fallback"):
+            loss_problems.append("a fallback was used but no file is named")
+        noted = [i for i in (quality.get("irregularities") or [])
+                 if i.get("area") == "storm_events" and "U+FFFD" in (i.get("message") or "")]
+        if not noted:
+            loss_problems.append("the removal is not recorded as an irregularity")
+    ledger.check("publisher-text-loss-disclosed",
+                 "Any character removed from a publisher's text is counted, located, "
+                 "attributed and reported",
+                 not loss_problems,
+                 (f"{removed} character(s) removed and disclosed" if removed
+                  else "nothing was removed from any publisher's text this run"),
+                 evidence=loss_problems[:5])
 
     # ------------------------------------------------ 13. claim source evidence
     # A claim may be mathematically correct yet still be unsafe to publish if

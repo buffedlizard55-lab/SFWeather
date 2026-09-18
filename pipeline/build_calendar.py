@@ -377,6 +377,34 @@ def collect_cpc(cpc, default_year):
                     "A": "Above", "B": "Below", "N": "Near normal",
                 }.get(cat, cat)
 
+                # The DBF's category field and its probability do not always
+                # point the same way.  Several of CPC's long-lead polygons
+                # carry Cat="Above" with Prob=33.0, and 33.0% is the
+                # climatological baseline for a three-way split (100/3 =
+                # 33.3%).  Rendering that as a plain "Above median (33%)" would
+                # present a no-tilt value as a tilt, so the record carries an
+                # explicit, derived flag and a sentence the reader can check
+                # against the raw DBF row that ships with it.
+                try:
+                    prob_val = float(rec.get("prob"))
+                except (TypeError, ValueError):
+                    prob_val = None
+                cat_norm = cat.upper()
+                rec["probability_at_climatological_baseline"] = bool(
+                    prob_val is not None
+                    and abs(prob_val - (100.0 / 3.0)) < 0.5
+                    and cat_norm in ("ABOVE", "BELOW", "A", "B", "N", "NEAR")
+                )
+                if rec["probability_at_climatological_baseline"]:
+                    rec["baseline_note"] = (
+                        f"CPC's category field for this polygon is '{cat}' but the "
+                        f"probability it carries is {prob_val:.1f}%. A three-way split "
+                        "has a climatological baseline of 33.3%, so this value sits on "
+                        "the baseline and is not a tilt. Both the raw category and the "
+                        "probability are shown exactly as CPC published them; this note "
+                        "is this project's reading of the two, and the raw DBF row is "
+                        "published next to it for checking.")
+
                 issued = rec["fcst_date"]
                 if isinstance(issued, str) and len(issued) == 8 and issued.isdigit():
                     issued = f"{issued[:4]}-{issued[4:6]}-{issued[6:8]}"
@@ -806,7 +834,13 @@ def main():
         "nws_window": {
             "first_day": min(nws_days) if nws_days else None,
             "last_day": max(nws_days) if nws_days else None,
-            "days_covered": sum(1 for e in calendar if e["tier"] == "nws"),
+            # How many SCOREBOARD days currently carry a real NWS forecast.
+            # This is not the length of the NWS horizon - it is 0 whenever the
+            # horizon ends before 1 October, which is the normal case in the
+            # off-season.  It used to be called "days_covered" here, next to
+            # "horizon_days", which invited reading 0 as "the NWS covers no
+            # days".  The names now say which is which.
+            "scoreboard_days_in_horizon": sum(1 for e in calendar if e["tier"] == "nws"),
             # How long the official daily horizon is today, independent of how
             # many scoreboard days fall inside it (today: none, because the
             # horizon ends in September and the scoreboard starts on 1 October).
@@ -857,6 +891,9 @@ def main():
             if published_daily_normals else None),
         "daily_normals_comparison": daily_normals_comparison,
         "season_summary": dist,
+        # Record values from the same 30-season files, each bound to the season
+        # that produced it (see climo.build_season_statistics).
+        "severity_record": season_climo.get("severity_record", {}),
         "streak_probability": season_climo.get("probability_of_at_least_one_streak", {}),
         "enso_stratified": season_climo.get("enso_stratified_season_total_prcp_in", {}),
         "wettest_seasons": season_climo.get("wettest_seasons", []),
@@ -873,7 +910,7 @@ def main():
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, indent=2, default=str))
-    n_forecast = out["nws_window"]["days_covered"]
+    n_forecast = out["nws_window"]["scoreboard_days_in_horizon"]
     print(f"  wrote {OUT} ({OUT.stat().st_size:,} bytes)")
     print(f"  {n_forecast} day(s) carry an official NWS forecast; "
           f"{len(calendar) - n_forecast} day(s) show 1991-2020 climatology.")
