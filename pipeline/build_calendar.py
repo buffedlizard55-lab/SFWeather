@@ -910,6 +910,31 @@ def main():
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, indent=2, default=str))
+
+    # Forecast verification loop: archive current forecast snapshot and update verification dataset
+    try:
+        hist_path = DATA / "forecast_history.json"
+        existing_hist = json.loads(hist_path.read_text()) if hist_path.exists() else []
+        snap = climo_lib.record_forecast_snapshot(current_forecast)
+        updated_hist = climo_lib.update_forecast_history(existing_hist, snap)
+        hist_path.write_text(json.dumps(updated_hist, indent=2, default=str))
+
+        # Score forecast history against any available observations
+        ghcn_probe_path = DATA / "ghcn_probe.json"
+        ghcn_obs = {}
+        if ghcn_probe_path.exists():
+            try:
+                probe = json.loads(ghcn_probe_path.read_text())
+                for cand in probe.get("candidates", []):
+                    if cand.get("sample_parsed"):
+                        ghcn_obs.update(cand["sample_parsed"])
+            except Exception:
+                pass
+        scored = climo_lib.score_forecast_history(updated_hist, ghcn_obs)
+        (DATA / "forecast_verification.json").write_text(json.dumps(scored, indent=2, default=str))
+    except Exception as exc:  # noqa: BLE001 - verification loop should not block calendar build
+        print(f"  forecast verification warning: {exc}")
+
     n_forecast = out["nws_window"]["scoreboard_days_in_horizon"]
     print(f"  wrote {OUT} ({OUT.stat().st_size:,} bytes)")
     print(f"  {n_forecast} day(s) carry an official NWS forecast; "

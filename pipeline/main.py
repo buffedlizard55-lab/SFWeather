@@ -1129,6 +1129,43 @@ def fetch_gsod(years):
     return None
 
 
+def fetch_isd_hourly_summary(years, station_id="72494023234"):
+    """Fetch NCEI Integrated Surface Database (ISD) global-hourly data for SFO ASOS.
+
+    Downloads hourly observations for station 72494023234 (KSFO) across the requested
+    years, parses them with climo.parse_isd_hourly, and aggregates true simultaneous
+    wind-and-rain statistics.
+    Raw hourly CSVs (~10-20 MB per year) are not saved into data/ (keeping the repository
+    compact); only the computed joint-frequency summary is returned.
+    """
+    all_records = []
+    statuses = []
+    base_url = "https://www.ncei.noaa.gov/data/global-hourly/access/"
+    for year in years:
+        url = f"{base_url}{year}/{station_id}.csv"
+        res = fetchlib.get(url, timeout=300)
+        record(res, note=f"NCEI ISD global-hourly {year}: {station_id}")
+        statuses.append({"year": year, "status": res.status, "ok": res.ok})
+        if res.ok and res.body:
+            records = climo.parse_isd_hourly(res.text())
+            all_records.extend(records)
+
+    if not all_records:
+        note_irregularity("warning", "isd",
+                          f"No ISD hourly records retrieved for station {station_id}; "
+                          "falling back to GSOD daily wind+rain approximation.",
+                          {"station_id": station_id})
+        return None
+
+    summary = climo.aggregate_isd_hourly_wind_and_rain(all_records)
+    summary["station_id"] = station_id
+    summary["years_requested"] = [years[0], years[-1]]
+    summary["base_url"] = base_url
+    summary["per_year"] = statuses
+    summary["source"] = f"NOAA NCEI Integrated Surface Database (ISD) station {station_id}"
+    return summary
+
+
 def fetch_daily_normals():
     """NCEI 1991-2020 U.S. Climate Normals (daily) for the rain/temperature station.
 
@@ -1497,6 +1534,7 @@ def main():
                                "bytes": ghcn["bytes"]})
     gsod_years = list(range(1991, today.year))
     gsod = fetch_gsod(gsod_years)
+    isd_summary = fetch_isd_hourly_summary(gsod_years)
     normals = fetch_daily_normals()
     monthly_normals = fetch_monthly_normals()
     humidity_normals = fetch_humidity_normals()
@@ -1607,6 +1645,8 @@ def main():
     write_json(outdir / "cpc.json", cpc)
     write_json(outdir / "enso.json", enso)
     write_json(outdir / "climatology.json", climo_out)
+    if isd_summary:
+        write_json(outdir / "isd_hourly_summary.json", isd_summary)
     if storm:
         write_json(outdir / "storm_events.json", storm)
     if normals:

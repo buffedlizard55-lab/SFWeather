@@ -1505,6 +1505,86 @@ if os.path.exists(os.path.join(ROOT, "data", "calendar.json")):
           json.dumps(_pe))
 
 # --------------------------------------------------------------------------- #
+section("ISD hourly wind & rain parsing (open item 1)")
+
+_sample_isd = """STATION,DATE,SOURCE,LATITUDE,LONGITUDE,ELEVATION,NAME,REPORT_TYPE,CALL_SIGN,QUALITY_CONTROL,WND,CIG,VIS,TMP,DEW,SLP,AA1,GA1
+"72494023234","1991-10-01T07:56:00","4","37.619"," -122.365","3.4","SAN FRANCISCO INTERNATIONAL AIRPORT, CA US","FM-15","KSFO","V020","290,1,N,0103,1","99999,9,9,9","010000,1,9,9","+0172,1","+0111,1","10156,1","01,0025,9,5","99,99,99999,9,9,9"
+"72494023234","1991-10-01T08:56:00","4","37.619"," -122.365","3.4","SAN FRANCISCO INTERNATIONAL AIRPORT, CA US","FM-15","KSFO","V020","280,1,N,0050,1","99999,9,9,9","010000,1,9,9","+0167,1","+0111,1","10159,1","01,0000,9,5","99,99,99999,9,9,9"
+"72494023234","1991-10-01T09:56:00","4","37.619"," -122.365","3.4","SAN FRANCISCO INTERNATIONAL AIRPORT, CA US","FM-15","KSFO","V020","999,9,9,9999,9","99999,9,9,9","010000,1,9,9","+0160,1","+0110,1","10160,1","01,0010,9,5","99,99,99999,9,9,9"
+"72494023234","1991-05-01T12:00:00","4","37.619"," -122.365","3.4","SAN FRANCISCO INTERNATIONAL AIRPORT, CA US","FM-15","KSFO","V020","290,1,N,0120,1","99999,9,9,9","010000,1,9,9","+0170,1","+0110,1","10150,1","01,0050,9,5","99,99,99999,9,9,9"
+"""
+
+_parsed_isd = climo.parse_isd_hourly(_sample_isd)
+check("parse_isd_hourly parses all valid CSV records",
+      len(_parsed_isd) == 4, str(len(_parsed_isd)))
+check("ISD UTC timestamp is converted to local America/Los_Angeles calendar date",
+      _parsed_isd[0]["local_date"] == "1991-10-01" and _parsed_isd[0]["local_hour"] == 0,
+      f"{_parsed_isd[0]['local_date']} hour {_parsed_isd[0]['local_hour']}")
+check("WND 0103 tenths m/s converts to knots (10.3 m/s = 20.0 kt)",
+      _parsed_isd[0]["wind_speed_kt"] == 20.0, str(_parsed_isd[0]["wind_speed_kt"]))
+check("AA1 0025 tenths mm converts to inches (2.5 mm = 0.098 in)",
+      _parsed_isd[0]["prcp_in"] == 0.098, str(_parsed_isd[0]["prcp_in"]))
+check("simultaneous wind >= 20 kt and prcp > 0.00 flags is_wind_and_rain",
+      _parsed_isd[0]["is_wind_and_rain"] is True and _parsed_isd[1]["is_wind_and_rain"] is False,
+      f"{_parsed_isd[0]['is_wind_and_rain']} vs {_parsed_isd[1]['is_wind_and_rain']}")
+check("missing wind 9999 is decoded as None and not flagged as wind+rain",
+      _parsed_isd[2]["wind_speed_kt"] is None and _parsed_isd[2]["is_wind_and_rain"] is False,
+      str(_parsed_isd[2]))
+check("out-of-season month (May) is marked in_season=False",
+      _parsed_isd[3]["in_season"] is False and _parsed_isd[0]["in_season"] is True,
+      f"May in_season: {_parsed_isd[3]['in_season']}")
+
+_agg_isd = climo.aggregate_isd_hourly_wind_and_rain(_parsed_isd)
+check("ISD aggregation counts valid joint hours and simultaneous hours in season",
+      _agg_isd["valid_joint_hours"] == 2 and _agg_isd["simultaneous_wind_rain_hours"] == 1,
+      f"valid={_agg_isd['valid_joint_hours']}, sim={_agg_isd['simultaneous_wind_rain_hours']}")
+check("overall percentage is computed correctly (1/2 = 50.0%)",
+      _agg_isd["overall_pct"] == 50.0, str(_agg_isd["overall_pct"]))
+check("ISD per-season breakdown identifies season 1991-1992",
+      len(_agg_isd["per_season"]) == 1 and _agg_isd["per_season"][0]["season"] == "1991-1992",
+      json.dumps(_agg_isd["per_season"]))
+
+# --------------------------------------------------------------------------- #
+section("NWS forecast verification loop (open item 2)")
+
+_sample_fc_snapshot = {
+    "issuance_date": "2026-09-18",
+    "generated_utc": "2026-09-18T04:10:47+00:00",
+    "forecast_updated": "2026-09-18T03:51:56+00:00",
+    "days": [
+        {"target_date": "2026-09-18", "high_f": 64, "low_f": 58, "pop_pct": 10, "qpf_in": 0.0},
+        {"target_date": "2026-09-19", "high_f": 66, "low_f": 58, "pop_pct": 60, "qpf_in": 0.25},
+    ],
+}
+
+_hist1 = climo.update_forecast_history([], _sample_fc_snapshot)
+check("update_forecast_history appends snapshot to empty history",
+      len(_hist1) == 1 and _hist1[0]["issuance_date"] == "2026-09-18", str(_hist1))
+_hist2 = climo.update_forecast_history(_hist1, _sample_fc_snapshot)
+check("update_forecast_history deduplicates snapshot for the same issuance date",
+      len(_hist2) == 1, str(len(_hist2)))
+
+_synth_ghcn = {
+    "2026-09-18": {"TMAX": "178", "TMIN": "144", "PRCP": "0"},   # 17.8 C = 64.0 F, 14.4 C = 58.0 F, 0 mm
+    "2026-09-19": {"TMAX": "189", "TMIN": "144", "PRCP": "51"},  # 18.9 C = 66.0 F, 5.1 mm = 0.20 in
+}
+
+_scored = climo.score_forecast_history(_hist1, _synth_ghcn)
+check("score_forecast_history matches forecasts against observations",
+      _scored["total_scored_pairs"] == 2, str(_scored["total_scored_pairs"]))
+check("temperature error is exact: forecast high 64 vs obs 64.0 is error 0.0",
+      _scored["scored_pairs"][0]["high_error"] == 0.0, str(_scored["scored_pairs"][0]["high_error"]))
+check("overall high MAE is 0.0 on perfect forecast",
+      _scored["overall_high_mae_f"] == 0.0, str(_scored["overall_high_mae_f"]))
+check("POP >= 50% correctly evaluates observed rain (pop=60% -> observed rain=True -> 100% hit rate)",
+      _scored["pop_ge_50_rain_pct"] == 100.0, str(_scored["pop_ge_50_rain_pct"]))
+check("POP < 50% correctly evaluates dry condition (pop=10% -> observed rain=False -> 0.0% rain)",
+      _scored["pop_lt_50_rain_pct"] == 0.0, str(_scored["pop_lt_50_rain_pct"]))
+check("lead days breakout handles 0-day lead and 1-day lead",
+      len(_scored["by_lead_days"]) == 2 and _scored["by_lead_days"][1]["lead_days"] == 1,
+      json.dumps(_scored["by_lead_days"]))
+
+# --------------------------------------------------------------------------- #
 
 passed = sum(1 for _n, ok, _d in RESULTS if ok)
 failed = [(n, d) for n, ok, d in RESULTS if not ok]
