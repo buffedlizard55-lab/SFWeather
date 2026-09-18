@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T03:15:25Z",
+  "generated_utc": "2026-09-18T04:05:29Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset)",
@@ -307,23 +307,23 @@
           },
           {
             "label": "Wettest single day on record in the window",
-            "value": "not derived this run"
+            "value": "5.54 in (1994-1995)"
           },
           {
             "label": "Days \u2265 0.50 in per season",
-            "value": "8.39 NOAA published"
+            "value": "8.4 counted \u00b7 8.39 NOAA published"
           },
           {
             "label": "Days \u2265 1.00 in per season",
-            "value": "3.26 NOAA published"
+            "value": "3.2 counted \u00b7 3.26 NOAA published"
           },
           {
             "label": "Days \u2265 2.00 in per season",
-            "value": "0.51 NOAA published"
+            "value": "0.5 counted \u00b7 0.51 NOAA published"
           },
           {
             "label": "Days \u2265 4.00 in per season",
-            "value": "0.02 NOAA published"
+            "value": "0.0 counted \u00b7 0.02 NOAA published"
           }
         ],
         "basis": "1991\u20132020 observed record \u2014 an expectation over those 30 seasons, not a prediction for 2026-27",
@@ -355,11 +355,11 @@
           },
           {
             "label": "Days with sustained wind \u2265 30 kt",
-            "value": "not derived this run"
+            "value": "mean 2.4 per season"
           },
           {
             "label": "Days with a gust \u2265 50 kt",
-            "value": "not derived this run"
+            "value": "mean 0.3 per season"
           }
         ],
         "basis": "1991\u20132020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away)",
@@ -407,7 +407,7 @@
         "n": 6,
         "key": "storm_severity",
         "question": "How severe have the storms actually been here?",
-        "answer": "NOAA's Storm Events Database holds 119 records for San Francisco County over 2014\u20132026, of which 98 are flood-type. Its damage column is not usable as a cost estimate \u2014 every non-zero value NCEI holds for this county is a token amount (12 of 119 records carry one) \u2014 so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. No named warning category (Advisory / Warning / High Wind) is applied: those criteria are written per forecast zone and this project does not restate them.",
+        "answer": "On the station record, the season averages 3.2 days a season at \u2265 1.00 in of rain, 2.4 days with a gust \u2265 40 kt, 0.5 days that are both. NOAA's Storm Events Database holds 119 records for San Francisco County over 2014\u20132026, of which 98 are flood-type. Its damage column is not usable as a cost estimate \u2014 every non-zero value NCEI holds for this county is a token amount (12 of 119 records carry one) \u2014 so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. No named warning category (Advisory / Warning / High Wind) is applied: those criteria are written per forecast zone and this project does not restate them.",
         "numbers": [
           {
             "label": "Storm Events records, SF County",
@@ -420,6 +420,18 @@
           {
             "label": "Records with a non-zero damage figure",
             "value": "12 of 119 \u2014 no dollar total published"
+          },
+          {
+            "label": "Days per season at \u2265 1.00 in",
+            "value": "mean 3.2 \u00b7 peak 7 in 1996-1997"
+          },
+          {
+            "label": "Days per season with a gust \u2265 40 kt",
+            "value": "mean 2.4"
+          },
+          {
+            "label": "Days per season both \u2265 1.00 in and a gust \u2265 40 kt",
+            "value": "mean 0.5 \u00b7 peak 2"
           }
         ],
         "basis": "NOAA NCEI Storm Events Database, reported events only \u2014 under-reporting is likely",
@@ -546,41 +558,169 @@
       }
     },
     "severity": {
-      "record_daily_prcp_in": null,
-      "record_gust": null,
-      "record_sustained_wind": null,
-      "record_days_ge_1in": null,
-      "record_days_gust_ge_40kt": null,
-      "record_severe_wind_and_rain_days": null,
+      "wet_days_ge_050in": {
+        "n": 30,
+        "mean": 8.4,
+        "median": 8.0,
+        "min": 1.0,
+        "max": 17.0,
+        "p10": 3.0,
+        "p25": 5.0,
+        "p75": 12.0,
+        "p90": 15.0
+      },
+      "wet_days_ge_1in": {
+        "n": 30,
+        "mean": 3.2,
+        "median": 3.0,
+        "min": 0.0,
+        "max": 7.0,
+        "p10": 1.0,
+        "p25": 2.0,
+        "p75": 5.0,
+        "p90": 6.0
+      },
+      "wet_days_ge_2in": {
+        "n": 30,
+        "mean": 0.5,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 2.0,
+        "p10": 0.0,
+        "p25": 0.0,
+        "p75": 1.0,
+        "p90": 1.0
+      },
+      "wet_days_ge_400in": {
+        "n": 30,
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 1.0,
+        "p10": 0.0,
+        "p25": 0.0,
+        "p75": 0.0,
+        "p90": 0.0
+      },
+      "max_daily_prcp_in": {
+        "n": 30,
+        "mean": 2.03,
+        "median": 1.81,
+        "min": 0.75,
+        "max": 5.54,
+        "p10": 1.09,
+        "p25": 1.24,
+        "p75": 2.61,
+        "p90": 3.19
+      },
+      "wind_days_ge_30kt": {
+        "n": 30,
+        "mean": 2.4,
+        "median": 2.0,
+        "min": 0.0,
+        "max": 7.0,
+        "p10": 1.0,
+        "p25": 1.0,
+        "p75": 3.0,
+        "p90": 5.0
+      },
+      "gust_days_ge_40kt": {
+        "n": 30,
+        "mean": 2.4,
+        "median": 1.0,
+        "min": 0.0,
+        "max": 7.0,
+        "p10": 0.0,
+        "p25": 1.0,
+        "p75": 4.0,
+        "p90": 6.0
+      },
+      "gust_days_ge_50kt": {
+        "n": 30,
+        "mean": 0.3,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 2.0,
+        "p10": 0.0,
+        "p25": 0.0,
+        "p75": 1.0,
+        "p90": 1.0
+      },
+      "max_wind_mph": {
+        "n": 30,
+        "mean": 40.1,
+        "median": 39.1,
+        "min": 31.1,
+        "max": 54.1,
+        "p10": 34.6,
+        "p25": 36.9,
+        "p75": 43.6,
+        "p90": 44.9
+      },
+      "severe_wind_and_rain_days": {
+        "n": 30,
+        "mean": 0.5,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 2.0,
+        "p10": 0.0,
+        "p25": 0.0,
+        "p75": 1.0,
+        "p90": 2.0
+      },
+      "record_daily_prcp_in": {
+        "season": "1994-1995",
+        "value": 5.54
+      },
+      "record_gust": {
+        "season": "1995-1996",
+        "value": 70.0
+      },
+      "record_sustained_wind": {
+        "season": "1995-1996",
+        "value": 54.1
+      },
+      "record_days_ge_1in": {
+        "season": "1996-1997",
+        "value": 7
+      },
+      "record_days_gust_ge_40kt": {
+        "season": "2015-2016",
+        "value": 7
+      },
+      "record_severe_wind_and_rain_days": {
+        "season": "1995-1996",
+        "value": 2
+      },
       "threshold_comparison": [
         {
           "threshold_in": 0.5,
-          "project_mean_days": null,
-          "project_max_days": null,
+          "project_mean_days": 8.4,
+          "project_max_days": 17.0,
           "noaa_expected_days": 8.39,
           "project_method": "mean of the 30 seasons' counts of days at or above this threshold, from the station's daily precipitation file",
           "noaa_method": "sum of NOAA's own published per-date percent-of-years value (DLY-PRCP-PCTALL-GE***HI) over the 123 dates"
         },
         {
           "threshold_in": 1.0,
-          "project_mean_days": null,
-          "project_max_days": null,
+          "project_mean_days": 3.2,
+          "project_max_days": 7.0,
           "noaa_expected_days": 3.26,
           "project_method": "mean of the 30 seasons' counts of days at or above this threshold, from the station's daily precipitation file",
           "noaa_method": "sum of NOAA's own published per-date percent-of-years value (DLY-PRCP-PCTALL-GE***HI) over the 123 dates"
         },
         {
           "threshold_in": 2.0,
-          "project_mean_days": null,
-          "project_max_days": null,
+          "project_mean_days": 0.5,
+          "project_max_days": 2.0,
           "noaa_expected_days": 0.51,
           "project_method": "mean of the 30 seasons' counts of days at or above this threshold, from the station's daily precipitation file",
           "noaa_method": "sum of NOAA's own published per-date percent-of-years value (DLY-PRCP-PCTALL-GE***HI) over the 123 dates"
         },
         {
           "threshold_in": 4.0,
-          "project_mean_days": null,
-          "project_max_days": null,
+          "project_mean_days": 0.0,
+          "project_max_days": 1.0,
           "noaa_expected_days": 0.02,
           "project_method": "mean of the 30 seasons' counts of days at or above this threshold, from the station's daily precipitation file",
           "noaa_method": "sum of NOAA's own published per-date percent-of-years value (DLY-PRCP-PCTALL-GE***HI) over the 123 dates"
@@ -1759,7 +1899,7 @@
     "station_id": "USW00023272",
     "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
     "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-    "retrieved_utc": "2026-09-18T03:14:56Z",
+    "retrieved_utc": "2026-09-18T04:05:01Z",
     "dates_parsed": 366,
     "columns": {
       "normal_high_f": "DLY-TMAX-NORMAL",

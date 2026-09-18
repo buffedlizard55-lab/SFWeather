@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T04:02:31Z",
+  "generated_utc": "2026-09-18T04:05:29Z",
   "counts": {
     "total": 3,
     "errors": 0,
@@ -44,11 +44,11 @@
         "encoding_fallback_used": false,
         "files_with_an_encoding_fallback": [],
         "contexts": [
-          "San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. Th",
-          "San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. Thi",
-          "San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. This",
-          " second wettest day on record, just 0.08\ufffd\ufffd\ufffd less than 1st place (11/5/1994) with",
-          "second wettest day on record, just 0.08\ufffd\ufffd\ufffd less than 1st place (11/5/1994) with "
+          "San Francisco Downtown site hit 5.46<U+FFFD><U+FFFD><U+FFFD> in the 24 hours of December 31st. Th",
+          "San Francisco Downtown site hit 5.46<U+FFFD><U+FFFD><U+FFFD> in the 24 hours of December 31st. Thi",
+          "San Francisco Downtown site hit 5.46<U+FFFD><U+FFFD><U+FFFD> in the 24 hours of December 31st. This",
+          " second wettest day on record, just 0.08<U+FFFD><U+FFFD><U+FFFD> less than 1st place (11/5/1994) with",
+          "second wettest day on record, just 0.08<U+FFFD><U+FFFD><U+FFFD> less than 1st place (11/5/1994) with "
         ]
       }
     }

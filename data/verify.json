@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T04:02:31Z",
+  "generated_utc": "2026-09-18T04:05:30Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -10,12 +10,10 @@
   ],
   "summary": {
     "total": 40,
-    "passed": 39,
-    "failed": 1,
+    "passed": 40,
+    "failed": 0,
     "warnings": 0,
-    "failed_checks": [
-      "no-replacement-characters"
-    ],
+    "failed_checks": [],
     "warning_checks": []
   },
   "checks": [
@@ -91,7 +89,7 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-18T04:01:30Z"
+        "retrieved_utc": "2026-09-18T04:04:55Z"
       }
     },
     {
@@ -567,14 +565,9 @@
     {
       "id": "no-replacement-characters",
       "title": "No published text carries a Unicode replacement character (a silent encoding failure)",
-      "status": "fail",
-      "detail": "1 dataset(s) carry U+FFFD",
-      "evidence": [
-        {
-          "dataset": "storm_events",
-          "context": "utf-8\"}], \"contexts\": [\"San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. Th\", \"San Francisco Do"
-        }
-      ]
+      "status": "pass",
+      "detail": "0 corrupted string(s) across the published datasets",
+      "evidence": []
     },
     {
       "id": "publisher-text-loss-disclosed",
@@ -608,7 +601,7 @@
         "http_status": 200,
         "bytes": 1013803,
         "sha256": "7b85c04a131672f58b38a950eb82855d5fd4054f0bd9bc3f69aa28897a714e3d",
-        "retrieved_utc": "2026-09-18T03:59:28Z",
+        "retrieved_utc": "2026-09-18T04:04:13Z",
         "host": "www2.census.gov"
       },
       "verified": true,
@@ -635,7 +628,7 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-18T04:01:30Z",
+        "retrieved_utc": "2026-09-18T04:04:55Z",
         "host": "www.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -662,9 +655,9 @@
         "label": "NWS hourly gridded forecast",
         "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
         "http_status": 200,
-        "bytes": 162424,
-        "sha256": "458a62ff0d3218b7c1995452e6ecdae9db147386c4d73a1c6d6d0d0b3e0b1b64",
-        "retrieved_utc": "2026-09-18T03:59:29Z",
+        "bytes": 162491,
+        "sha256": "f17859a433a00885455f55903c78c315a11702ccf268be9a59140c052de1b72d",
+        "retrieved_utc": "2026-09-18T04:04:13Z",
         "host": "api.weather.gov"
       },
       "verified": true
@@ -706,7 +699,7 @@
         "http_status": 200,
         "bytes": 6423708,
         "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
-        "retrieved_utc": "2026-09-18T04:02:05Z",
+        "retrieved_utc": "2026-09-18T04:05:10Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true
@@ -723,7 +716,7 @@
         "http_status": 200,
         "bytes": 7488380,
         "sha256": "647b301aec57b8ad38287b2353e2a1cdcaeee8f06df205d4983db2fd9feeae19",
-        "retrieved_utc": "2026-09-18T04:01:42Z",
+        "retrieved_utc": "2026-09-18T04:04:56Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -748,7 +741,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T04:01:54Z",
+        "retrieved_utc": "2026-09-18T04:05:01Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -773,7 +766,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T04:01:54Z",
+        "retrieved_utc": "2026-09-18T04:05:01Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -798,7 +791,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T04:01:54Z",
+        "retrieved_utc": "2026-09-18T04:05:01Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -823,7 +816,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T04:01:54Z",
+        "retrieved_utc": "2026-09-18T04:05:01Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -854,7 +847,7 @@
         "http_status": 200,
         "bytes": 462174,
         "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-        "retrieved_utc": "2026-09-18T04:01:54Z",
+        "retrieved_utc": "2026-09-18T04:05:01Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -882,7 +875,7 @@
         "http_status": 200,
         "bytes": 3607956,
         "sha256": "6e1955b1e38868c38685acd83a0ef92df9bcc52a3acaec11a583e759c46414dc",
-        "retrieved_utc": "2026-09-18T04:01:22Z",
+        "retrieved_utc": "2026-09-18T04:04:52Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -920,7 +913,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T04:00:12Z",
+        "retrieved_utc": "2026-09-18T04:04:28Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -958,7 +951,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T04:00:12Z",
+        "retrieved_utc": "2026-09-18T04:04:28Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -996,7 +989,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T04:00:12Z",
+        "retrieved_utc": "2026-09-18T04:04:28Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1034,7 +1027,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T04:00:12Z",
+        "retrieved_utc": "2026-09-18T04:04:28Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1072,7 +1065,7 @@
         "http_status": 200,
         "bytes": 3621792,
         "sha256": "6119ef340649ba4ba21072ef910e1579b7ed01251708cb81531082ab6627ab2f",
-        "retrieved_utc": "2026-09-18T04:01:24Z",
+        "retrieved_utc": "2026-09-18T04:04:52Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1146,11 +1139,11 @@
         "encoding_fallback_used": false,
         "files_with_an_encoding_fallback": [],
         "contexts": [
-          "San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. Th",
-          "San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. Thi",
-          "San Francisco Downtown site hit 5.46\ufffd\ufffd\ufffd in the 24 hours of December 31st. This",
-          " second wettest day on record, just 0.08\ufffd\ufffd\ufffd less than 1st place (11/5/1994) with",
-          "second wettest day on record, just 0.08\ufffd\ufffd\ufffd less than 1st place (11/5/1994) with "
+          "San Francisco Downtown site hit 5.46<U+FFFD><U+FFFD><U+FFFD> in the 24 hours of December 31st. Th",
+          "San Francisco Downtown site hit 5.46<U+FFFD><U+FFFD><U+FFFD> in the 24 hours of December 31st. Thi",
+          "San Francisco Downtown site hit 5.46<U+FFFD><U+FFFD><U+FFFD> in the 24 hours of December 31st. This",
+          " second wettest day on record, just 0.08<U+FFFD><U+FFFD><U+FFFD> less than 1st place (11/5/1994) with",
+          "second wettest day on record, just 0.08<U+FFFD><U+FFFD><U+FFFD> less than 1st place (11/5/1994) with "
         ]
       }
     }
