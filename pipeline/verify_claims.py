@@ -122,6 +122,7 @@ def main() -> int:
     quality = load("quality_report.json")
     humidity_normals = load("humidity_normals.json")
     monthly_normals = load("monthly_normals.json")
+    landlord = load("landlord.json")
 
     # Keep every manifest row, including repeated fetches of the same URL.  A
     # dict keyed only by URL silently collapsed the two 90-day discussion
@@ -408,6 +409,94 @@ def main() -> int:
                      cross_check={"note": "Computed inside the pipeline from the raw GHCN-Daily file; "
                                           "recomputable from the same URL by anyone."})
 
+    # --------------------------------------- 6b. maintenance cost-driver block
+    # The executive summary's cost drivers are built only from verified
+    # structures; the ledger re-derives the published expected-day counts from
+    # the committed climatology table and audits the block's structure (ranks,
+    # evidence presence, official-only sources).  A cost driver without
+    # evidence or with a non-official source is exactly the class of claim
+    # this project is not allowed to make.
+    from landlord_summary import expected_event_days as _eed
+
+    es = (landlord.get("executive_summary") or {})
+    drivers = es.get("cost_drivers") or []
+    struct_issues = []
+    if not isinstance(drivers, list) or not (4 <= len(drivers) <= 8):
+        struct_issues.append(f"driver count {len(drivers)} outside expected 4-8")
+    for i, d in enumerate(drivers if isinstance(drivers, list) else []):
+        if not isinstance(d, dict):
+            struct_issues.append(f"driver {i} is not an object")
+            continue
+        if d.get("rank") != i + 1:
+            struct_issues.append(f"driver {i} rank {d.get('rank')} != {i + 1}")
+        if not d.get("driver"):
+            struct_issues.append(f"driver {i} has no title")
+        if not d.get("why_it_costs"):
+            struct_issues.append(f"driver {i} has no guidance sentence")
+        ev = d.get("evidence") or []
+        if not ev:
+            struct_issues.append(f"driver {i} has no evidence rows")
+        for j, row in enumerate(ev):
+            if not (row.get("label") and row.get("value") not in (None, "", "None")):
+                struct_issues.append(f"driver {i} evidence row {j} empty: {row!r:.120}")
+        srcs = d.get("sources") or []
+        if not srcs:
+            struct_issues.append(f"driver {i} has no sources")
+        for s in srcs:
+            u = (s or {}).get("url") or ""
+            if not u.startswith("https://") or host_of(u) not in OFFICIAL_HOSTS:
+                struct_issues.append(f"driver {i} source not official: {u}")
+    if "guidance" not in (es.get("cost_drivers_note") or ""):
+        struct_issues.append("cost_drivers_note does not separate guidance from verified numbers")
+    ledger.check("cost-drivers-structure",
+                 "Every maintenance cost driver is ranked, carries evidence rows, and cites only "
+                 "official .gov sources",
+                 not struct_issues,
+                 (f"{len(drivers)} drivers; " +
+                  ("all structural rules hold" if not struct_issues
+                   else f"{len(struct_issues)} issue(s)")),
+                 evidence={"issues": struct_issues[:8], "driver_count": len(drivers)})
+
+    pub_days = es.get("expected_days") or {}
+    recomp = {}
+    daily = climo.get("daily") or []
+    season_daily = [d for d in daily if d.get("month") in (10, 11, 12, 1)]
+    for key, field in (("ge_025in_days", "p_rain_ge_025in_pct"),
+                       ("ge_100in_days", "p_rain_ge_100in_pct")):
+        recomp[key] = _eed(season_daily, field)
+    arith_ok = all(
+        pub_days.get(k) is not None and recomp[k] is not None
+        and abs(float(pub_days[k]) - float(recomp[k])) <= 0.01
+        for k in recomp)
+    ledger.check("cost-driver-expected-days-arithmetic",
+                 "The published expected heavy-rain day counts equal the sum of the per-date "
+                 "1991-2020 probabilities in the committed climatology table",
+                 arith_ok,
+                 "; ".join(f"{k}: published {pub_days.get(k)} vs recomputed {recomp[k]} "
+                           f"over {len(season_daily)} season dates" for k in recomp),
+                 evidence={"published": pub_days, "recomputed": recomp,
+                           "n_season_dates": len(season_daily)})
+
+    # Raw ENSO data tokens ("el_nino", "la_nina") are keys, not phrases; none
+    # may appear in any string the executive summary displays to the reader.
+    import re as _re3
+    display_strings = [es.get("key_finding") or ""]
+    for a in landlord.get("action_items") or []:
+        display_strings += [a.get("title") or "", a.get("detail") or ""]
+    for d in drivers:
+        display_strings += [d.get("driver") or "", d.get("why_it_costs") or ""]
+        for row in d.get("evidence") or []:
+            display_strings += [str(row.get("label") or ""), str(row.get("value") or "")]
+    raw_tokens = [s for s in display_strings
+                  if _re3.search(r"\b(?:el_nino|la_nina)\b", s, _re3.IGNORECASE)]
+    ledger.check("raw-phase-tokens",
+                 "No raw ENSO data token (el_nino / la_nina) appears in any reader-facing "
+                 "executive-summary string",
+                 not raw_tokens,
+                 (f"{len(raw_tokens)} string(s) carry a raw phase token"
+                  if raw_tokens else "0 raw tokens in display strings"),
+                 evidence=raw_tokens[:5])
+
     # ------------------------------- 7. independent official normals cross-check
     if monthly_normals and climo:
         off = monthly_normals.get("precip_in") or {}
@@ -505,6 +594,15 @@ def main() -> int:
         for r in d.get("cpc") or []:
             if r.get("url"):
                 refs.add(r["url"])
+    # The landlord dashboard prints source URLs too (action checklist and the
+    # cost-driver block); they are held to the same traceability rule.
+    for a in landlord.get("action_items") or []:
+        if a.get("source_url"):
+            refs.add(a["source_url"])
+    for d in (landlord.get("executive_summary") or {}).get("cost_drivers") or []:
+        for s in d.get("sources") or []:
+            if s.get("url"):
+                refs.add(s["url"])
     # Some citations point at an official dataset *landing page* rather than at a
     # single file (the pipeline fetches the per-year files beneath it).  Those are
     # allowed, but only if the page is an official host AND at least one fetched

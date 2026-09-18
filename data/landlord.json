@@ -42,7 +42,9 @@
       "year": 2026,
       "oni_c": 1.8,
       "phase": "el_nino",
-      "strength": "strong"
+      "strength": "strong",
+      "phase_label": "El Ni\u00f1o",
+      "oni_c_fmt": "+1.80 \u00b0C"
     },
     "season_total_prcp": {
       "n": 30,
@@ -207,7 +209,221 @@
         "p90": 18.59
       }
     },
-    "key_finding": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 11.1 days per season on average at SFO (upper bound for Sunset). Current ENSO: el_nino (official ONI 1.8C, JJA 2026) tilts toward wetter than normal, with CPC status \"El Ni\u00f1o Advisory\"; the CPC outlooks attached to each day show the official probabilities for this window."
+    "expected_days": {
+      "ge_025in_days": 14.97,
+      "ge_100in_days": 3.19,
+      "method": "Sum of each calendar date's 1991-2020 observed probability over the 123-day window (linearity of expectation): the expected number of days per season meeting the test, not a prediction for 2026-27."
+    },
+    "cost_drivers": [
+      {
+        "driver": "Prolonged wet spells \u2014 roof, gutters & drainage",
+        "why_it_costs": "A week or more of nearly continuous rain saturates roofing and sheathing, finds failed flashing, and keeps gutters overflowing \u2014 the classic path to ceiling stains, rotten fascia and end-of-lease repair bills. Inspect roof, gutters and downspouts before the season and re-check after any 7+ day run.",
+        "evidence": [
+          {
+            "label": "Run of \u22653 consecutive wet days",
+            "value": "96.7% of seasons (29 of 30)"
+          },
+          {
+            "label": "Run of \u22655 consecutive wet days",
+            "value": "80.0% of seasons (24 of 30)"
+          },
+          {
+            "label": "Run of \u22657 consecutive wet days",
+            "value": "53.3% of seasons (16 of 30)"
+          },
+          {
+            "label": "Run of \u226510 consecutive wet days",
+            "value": "23.3% of seasons (7 of 30)"
+          },
+          {
+            "label": "Longest run in a season",
+            "value": "mean 7.3 days \u00b7 max 17.0 days on record"
+          }
+        ],
+        "sources": [
+          {
+            "label": "NCEI GHCN-Daily USW00023272 (SF downtown gauge)",
+            "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+          }
+        ],
+        "rank": 1
+      },
+      {
+        "driver": "Heavy single-day rain \u2014 storm drains, entryways & low-lying units",
+        "why_it_costs": "Short, intense rain is what overwhelms area drains, garage thresholds and ground-floor entryways, and it is when sewer backups and slope failures happen. Clear drains before the season; the heaviest days cluster in December and January.",
+        "evidence": [
+          {
+            "label": "Days \u2265 0.25 in rain per season (expected count)",
+            "value": "14.97 days"
+          },
+          {
+            "label": "Days \u2265 1.00 in rain per season (expected count)",
+            "value": "3.19 days"
+          },
+          {
+            "label": "Wettest December / January on record (1991\u20132020)",
+            "value": "12.03 in / 12.07 in"
+          },
+          {
+            "label": "Flood-type storm reports in SF County (2014\u20132026)",
+            "value": "99 events in NOAA Storm Events (reported events only - under-reporting is likely)"
+          },
+          {
+            "label": "\u2026of those, reports carrying a recorded property-damage figure",
+            "value": "4 of 99 (county damage entries are sparse in this database)"
+          }
+        ],
+        "sources": [
+          {
+            "label": "NCEI GHCN-Daily USW00023272 (SF downtown gauge)",
+            "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+          },
+          {
+            "label": "NCEI Storm Events CSV archive (SF County)",
+            "url": "https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/"
+          }
+        ],
+        "rank": 2
+      },
+      {
+        "driver": "Wind + rain together \u2014 wind-driven water intrusion",
+        "why_it_costs": "Wind pushes rain sideways under shingles, laps and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. These are also fence-failure and tree-limb days. Wind is recorded at SFO, ~10 miles away and more exposed, so treat the counts as an upper bound for the Sunset.",
+        "evidence": [
+          {
+            "label": "Days with rain \u2265 0.01 in and sustained wind \u2265 20 kt",
+            "value": "mean 11.1 \u00b7 median 10.0 \u00b7 max 24.0 per season"
+          },
+          {
+            "label": "Days with rain \u2265 0.50 in and a gust \u2265 35 kt",
+            "value": "mean 2.2 \u00b7 median 2.0 \u00b7 max 8.0 per season"
+          }
+        ],
+        "sources": [
+          {
+            "label": "NCEI GSOD 72494023234 (KSFO wind)",
+            "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+          },
+          {
+            "label": "NCEI GHCN-Daily USW00023272 (SF downtown gauge)",
+            "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+          }
+        ],
+        "rank": 3
+      },
+      {
+        "driver": "Peak gusts \u2014 trees, fences, roofing & tenant safety",
+        "why_it_costs": "The strongest gust of the season is what breaks limbs onto roofs and cars and flattens fences - the storm-season liability with the shortest fuse. SFO is more exposed than the Sunset, so these gusts are an upper bound for the ZIP.",
+        "evidence": [
+          {
+            "label": "Strongest gust of the season (SFO ASOS)",
+            "value": "mean 53.8 mph \u00b7 median 54.1 mph \u00b7 record 70.0 mph"
+          },
+          {
+            "label": "Thunderstorm-wind reports in SF County (2014\u20132026)",
+            "value": "4 events in NOAA Storm Events"
+          }
+        ],
+        "sources": [
+          {
+            "label": "NCEI GSOD 72494023234 (KSFO wind)",
+            "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+          },
+          {
+            "label": "NCEI Storm Events CSV archive (SF County)",
+            "url": "https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/"
+          }
+        ],
+        "rank": 4
+      },
+      {
+        "driver": "Total seasonal water load \u2014 waterproofing budget & insurance",
+        "why_it_costs": "This is the total water the envelope must shed across the season and the right baseline for repair budgets: plan for the mean, but price reserves off the wetter tail - the p90 season delivered about 1.5x the mean. El Ni\u00f1o tilts toward the wet end in this record, but individual El Ni\u00f1o seasons have ranged from 7.27 to 22.82 in, so the tilt is not a promise.",
+        "evidence": [
+          {
+            "label": "Season total, Oct 1 \u2013 Jan 31 (1991\u20132020)",
+            "value": "mean 12.79 in \u00b7 median 13.26 in \u00b7 range 1.71\u201322.82 in \u00b7 p10\u2013p90 6.38\u201318.59 in"
+          },
+          {
+            "label": "Current ENSO state (NOAA's published ONI product)",
+            "value": "JJA 2026: +1.80 \u00b0C = El Ni\u00f1o (strong); CPC Alert System Status: El Ni\u00f1o Advisory"
+          },
+          {
+            "label": "Season total by ENSO phase (1991\u20132020; small samples)",
+            "value": "El Ni\u00f1o 14.23 in (n=11) \u00b7 La Ni\u00f1a 11.16 in (n=12)"
+          },
+          {
+            "label": "CPC DJF 2026-2027 precipitation outlook (issued 2026-09-17)",
+            "value": "Above median at 40.0% probability"
+          },
+          {
+            "label": "CPC JFM 2027 precipitation outlook (issued 2026-09-17)",
+            "value": "Above median at 50.0% probability"
+          },
+          {
+            "label": "CPC NDJ 2026-2027 precipitation outlook (issued 2026-09-17)",
+            "value": "Above median at 33.0% probability"
+          },
+          {
+            "label": "CPC OND 2026 precipitation outlook (issued 2026-09-17)",
+            "value": "Equal chances at 33.0% probability"
+          },
+          {
+            "label": "CPC Oct 2026 precipitation outlook (issued 2026-09-17)",
+            "value": "Equal chances at 33.0% probability"
+          },
+          {
+            "label": "CPC SON 2026 precipitation outlook (issued 2026-08-20)",
+            "value": "Equal chances at 33.0% probability"
+          }
+        ],
+        "sources": [
+          {
+            "label": "NCEI GHCN-Daily USW00023272 (SF downtown gauge)",
+            "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+          },
+          {
+            "label": "NOAA CPC official ONI product",
+            "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
+          },
+          {
+            "label": "CPC DJF 2026-2027 shapefile",
+            "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+          },
+          {
+            "label": "CPC Oct 2026 shapefile",
+            "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/monthlyupdate/monthupd_prcp_latest.zip"
+          },
+          {
+            "label": "CPC SON 2026 shapefile",
+            "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202608.zip"
+          }
+        ],
+        "rank": 5
+      },
+      {
+        "driver": "Wet-day frequency \u2014 condensation, ventilation & works scheduling",
+        "why_it_costs": "Three to four wet days a week for months drives indoor condensation and mold complaints and closes windows for exterior paint, roofing and concrete work. October is normally the driest month of the window - schedule exterior jobs there, not in December.",
+        "evidence": [
+          {
+            "label": "Wet days per season (\u22650.01 in)",
+            "value": "mean 34.5 \u00b7 median 35.0 \u00b7 range 7.0\u201355.0 of 123 days"
+          },
+          {
+            "label": "Expected wet days by month",
+            "value": "October 2026: 3.5 \u00b7 November 2026: 7.9 \u00b7 December 2026: 11.7 \u00b7 January 2027: 11.4"
+          }
+        ],
+        "sources": [
+          {
+            "label": "NCEI GHCN-Daily USW00023272 (SF downtown gauge)",
+            "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+          }
+        ],
+        "rank": 6
+      }
+    ],
+    "cost_drivers_note": "Ranked for the landlord question behind this site: what about this rainy season plausibly drives repair and maintenance cost. The 'Why it matters' sentence under each driver is maintenance guidance about cost mechanisms \u2014 it is not a weather claim. Every number is computed from, and links to, the official sources shown. Expected-day counts are sums of the per-date 1991\u20132020 observed probabilities (linearity of expectation): an expectation over the distribution, not a prediction for 2026-27.",
+    "key_finding": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 11.1 days per season on average at SFO (upper bound for Sunset). Current ENSO: El Ni\u00f1o (official ONI +1.80 \u00b0C, JJA 2026) - in this record El Ni\u00f1o seasons averaged wetter than La Ni\u00f1a (14.23 in vs 11.16 in), with a wide spread in both; CPC status \"El Ni\u00f1o Advisory\". The CPC outlooks attached to each day show the official probabilities for this window."
   },
   "monthly": [
     {
@@ -1040,8 +1256,8 @@
     {
       "category": "ENSO / seasonal tilt",
       "priority": "high",
-      "title": "ENSO phase: el_nino (official ONI 1.8\u00b0C for JJA 2026)",
-      "detail": "NOAA's published ONI product shows JJA 2026 at 1.8\u00b0C = el_nino, strong by CPC's own strength bands. CPC Alert System Status: El Ni\u00f1o Advisory. In El Ni\u00f1o years, Oct-Jan mean was 14.23 in vs 11.16 in for La Ni\u00f1a (n=11 El Ni\u00f1o seasons). El Ni\u00f1o tilts toward wetter, but spread is wide: wettest El Ni\u00f1o 22.82 in, driest El Ni\u00f1o 7.27 in.",
+      "title": "ENSO phase: El Ni\u00f1o (official ONI +1.80 \u00b0C for JJA 2026)",
+      "detail": "NOAA's published ONI product shows JJA 2026 at +1.80 \u00b0C = El Ni\u00f1o, strong by CPC's own strength bands. CPC Alert System Status: El Ni\u00f1o Advisory. In El Ni\u00f1o years, Oct-Jan mean was 14.23 in vs 11.16 in for La Ni\u00f1a (n=11 El Ni\u00f1o seasons). El Ni\u00f1o tilts toward wetter, but spread is wide: wettest El Ni\u00f1o 22.82 in, driest El Ni\u00f1o 7.27 in.",
       "source": "NOAA CPC official ONI product (oni.ascii.txt)",
       "source_url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
     },

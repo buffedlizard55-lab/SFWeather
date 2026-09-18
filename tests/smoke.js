@@ -52,7 +52,8 @@ try {
 }
 
 const REQUIRED_SECTIONS = [
-  '#data-status', '#landlord-stats', '#landlord-monthly', '#landlord-duration', '#landlord-windrain',
+  '#data-status', '#landlord-stats', '#landlord-cost-drivers', '#landlord-monthly',
+  '#landlord-duration', '#landlord-windrain',
   '#landlord-cpc', '#landlord-actions', '#tier-legend', '#tbl-location', '#tbl-stations',
   '#enso-body', '#cpc-season-table', '#monthly-table', '#enso-strat', '#discussions',
   '#now-current', '#nws-forecast', '#nws-obs', '#nws-alerts', '#calendar-grid',
@@ -258,6 +259,53 @@ setTimeout(() => {
     }
     if (d.rain_amount_in !== null && !d.rain_amount_basis) {
       problems.push('forecast day ' + d.date + ' shows a rain amount with no stated basis');
+    }
+  });
+
+  // 13. The maintenance cost-driver block: rendered, sourced, and honest
+  //     about which sentence is guidance and which number is data.
+  const cdCards = doc.querySelectorAll('#landlord-cost-drivers .cost-driver');
+  if (cdCards.length < 4) problems.push('expected >=4 cost drivers, found ' + cdCards.length);
+  cdCards.forEach((card, i) => {
+    const t = card.textContent;
+    if (!/guidance/i.test(t)) problems.push('cost driver ' + i + ' does not label its guidance sentence');
+    if (!card.querySelector('.cd-ev th')) problems.push('cost driver ' + i + ' has no evidence table');
+    if (!card.querySelector('a[href^="https://"]')) problems.push('cost driver ' + i + ' has no source link');
+    if (/NaN|undefined/.test(t)) problems.push('cost driver ' + i + ' shows a raw NaN/undefined');
+  });
+  // A cost driver must never render without its numbers.
+  const landlordJson = JSON.parse(fs.readFileSync(path.join(repo, 'data/landlord.json'), 'utf8'));
+  const nExpected = ((landlordJson.executive_summary || {}).cost_drivers || [])
+    .filter(d => (d.evidence || []).length).length;
+  if (cdCards.length !== nExpected) {
+    problems.push('rendered ' + cdCards.length + ' cost drivers but the dataset has ' +
+      nExpected + ' with evidence');
+  }
+
+  // 14. Raw ENSO data tokens are keys, not phrases: "el_nino" must never be
+  //     printed.  Both the summary sentence and the stat card showed it raw.
+  const landlordText = text('#landlord');
+  if (/\bel_nino\b|\bla_nina\b/.test(landlordText)) {
+    problems.push('raw ENSO phase token visible on the landlord dashboard');
+  }
+
+  // 15. The ENSO stat card must name the season of the official ONI value
+  //     (e.g. "JJA 2026") - an earlier version printed a bare " ONI ·" line.
+  const ensoStat = Array.from(doc.querySelectorAll('#landlord-stats .landlord-stat'))
+    .find(x => /ENSO/.test(x.textContent));
+  if (!ensoStat) problems.push('ENSO stat card missing');
+  else {
+    const et = ensoStat.textContent;
+    if (!/ONI/.test(et)) problems.push('ENSO stat card does not mention ONI: ' + et);
+    if (!/[A-Z]{3} 20\d\d/.test(et)) problems.push('ENSO stat card does not name the ONI season: ' + et);
+  }
+
+  // 16. Nothing on the whole page may render the machine artefacts NaN or
+  //     "undefined".
+  ['#landlord', '#season', '#calendar', '#wind'].forEach(sel => {
+    const t = text(sel);
+    if (/\bundefined\b|\bNaN\b/.test(t)) {
+      problems.push('section ' + sel + ' renders "undefined" or "NaN"');
     }
   });
 

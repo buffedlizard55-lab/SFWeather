@@ -633,6 +633,168 @@ else:
     check("data/calendar.json present to audit", False, "missing")
 
 # --------------------------------------------------------------------------- #
+# Maintenance cost drivers (executive summary)
+#
+# The landlord executive summary ranks repair & maintenance cost drivers and
+# publishes "expected days per season" for heavy-rain thresholds.  Those
+# expected counts are sums of the per-date observed probabilities, and the
+# block mixes guidance sentences with verified numbers, so each helper is
+# pinned here with synthetic, hand-computable values: the summation itself,
+# the Storm Events damage parsing ("0.00K" means *no recorded damage*, not
+# unknown), the phase/ONI display formatting (raw tokens must never reach the
+# reader), and the driver's refusal to publish a claim without evidence.
+# --------------------------------------------------------------------------- #
+
+section("landlord maintenance cost drivers")
+
+from landlord_summary import (build_cost_drivers, expected_event_days,  # noqa: E402
+                              phase_label, fmt_oni_c, parse_damage_usd)
+
+# expected_event_days: linearity of expectation, both record shapes.
+_syn_days = [
+    {"climo": {"p_rain_ge_025in_pct": 50.0, "p_rain_ge_100in_pct": 10.0}},
+    {"climo": {"p_rain_ge_025in_pct": 25.0, "p_rain_ge_100in_pct": None}},
+    {"climo": {"p_rain_ge_025in_pct": None, "p_rain_ge_100in_pct": 5.0}},
+]
+check("expected days sums nested climo probabilities",
+      expected_event_days(_syn_days, "p_rain_ge_025in_pct") == 0.75,
+      str(expected_event_days(_syn_days, "p_rain_ge_025in_pct")))
+check("None probabilities are skipped, not treated as zero data",
+      expected_event_days(_syn_days, "p_rain_ge_100in_pct") == 0.15,
+      str(expected_event_days(_syn_days, "p_rain_ge_100in_pct")))
+_flat = [{"month": 12, "p_rain_ge_025in_pct": 40.0},
+         {"month": 12, "p_rain_ge_025in_pct": 20.0}]
+check("flat climatology rows sum the same way",
+      expected_event_days(_flat, "p_rain_ge_025in_pct") == 0.6, "")
+check("a key no row carries returns None, never an invented zero",
+      expected_event_days(_flat, "p_rain_ge_100in_pct") is None, "")
+check("empty input returns None",
+      expected_event_days([], "p_rain_ge_025in_pct") is None, "")
+
+# parse_damage_usd: Storm Events "0.00K" is a real value meaning no recorded
+# damage, while "" means unknown.
+check("0.00K parses to 0, not None", parse_damage_usd("0.00K") == 0.0, "")
+check("2.50K parses to 2500", parse_damage_usd("2.50K") == 2500.0, "")
+check("1.2M parses to 1200000", parse_damage_usd("1.2M") == 1200000.0, "")
+check("empty damage is unknown (None), not zero", parse_damage_usd("") is None, "")
+check("missing damage is unknown (None), not zero", parse_damage_usd(None) is None, "")
+
+# Display formatting: the raw tokens are data keys, never reader-facing text.
+check("phase el_nino renders as El Niño", phase_label("el_nino") == "El Niño",
+      phase_label("el_nino"))
+check("phase la_nina renders as La Niña", phase_label("la_nina") == "La Niña",
+      phase_label("la_nina"))
+check("phase neutral renders as Neutral", phase_label("neutral") == "Neutral", "")
+check("ONI formats signed with 2 decimals and the degree unit",
+      fmt_oni_c(1.8) == "+1.80 °C" and fmt_oni_c(-0.6) == "-0.60 °C",
+      repr((fmt_oni_c(1.8), fmt_oni_c(-0.6))))
+check("missing ONI formats to None, not 0.00 °C", fmt_oni_c(None) is None, "")
+
+# build_cost_drivers with synthetic, hand-verifiable inputs.
+_syn_dist = {
+    "season_total_prcp_in": {"mean": 10.0, "median": 9.5, "min": 1.0, "max": 20.0,
+                             "p10": 3.0, "p90": 17.0},
+    "december_total_prcp_in": {"max": 11.0},
+    "january_total_prcp_in": {"max": 9.0},
+    "longest_wet_streak_days": {"mean": 6.0, "max": 12.0},
+    "wet_days": {"mean": 30.0, "median": 30.0, "min": 8.0, "max": 50.0},
+    "wind_and_rain_days": {"mean": 9.0, "median": 9.0, "max": 20.0},
+    "heavy_wind_and_rain_days": {"mean": 1.5, "median": 1.0, "max": 6.0},
+    "max_gust_mph": {"mean": 50.0, "median": 51.0, "max": 70.0},
+}
+_syn_streak = {"ge_3_days": {"seasons": 27, "pct": 90.0},
+               "ge_5_days": {"seasons": 21, "pct": 70.0},
+               "ge_7_days": {"seasons": 15, "pct": 50.0},
+               "ge_10_days": {"seasons": 6, "pct": 20.0}}
+_syn_strat = {"el_nino": {"n": 10, "mean": 12.0}, "la_nina": {"n": 10, "mean": 8.0}}
+_syn_oni = {"label": "JJA 2026", "oni_c": 1.8, "phase": "el_nino", "strength": "strong"}
+_syn_cpc = [{"variable": "prcp", "valid_season": "DJF 2026-2027", "category_label": "Above median",
+             "prob": 40.0, "issued": "2026-09-17", "url": "https://ftp.cpc.ncep.noaa.gov/GIS/x.zip"}]
+_syn_storms = {"years": [2014, 2026],
+               "events": [{"event_type": "Flood", "damage_property": "2.50K"},
+                          {"event_type": "Flood", "damage_property": "0.00K"},
+                          {"event_type": "Thunderstorm Wind", "damage_property": ""},
+                          {"event_type": "Hail"}]}
+_drivers = build_cost_drivers(days=_syn_days, dist=_syn_dist, streak_prob=_syn_streak,
+                              enso_strat=_syn_strat, latest_oni=_syn_oni,
+                              diagnostic_status="El Niño Advisory",
+                              relevant_cpc=_syn_cpc, storms=_syn_storms,
+                              monthly=[{"label": "October", "year": 2026, "expected_wet_days": 3.5}])
+check("synthetic inputs yield all six ranked drivers", len(_drivers) == 6,
+      str(len(_drivers)))
+check("ranks are sequential from 1",
+      [d.get("rank") for d in _drivers] == list(range(1, len(_drivers) + 1)),
+      str([d.get("rank") for d in _drivers]))
+check("every driver carries title, guidance, evidence and an https source",
+      all(d.get("driver") and d.get("why_it_costs") and d.get("evidence")
+          and any((s or {}).get("url", "").startswith("https://") for s in d.get("sources", []))
+          for d in _drivers), "")
+check("no empty evidence value is published",
+      all(row.get("value") not in (None, "", "None")
+          for d in _drivers for row in d.get("evidence", [])), "")
+_heavy = next(d for d in _drivers if d["rank"] == 2)
+check("heavy-rain driver publishes the expected counts from the synthetic days",
+      any("0.75" in str(row.get("value")) for row in _heavy["evidence"]),
+      str([row.get("value") for row in _heavy["evidence"]]))
+check("storm-derived counts come from the synthetic event table",
+      any("2 events" in str(row.get("value")) for row in _heavy["evidence"])
+      and any("1 events" in str(row.get("value")) for d in _drivers if d["rank"] == 4
+              for row in d["evidence"]), "")
+check("damage-bearing flood count parses 0.00K as zero and 2.50K as damage",
+      any("1 of 2" in str(row.get("value")) for row in _heavy["evidence"]),
+      str([row.get("value") for row in _heavy["evidence"]]))
+_budget = next(d for d in _drivers if d["rank"] == 5)
+check("no raw phase token in any driver string",
+      all("el_nino" not in json.dumps(d) and "la_nina" not in json.dumps(d)
+          for d in _drivers), "")
+check("budget driver shows the mapped ENSO phase and formatted ONI",
+      any("El Niño" in str(row.get("value")) and "+1.80 °C" in str(row.get("value"))
+          for row in _budget["evidence"]),
+      str([row.get("value") for row in _budget["evidence"]]))
+
+# Missing supplementary sources must degrade, not invent: no storms table means
+# no storm-report evidence rows, but the verified numbers still publish.
+_drivers_ns = build_cost_drivers(days=_syn_days, dist=_syn_dist, streak_prob=_syn_streak,
+                                 enso_strat=_syn_strat, latest_oni=_syn_oni,
+                                 diagnostic_status=None, relevant_cpc=[],
+                                 storms=None, monthly=[])
+check("missing storms table: drivers still build from verified numbers",
+      len(_drivers_ns) == 6, str(len(_drivers_ns)))
+check("missing storms table: no storm-report evidence row is invented",
+      not any("Storm Events" in str(row.get("value"))
+              for d in _drivers_ns for row in d.get("evidence", [])), "")
+
+# The committed executive summary must satisfy the same rules end to end.
+if os.path.exists(_ll_path):
+    with io.open(_ll_path, encoding="utf-8") as fh:
+        _llex = json.load(fh).get("executive_summary", {})
+    _ll_drivers = _llex.get("cost_drivers") or []
+    check("committed executive summary has >=4 cost drivers", len(_ll_drivers) >= 4,
+          str(len(_ll_drivers)))
+    check("committed driver ranks are sequential from 1",
+          [d.get("rank") for d in _ll_drivers] == list(range(1, len(_ll_drivers) + 1)), "")
+    check("committed drivers all carry evidence and an official source",
+          all(d.get("evidence")
+              and all((s or {}).get("url", "").startswith("https://")
+                      and any(h in (s or {}).get("url", "") for h in
+                              ("ncei.noaa.gov", "noaa.gov", "census.gov", "weather.gov"))
+                      for s in d.get("sources", []))
+              and d.get("sources") for d in _ll_drivers), "")
+    check("committed cost-driver note separates guidance from verified numbers",
+          "guidance" in (_llex.get("cost_drivers_note") or ""), "")
+    _disp = [_llex.get("key_finding", "")]
+    for d in _ll_drivers:
+        _disp += [d.get("driver", ""), d.get("why_it_costs", "")]
+        _disp += [str(r.get("label", "")) + " " + str(r.get("value", ""))
+                  for r in d.get("evidence", [])]
+    check("no raw ENSO token in committed executive-summary strings",
+          not any(__import__("re").search(r"\b(?:el_nino|la_nina)\b", s) for s in _disp), "")
+    check("expected-day counts are present and numeric in the committed summary",
+          isinstance((_llex.get("expected_days") or {}).get("ge_025in_days"), (int, float))
+          and isinstance((_llex.get("expected_days") or {}).get("ge_100in_days"), (int, float)),
+          str(_llex.get("expected_days")))
+
+# --------------------------------------------------------------------------- #
 
 passed = sum(1 for _n, ok, _d in RESULTS if ok)
 failed = [(n, d) for n, ok, d in RESULTS if not ok]

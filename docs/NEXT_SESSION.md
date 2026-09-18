@@ -6,12 +6,46 @@ official, free, no-key sources; nothing here depends on commercial data.
 
 ---
 
-## 1. State at the end of this session (17 Sep 2026)
+## 1. State at the end of this session (17 Sep 2026, second working session)
 
 **What is live:** the nightly pipeline, the Oct 2026 – Jan 2027 scoreboard, the
 landlord dashboard, the current-forecast panel, the verification ledger, and the
 headless/inline tests. GitHub Pages serves `main` from the repository root, and the
 `Update NOAA data` workflow refreshes `data/` on every push and nightly at 07:15 UTC.
+
+### What changed in the second session (17 Sep 2026)
+
+1. **The executive summary the brief leads with is now on the page**: a ranked
+   list of **repair & maintenance cost drivers** (`data/landlord.json` →
+   `executive_summary.cost_drivers`, rendered as the "Repair & maintenance cost
+   drivers" card on the landlord dashboard). Six drivers: prolonged wet spells,
+   heavy single-day rain, wind + rain together, peak gusts, total seasonal water
+   load (with the ENSO/CPC tilt), and wet-day frequency. Every evidence number is
+   copied from the verified structures; the "why it matters" sentence is labelled
+   on the card as guidance, not a weather claim.
+2. **New published statistics**: expected heavy-rain days per season as sums of the
+   per-date 1991-2020 probabilities — 14.97 days ≥ 0.25 in and 3.19 days ≥ 1.00 in
+   (method published next to the numbers; the ledger re-derives them). Plus NCEI
+   Storm Events county context: 99 flood-type reports 2014-2026 (under-reporting
+   flagged), of which 4 carry a recorded property-damage figure.
+3. **Bugs 31-33 found and fixed** (table in `docs/VERIFICATION.md`): the ENSO stat
+   printed the raw token `el_nino` and a bare " ONI ·" subtitle; the key finding
+   and ENSO action item printed the raw token and a unit-less `1.8C` with a tilt
+   sentence that always claimed "wetter"; and a latent `None%` formatting defect
+   on CPC probabilities in the action checklist.
+4. **Ledger 23 → 26 checks** (`cost-drivers-structure`,
+   `cost-driver-expected-days-arithmetic`, `raw-phase-tokens`); unit tests
+   **89 → 121**; smoke test gained 4 render guards (cost-driver evidence/source
+   rules, no raw phase tokens, ENSO season naming, no `NaN`/`undefined` in main
+   sections). The source-traceability sweep now also covers the landlord action
+   checklist and cost-driver source URLs — all pass.
+5. **Pipeline determinism confirmed**: re-running the derive steps against the
+   committed inputs reproduces `data/calendar.json` byte-for-byte.
+
+### First session (17 Sep 2026), earlier the same day
+
+The summary below is kept for history; the numbers it quotes are superseded by the
+ledger and test counts above.
 
 **How to tell whether the last run was good** — do this before anything else:
 

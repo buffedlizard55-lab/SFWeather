@@ -57,18 +57,34 @@ where the point fell between polygons and the nearest one had to be used.
 It contains what somebody reported to an NWS office. Quiet but damaging events can
 be missing. It is not a census.
 
-### 8. No bias correction, downscaling or post-processing
+### 8. "Expected days per season" is an expectation, not a forecast
+The landlord cost-driver block publishes *expected counts* (e.g. ~15.0 days ≥ 0.25 in
+and ~3.2 days ≥ 1.00 in per season) computed as sums of each calendar date's
+1991-2020 observed probability across the 123-day window. That is a linear
+expectation over the observed distribution — a budgeting baseline — and it says
+nothing certain about 2026-27. Aggregation smooths out year-to-year bunching
+(atmospheric rivers arrive in clusters), which is exactly the structure the wet-spell
+streak statistics carry. The method is published next to the numbers on the site and
+re-derived by the claim ledger on every run.
+
+### 9. Storm Events damage figures are near-token entries
+For San Francisco County the NCEI Storm Events files mostly record `0.00K` damage,
+and the few non-zero flood entries are `0.01K` ($10) placeholders. The site therefore
+reports **event counts**, and how many reports carry any damage figure at all — never
+a dollar total — because the totals as recorded would misstate real losses.
+
+### 10. No bias correction, downscaling or post-processing
 Numbers are used exactly as published. A research-grade product would calibrate CPC
 probabilities against local observations and downscale the NWS grid to the
 neighbourhood.
 
-### 9. AccuWeather and other commercial providers are excluded
+### 11. AccuWeather and other commercial providers are excluded
 They require a paid key, their terms do not allow redistribution, and their output
 cannot be verified line by line against a public endpoint. `verify_sources.py`
 fails the build on any non-official host, so this cannot drift by accident. If you
 want a commercial second opinion you must read it at the source.
 
-### 10. Forecast gusts and rain amounts carry one allocation step
+### 12. Forecast gusts and rain amounts carry one allocation step
 The `/forecast/hourly` product returns **no `windGust` and no QPF** for grid
 `MTR 82,105` (0 of 156 periods on 17 Sep 2026), so those two fields come from the
 raw gridpoint series at the same point.

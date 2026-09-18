@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-17T23:08:29Z
+generated_utc: 2026-09-18T00:13:46Z
 
-checks: 23 passed, 0 failed, 0 warning(s)  (of 23)
+checks: 26 passed, 0 failed, 0 warning(s)  (of 26)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         105 recorded fetches (104 unique URLs)
@@ -35,6 +35,12 @@ checks: 23 passed, 0 failed, 0 warning(s)  (of 23)
         {'min': 1.71, 'p10': 6.38, 'p25': 8.5, 'median': 13.26, 'p75': 17.42, 'p90': 18.59, 'max': 22.82}
 [PASS] streak-arithmetic: Every published streak percentage equals seasons-with-a-streak / n_seasons
         ge_10_days: 7/30 = 23.3%; ge_3_days: 29/30 = 96.7%; ge_5_days: 24/30 = 80.0%; ge_7_days: 16/30 = 53.3%
+[PASS] cost-drivers-structure: Every maintenance cost driver is ranked, carries evidence rows, and cites only official .gov sources
+        6 drivers; all structural rules hold
+[PASS] cost-driver-expected-days-arithmetic: The published expected heavy-rain day counts equal the sum of the per-date 1991-2020 probabilities in the committed climatology table
+        ge_025in_days: published 14.97 vs recomputed 14.97 over 123 season dates; ge_100in_days: published 3.19 vs recomputed 3.19 over 123 season dates
+[PASS] raw-phase-tokens: No raw ENSO data token (el_nino / la_nina) appears in any reader-facing executive-summary string
+        0 raw tokens in display strings
 [PASS] normals-cross-check: The project's monthly rainfall means agree with NOAA's published 1991-2020 monthly normals for the same station
         largest difference 0.07 in
 [PASS] cpc-dedup: No duplicate CPC outlook is attached for the same period and variable
@@ -44,7 +50,7 @@ checks: 23 passed, 0 failed, 0 warning(s)  (of 23)
 [PASS] alert-test-filter: NOAA test messages are counted separately from real alerts
         real alerts=0, tests=0, total=0
 [PASS] source-traceability: Every source URL printed on the site is either fetched (with a hash) or an official landing page with fetched files beneath it
-        12 URL(s) traced, 1 landing page(s), 0 untraceable
+        15 URL(s) traced, 1 landing page(s), 0 untraceable
 [PASS] quotes-plain-text: Every quoted official sentence is decoded plain text, exactly as a browser shows it (no HTML entities)
         0 quoted string(s) contain entity text
 [PASS] claim-source-evidence: Every recorded claim with a source URL has a successful fetch with HTTP, size and hash evidence
@@ -144,5 +150,5 @@ claims recorded: 17
     method: point-in-polygon sample of the official CPC GIS shapefile at 37.760459, -122.483894 (attributes read from the DBF)
     cross-check: {"used_nearest_polygon": false, "containing_polygon_index": 7, "containing_polygon_bbox_lon_lat": [-124.4097, 34.5429, -119.6101, 42.0986], "raw_dbf_attributes": {"Fcst_Date": "20260917", "Valid_Seas": "Oct 2026", "Prob": 40.0, "Cat": "Above"}, "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the bounding
 - sources-listed: Source URLs referenced by the scoreboard
-    value: {"count": 12, "all_traced": true, "landing_pages": 1} URLs
+    value: {"count": 15, "all_traced": true, "landing_pages": 1} URLs
     method: union of every source URL attached to a day or a CPC record

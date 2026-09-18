@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-17T23:08:29Z",
+  "generated_utc": "2026-09-18T00:13:46Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,8 +9,8 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 23,
-    "passed": 23,
+    "total": 26,
+    "passed": 26,
     "failed": 0,
     "warnings": 0,
     "failed_checks": [],
@@ -172,6 +172,41 @@
       "evidence": null
     },
     {
+      "id": "cost-drivers-structure",
+      "title": "Every maintenance cost driver is ranked, carries evidence rows, and cites only official .gov sources",
+      "status": "pass",
+      "detail": "6 drivers; all structural rules hold",
+      "evidence": {
+        "issues": [],
+        "driver_count": 6
+      }
+    },
+    {
+      "id": "cost-driver-expected-days-arithmetic",
+      "title": "The published expected heavy-rain day counts equal the sum of the per-date 1991-2020 probabilities in the committed climatology table",
+      "status": "pass",
+      "detail": "ge_025in_days: published 14.97 vs recomputed 14.97 over 123 season dates; ge_100in_days: published 3.19 vs recomputed 3.19 over 123 season dates",
+      "evidence": {
+        "published": {
+          "ge_025in_days": 14.97,
+          "ge_100in_days": 3.19,
+          "method": "Sum of each calendar date's 1991-2020 observed probability over the 123-day window (linearity of expectation): the expected number of days per season meeting the test, not a prediction for 2026-27."
+        },
+        "recomputed": {
+          "ge_025in_days": 14.97,
+          "ge_100in_days": 3.19
+        },
+        "n_season_dates": 123
+      }
+    },
+    {
+      "id": "raw-phase-tokens",
+      "title": "No raw ENSO data token (el_nino / la_nina) appears in any reader-facing executive-summary string",
+      "status": "pass",
+      "detail": "0 raw tokens in display strings",
+      "evidence": []
+    },
+    {
       "id": "normals-cross-check",
       "title": "The project's monthly rainfall means agree with NOAA's published 1991-2020 monthly normals for the same station",
       "status": "pass",
@@ -228,7 +263,7 @@
       "id": "source-traceability",
       "title": "Every source URL printed on the site is either fetched (with a hash) or an official landing page with fetched files beneath it",
       "status": "pass",
-      "detail": "12 URL(s) traced, 1 landing page(s), 0 untraceable",
+      "detail": "15 URL(s) traced, 1 landing page(s), 0 untraceable",
       "evidence": {
         "untraceable": [],
         "landing_pages": [
@@ -729,7 +764,7 @@
       "id": "sources-listed",
       "statement": "Source URLs referenced by the scoreboard",
       "value": {
-        "count": 12,
+        "count": 15,
         "all_traced": true,
         "landing_pages": 1
       },

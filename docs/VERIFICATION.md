@@ -169,6 +169,34 @@ sat in the two fields this project exists to answer. It survived the first audit
 because every check asked "is this value right?" and nothing asked "is a value that
 exists being dropped?" The new tests ask the second question.
 
+### Third review pass, 17 Sep 2026 (bugs 31-33) - maintenance cost-driver session
+
+This session added the executive summary the brief actually asked for first - a
+ranked list of **repair & maintenance cost drivers** (`build_cost_drivers()` in
+`pipeline/landlord_summary.py`, rendered by `renderCostDrivers()`). Every number in
+it is copied from the already-verified structures; the "why it matters" sentence is
+labelled on the card as *guidance, not a weather claim*. While building it, the
+line-by-line pass found three defects in what was already published:
+
+| # | Symptom | Root cause | Fix |
+| --- | --- | --- | --- |
+| 31 | The "ENSO now" stat on the executive summary showed the raw data token **`el_nino` +1.8°C** and a subtitle beginning with a bare space: ` ONI · El Niño mean ...` | The official ONI is **season-labelled** (`JJA 2026`), but the card looked only for a `year_month` field that does not exist on the record, and printed the internal phase key instead of a reader-facing label | The pipeline now publishes `phase_label` (`El Niño`) and `oni_c_fmt` (`+1.80 °C`) alongside the raw fields; the renderer uses the season label. `npm test` asserts the card names its ONI season and that no raw phase token is visible anywhere on the landlord dashboard |
+| 32 | The executive summary's key finding and the ENSO action item read `Current ENSO: el_nino (official ONI 1.8C, JJA 2026)` - machine token and a unit-less number, and the sentence always claimed a wetter tilt regardless of phase | Pipeline prose was built from the raw `phase` and `oni_c` fields, formatted inline | `phase_label()` / `fmt_oni_c()` helpers (unit-tested), and the tilt sentence is now phase-aware (it says what this record shows for the phase NOAA actually published; a La Niña or neutral season gets its own honest wording). New ledger check `raw-phase-tokens` fails the run if `el_nino`/`la_nina` appears in any reader-facing executive-summary string |
+| 33 | **Latent**: a CPC outlook with a missing probability would have rendered as `at None% probability` in the action checklist and in the new cost-driver evidence | Two f-strings interpolated `prob` without a None guard | Both sites now phrase the row as "probability not stated in the sampled polygon" when the polygon carries no probability. Never triggered by current data; caught by reading the code paths the new block reuses |
+
+The new block is held to the same gates as everything else: ledger check
+`cost-drivers-structure` requires every driver to be ranked, carry evidence rows,
+and cite only official .gov sources; `cost-driver-expected-days-arithmetic`
+re-derives the published expected heavy-rain day counts (14.97 days ≥ 0.25 in and
+3.19 days ≥ 1.00 in per season) from the committed climatology table as sums of the
+per-date probabilities and fails on any disagreement. The smoke test refuses a
+cost-driver card with no evidence table or no source link.
+
+One deliberate editorial rule for the block: *expected-day counts are sums of
+per-date 1991-2020 probabilities* (linearity of expectation). The method string is
+published next to the numbers on the site, because the figure is an expectation
+over the observed distribution, not a prediction for 2026-27.
+
 ## Release held back: the deleted-function incident
 
 Two consecutive runs published nothing, which is the gate behaving correctly:
@@ -212,25 +240,32 @@ reached on only some code paths would have been silent.
 
 ## How the ledger and the tests stand now
 
-* `pipeline/verify_claims.py`: **23 automated checks, 17 recorded claims**, each claim
+* `pipeline/verify_claims.py`: **26 automated checks, 17 recorded claims**, each claim
   carrying value, unit, method, official URL, HTTP status, bytes, SHA-256, retrieval
   time and - where one exists - an independent cross-check. Order: provenance-present,
   provenance-record-count, hosts-official, centroid-verified, oni-official-read-directly,
   oni-official-present,
   nws-daily-aggregation, tier-honesty, calendar-completeness, calendar-fields,
   humidity-honesty, oni-cross-check, season-mean-arithmetic, distribution-ordering,
-  month-mean-*, streak-arithmetic, normals-cross-check, cpc-dedup,
-  cpc-seasonal-present, alert-test-filter, source-traceability, quotes-plain-text,
-  claim-source-evidence.
-* `tests/test_parsers.py`: **89 offline assertions**, stdlib only. Added 17 Sep 2026:
-  the exact official-host allow-list, the CPC category-explanation rule (bugs 23) and the gridpoint gust/QPF aggregation,
+  month-mean-*, streak-arithmetic, cost-drivers-structure,
+  cost-driver-expected-days-arithmetic, raw-phase-tokens, normals-cross-check,
+  cpc-dedup, cpc-seasonal-present, alert-test-filter, source-traceability,
+  quotes-plain-text, claim-source-evidence.
+* `tests/test_parsers.py`: **121 offline assertions**, stdlib only. Added 17 Sep 2026:
+  the exact official-host allow-list, the CPC category-explanation rule (bug 23) and the gridpoint gust/QPF aggregation,
   including the local-midnight accumulation split and the cross-check of derived gusts
-  against the gusts NWS states in its own text forecast.
+  against the gusts NWS states in its own text forecast. Added in the third pass:
+  the expected-days summation (both record shapes), the Storm Events damage parsing
+  (`0.00K` = no recorded damage, `""` = unknown), the ENSO phase/ONI display
+  formatting, and the cost-driver builder's evidence rules on synthetic inputs and
+  on the committed landlord.json.
 * `npm test` (jsdom): renders the page against the committed data and fails on an
   empty section, a broken day dialog, a broken CSV export, a truncated source label,
   the broken reality-check sentence, a CPC note that does not explain its own category,
   an unlabelled rain/temperature outlook, an unrounded humidity, a mislabelled source
-  link, or a forecast day missing its gust or rain amount.
+  link, a forecast day missing its gust or rain amount, a cost-driver card without
+  evidence or a source, a raw ENSO phase token on the landlord dashboard, or a
+  `NaN`/`undefined` rendered anywhere in the main sections.
 * Nightly gate: `summary.failed > 0` -> "refresh NOT published", diagnostics committed
   only. The site then keeps the last verified dataset.
 
