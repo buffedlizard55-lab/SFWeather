@@ -1176,12 +1176,17 @@ function openDay(d) {
           : 'Some wet-day precipitation percentiles are blank because NOAA does not '
             + 'publish them for this date.' }));
     }
+    // The count is read from the data, never typed: the previous wording said
+    // "13 element columns ... including 14 traced" because the hard-coded 13 did
+    // not know about the year-count column the column map also carries.
     const pubCols = off.published_columns || {};
+    const nCols = Object.keys(pubCols).length;
     body.append(el('p', { class: 'fine' }, [
       'Source: ',
       link(off.source_url, 'NCEI 1991-2020 daily normals for ' + (off.station_id || 'this station')),
-      document.createTextNode(' \u00b7 13 element columns read, including ' +
-        (Object.keys(pubCols).length || 0) + ' traced to named columns.')
+      document.createTextNode(nCols
+        ? ` \u00b7 ${nCols} column(s) of the published file traced to named elements.`
+        : '')
     ]));
   }
 
