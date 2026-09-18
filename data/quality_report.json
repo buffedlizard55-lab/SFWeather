@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T19:59:27Z",
+  "generated_utc": "2026-09-18T20:08:29Z",
   "counts": {
     "total": 5,
     "errors": 0,
@@ -61,7 +61,7 @@
         "http_status": 404,
         "note": "Latest official observation from station OAMC1",
         "error": "HTTP 404 Not Found",
-        "retrieved_utc": "2026-09-18T19:55:25Z"
+        "retrieved_utc": "2026-09-18T20:06:00Z"
       }
     },
     {
@@ -73,7 +73,7 @@
         "http_status": 404,
         "note": "NCEI 1991-2020 Hourly Climate Normals: USW00023272",
         "error": "HTTP 404 Not Found",
-        "retrieved_utc": "2026-09-18T19:58:57Z"
+        "retrieved_utc": "2026-09-18T20:08:07Z"
       }
     }
   ]
