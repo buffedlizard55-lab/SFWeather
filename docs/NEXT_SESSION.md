@@ -117,6 +117,46 @@ across 5 exact official hosts, `verify_claims` 23/23.
 
 ---
 
+### Third pass, 17 Sep 2026 (this session) - the published-normals session
+
+**What was added**
+
+1. **NOAA's own published per-date daily normals**, shown beside this project's
+   count of the same quantity, date by date, with the difference published rather
+   than reconciled (`pipeline/climo.py` `parse_daily_normals` /
+   `compare_daily_normals`; new section "Two official answers" and a per-day table in
+   the day dialog). On the 123 dates of this window: rain day >= 0.01 in mean
+   difference **-0.4 pp**, >= 0.25 in **-0.1 pp**, >= 1.00 in **+0.1 pp**, normal high
+   **-0.6 F**, normal low **-0.3 F**. 25 dates differ by more than 10 points, which the
+   page explains (30-season sampling error is about +/-9 points near p = 40 %).
+2. **A day finder** on the scoreboard ("Jump to a date"): picks the month, marks the
+   day, opens its detail.
+3. **`GE###HI` columns resolved from the file, not assumed**: the digits are
+   hundredths of an inch (GE001HI = >= 0.01 in), and the mapping now travels with the
+   data as `layout.thresholds_in`, so a label cannot drift from its column.
+
+**Defects found and fixed** (full table in [`VERIFICATION.md`](VERIFICATION.md),
+bugs 34-39): the published-vs-derived comparison had been producing **no pairs at
+all** because `build_calendar.py` carried a duplicate aggregator keyed on
+`..._001in_pct` columns that do not exist; **123 dates published `-9999.00 in`** as a
+precipitation percentile because NOAA's missing-value sentinel was not in the
+missing list; the check written to catch that **could not fire** (it tested
+`endswith("_pctl_in")` against a key spelled `pcp_50pctl_in`); climatically-mean
+amounts were labelled `rain` on the tile; `import climo` was shadowed inside
+`main()`; and prose still said the wind station was "~10 miles" away when the
+pipeline computes 11.9.
+
+**Verification:** ledger **32 checks, 0 failed, 0 warnings** on the regenerated
+dataset; `tests/test_parsers.py` **170 assertions**; `npm test` green with new
+guards proven to fail on the old code before being kept. Sandbox has no egress to
+NOAA/NWS hosts, so every number came from the `Update NOAA data` workflow.
+
+**The lesson worth keeping:** bug 37 was invisible in every offline fixture and
+appeared only when the first dataset produced by CI was read line by line. Fixture
+data cannot prove a parser is right about a publisher's conventions. Bug 38 is its
+companion - a guard that cannot fire is worse than no guard, so the range rule now
+lives in `climo.implausible_normals_value()` and is unit-tested.
+
 ## 2. Open work, in priority order
 
 ### 1. Hourly ISD wind → hour-by-hour simultaneous wind and rain
@@ -153,7 +193,7 @@ show the quoted sentence with its source. Never turn a mention into a number.
 **Effort:** ~0.5 day.
 
 ### 5. A nearer wind record than SFO
-SFO is ~10 mi away and more exposed, so every wind number is an upper bound. Assess
+SFO is 11.9 mi away and more exposed, so every wind number is an upper bound. Assess
 `SFOC1` and other ISD stations in the city; if a usable overlap exists, publish a
 documented ratio (labelled an estimate) alongside — never instead of — the raw SFO
 numbers.
