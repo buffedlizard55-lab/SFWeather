@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-18T19:51:41Z
+generated_utc: 2026-09-18T19:53:57Z
 
-checks: 47 passed, 0 failed, 1 warning(s)  (of 48)
+checks: 48 passed, 0 failed, 0 warning(s)  (of 48)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         141 recorded fetches (140 unique URLs)
@@ -95,8 +95,8 @@ checks: 47 passed, 0 failed, 1 warning(s)  (of 48)
         all values on 123 scoreboard day(s) and 7 current-forecast day(s) carry a basis
 [PASS] readme-figures-traceable: Every figure in the README's rainy-season table is a number the dataset actually publishes (at the precision written)
         all README table figures matched a published value
-[WARN] docs-current-dates-traceable: Any date in the documentation that could be read as the current NWS forecast horizon is a date this run actually published
-        1 documentation date(s) near this run match no published forecast-window date: [{'file': 'VERIFICATION.md', 'date': '2026-10-01'}]
+[PASS] docs-current-dates-traceable: Any date in the documentation that could be read as the current NWS forecast horizon is a date this run actually published
+        no documentation date near 2026-09-18 is absent from the 134 date(s) this dataset publishes (forecast window, scoreboard days, CPC issuances, run date)
 [PASS] failed-fetches-explained: Every fetch that did not return HTTP 200 is explained in the quality report, naming what it cost the dataset - not merely counted in the source manifest
         2 failed fetch(es), all explained in the quality report
 

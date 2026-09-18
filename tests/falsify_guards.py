@@ -261,13 +261,27 @@ def _b2(tmp):
 
 
 def _provenance_case(mutate_prov, mutate_quality=None):
-    """Build a fixture with a controlled provenance manifest / quality report."""
+    """Build a fixture with a controlled provenance manifest / quality report.
+
+    run.json's counts are recomputed from the mutated manifest so the fixture
+    does not trip the unrelated provenance-record-count check and obscure the
+    verdict this case is actually about.
+    """
     def build(tmp):
         for f in DATA.glob("*.json"):
             shutil.copy2(f, tmp / f.name)
         prov = load("provenance.json")
         mutate_prov(prov)
         dump(tmp / "provenance.json", prov)
+        entries = prov.get("entries") or []
+        failed = sum(1 for e in entries
+                     if e.get("ok") is False or (e.get("http_status") or 200) != 200)
+        run = load("run.json")
+        run.setdefault("counts", {})
+        run["counts"]["manifest_entries"] = len(entries)
+        run["counts"]["successful_fetches"] = len(entries) - failed
+        run["counts"]["failed_fetches"] = failed
+        dump(tmp / "run.json", run)
         if mutate_quality:
             q = load("quality_report.json")
             mutate_quality(q)

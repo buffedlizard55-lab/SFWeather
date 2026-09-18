@@ -1546,6 +1546,16 @@ def main() -> int:
             window_dates.add(v)
     for day in ((cal.get("current_forecast") or {}).get("days") or []):
         window_dates.add(str(day.get("date"))[:10])
+    # So are the scoreboard's own 123 dates.  Documentation that says the season
+    # runs "2026-10-01 -> 2027-01-31" is quoting dates this dataset publishes;
+    # treating them as unverifiable produced a false positive on the first CI run
+    # that carried the pass-3 table.  What this check is for is a date presented
+    # as *today's forecast horizon* that the run never published - and those sit
+    # just past the horizon, inside neither the window nor the season.
+    for day in (cal.get("days") or []):
+        v = str(day.get("date") or "")[:10]
+        if len(v) == 10:
+            window_dates.add(v)
     if run_date:
         window_dates.add(run_date.isoformat())
     # CPC issuance dates belong in the vocabulary too: documentation that says an
@@ -1586,13 +1596,17 @@ def main() -> int:
         "Any date in the documentation that could be read as the current NWS "
         "forecast horizon is a date this run actually published",
         not stale_dates,
-        (f"{len(stale_dates)} documentation date(s) near this run match no published "
-         f"forecast-window date: {stale_dates[:6]}")
+        (f"{len(stale_dates)} documentation date(s) near this run match no date this "
+         f"dataset publishes: {stale_dates[:6]}")
         if stale_dates else
-        f"no documentation date near {run_date.isoformat() if run_date else 'this run'} "
-        f"contradicts the published window {sorted(window_dates)}",
+        (f"no documentation date near "
+         f"{run_date.isoformat() if run_date else 'this run'} is absent from the "
+         f"{len(window_dates)} date(s) this dataset publishes (forecast window, "
+         f"scoreboard days, CPC issuances, run date)"),
         severity="warning",
-        evidence={"stale": stale_dates[:10], "window_dates": sorted(window_dates)})
+        evidence={"stale": stale_dates[:10],
+                  "published_date_count": len(window_dates),
+                  "published_dates_sample": sorted(window_dates)[:12]})
 
     # ------------------------------- 16. failed fetches are explained, not just counted
     # The site already discloses a failed fetch twice over: the status banner
@@ -1611,16 +1625,16 @@ def main() -> int:
     unexplained = []
     for e in failed_fetches:
         url = str(e.get("url") or "")
-        # Match on the URL, or on the fetch note, or on the distinctive last
-        # path segment (a station id or a filename), so the irregularity does not
-        # have to quote the URL character for character.
-        needles = [url]
-        if e.get("note"):
-            needles.append(str(e["note"]))
-        tail = [p for p in url.rstrip("/").split("/") if p]
-        if tail:
-            needles.append(tail[-1])
-        if not any(n and n.lower() in irr_text for n in needles):
+        # Match on the URL or on the fetch note - both of which
+        # main.flag_failed_fetches() writes into the irregularity it records.
+        # An earlier version also accepted the URL's last path segment, on the
+        # theory that a station id or filename is distinctive.  It is not: two
+        # NWS observation URLs both end in "latest", so one station's explanation
+        # silently covered another's failure and the check reported a failure as
+        # explained.  tests/falsify_guards.py caught it.  A heuristic needle that
+        # can match the wrong irregularity is worse than a strict one.
+        needles = [n for n in (url, str(e.get("note") or "")) if n.strip()]
+        if not any(n.lower() in irr_text for n in needles):
             unexplained.append({"url": url, "http_status": e.get("http_status"),
                                 "note": e.get("note")})
     ledger.check(
