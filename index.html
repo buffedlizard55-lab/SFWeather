@@ -242,6 +242,13 @@
       <div class="card">
         <div class="cal-controls">
           <div class="month-tabs" id="month-tabs" role="tablist"></div>
+          <div class="cal-find">
+            <label for="day-find">Jump to a date</label>
+            <input type="date" id="day-find" min="2026-10-01" max="2027-01-31"
+                   aria-describedby="day-find-help">
+            <button class="btn btn-sm" type="button" id="day-find-go">Open</button>
+            <span class="fine" id="day-find-help">…or click any day.</span>
+          </div>
           <div class="cal-legend">
             <span><i class="sw sw-0"></i>&lt;10%</span>
             <span><i class="sw sw-1"></i>10–25%</span>
@@ -280,7 +287,7 @@
     <section id="wind" class="section">
       <h2>Wind, gusts, and wind&nbsp;+&nbsp;rain together</h2>
       <div class="card">
-        <p class="fine">Wind is measured at the SFO ASOS (KSFO), about 10 miles south-east of
+        <p class="fine">Wind is measured at the SFO ASOS (KSFO), 11.9 miles south-east of
           94122. That site is far more open than the Sunset, so it runs windier than the ZIP code
           itself — read these as an upper bound for the neighbourhood. Source: <a href="https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt" target="_blank" rel="noopener">GSOD README</a> (units: knots, converted to mph ×1.15078) and <a href="https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/" target="_blank" rel="noopener">GSOD archive</a>. Joint wind+rain uses GSOD wind + GHCN rain for same date.</p>
         <div id="wind-table"></div>
@@ -301,7 +308,7 @@
         <div id="storm-summary"></div>
       </div>
       <div class="card">
-        <h3>Most damaging recorded events</h3>
+        <h3>Recorded events carrying a damage figure</h3>
         <div id="storm-table"></div>
       </div>
     </section>
@@ -336,6 +343,19 @@
       </div>
     </section>
 
+    <!-- ============== published vs derived daily normals ============= -->
+    <section id="published" class="section">
+      <h2>Two official answers — NOAA’s published normals vs this project’s own count</h2>
+      <div class="card">
+        <p class="fine">The single most useful cross-check on this site. NOAA publishes, for every
+          calendar date at this station, its own probability that the date records at least
+          0.01 / 0.25 / 1.00 in of rain. This project also counts that from 30 seasons of
+          GHCN-Daily. Rather than pick one, both are published here with the difference.
+          Source: <a href="https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv" target="_blank" rel="noopener">NCEI 1991–2020 daily normals (USW00023272)</a>.</p>
+        <div id="published-normals"></div>
+      </div>
+    </section>
+
     <!-- ============================ quality ========================== -->
     <section id="quality" class="section">
       <h2>Data quality — irregularities flagged for review</h2>
@@ -357,7 +377,7 @@
             shows observed climatology, clearly badged. Anyone who tells you the rainfall on
             14 January 2027 is “going to be 0.8 inches” is inventing it. Verify: <a href="https://forecast.weather.gov/MapClick.php?lat=37.7605&lon=-122.4839" target="_blank" rel="noopener">forecast.weather.gov MapClick</a> only shows 7 days.</li>
           <li><strong>Two different stations.</strong> Rain/temperature from the San Francisco
-            downtown gauge USW00023272, wind from SFO 72494023234. They are ~10 miles apart, and San Francisco’s
+            downtown gauge USW00023272, wind from SFO 72494023234. They are 11.9 miles apart, and San Francisco’s
             microclimates mean the Sunset differs from both. Sources: <a href="https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv" target="_blank" rel="noopener">GHCN-Daily file</a> and <a href="https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/" target="_blank" rel="noopener">GSOD archive</a>.</li>
           <li><strong>GSOD days are UTC days</strong> (00-24Z), i.e. roughly 16:00-16:00
             local, while GHCN rain days are local days. The joint wind-and-rain statistic therefore
@@ -384,7 +404,7 @@
             normal. Where available, it is a labelled per-calendar-date derivation from official NCEI
             hourly temperature and dew-point normals (Magnus formula); if that source is unavailable,
             the field remains empty.</li>
-          <li><strong>Wind record still comes from SFO</strong> (KSFO), ~10 miles away: the closest
+          <li><strong>Wind record still comes from SFO</strong> (KSFO), 11.9 miles away: the closest
             long daily wind record. Hourly ISD at a nearer site would tighten it.</li>
           <li>See full list in <a href="https://github.com/buffedlizard55-lab/SFWeather/blob/main/docs/LIMITATIONS.md" target="_blank" rel="noopener">LIMITATIONS.md</a></li>
         </ul>

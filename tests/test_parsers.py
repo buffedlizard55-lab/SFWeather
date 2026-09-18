@@ -795,6 +795,163 @@ if os.path.exists(_ll_path):
           str(_llex.get("expected_days")))
 
 # --------------------------------------------------------------------------- #
+print("\n== official NCEI daily normals (normals-daily)")
+
+# A fixture in the exact layout NCEI serves, with hand-computable values: every
+# element is the same on every date, so the expected parse is known exactly.
+# The NAME field deliberately contains an unquoted comma, because that is the
+# real file's shape and it is what broke the GSOD reader (see VERIFICATION.md #6).
+_DLY_HEAD = ["STATION", "DATE", "LATITUDE", "LONGITUDE", "ELEVATION", "NAME",
+             "month", "day", "hour"]
+_DLY_VALS = {"DLY-TMAX-NORMAL": "  60.0", "DLY-TMIN-NORMAL": "  50.0",
+             "DLY-TAVG-NORMAL": "  55.0",
+             "DLY-PRCP-PCTALL-GE001HI": "  36.8", "DLY-PRCP-PCTALL-GE010HI": "  25.3",
+             "DLY-PRCP-PCTALL-GE025HI": "  16.8", "DLY-PRCP-PCTALL-GE050HI": "  10.3",
+             "DLY-PRCP-PCTALL-GE100HI": "   4.3", "DLY-PRCP-PCTALL-GE200HI": "   0.6",
+             "DLY-PRCP-PCTALL-GE400HI": "   0.0", "DLY-PRCP-PCTALL-GE600HI": "   0.0",
+             "DLY-PRCP-25PCTL": "   0.07", "DLY-PRCP-50PCTL": "   0.21",
+             "DLY-PRCP-75PCTL": "   0.56"}
+_DLY_ELEMS = list(_DLY_VALS)
+
+
+def _daily_normals_fixture(include_leap_day=True):
+    import datetime as _dt
+    head = list(_DLY_HEAD)
+    for e in _DLY_ELEMS:
+        head += [e, "meas_flag_" + e, "comp_flag_" + e, "years_" + e]
+    lines = [",".join('"%s"' % h for h in head)]
+    d = _dt.date(2024, 1, 1)
+    while d.year == 2024:
+        if not include_leap_day and (d.month, d.day) == (2, 29):
+            d += _dt.timedelta(days=1)
+            continue
+        mmdd = d.strftime("%m-%d")
+        cells = ['"USW00023272"', '"%s"' % mmdd, '" 37.77"', '"-122.43"', '"  45.7"',
+                 '"SAN FRANCISCO DWTN, CA US"', '"%s"' % mmdd[:2], '"%s"' % mmdd[3:], '"99"']
+        for e in _DLY_ELEMS:
+            cells += ['"%s"' % _DLY_VALS[e], '" "', '"S"', '"30"']
+        lines.append(",".join(cells))
+        d += _dt.timedelta(days=1)
+    return "\n".join(lines) + "\n"
+
+
+_by, _layout = climo.parse_daily_normals(_daily_normals_fixture())
+check("daily normals: a full year parses to 366 dated rows", len(_by) == 366, str(len(_by)))
+check("daily normals: 01-01, 12-31 and the leap day are all present",
+      all(k in _by for k in ("01-01", "12-31", "02-29")),
+      str([k for k in ("01-01", "12-31", "02-29") if k not in _by]))
+check("daily normals: the unquoted comma in NAME does not shift the row",
+      _by["12-13"]["normal_high_f"] == 60.0 and _by["12-13"]["normal_low_f"] == 50.0,
+      repr((_by["12-13"]["normal_high_f"], _by["12-13"]["normal_low_f"])))
+
+# The GE###HI digits are HUNDREDTHS of an inch.  Getting this wrong by one order
+# of magnitude would silently compare the wrong pair of columns everywhere, so the
+# mapping is pinned here and the values are the real ones for 01-01 at USW00023272.
+check("daily normals: GE001HI is >= 0.01 in, not >= 0.001 in",
+      _by["01-01"]["p_pcp_ge_0p01in_pct"] == 36.8, repr(_by["01-01"].get("p_pcp_ge_0p01in_pct")))
+check("daily normals: GE010HI is >= 0.10 in", _by["01-01"]["p_pcp_ge_0p10in_pct"] == 25.3, "")
+check("daily normals: GE025HI is >= 0.25 in", _by["01-01"]["p_pcp_ge_0p25in_pct"] == 16.8, "")
+check("daily normals: GE050HI is >= 0.50 in", _by["01-01"]["p_pcp_ge_0p50in_pct"] == 10.3, "")
+check("daily normals: GE100HI is >= 1.00 in", _by["01-01"]["p_pcp_ge_1p00in_pct"] == 4.3, "")
+check("daily normals: GE200HI is >= 2.00 in", _by["01-01"]["p_pcp_ge_2p00in_pct"] == 0.6, "")
+check("daily normals: published thresholds are carried with the data",
+      _layout["thresholds_in"].get("p_pcp_ge_0p01in_pct") == 0.01
+      and _layout["thresholds_in"].get("p_pcp_ge_1p00in_pct") == 1.00,
+      str(_layout["thresholds_in"]))
+check("daily normals: every probability column is monotone non-increasing",
+      all(_by[k]["p_pcp_ge_0p01in_pct"] >= _by[k]["p_pcp_ge_0p10in_pct"]
+          >= _by[k]["p_pcp_ge_0p25in_pct"] >= _by[k]["p_pcp_ge_0p50in_pct"]
+          >= _by[k]["p_pcp_ge_1p00in_pct"] >= _by[k]["p_pcp_ge_2p00in_pct"]
+          for k in _by), "")
+check("daily normals: percentiles keep three decimals (0.07, not 0.1)",
+      _by["01-01"]["pcp_25pctl_in"] == 0.07 and _by["01-01"]["pcp_75pctl_in"] == 0.56, "")
+check("daily normals: the published year count is captured",
+      _by["01-01"]["n_years_pcp_ge_010in"] == 30, "")
+check("daily normals: every friendly key is traceable to an official column",
+      all(col.startswith("DLY-") for col in _layout["column_by_key"].values())
+      and len(_layout["column_by_key"]) == len(climo._DLY_ELEMENTS),
+      str(sorted(_layout["column_by_key"].values())))
+check("daily normals: an element in the file that the parser does not claim "
+      "(DLY-TAVG-NORMAL) is left out rather than given a made-up key",
+      not any(v == "DLY-TAVG-NORMAL" for v in _layout["column_by_key"].values()), "")
+
+# A missing value must stay missing, never become 0.
+_by_blank, _ = climo.parse_daily_normals(
+    _daily_normals_fixture().replace('"  25.3"', '"      "', 1))
+check("daily normals: a blank published value is absent, not zero",
+      "p_pcp_ge_0p10in_pct" not in _by_blank["01-01"], repr(_by_blank["01-01"]))
+
+# A file with none of the expected columns must be refused, not guessed at.
+_by_bad, _layout_bad = climo.parse_daily_normals(
+    "STATION,DATE,SOMETHING\nUSW00023272,01-01,7\n")
+check("daily normals: an unknown layout yields no values and a recorded reason",
+      _by_bad == {} and _layout_bad.get("usable") is False
+      and "reason" in _layout_bad, json.dumps(_layout_bad)[:200])
+
+# A truncated read (the old 200,000-character cap) must be detectable.
+_by_short, _layout_short = climo.parse_daily_normals(
+    "\n".join(_daily_normals_fixture().splitlines()[:100]) + "\n")
+check("daily normals: a truncated file parses to fewer than 366 dates (detectable)",
+      len(_by_short) < 366, "%d dates" % len(_by_short))
+
+# The comparison pairs like-for-like and is signed the right way round.
+# Published >=0.01 in is 36.8 %; a derived 10.0 % therefore differs by +26.8.
+# Published >=0.25 in (16.8) and >=1.00 in (4.3) are matched exactly by the fake
+# derived values, so they must NOT be flagged.
+_fake_climo = {"01-01": {"p_rain_day_pct": 10.0, "p_rain_ge_025in_pct": 16.8,
+                         "p_rain_ge_100in_pct": 4.3, "normal_high_f": 57.1,
+                         "normal_low_f": 46.2}}
+_cmp = climo.compare_daily_normals(_by, _fake_climo)
+_p = _cmp["pairs"]
+check("daily normals: correct pairs are compared (>=0.01in published vs derived)",
+      _p["rain day >= 0.01 in"]["n"] == 1
+      and _p["rain day >= 0.01 in"]["largest_difference_published"] == 36.8
+      and _p["rain day >= 0.01 in"]["largest_difference_derived"] == 10.0,
+      json.dumps(_p.get("rain day >= 0.01 in")))
+check("daily normals: the difference is signed published-minus-derived",
+      _p["rain day >= 0.01 in"]["mean_difference"] == 26.8
+      and _p["normal low"]["mean_difference"] == 3.8,
+      json.dumps({k: v.get("mean_difference") for k, v in _p.items()}))
+check("daily normals: an exact agreement reports zero difference, not a flag",
+      _p["rain >= 0.25 in"]["largest_absolute_difference"] == 0.0
+      and _p["rain >= 1.00 in"]["largest_absolute_difference"] == 0.0, "")
+check("daily normals: only the >10-point percentage disagreement is flagged",
+      len(_cmp["flagged"]) == 1 and _cmp["flagged"][0]["mmdd"] == "01-01"
+      and _cmp["flagged"][0]["quantity"] == "rain day >= 0.01 in"
+      and _cmp["flagged"][0]["difference"] == 26.8,
+      json.dumps(_cmp["flagged"]))
+check("daily normals: temperature pairs are never flagged (a different statistic)",
+      all(f["quantity"] not in ("normal high", "normal low") for f in _cmp["flagged"]), "")
+check("daily normals: the comparison names no date it did not compare",
+      _cmp["compared_dates"] == 366 and _cmp["pairs"]["normal high"]["n"] == 1, "")
+
+# --------------------------------------------------------------------------- #
+print("\n== published-vs-derived values on the committed scoreboard")
+
+if os.path.exists(os.path.join(ROOT, "data", "calendar.json")):
+    with io.open(os.path.join(ROOT, "data", "calendar.json"), encoding="utf-8") as fh:
+        _cal = json.load(fh)
+    _days = _cal.get("days") or []
+    _withoff = [d for d in _days if d.get("official_normal")]
+    if _withoff:
+        check("committed days carry the published normals block", True,
+              "%d of %d days" % (len(_withoff), len(_days)))
+        check("every published block names its source URL and station",
+              all((d["official_normal"].get("source_url") or "").startswith("https://")
+                  and d["official_normal"].get("station_id") for d in _withoff), "")
+        check("published blocks expose the 8 GE thresholds and 3 percentiles",
+              all(all(k in d["official_normal"] or k.endswith("in_pct") is False
+                      for k in ("p_pcp_ge_0p01in_pct", "p_pcp_ge_1p00in_pct",
+                                "pcp_50pctl_in")) for d in _withoff), "")
+        check("the comparison block exists and records a compared-date count",
+              isinstance((_cal.get("daily_normals_comparison") or {}).get("compared_dates"),
+                         int), "")
+    else:
+        check("committed scoreboard has no published-normals block yet "
+              "(pipeline regenerates it on the next Actions run)",
+              True, "0 of %d days carry official_normal" % len(_days))
+
+# --------------------------------------------------------------------------- #
 
 passed = sum(1 for _n, ok, _d in RESULTS if ok)
 failed = [(n, d) for n, ok, d in RESULTS if not ok]

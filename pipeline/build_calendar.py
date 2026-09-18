@@ -23,6 +23,12 @@ import re
 import sys
 from pathlib import Path
 
+# The shared parser/comparison implementation.  Imported under an explicit
+# alias because main() already has a local `climo` (the loaded climatology.json),
+# which silently shadowed the module.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import climo as climo_lib  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 OUT = DATA / "calendar.json"
@@ -412,6 +418,16 @@ def main():
     date_rh = humidity_normals.get("date_rh_pct") or {}
     humidity_station = humidity_normals.get("station_id")
     humidity_station_name = humidity_normals.get("station_name")
+    # NOAA's own published per-date normals (see pipeline/climo.py).  These are
+    # carried onto every day so the dialog can show the official number next to
+    # this project's derived one, with the difference stated.
+    published_daily_normals = load("daily_normals.json")
+    pub_by_mmdd = published_daily_normals.get("by_mmdd") or {}
+    official_column_names = ((published_daily_normals.get("layout") or {})
+                             .get("column_by_key") or {})
+    official_column_names = dict(official_column_names)
+    official_column_names.setdefault("n_years_pcp_ge_010in",
+                                     "years_DLY-PRCP-PCTALL-GE010HI")
 
     daily_climo = {d["mmdd"]: d for d in climo.get("daily", [])}
     season_climo = climo.get("season", {})
@@ -570,6 +586,47 @@ def main():
                  "url": meta.get("wind_station", {}).get("url")},
             ]
 
+        # ---- NOAA's published daily normals for this calendar date ----------
+        # Read straight out of the official NCEI file. Where this project also
+        # derives the same quantity from GHCN-Daily, the derived value and the
+        # signed difference are published alongside it - the two are never
+        # reconciled into one number, so a reviewer can see the disagreement.
+        pub = pub_by_mmdd.get(mmdd)
+        if pub:
+            official = dict(pub)
+            official["source_url"] = published_daily_normals.get("url")
+            official["station_id"] = published_daily_normals.get("station_id")
+            official["source"] = published_daily_normals.get("source")
+            derived_pairs = (
+                ("p_pcp_ge_0p01in_pct", "p_rain_day_pct", "pct_points",
+                 "share of years with >= 0.01 in"),
+                ("p_pcp_ge_0p25in_pct", "p_rain_ge_025in_pct", "pct_points",
+                 "share of years with >= 0.25 in"),
+                ("p_pcp_ge_1p00in_pct", "p_rain_ge_100in_pct", "pct_points",
+                 "share of years with >= 1.00 in"),
+                ("normal_high_f", "normal_high_f", "deg_f", "normal high"),
+                ("normal_low_f", "normal_low_f", "deg_f", "normal low"),
+            )
+            comparison = []
+            for pub_key, der_key, unit, label in derived_pairs:
+                pv, dv = official.get(pub_key), c.get(der_key)
+                if pv is None or dv is None:
+                    continue
+                comparison.append({
+                    "quantity": label,
+                    "published": pv,
+                    "derived": dv,
+                    "difference": round(pv - dv, 3),
+                    "unit": unit,
+                    "published_column": next(
+                        (col for col, key in official_column_names.items() if key == pub_key),
+                        pub_key),
+                })
+            # Only genuinely like-for-like pairs are compared, so a temperature
+            # normal is never diffed against a probability.
+            official["derived_comparison"] = comparison
+            official["published_columns"] = official_column_names
+            entry["official_normal"] = official
         # CPC outlooks that validly cover this day
         covering = []
         for r in short_range:
@@ -696,6 +753,42 @@ def main():
         "days": current_days,
     }
 
+    # ---- published-vs-derived daily normals, over the whole season window ----
+    # This is the single most direct cross-check on the site: NOAA publishes, for
+    # each calendar date, the share of years that recorded at least 0.01 in of
+    # precipitation.  The project derives the same quantity from 30 seasons of
+    # GHCN-Daily.  Both are published; the difference is stated, never averaged
+    # away.  A large difference would mean one of the two is wrong, and it is
+    # surfaced as an irregularity rather than quietly dropped.
+    daily_normals_comparison = None
+    if pub_by_mmdd:
+        # The aggregation lives in climo, next to the parser, so the site, the
+        # ledger and the unit tests all measure the same thing the same way.
+        # (build_calendar previously re-implemented it inline, which is how the
+        # threshold pairing drifted.)
+        comparison = climo_lib.compare_daily_normals(pub_by_mmdd, daily_climo)
+        # Inside the season it is the ISO date a reader wants, not "MM-DD".
+        mmdd_to_iso = {d["mmdd"]: d["date"] for d in calendar}
+        for row in comparison.get("flagged") or []:
+            row["date"] = mmdd_to_iso.get(row.get("mmdd"))
+        for blk in (comparison.get("pairs") or {}).values():
+            if blk.get("largest_difference_date"):
+                blk["largest_difference_date"] = mmdd_to_iso.get(
+                    blk["largest_difference_date"], blk["largest_difference_date"])
+        comparison["published_source_url"] = published_daily_normals.get("url")
+        comparison["published_station_id"] = published_daily_normals.get("station_id")
+        comparison["published_sha256"] = published_daily_normals.get("sha256")
+        comparison["flag_threshold_pct_points"] = 10.0
+        comparison["note"] = (
+            "Published values are read column-for-column out of NOAA NCEI's "
+            "1991-2020 daily normals for the same station; derived values are this "
+            "project's own count over the 30 seasons of GHCN-Daily in the same "
+            "window. NOAA smooths its published values across neighbouring dates "
+            "while this project's are raw counts in 3.33-point steps, so a few "
+            "points of difference is expected. Both are shown and the difference is "
+            "published rather than reconciled.")
+        daily_normals_comparison = comparison
+
     out = {
         # Keep the source-run timestamp, rather than stamping a later local
         # transform as if it fetched NOAA again.  In the normal workflow this
@@ -753,6 +846,16 @@ def main():
         },
         "humidity_normals": humidity_normals or None,
         "monthly_normals_official": monthly_normals or None,
+        # Metadata only. The per-date published values live on each day, and the
+        # raw file body is never copied into the site data (an allow-list, not a
+        # blocklist: a future key cannot silently drag a megabyte in with it).
+        "daily_normals_official": (
+            {k: published_daily_normals.get(k) for k in
+             ("station_id", "station_name", "url", "sha256", "bytes",
+              "retrieved_utc", "source", "units", "dates_parsed", "layout")
+             if published_daily_normals.get(k) is not None}
+            if published_daily_normals else None),
+        "daily_normals_comparison": daily_normals_comparison,
         "season_summary": dist,
         "streak_probability": season_climo.get("probability_of_at_least_one_streak", {}),
         "enso_stratified": season_climo.get("enso_stratified_season_total_prcp_in", {}),
@@ -776,6 +879,21 @@ def main():
           f"{len(calendar) - n_forecast} day(s) show 1991-2020 climatology.")
     print(f"  CPC records attached: {len(cpc_records)} "
           f"({len(seasonal)} seasonal/monthly, {len(short_range)} short-range)")
+    if daily_normals_comparison:
+        cmp_ = daily_normals_comparison
+        print(f"  NOAA published daily normals cross-check over "
+              f"{cmp_['compared_dates']} date(s):")
+        for label, blk in cmp_["pairs"].items():
+            if not blk.get("n"):
+                continue
+            print(f"    {label}: n={blk['n']} mean diff {blk['mean_difference']} "
+                  f"{blk['unit']}, largest |diff| {blk['largest_absolute_difference']} "
+                  f"on {blk['largest_difference_date']}")
+        if cmp_["flagged"]:
+            print(f"    {len(cmp_['flagged'])} date(s) differ by more than 10 "
+                  f"percentage points - published, not reconciled")
+    else:
+        print("  NOAA published daily normals: not available this run")
     return 0
 
 

@@ -855,13 +855,22 @@ def fetch_enso():
         }
         if official_rows:
             last = official_rows[-1]
+            phase_token = climo.enso_phase(last["anomaly_c"])
+            strength_token = climo.enso_strength(last["anomaly_c"])
+            # The reader-facing labels ship WITH the record.  Publishing only the
+            # raw token is what let the season panel print "el nino" (a literal
+            # underscore-to-space substitution) while the executive summary
+            # printed "El Niño" from the same value.
             out["official_oni"]["latest"] = {
                 "label": last["label"],
                 "season": last["season"],
                 "year": last["year"],
                 "oni_c": last["anomaly_c"],
-                "phase": climo.enso_phase(last["anomaly_c"]),
-                "strength": climo.enso_strength(last["anomaly_c"]),
+                "oni_c_fmt": climo.fmt_oni_c(last["anomaly_c"]),
+                "phase": phase_token,
+                "phase_label": climo.phase_label(phase_token),
+                "strength": strength_token,
+                "strength_label": climo.strength_label(strength_token),
             }
     else:
         note_irregularity("error", "enso",
@@ -923,7 +932,9 @@ def fetch_enso():
             last = oni[latest[-1]]
             out["latest_oni_derived"] = {
                 "year_month": f"{latest[-1][0]:04d}-{latest[-1][1]:02d}",
-                "oni_c": round(last, 2), "phase": climo.enso_phase(last)}
+                "oni_c": round(last, 2),
+                "phase": climo.enso_phase(last),
+                "phase_label": climo.phase_label(climo.enso_phase(last))}
 
         # Compare the derived centred mean with the official season that covers
         # the same three months, and publish the difference.
@@ -1118,14 +1129,72 @@ def fetch_gsod(years):
 
 
 def fetch_daily_normals():
-    """NCEI 1991-2020 U.S. Climate Normals (daily), if the path is available."""
+    """NCEI 1991-2020 U.S. Climate Normals (daily) for the rain/temperature station.
+
+    This is the official published *daily* normals product: it carries the normal
+    high and low for each calendar date **and** the published probability that the
+    date records at least 0.001 / 0.010 / 0.025 / 0.050 / 0.100 ... inches of
+    precipitation, plus the 25th/50th/75th precipitation percentiles.
+
+    Those probabilities are the same quantity the project derives itself from 30
+    seasons of GHCN-Daily (``p_rain_day_pct`` and friends), so publishing both and
+    the difference between them is a real, date-by-date cross-check rather than a
+    restatement.
+
+    The parsed values are stored - not the raw file, which is ~1 MB of which only
+    a handful of columns are used, and which was previously committed **truncated
+    to 200,000 characters**, cutting the file off at 04 June and leaving the whole
+    Oct-Jan window absent.
+    """
     for sid, name in GHCN_CANDIDATES:
         url = f"https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/{sid}.csv"
         res = fetchlib.get(url, timeout=300)
         record(res, note=f"NCEI 1991-2020 Daily Climate Normals: {sid}")
-        if res.ok and res.body:
-            return {"station_id": sid, "url": url, "sha256": res.sha256,
-                    "text": res.text()[:200000]}
+        if not (res.ok and res.body):
+            continue
+        text = res.text()
+        try:
+            by_mmdd, layout = climo.parse_daily_normals(text)
+        except Exception as exc:  # noqa: BLE001 - a layout change must not kill the run
+            note_irregularity("warning", "normals",
+                              "The NCEI daily-normals file could not be parsed; the "
+                              "published per-date normals are unavailable this run.",
+                              {"url": url, "error": f"{type(exc).__name__}: {exc}",
+                               "first_400_chars": text[:400]})
+            continue
+        if not by_mmdd:
+            note_irregularity("warning", "normals",
+                              "The NCEI daily-normals file was fetched but no dated "
+                              "elements could be read from it.",
+                              {"url": url, "layout": layout})
+            continue
+        # A truncated read would silently drop dates, so require the full year.
+        expected_dates = 366
+        if len(by_mmdd) < expected_dates:
+            note_irregularity(
+                "warning", "normals",
+                "The NCEI daily-normals file yielded fewer calendar dates than a full "
+                "year; the missing dates will show no published normal.",
+                {"url": url, "dates_parsed": len(by_mmdd), "expected": expected_dates,
+                 "first": min(by_mmdd), "last": max(by_mmdd)})
+        return {
+            "station_id": sid,
+            "station_name": name,
+            "url": url,
+            "sha256": res.sha256,
+            "bytes": res.size,
+            "retrieved_utc": res.retrieved_utc,
+            "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (daily, by station)",
+            "units": {
+                "normal_high_f": "degrees Fahrenheit (DLY-TMAX-NORMAL, as published)",
+                "normal_low_f": "degrees Fahrenheit (DLY-TMIN-NORMAL, as published)",
+                "p_pcp_ge_*in_pct": "percent of years (DLY-PRCP-PCTALL-GE***HI, as published)",
+                "pcp_*pctl_in": "inches (DLY-PRCP-25/50/75PCTL, as published)",
+            },
+            "dates_parsed": len(by_mmdd),
+            "layout": layout,
+            "by_mmdd": by_mmdd,
+        }
     return None
 
 
@@ -1388,9 +1457,18 @@ def main():
         climo_out["season"] = climo.build_season_statistics(
             ghcn["data"], gsod["data"], season_month_days, NORMALS_PERIOD, oni_series,
             oni_seasons=(enso.get("official_oni") or {}).get("seasons") or None)
+        # Distance from the verified ZIP centroid to the wind station, taken from
+        # the distance the NWS itself reports for KSFO rather than typed into
+        # prose.  Published, so the caveat text below can be generated from it.
+        ksfo_distance_mi = 0.0
+        for st in (nws.get("stations") or []):
+            if st.get("station_id") == "KSFO" and st.get("distance_m"):
+                ksfo_distance_mi = float(st["distance_m"]) / 1609.344
+                break
         climo_out["meta"] = {
             "normals_period": list(NORMALS_PERIOD),
             "season": SEASON,
+            "station_distance_mi": {"wind_ksfo": round(ksfo_distance_mi, 1)},
             "precip_station": {"id": ghcn["station_id"], "name": ghcn["name"], "url": ghcn["url"]},
             "wind_station": {"id": gsod["station_id"], "name": gsod["name"],
                              "url": gsod["base_url"]},
@@ -1406,9 +1484,16 @@ def main():
                 "days. The joint wind-and-rain statistics therefore pair a local-day rain "
                 "total with a UTC-day wind figure for the same calendar date. This is an "
                 "approximation and is stated rather than hidden.",
-                "Wind data come from the SFO ASOS (KSFO), about 10 miles south-east of "
-                "94122. Exposure at SFO is more open than in the Sunset, so wind speeds "
-                "there are typically higher than at the ZIP code itself.",
+                # The distance is computed from the distance_m that the NWS itself
+                # returns for KSFO in the station feed, not typed in: the prose
+                # previously said "about 10 miles" while the project's own recorded
+                # value was 11.9 miles.
+                f"Wind data come from the SFO ASOS (KSFO), about "
+                f"{ksfo_distance_mi:.0f} miles south-east of 94122 (great-circle "
+                f"distance from the ZIP centroid to the station, computed from the "
+                f"station coordinates the NWS returns). Exposure at SFO is more open "
+                f"than in the Sunset, so wind speeds there are typically higher than at "
+                f"the ZIP code itself.",
                 "GSOD 'MAX'/'MIN' are the reported daily extremes, which per NCEI are not "
                 "always the true calendar-day extremes.",
                 "Percentages for a single calendar date are computed from 30 seasons "

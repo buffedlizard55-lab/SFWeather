@@ -14,7 +14,13 @@ from __future__ import annotations
 
 import json
 import datetime as dt
+import sys
 from pathlib import Path
+
+# The canonical ENSO label mapping lives in climo.py, next to the phase and
+# strength bands it describes, so there is exactly one definition.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import climo  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -47,36 +53,16 @@ def pct(v):
 # tests in tests/test_parsers.py can pin them down with synthetic values.
 # --------------------------------------------------------------------------
 
-#: Raw ENSO phase tokens produced by the pipeline -> reader-facing labels.
-#: The raw token must never reach the page: "el_nino" is a data key, not a
-#: phrase, and showing it made the executive summary read like machine output.
-PHASE_LABELS = {
-    "el_nino": "El Niño",
-    "la_nina": "La Niña",
-    "neutral": "Neutral",
-}
-
-
-def phase_label(phase):
-    """Reader-facing label for an ENSO phase token.
-
-    Returns the mapped label for the three phases the pipeline can produce.
-    An unexpected token is returned as-is (it is a real data value, so it is
-    safe to show) rather than replaced with a guessed phrase.
-    """
-    if phase is None:
-        return "unknown"
-    return PHASE_LABELS.get(str(phase).strip().lower(), str(phase))
-
-
-def fmt_oni_c(value):
-    """Format an ONI anomaly the way NOAA publishes it: signed, 2 dp, deg C."""
-    if value is None:
-        return None
-    try:
-        return f"{float(value):+.2f} °C"
-    except (TypeError, ValueError):
-        return None
+#: Raw ENSO tokens -> reader-facing labels.  The canonical definitions live in
+#: climo.py and are re-exported here so this module and the site renderer always
+#: agree on exactly one mapping (the previous duplicate copy was how the season
+#: panel ended up printing "el nino" while the executive summary printed
+#: "El Niño" from the same value).
+PHASE_LABELS = climo.PHASE_LABELS
+STRENGTH_LABELS = climo.STRENGTH_LABELS
+phase_label = climo.phase_label
+strength_label = climo.strength_label
+fmt_oni_c = climo.fmt_oni_c
 
 
 def expected_event_days(days, climo_key):
@@ -243,7 +229,9 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
             "why_it_costs": ("Wind pushes rain sideways under shingles, laps and window seals and "
                              "into vents, so buildings leak during storms that would stay dry in "
                              "calm rain. These are also fence-failure and tree-limb days. Wind is "
-                             "recorded at SFO, ~10 miles away and more exposed, so treat the "
+                             "recorded at SFO, 11.9 miles away (computed great-circle distance from the "
+                             "94122 centroid, see climatology.meta.station_distance_mi) and "
+                             "more exposed, so treat the "
                              "counts as an upper bound for the Sunset."),
             "evidence": [
                 {"label": "Days with rain ≥ 0.01 in and sustained wind ≥ 20 kt",
@@ -652,6 +640,52 @@ def main():
         latest_oni=latest_oni, diagnostic_status=diagnostic_status,
         relevant_cpc=relevant_cpc, storms=storms, monthly=monthly)
 
+    # 8b. NOAA's own published daily normals for the same station ----------
+    # The landlord's two headline rain questions have an *officially published*
+    # answer as well as this project's derivation: NCEI publishes, for every
+    # calendar date, the share of years recording at least 0.25 in and at least
+    # 1.00 in of precipitation.  Summing those published probabilities over the
+    # 123 dates gives the expected heavy-rain days per season straight from the
+    # official file - an independent counterpart to ``expected_days`` above.
+    # Both are published side by side; neither replaces the other.
+    published_official = {
+        "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (daily, by station)",
+        "url": (calendar.get("daily_normals_official") or {}).get("url"),
+        "station_id": (calendar.get("daily_normals_official") or {}).get("station_id"),
+        "station_name": (calendar.get("daily_normals_official") or {}).get("station_name"),
+        "sha256": (calendar.get("daily_normals_official") or {}).get("sha256"),
+        "retrieved_utc": (calendar.get("daily_normals_official") or {}).get("retrieved_utc"),
+        "dates_parsed": (calendar.get("daily_normals_official") or {}).get("dates_parsed"),
+        "columns": (calendar.get("daily_normals_official") or {}).get("layout", {}).get("column_by_key"),
+        "comparison": calendar.get("daily_normals_comparison"),
+    }
+    pub_expected = {}
+    for key, label in (("p_pcp_ge_0p25in_pct", "ge_025in_days"),
+                       ("p_pcp_ge_1p00in_pct", "ge_100in_days"),
+                       ("p_pcp_ge_0p01in_pct", "ge_010in_days"),
+                       ("p_pcp_ge_0p50in_pct", "ge_050in_days")):
+        total = 0.0
+        seen = 0
+        for d in days:
+            off = d.get("official_normal") or {}
+            v = off.get(key)
+            if v is None:
+                continue
+            seen += 1
+            total += float(v) / 100.0
+        if seen:
+            pub_expected[label] = round(total, 2)
+    if pub_expected:
+        pub_expected["days_covered"] = len(days)
+        pub_expected["method"] = (
+            "Sum of NOAA's own published per-date probabilities (DLY-PRCP-PCTALL-"
+            "GE***HI) over the 123 dates of the window - the same linearity-of-"
+            "expectation arithmetic as expected_days, but using the official "
+            "published probabilities instead of this project's own count.")
+        published_official["published_expected_days"] = pub_expected
+    official_daily_normals = published_official if published_official.get("comparison") \
+        or pub_expected else None
+
     # Phase-aware ENSO sentence for the key finding: the tilt wording has to
     # follow the phase NOAA actually published, not a template that always
     # says "wetter".
@@ -750,6 +784,7 @@ def main():
             "storm_events": "https://www.ncdc.noaa.gov/stormevents/",
             "normals": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv"
         },
+        "official_daily_normals": official_daily_normals,
         "disclaimer": "Independent hobby project. Not affiliated with NOAA/NWS/NCEI/CPC. For life-safety decisions use weather.gov and weather.gov/mtr directly. Daily forecast beyond 7 days does not exist; climatology shown is not a forecast.",
         "verification_note": "Every number traces to a URL in data/provenance.json. No commercial providers (AccuWeather etc.) are used because they require paid keys and are not independently verifiable line by line. All hosts verified against vetted official list."
     }
