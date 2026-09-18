@@ -59,7 +59,7 @@ const REQUIRED_SECTIONS = [
   '#enso-body', '#cpc-season-table', '#monthly-table', '#enso-strat', '#discussions',
   '#now-current', '#nws-forecast', '#nws-obs', '#nws-alerts', '#calendar-grid',
   '#streak-table', '#streak-chart', '#wind-table', '#gust-table', '#storm-summary',
-  '#provenance', '#nws-verification-body', '#cpc-backtest-body',
+  '#provenance', '#nws-verification-body', '#cpc-backtest-body', '#digest-body',
   '#verify-body', '#quality-report', '#caveats'
 ];
 
@@ -705,6 +705,114 @@ setTimeout(() => {
       if (absences.length && !/absent by design/.test(meta)) {
         problems.push('the status line hides ' + absences.length +
           ' expected absence(s) instead of publishing them');
+      }
+    }
+  }
+
+  // 24. The storm-watch digest card: threshold, privacy, and consistency
+  //     with data/digest.json (quiet state or one row per trigger).
+  {
+    const dt = text('#digest-body');
+    let dg = null;
+    try {
+      dg = JSON.parse(fs.readFileSync(path.join(repo, 'data/digest.json'), 'utf8'));
+    } catch (e) { /* digest not built this run; the card must say so */ }
+    if (!dg) {
+      if (!dt.includes('No digest was produced')) {
+        problems.push('#digest-body does not explain the missing digest.json');
+      }
+    } else {
+      const thr = String((dg.pop_threshold_pct ?? 50));
+      if (!dt.includes(thr + '%') && !dt.includes(thr + ' %')) {
+        problems.push('#digest-body does not state the POP threshold (' + thr + '%)');
+      }
+      if (!dt.includes('stores no address')) {
+        problems.push('#digest-body does not publish the opt-in privacy statement');
+      }
+      const n = ((dg.nws_alerts || []).length) + ((dg.high_pop_days || []).length);
+      if (n === 0 && !dt.includes('Quiet')) {
+        problems.push('#digest-body shows no quiet state although the digest has 0 triggers');
+      }
+      if (n > 0) {
+        const rows = doc.querySelectorAll('#digest-body tbody tr').length;
+        if (rows !== n) {
+          problems.push('#digest-body renders ' + rows + ' trigger row(s) but digest.json has ' + n);
+        }
+      }
+    }
+    const rss = doc.querySelector('#digest a[href="data/alerts.xml"]');
+    if (!rss) problems.push('digest card has no subscribe link to data/alerts.xml');
+  }
+
+  // 25. AFD issuance history: when the data carries last-mention dates, the
+  //     card must show them; the history file must be linked.
+  {
+    const hist = ((cal.afd_language || {}).history) || {};
+    const lm = hist.last_mention || {};
+    const card = doc.querySelector('#afd-language');
+    const t = card ? card.textContent : '';
+    if (Object.keys(lm).length) {
+      if (!t.includes('last mentioned')) {
+        problems.push('AFD card omits the last-mentioned history the data carries');
+      }
+      const dated = Object.values(lm).filter(b => b.last_issuance_time);
+      dated.forEach(b => {
+        if (!t.includes(b.last_issuance_time)) {
+          problems.push('AFD card omits the last-mention date for ' + (b.label || '?'));
+        }
+      });
+      if (!card.querySelector('a[href="data/afd_history.json"]')) {
+        problems.push('AFD card does not link data/afd_history.json');
+      }
+    }
+  }
+
+  // 26. The day dialog's deep links: every headline field must offer the
+  //     exact official row/file behind it, on an official host.
+  {
+    const cell = doc.querySelector('.day[data-date]');
+    if (cell) {
+      cell.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      const dlg = doc.querySelector('#day-dialog-body');
+      const dt = dlg ? dlg.textContent : '';
+      if (!dt.includes('Verify each number yourself')) {
+        problems.push('day dialog renders no per-field deep links');
+      }
+      const OFFICIAL = /^(api\.weather\.gov|forecast\.weather\.gov|www\.ncei\.noaa\.gov|www\.cpc\.ncep\.noaa\.gov|ftp\.cpc\.ncep\.noaa\.gov|www\.weather\.gov)$/;
+      const links = dlg ? Array.from(dlg.querySelectorAll('table a[href^="https://"]')) : [];
+      if (!links.length) {
+        problems.push('day dialog deep-link table has no https links');
+      }
+      links.forEach(a => {
+        const host = (a.getAttribute('href') || '').replace(/^https:\/\//, '').split('/')[0];
+        if (!OFFICIAL.test(host)) {
+          problems.push('day dialog deep link leaves the official hosts: ' + a.getAttribute('href'));
+        }
+      });
+    }
+  }
+
+  // 27. The CPC back-test card must match data/cpc_backtest.json: a hit-rate
+  //     when rows are scored, otherwise the pending-backfill reason — never a
+  //     silent or half-rendered state.
+  {
+    let bt = null;
+    try {
+      bt = JSON.parse(fs.readFileSync(path.join(repo, 'data/cpc_backtest.json'), 'utf8'));
+    } catch (e) { /* file legitimately absent until the first scheduled run */ }
+    const t = text('#cpc-backtest-body');
+    if (!bt) {
+      if (!t.includes('missing this run')) {
+        problems.push('#cpc-backtest-body does not explain the missing back-test file');
+      }
+    } else if ((bt.rows || []).length) {
+      const hr = (bt.summary || {}).hit_rate_pct;
+      if (hr !== null && hr !== undefined && !t.includes(String(hr) + '%')) {
+        problems.push('#cpc-backtest-body does not show the scored hit-rate ' + hr + '%');
+      }
+    } else {
+      if (!t.includes('back-fill') && !t.includes('backfill')) {
+        problems.push('#cpc-backtest-body does not explain the pending back-fill');
       }
     }
   }

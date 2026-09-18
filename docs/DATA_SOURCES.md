@@ -87,6 +87,23 @@ can be checked against the published map by eye.
 Sampling only the first would silently discard 13 of the 14 official outlooks,
 so every shapefile in the archive is sampled.
 
+### CPC back-test archives (used by `pipeline/cpc_backtest.py`)
+
+| Source | URL | Note |
+| --- | --- | --- |
+| Live GIS (recent months only) | <https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/> | keeps ~8 recent `seasprcp_YYYYMM.zip` / `seastemp_YYYYMM.zip` issuances; older ones 404 |
+| **Official long-lead archive (Oct 1995 →)** | <https://www.cpc.ncep.noaa.gov/products/archives/long_lead/llarc.ind.php> | the only accepted source for historical issuances |
+| CPC's own seasonal verifications | <https://www.cpc.ncep.noaa.gov/products/predictions/long_range/tools/briefing/seas_veri.grid.php> | CONUS-wide skill, not a 94122 score — linked for manual review only |
+
+When no historical archive is retrievable the back-test writes
+`status: pending-backfill` rather than a hit-rate, and each missing issuance is
+recorded in the provenance manifest under the expected-absence rule
+`historical-archive-not-retained` (a 404 on the live server is routine, not an
+outage). **The IRI Data Library was considered and rejected:** it is a Columbia
+academic mirror, not an official NOAA operational product; it serves HTTP (this
+project requires HTTPS); and its `SOURCES/.NOAA/.NCEP/.CPC/` tree holds
+monitoring datasets, not the outlook polygons. It stays off `ALLOWED_HOSTS`.
+
 ### ENSO
 
 | Product | URL | Used for |
@@ -123,6 +140,21 @@ La Nina <= -0.5 C).
 Station `USW00023272` is **SAN FRANCISCO DOWNTOWN, CA US**, at
 37.7705 N, -122.4269 W, elevation 45.7 m - the closest long-record
 precipitation gauge with a continuous daily series.
+
+### GSOD/ISD retirement (August 2025) and their official successors
+
+NCEI retired both archives on **2025-08-29** (final HadISD release
+`v342_202508p`; the GSODR docs record the same end date). The KSFO series used
+here end at **2025-08-27** — that is the provider's end-of-service, not a gap
+in this project, and the coverage notes and stale-archive flag say so. The
+official successors, already probed by every pipeline run
+(`data/isd_history.json`, `data/ghcnh_probe.json`) and to be stitched in once
+their coverage is confirmed:
+
+| Successor | Replaces | Bulk access |
+| --- | --- | --- |
+| **GHCNh** (Global Historical Climatology Network hourly) | ISD / global-hourly | PSV and Parquet by year: `https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/{YYYY}/{psv,parquet}/GHCNh_{ID}_{YYYY}.*` — [station list](https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.csv) — DOI `10.25921/jp3d-3v19` |
+| **SSODv2** (Synoptic Summary of the Day, from GHCNh) | GSOD | daily summaries 00–23 UTC; GHCNd remains the recommended source for daily precipitation and max/min temperature |
 
 ### ISD hourly — the unit conventions used, and why
 
@@ -163,4 +195,5 @@ the field is left empty — the pipeline never estimates a missing number.
 | AccuWeather, The Weather Company / IBM, Tomorrow.io, OpenWeatherMap, WeatherAPI, Visual Crossing, meteoblue | Commercial. Require a paid key or registered account, license redistribution, and their numbers cannot be checked line by line against a public endpoint. |
 | Scraped pages (weather.com, wunderground, accuweather.com HTML) | Not an authorised interface, unstable, and unverifiable. |
 | CW3E / Scripps atmospheric-river products | Valuable research, but not an official NOAA operational product. |
+| IRI Data Library (`iridl.ldeo.columbia.edu`) | Academic mirror, HTTP only, and its CPC tree holds monitoring datasets rather than outlook polygons. Considered 18 Sep 2026 and rejected — see §3. |
 | Anything behind a login, paywall or CAPTCHA | Cannot be verified or reproduced. |

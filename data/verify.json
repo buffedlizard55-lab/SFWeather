@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T20:42:23Z",
+  "generated_utc": "2026-09-18T23:04:47Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,8 +9,8 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 53,
-    "passed": 53,
+    "total": 59,
+    "passed": 59,
     "failed": 0,
     "warnings": 0,
     "failed_checks": [],
@@ -232,7 +232,7 @@
       "id": "raw-phase-tokens-dataset",
       "title": "No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)",
       "status": "pass",
-      "detail": "0 raw tokens across 15624 scanned string(s)",
+      "detail": "0 raw tokens across 17355 scanned string(s)",
       "evidence": []
     },
     {
@@ -868,6 +868,56 @@
           }
         ]
       }
+    },
+    {
+      "id": "cpc-backtest-sampling-method",
+      "title": "CPC back-test rows (when present) use the live point-in-polygon path and EC rows are never scored",
+      "status": "pass",
+      "detail": "no cpc_backtest.json in this dataset (back-fill pending); the site reports pending-backfill rather than a hit-rate",
+      "evidence": null
+    },
+    {
+      "id": "deep-links-traceable",
+      "title": "Every scoreboard day carries per-field manual-verification links to official URLs",
+      "status": "pass",
+      "detail": "123 day(s) carry 6 deep links each",
+      "evidence": {
+        "problems": []
+      }
+    },
+    {
+      "id": "afd-history-consistent",
+      "title": "AFD issuance history is append-only, deduped, and quotations-only",
+      "status": "pass",
+      "detail": "1 issuance(s) in history",
+      "evidence": {
+        "problems": []
+      }
+    },
+    {
+      "id": "digest-rss-traceable",
+      "title": "Alert digest items trace to the verified NWS alert and forecast blocks",
+      "status": "pass",
+      "detail": "0 alert(s), 0 high-POP day(s)",
+      "evidence": {
+        "problems": []
+      }
+    },
+    {
+      "id": "model-guidance-separated",
+      "title": "No model guidance (CFSv2/NMME) is merged into the scoreboard tiers",
+      "status": "pass",
+      "detail": "all scoreboard days are nws/climatology with no model keys",
+      "evidence": {
+        "problems": []
+      }
+    },
+    {
+      "id": "successor-probe-present",
+      "title": "The GSOD/ISD retirement is investigated (history + successor probe)",
+      "status": "pass",
+      "detail": "no isd_history.json / ghcnh_probe.json in this dataset; the next pipeline run investigates the 2025-08-27 stop",
+      "evidence": null
     }
   ],
   "claims": [

@@ -122,6 +122,7 @@ EXPECTED_ABSENCE_RULES = (
     "annual-file-not-yet-published",       # NCEI publishes an annual file after the year ends
     "station-without-observations-product",  # NWS lists the station but publishes no observations/latest
     "candidate-station-without-the-product",  # NCEI publishes hourly normals for some candidates only
+    "historical-archive-not-retained",       # CPC keeps only recent GIS issuances; older ones 404
 )
 
 
@@ -1316,6 +1317,101 @@ def fetch_isd_hourly_summary(years, station_id="72494023234", station_name=None)
     return summary
 
 
+def fetch_isd_history(station_id="72494023234"):
+    """NCEI ISD station history — is the 2025-08-27 stop an identifier change?
+
+    Reads https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv and searches
+    for the KSFO entry plus any same-name row that begins after it ends (a
+    successor USAF-WBAN).  When no successor exists the stop is a dataset
+    retirement, not an identifier change — GSOD/ISD were retired 2025-08-29 and
+    replaced by SSODv2/GHCNh (see fetch_ghcnh_probe).  Never fatal: on failure
+    the question is left open and flagged.
+    """
+    url = climo.ISD_HISTORY_URL
+    text, res = fetchlib.get_text(url, timeout=180)
+    record(res, note="NCEI ISD station history (successor-id search for KSFO)")
+    if not (res.ok and res.body):
+        note_irregularity("warning", "isd",
+                          "ISD station-history file unavailable; the successor-id "
+                          "question for KSFO is left open this run.",
+                          {"url": url, "status": res.status})
+        return None
+    rows = climo.parse_isd_history(text)
+    found = climo.search_isd_history(rows, station_id=station_id)
+    out = {
+        "url": url,
+        "sha256": res.sha256,
+        "retrieved_utc": res.retrieved_utc,
+        "station_id": station_id,
+        "n_rows": len(rows),
+        "station": found.get("station"),
+        "n_same_name": len(found.get("same_name") or []),
+        "same_name_ids": sorted({r.get("station_id") for r in (found.get("same_name") or [])})[:12],
+        "successor": found.get("successor"),
+        "verdict": ("successor-id-found" if found.get("successor")
+                    else ("station-found-no-successor" if found.get("station")
+                          else "station-not-in-history")),
+    }
+    if found.get("successor"):
+        note_irregularity("warning", "isd",
+                          f"ISD history lists a possible successor id for {station_id}: "
+                          f"{found['successor'].get('station_id')} "
+                          f"({found['successor'].get('name')}, BEGIN {found['successor'].get('begin')}). "
+                          "The wind archive has not been stitched yet; see docs/NEXT_SESSION.md.",
+                          {"successor": found.get("successor")})
+    elif found.get("station"):
+        note_irregularity("info", "isd",
+                          f"ISD history shows {station_id} ending {found['station'].get('end')} "
+                          "with no same-name successor row: the 2025-08-27 stop is the "
+                          "retired-dataset end, not an identifier change. Successors are "
+                          "GHCNh (hourly) and SSODv2 (daily); see data/ghcnh_probe.json.",
+                          {"station": found.get("station"),
+                           "ghcnh": climo.GHCNH_PRODUCT_URL,
+                           "ssod": climo.SSOD_PRODUCT_URL})
+    return out
+
+
+def fetch_ghcnh_probe():
+    """Probe NCEI's GHCNh/SSOD successor products (lightweight, no bulk data).
+
+    Fetches only the GHCNh station-list doc (small text) to confirm the
+    successor exists and is reachable on the vetted host, and records the
+    official product pages.  Full migration (PSV/parquet parsing, archive
+    stitching) is future work — this probe is what lets the site say "the
+    successor exists at this URL" instead of asserting it from memory.
+    """
+    url = climo.GHCNH_STATION_LIST_URL
+    text, res = fetchlib.get_text(url, timeout=180)
+    record(res, note="NCEI GHCNh station list (successor-product probe)")
+    probe = {
+        "ghcnh_product_url": climo.GHCNH_PRODUCT_URL,
+        "ssod_product_url": climo.SSOD_PRODUCT_URL,
+        "station_list_url": url,
+        "station_list_ok": bool(res.ok and res.body),
+        "station_list_status": res.status,
+        "station_list_sha256": res.sha256,
+        "retrieved_utc": res.retrieved_utc,
+        "note": ("GHCNh (hourly) replaces ISD; SSODv2 (daily) replaces GSOD. "
+                 "Both live on www.ncei.noaa.gov, already a vetted host."),
+    }
+    if res.ok and res.body:
+        # The station list is large (multi-MB), but a substring search needs no
+        # truncation — and truncating would be wrong: US ids sort near the end,
+        # so a prefix search would report SFO as missing when it is merely late
+        # in the file.  Record only whether the SFO-area GHCN ids appear.
+        probe["contains_sfo_ids"] = {
+            sid: (sid in text)
+            for sid in ("USW00023234", "USW00023272")
+        }
+        probe["bytes"] = res.size
+    else:
+        note_irregularity("warning", "isd",
+                          "GHCNh station-list probe failed; the successor-product "
+                          "links are published but unconfirmed this run.",
+                          {"url": url, "status": res.status})
+    return probe
+
+
 def build_record_coverage(*, ghcn, gsod, isd, today, normals_period):
     """How far each NCEI archive actually reaches, and how old its newest row is.
 
@@ -1355,15 +1451,15 @@ def build_record_coverage(*, ghcn, gsod, isd, today, normals_period):
     add("wind", f"GSOD {gsod.get('station_id') if gsod else '72494023234'} (daily wind "
                 "and gusts, 00-24Z)",
         gsod_last, "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
-        "Annual files; GSOD cannot be more current than the ISD hourly file it is "
-        "derived from.")
+        "RETIRED 2025-08-29 (NCEI); successor is SSODv2. Annual files; GSOD cannot be "
+        "more current than the ISD hourly file it is derived from.")
 
     isd_last = (isd or {}).get("latest_observation_utc")
     add("isd_hourly", f"ISD hourly {(isd or {}).get('station_id', '72494023234')} "
                       "(hour-by-hour wind and precipitation)",
         str(isd_last)[:10] if isd_last else None,
         "https://www.ncei.noaa.gov/data/global-hourly/access/",
-        "Annual files of hourly observations.")
+        "RETIRED 2025-08-29 (NCEI); successor is GHCNh. Annual files of hourly observations.")
 
     stale = [a for a in out["archives"] if a["age_days"] is None or a["age_days"] > 180]
     out["stale_archives"] = [a["area"] for a in stale]
@@ -1762,6 +1858,8 @@ def main():
     gsod_years = list(range(1991, today.year + 1))
     gsod = fetch_gsod(gsod_years)
     isd_summary = fetch_isd_hourly_summary(gsod_years, station_name=GSOD_WIND_NAME)
+    isd_history = fetch_isd_history()
+    ghcnh_probe = fetch_ghcnh_probe()
     normals = fetch_daily_normals()
     monthly_normals = fetch_monthly_normals()
     humidity_normals = fetch_humidity_normals()
@@ -1860,9 +1958,10 @@ def main():
         note_irregularity(
             "warning", "coverage",
             "At least one NCEI archive this project reads is more than 180 days behind "
-            "the run date. Every published statistic is a 1991-2020 statistic and is "
-            "unaffected; the flag exists so nothing claims to describe *current* "
-            "conditions from a stale archive.",
+            "the run date (GSOD/ISD were retired by NCEI on 2025-08-29; successors are "
+            "SSODv2/GHCNh — see data/ghcnh_probe.json and data/isd_history.json). Every "
+            "published statistic is a 1991-2020 statistic and is unaffected; the flag "
+            "exists so nothing claims to describe *current* conditions from a stale archive.",
             {"archives": [{"area": a["area"], "last_date": a["last_date"],
                            "age_days": a["age_days"], "url": a["url"]} for a in stale]})
         log("      record coverage: STALE archive(s) -> "
@@ -1893,6 +1992,10 @@ def main():
     write_json(outdir / "climatology.json", climo_out)
     if isd_summary:
         write_json(outdir / "isd_hourly_summary.json", isd_summary)
+    if isd_history:
+        write_json(outdir / "isd_history.json", isd_history)
+    if ghcnh_probe:
+        write_json(outdir / "ghcnh_probe.json", ghcnh_probe)
     if storm:
         write_json(outdir / "storm_events.json", storm)
     if normals:

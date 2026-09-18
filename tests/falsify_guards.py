@@ -61,6 +61,11 @@ def run_ledger(datadir, repo_root=None):
     script = (repo_root or REPO) / "pipeline" / "verify_claims.py"
     env = dict(os.environ, SFWEATHER_DATA=str(datadir),
                PYTHONPATH=str((repo_root or REPO) / "pipeline"))
+    # The digest check reads data/alerts.xml (RSS/JSON item agreement), which is
+    # not a *.json copy-loop file — stage the committed feed unless the case
+    # deleted it on purpose.
+    if not (datadir / "alerts.xml").exists() and (DATA / "alerts.xml").exists():
+        shutil.copy2(DATA / "alerts.xml", datadir / "alerts.xml")
     proc = subprocess.run([sys.executable, str(script)], env=env,
                           capture_output=True, text=True, cwd=str(repo_root or REPO))
     statuses = {}
@@ -425,6 +430,162 @@ def _h8(tmp):
     counts["expected_absences"] = counts.get("expected_absences", 0) + 1
     dump(tmp / "provenance.json", prov)
     dump(tmp / "run.json", run)
+    return tmp
+
+
+_LIVE_SAMPLING = ("lib_shape.point_in_polygon at the 94122 centroid "
+                  "(same code path as live CPC outlooks)")
+_ARCHIVE_URL = ("https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/"
+                "seasprcp_199508.zip")
+
+
+def _prov_with_archive(tmp, *urls):
+    prov = load("provenance.json")
+    for u in urls:
+        prov["entries"].append({"url": u, "http_status": 200, "ok": True,
+                                "bytes": 12345, "sha256": "1" * 64,
+                                "retrieved_utc": "2026-09-18T20:00:00Z",
+                                "note": "fixture: archived CPC issuance"})
+    dump(tmp / "provenance.json", prov)
+
+
+@case("a fabricated back-test with one scored row passes", "pass",
+      "cpc-backtest-sampling-method")
+def _bt_pass(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    dump(tmp / "cpc_backtest.json", {
+        "status": "scored",
+        "rows": [
+            {"category": "EC", "observed_tercile": "Near-normal", "hit": None,
+             "sampling": _LIVE_SAMPLING, "url": _ARCHIVE_URL,
+             "polygon_index": 3},
+            {"category": "Above", "observed_tercile": "Above", "hit": True,
+             "sampling": _LIVE_SAMPLING, "url": _ARCHIVE_URL,
+             "polygon_index": 3},
+        ],
+        "summary": {"hit_rate_pct": 100.0, "n_rows_scored": 1},
+    })
+    _prov_with_archive(tmp, _ARCHIVE_URL)
+    return tmp
+
+
+@case("an EC outlook counted as a hit fails the back-test guard", "fail",
+      "cpc-backtest-sampling-method")
+def _bt_ec(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    dump(tmp / "cpc_backtest.json", {
+        "status": "scored",
+        "rows": [{"category": "EC", "observed_tercile": "Near-normal",
+                  "hit": True, "sampling": _LIVE_SAMPLING,
+                  "url": _ARCHIVE_URL, "polygon_index": 3}],
+        "summary": {"hit_rate_pct": 100.0, "n_rows_scored": 1},
+    })
+    _prov_with_archive(tmp, _ARCHIVE_URL)
+    return tmp
+
+
+@case("a back-test row scored off the live sampling path fails", "fail",
+      "cpc-backtest-sampling-method")
+def _bt_path(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    dump(tmp / "cpc_backtest.json", {
+        "status": "scored",
+        "rows": [{"category": "Above", "observed_tercile": "Above",
+                  "hit": True, "sampling": "eyeballed off the GIF",
+                  "url": _ARCHIVE_URL, "polygon_index": 3}],
+        "summary": {"hit_rate_pct": 100.0, "n_rows_scored": 1},
+    })
+    _prov_with_archive(tmp, _ARCHIVE_URL)
+    return tmp
+
+
+@case("a back-test row with no recorded fetch fails", "fail",
+      "cpc-backtest-sampling-method")
+def _bt_prov(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    dump(tmp / "cpc_backtest.json", {
+        "status": "scored",
+        "rows": [{"category": "Above", "observed_tercile": "Above",
+                  "hit": True, "sampling": _LIVE_SAMPLING,
+                  "url": _ARCHIVE_URL, "polygon_index": 3}],
+        "summary": {"hit_rate_pct": 100.0, "n_rows_scored": 1},
+    })
+    # No provenance entry added: the fetch is untraceable by construction.
+    return tmp
+
+
+@case("a scoreboard day stripped of deep links fails", "fail",
+      "deep-links-traceable")
+def _dl(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    cal = load("calendar.json")
+    if not cal["days"][0].get("deep_links"):
+        raise AssertionError("fixture expected the dataset to carry deep_links")
+    cal["days"][0]["deep_links"] = {}
+    dump(tmp / "calendar.json", cal)
+    return tmp
+
+
+@case("a duplicated AFD issuance fails the history guard", "fail",
+      "afd-history-consistent")
+def _ah(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    hist = load("afd_history.json")
+    if not hist:
+        raise AssertionError("fixture expected a non-empty afd_history.json")
+    hist.append(copy.deepcopy(hist[0]))
+    dump(tmp / "afd_history.json", hist)
+    return tmp
+
+
+@case("a digest built at the wrong threshold fails", "fail",
+      "digest-rss-traceable")
+def _dg(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    dg = load("digest.json")
+    dg["pop_threshold_pct"] = 40
+    dump(tmp / "digest.json", dg)
+    return tmp
+
+
+@case("a model-guidance key on a scoreboard day fails", "fail",
+      "model-guidance-separated")
+def _mg(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    cal = load("calendar.json")
+    cal["days"][0]["model_cfs_rain_in"] = 1.23
+    dump(tmp / "calendar.json", cal)
+    return tmp
+
+
+@case("a successor probe with an invented verdict fails", "fail",
+      "successor-probe-present")
+def _sp(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    dump(tmp / "isd_history.json", {
+        "url": "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv",
+        "verdict": "the-intern-deleted-it",
+    })
+    _prov_with_archive(
+        tmp, "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv")
+    return tmp
+
+
+@case("a digest whose RSS feed is malformed fails", "fail",
+      "digest-rss-traceable")
+def _dg_rss(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    (tmp / "alerts.xml").write_text("<rss><channel><item>unclosed")
     return tmp
 
 

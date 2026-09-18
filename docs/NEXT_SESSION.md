@@ -1,35 +1,59 @@
 # Next session — handoff
 
-## 1. State at the end of this session (18 Sep 2026 — UI surface for NWS verification loop and CPC back-test)
+## 1. State at the end of this session (18 Sep 2026 — Pass 1: CPC back-test pipeline, GSOD/ISD retirement, deep links, AFD history, digest)
 
-**Ledger:** 53 checks, 19 claims — all pass.
+**Ledger:** 59 checks (new: `cpc-backtest-sampling-method`, `deep-links-traceable`,
+`afd-history-consistent`, `digest-rss-traceable`, `model-guidance-separated`,
+`successor-probe-present`), 19 claims — all pass.
 
-**Tests:** `tests/test_parsers.py` 336/336 · `tests/falsify_guards.py` 23 cases ·
-`tests/falsify_smoke.py` 13 cases · `npm test` (jsdom smoke) passes ·
-`pipeline/verify_sources.py` passes · `pipeline/verify_claims.py` passes.
+**Tests:** `tests/test_parsers.py` 377/377 · `tests/falsify_guards.py` 33 cases ·
+`npm test` (jsdom smoke, +4 guards: digest, AFD history, day-dialog deep links,
+back-test/file consistency) passes · `pipeline/verify_sources.py` passes ·
+`pipeline/verify_claims.py` passes.
 
-### What changed in this session
+**Pass 2 (same session, bug/edge-case review of the diff above):** 10 further
+defects found and fixed, all with regression tests — a wrong helper name that
+would have crashed the nightly run, a successor rule that reported a buoy,
+unmerged back-test provenance, a JFM year-mapping error, a dropped NWS dialog
+link, a ledger leniency keyed on one day, a stale-pass hole in the publish
+gate, and a wrong GHCNh probe URL. See `docs/VERIFICATION.md` Session 8,
+Pass 2 table (bugs 55–64). All suites re-green after the fixes.
 
-1. **Two new site sections**, surfaced visibly rather than sitting as silent data files:
-   - **NWS forecast verification** (`#nws-verification`) — reads
-     `data/forecast_verification.json`, reports the running scored-pair count, and
-     explains why it currently reads 0 (the first pairs populate once GHCN-Daily
-     observations catch up to the archived forecasts). Once pairs exist it shows
-     high-temp MAE, POP calibration (rain frequency when POP ≥ 50 % vs < 50 %),
-     and a lead-day breakdown. Nav link added.
-   - **CPC back-test** (`#cpc-backtest`) — reads `data/cpc_backtest.json`; when
-     that file is absent (the current state) it honestly reports the
-     **data-source limitation**: CPC's live GIS server only exposes the current
-     month's issuance, so historical `seasprcp_YYYYMM.zip` files must be
-     bulk-fetched from a static archive before a hit-rate can be computed. It
-     describes the exact work needed (vetted host, bulk fetch, existing sampling
-     code path). Nav link added.
-2. Both sections render cleanly in jsdom (smoke test passes); both handle the
-   "no data yet" case with an explanatory callout rather than an empty panel.
-3. Everything previously live is unchanged: nightly pipeline, scoreboard,
-   landlord dashboard, bottom line, cost drivers, hour-by-hour wind+rain, AFD
-   scanner, verification ledger, source provenance, Storm Events, published-vs-
-   derived normals cross-check.
+### What changed in this session (Pass 1)
+
+1. **CPC back-test pipeline** (`pipeline/cpc_backtest.py`, new workflow step):
+   samples each historical August `seasprcp` issuance at the 94122 centroid with
+   the same `main._sample_shapefile_archive` → `lib_shape` code path as the live
+   outlooks, scores Above/Below against the GHCN-Daily OND/NDJ/DJF/JFM tercile,
+   writes `data/cpc_backtest.json`. EC outlooks are unscored by construction.
+   When no archive is retrievable it writes `status: pending-backfill` and each
+   404 is recorded under the new expected-absence rule
+   `historical-archive-not-retained`. **IRI vetting concluded: rejected** (academic
+   mirror, HTTP-only, no outlook polygons) — documented in
+   `docs/DATA_SOURCES.md` §3 and kept off `ALLOWED_HOSTS`. The card renderer was
+   rewritten for the real file schema (it previously expected a shape the writer
+   never produced).
+2. **GSOD/ISD stop at 2025-08-27 explained**: NCEI retired both archives on
+   2025-08-29. Coverage notes and the stale-archive flag now say "retired", and
+   each run probes the official successors (GHCNh hourly, SSODv2) into
+   `data/isd_history.json` / `data/ghcnh_probe.json`.
+3. **Per-field deep links**: every scoreboard day carries `deep_links` (NWS days:
+   hourly `startTime` values named in the hint; climatology days: GHCN row,
+   GSOD annual-file pattern, hourly-normals rows, published-normals row), rendered
+   in the day dialog as "Verify each number yourself". Ledger check `deep-links-traceable` fails
+   the run if a day lacks its tier's keys.
+4. **AFD issuance history** (`data/afd_history.json`, append-only, deduped,
+   capped at 120): the AFD card now shows "the last discussion to mention X was
+   …" per category. Quotations only — never attached to a scoreboard day.
+5. **Storm-watch digest** (`pipeline/build_digest.py`, new workflow step):
+   `data/alerts.xml` (RSS 2.0) + `data/digest.json`, one entry per active CAZ006
+   alert and per NWS-window day with POP ≥ 50. Test messages excluded,
+   climatology can never trigger. Opt-in only: static files, no addresses stored,
+   no email offered (a static project cannot send mail honestly). Rendered in a
+   `#digest` card with a subscribe link and the privacy statement.
+6. Six new ledger checks cover all of the above (deep links, back-test method,
+   AFD history, digest/RSS, model-guidance separation, successor probes). All suites
+   green (see §1 counts).
 
 ### What already existed and needed surfacing (not new code, just visibility)
 
@@ -49,71 +73,60 @@
 
 ## 2. Open work — next session priority order
 
-### 1. Back-fill the CPC archive to run the back-test for real
+### 1. Back-fill the CPC archive to run the back-test for real — pipeline done, archive fetch still open
 
-**Blocker:** `ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/` only hosts
-`seasprcp_YYYYMM.zip` / `seastemp_YYYYMM.zip` for the current and previous month.
-Historical issuances live at:
-- CPC static archive — many are preserved at
-  `https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/YYYY/`
-  when it has been retained; and at
-- **IRI Data Library** `http://iridl.ldeo.columbia.edu/SOURCES/.NOAA/.NCEP/.CPC/.seasonal/`
-  which holds a shapefile archive back to 1995 — but this host is NOT on the
-  vetted-host allow-list.
+**Done 18 Sep 2026:** `pipeline/cpc_backtest.py` exists, runs as a workflow step,
+samples with the live-outlook code path, scores EC as unscored, writes rows +
+hit-rate-by-category/lead, and degrades to `pending-backfill` with per-issuance
+attempt records. Ledger check + render guard + offline scoring tests all exist.
+**IRI vetting concluded: REJECTED** — do not revisit without new evidence (see
+`docs/DATA_SOURCES.md` §3).
 
-**Work:**
-1. Pull the list of issuance months needed: every mid-month release from
-   1995-08 through 2020-08 (25+ seasons, so OND, NDJ, DJF, JFM can all be scored
-   against observed terciles).
-2. If `iridl.ldeo.columbia.edu` is required, vet it, add it to
-   `pipeline/verify_sources.py` `ALLOWED_HOSTS`, and document the decision in
-   `docs/DATA_SOURCES.md`.
-3. Write a `pipeline/cpc_backtest.py` (or extend `main.py`) that:
-   - fetches each historical `seasprcp_YYYYMM.zip`,
-   - samples it at the 94122 point using the existing `lib_shape.py`
-     point-in-polygon (same code path used for live CPC outlooks),
-   - reads the target season (e.g. `OND 2015` for the Aug 2015 issuance) from the
-     DBF row,
-   - computes the observed Oct/Nov/Dec/Jan precipitation total from GHCN-Daily
-     USW00023272, assigns a tercile against the 1991–2020 distribution,
-   - writes `data/cpc_backtest.json` with one row per issuance (season, CPC
-     category, probability, observed tercile, hit/miss) plus an overall hit-rate
-     summary broken out by category and lead.
-4. Add a falsifiable ledger check (`cpc-backtest-sampling-method`) and at least
-   one render guard (hit/miss pill must render when data is present).
-5. Add a test with one synthetic season so the arithmetic is verified offline.
+**Still open:** the nightly run attempts the August issuances 1995–2020 against
+the live GIS server and the `www` mirror, but both usually 404 for old months.
+What remains is finding the per-issuance file URLs inside the official Oct-1995
+archive (<https://www.cpc.ncep.noaa.gov/products/archives/long_lead/llarc.ind.php> —
+currently an index of graphics pages, not direct ZIP links) and teaching the
+back-test to follow them. Until then the card honestly reports pending-backfill
+with the attempt table.
 
-**Effort:** ~1–2 days. The sampling and scoring primitives already exist; the
-new work is the bulk fetch and the host-vetting decision.
+### 2. Chase why GSOD/ISD for KSFO stop at 2025-08-27 — RESOLVED, successor stitching open
 
-### 2. Chase why GSOD/ISD for KSFO stop at 2025-08-27
+**Resolved 18 Sep 2026:** NCEI retired GSOD and ISD on 2025-08-29; no station-ID
+change, no lag. Coverage notes and the stale flag now say "retired", and each
+run records `data/isd_history.json` + `data/ghcnh_probe.json`.
 
-NCEI's annual files for station 72494023234 have not rolled forward. Either
-the station identifier changed or NCEI has a lag in producing the GSOD annual
-files. Check `isd-history.csv` for the station and look for a successor
-`USAF-WBAN` id. If one exists, stitch the archives; if not, document that the
-file ends where it ends and keep the stale-archive flag honest.
+**Still open:** stitch the successors once probe coverage is confirmed — GHCNh
+hourly for the hour-by-hour wind+rain statistic (post-Aug-2025 hours), SSODv2
+for daily wind/gust. Keep GHCNd as the daily precipitation authority. Do not
+drop the frozen 1991–2025 ISD/GSOD aggregates: they are the only record for
+those years.
 
 ### 3. Deep links in the day dialog
 
 Every field already names its basis, but a reader trying to manually verify
 temperature on 14 December still has to download the whole GHCN CSV and search.
-Per-field deep links (GHCN CSV row anchor, NWS hourly `startTime`) would make
-manual verification a one-click step. **Effort:** a couple of hours.
+**Done 18 Sep 2026:** per-field deep links (`deep_links_for_nws_day` /
+`deep_links_for_climo_day`) with `startTime`-naming hints, rendered as "Verify
+each number yourself" in the day dialog and enforced by ledger check `deep-links-traceable`.
 
 ### 4. AFD history archive
 
 Store each scanned Area Forecast Discussion in `data/afd_history.json` so the
 AFD card can say "the last discussion to mention an atmospheric river was
-issued on …". That is a history of what NWS wrote, not a forecast, and would
-make the card useful in January rather than only today. **Effort:** ~2 hours.
+issued on …". **Done 18 Sep 2026:** `data/afd_history.json` (append-only,
+deduped, capped at 120) with a per-category last-mention table on the card and
+ledger check `afd-history-consistent`. Quotations only — never attached to a scoreboard day.
 
 ### 5. Multi-ZIP support and a digest
 
 The pipeline is already parameterised by coordinate; multi-ZIP is mostly
-front-end work. A digest (RSS or email) for "a day enters the 7-day window
-with POP ≥ X" or "an NWS alert is issued for CAZ006" needs an opt-in and a
-privacy story first.
+front-end work and is still open. **Digest done 18 Sep 2026:** RSS
+(`data/alerts.xml`) + JSON (`data/digest.json`) for "a day enters the NWS window
+with POP ≥ 50" or "an NWS alert is issued for CAZ006", with an opt-in-only
+privacy story (static files, no addresses, no tracking). **Email deliberately
+not offered**: it would require storing addresses and running a sender, which
+this static project cannot do honestly.
 
 ### 6. Model guidance (only with heavy caveats)
 
@@ -165,7 +178,9 @@ outage.
 # Local rebuild (fetches nothing in the sandbox — run on CI or a networked box)
 python3 pipeline/main.py --outdir data
 python3 pipeline/build_calendar.py
+python3 pipeline/cpc_backtest.py
 python3 pipeline/landlord_summary.py
+python3 pipeline/build_digest.py
 python3 pipeline/verify_claims.py
 python3 tests/test_parsers.py
 python3 tests/falsify_guards.py
@@ -188,6 +203,10 @@ python3 -m http.server 8000   # http://localhost:8000
 * NWS hourly — <https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly>
 * NWS alerts CAZ006 — <https://api.weather.gov/alerts/active?zone=CAZ006>
 * NWS AFD — <https://api.weather.gov/products/types/AFD/locations/MTR>
+* Storm-watch feed — <https://buffedlizard55-lab.github.io/SFWeather/data/alerts.xml> (+ `data/digest.json`)
+* AFD issuance history — <https://buffedlizard55-lab.github.io/SFWeather/data/afd_history.json>
+* CPC long-lead archive index (Oct 1995 →) — <https://www.cpc.ncep.noaa.gov/products/archives/long_lead/llarc.ind.php>
+* GHCNh station list (ISD successor) — <https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.csv>
 * GHCN-Daily USW00023272 — <https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv>
 * GSOD archive — <https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/>
 * GSOD README (units) — <https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt>

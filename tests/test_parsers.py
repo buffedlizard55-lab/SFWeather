@@ -32,6 +32,7 @@ and the column headers, which are copied verbatim from the official files.
 import io
 import json
 import os
+import pathlib
 import sys
 import traceback
 
@@ -43,6 +44,8 @@ import climo  # noqa: E402
 import main as pipeline_main  # noqa: E402
 import build_calendar  # noqa: E402
 import verify_sources  # noqa: E402
+import cpc_backtest  # noqa: E402
+import build_digest  # noqa: E402
 
 RESULTS = []
 
@@ -1966,23 +1969,26 @@ MANIFEST_FIXTURE = [
      "ok": False, "expected_absent": "station-without-observations-product"},
     {"url": "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023272.csv",
      "ok": False, "expected_absent": "candidate-station-without-the-product"},
+    {"url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_199508.zip",
+     "ok": False, "expected_absent": "historical-archive-not-retained"},
     {"url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
      "ok": False},                                    # a real failure
 ]
 
 _counts = pipeline_main.count_fetches(MANIFEST_FIXTURE)
-check("count_fetches separates a real failure from three expected absences",
-      _counts == {"manifest_entries": 5, "successful_fetches": 1,
-                  "failed_fetches": 1, "expected_absences": 3},
+check("count_fetches separates a real failure from four expected absences",
+      _counts == {"manifest_entries": 6, "successful_fetches": 1,
+                  "failed_fetches": 1, "expected_absences": 4},
       "got %r" % (_counts,))
 check("count_fetches counts every manifest entry exactly once",
       sum(_counts[k] for k in ("successful_fetches", "failed_fetches",
                                "expected_absences")) == len(MANIFEST_FIXTURE))
-check("the expected-absence rules are a closed set of three named reasons",
+check("the expected-absence rules are a closed set of four named reasons",
       set(pipeline_main.EXPECTED_ABSENCE_RULES) == {
           "annual-file-not-yet-published",
           "station-without-observations-product",
-          "candidate-station-without-the-product"},
+          "candidate-station-without-the-product",
+          "historical-archive-not-retained"},
       repr(pipeline_main.EXPECTED_ABSENCE_RULES))
 
 
@@ -2013,6 +2019,386 @@ check("a 200 is never recorded as an expected absence",
 pipeline_main.MANIFEST.clear()
 
 # --------------------------------------------------------------------------- #
+# CPC back-test scoring (pipeline/cpc_backtest.py).  Pure functions, so they are
+# pinned offline: the scoring rule is the load-bearing claim of the back-test
+# card ("CPC said above, it rained above"), and EC handling is where a
+# hit-rate is most easily inflated by accident.
+# --------------------------------------------------------------------------- #
+
+check("tercile ties at a break fall to Near-normal, not a tilt",
+      cpc_backtest.assign_tercile(10.0, 10.0, 20.0) == "Near-normal" and
+      cpc_backtest.assign_tercile(20.0, 10.0, 20.0) == "Near-normal")
+check("assign_tercile classifies strictly outside the breaks",
+      cpc_backtest.assign_tercile(9.9, 10.0, 20.0) == "Below" and
+      cpc_backtest.assign_tercile(20.1, 10.0, 20.0) == "Above")
+check("assign_tercile refuses to classify without breaks or a value",
+      cpc_backtest.assign_tercile(None, 10.0, 20.0) is None and
+      cpc_backtest.assign_tercile(15.0, None, None) is None)
+
+check("a CPC tilt verifies iff the observed tercile matches it",
+      cpc_backtest.cpc_hit("Above", "Above") is True and
+      cpc_backtest.cpc_hit("Below", "Below") is True and
+      cpc_backtest.cpc_hit("Above", "Below") is False and
+      cpc_backtest.cpc_hit("Below", "Above") is False)
+check("EC is never a tilt, so an EC outlook is always unscored",
+      cpc_backtest.cpc_hit("EC", "Above") is None and
+      cpc_backtest.cpc_hit("EC", "Near-normal") is None and
+      cpc_backtest.cpc_hit("Equal chances", "Below") is None)
+check("an unknown category or missing observation is unscored, not a miss",
+      cpc_backtest.cpc_hit("Mystery", "Above") is None and
+      cpc_backtest.cpc_hit("Above", None) is None)
+
+_ROWS = [
+    {"issuance_ym": "199508", "category": "Above", "category_label": "Above median",
+     "observed_tercile": "Above", "hit": True, "lead": 5},
+    {"issuance_ym": "199508", "category": "Above", "category_label": "Above median",
+     "observed_tercile": "Below", "hit": False, "lead": 5},
+    {"issuance_ym": "199508", "category": "EC", "category_label": "Equal chances",
+     "observed_tercile": "Near-normal", "hit": None, "lead": 5},
+]
+_S = cpc_backtest.score_rows(_ROWS)
+check("score_rows keeps EC rows out of the hit-rate denominator",
+      _S["n_rows_scored"] == 2 and _S["n_rows_unscored_ec"] == 1 and
+      _S["hits"] == 1 and _S["misses"] == 1 and _S["hit_rate_pct"] == 50.0,
+      repr(_S))
+check("score_rows breaks the hit-rate out by category and lead",
+      _S["by_category"]["Above median"] == {"scored": 2, "hits": 1, "hit_rate_pct": 50.0} and
+      _S["by_lead"]["5"] == {"scored": 2, "hits": 1, "hit_rate_pct": 50.0},
+      repr({k: _S[k] for k in ("by_category", "by_lead")}))
+check("score_rows of nothing is a null hit-rate, not zero skill",
+      cpc_backtest.score_rows([])["hit_rate_pct"] is None)
+
+# --------------------------------------------------------------------------- #
+# AFD issuance history (climo.update_afd_history / afd_last_mention).
+# Append-only and deduped by issuance_time: a rebuild must never duplicate or
+# rewrite an entry, and the scan's "id" field must survive the round trip (a
+# key/id rename once blanked the history — pinned here).
+# --------------------------------------------------------------------------- #
+
+_SCAN = {"sentences_scanned": 3,
+         "categories": [{"id": "strong_wind", "label": "Strong wind",
+                         "sentence_count": 1,
+                         "sentences": [{"sentence": "Gusts to 30 mph.",
+                                        "section": "MARINE", "matched_patterns": ["gust"]}]},
+                        {"id": "heavy_rain", "label": "Heavy rain",
+                         "sentence_count": 0, "sentences": []}]}
+_PROD = {"issuance_time": "2026-09-18T18:24:00+00:00", "id": "abc",
+         "source_url": "https://api.weather.gov/x", "text": "hello"}
+
+_H1 = climo.update_afd_history([], _PROD, _SCAN)
+check("update_afd_history appends one entry carrying the scan's category ids",
+      len(_H1) == 1 and [c.get("id") for c in _H1[0]["categories"]] ==
+      ["strong_wind", "heavy_rain"] and _H1[0]["text_chars"] == 5,
+      repr(_H1))
+_H2 = climo.update_afd_history(_H1, _PROD, _SCAN)
+check("update_afd_history dedupes a re-run of the same issuance", _H2 == _H1)
+check("afd_last_mention returns the newest issuance that mentioned the key",
+      climo.afd_last_mention(_H1, "strong_wind") == "2026-09-18T18:24:00+00:00" and
+      climo.afd_last_mention(_H1, "heavy_rain") is None)
+check("afd_last_mention tolerates a legacy entry that stored key not id",
+      climo.afd_last_mention(
+          [{"issuance_time": "2026-09-17T18:00:00+00:00",
+            "categories": [{"key": "strong_wind", "sentence_count": 2}]}],
+          "strong_wind") == "2026-09-17T18:00:00+00:00")
+check("update_afd_history caps the file at AFD_HISTORY_MAX, newest last",
+      len(climo.update_afd_history(
+          [{"issuance_time": "2026-%02d-01T00:00:00+00:00" % m, "categories": []}
+           for m in range(1, 13)] * 20, _PROD, _SCAN)) == climo.AFD_HISTORY_MAX)
+
+# --------------------------------------------------------------------------- #
+# Storm-watch digest (pipeline/build_digest.py).  The feed is the one artefact
+# that pushes numbers at a subscriber, so the trigger rules are pinned: test
+# alerts never fire, the POP threshold is inclusive, and only days inside the
+# NWS horizon (current_forecast.days) can trigger — climatology never can.
+# --------------------------------------------------------------------------- #
+
+_CAL = {"current_forecast": {
+    "forecast_updated": "2026-09-18T18:00:00+00:00",
+    "alerts": {"zone": "CAZ006", "events": [
+        {"event": "Wind Advisory", "is_test": False, "severity": "Moderate",
+         "headline": "Wind Advisory", "effective": "2026-09-18T18:00:00+00:00"},
+        {"event": "Test Message", "is_test": True, "severity": "Unknown",
+         "headline": "This is a test"}]},
+    "days": [{"date": "2026-09-19", "weekday": "Saturday", "rain_chance_pct": 50,
+              "rain_amount_in": 0.1, "hours_covered": 24},
+             {"date": "2026-09-20", "weekday": "Sunday", "rain_chance_pct": 49,
+              "rain_amount_in": 0.0, "hours_covered": 24}]},
+    "days": [{"date": "2026-10-01", "tier": "climo", "rain_chance_pct": 100}]}
+_NWS = {"active_alerts": {"source_url": "https://api.weather.gov/alerts/active?zone=CAZ006"}}
+
+_AI, _PI = build_digest.collect_triggers(_CAL, _NWS)
+check("collect_triggers drops test messages and keeps real alerts",
+      len(_AI) == 1 and _AI[0]["kind"] == "nws-alert" and
+      "Wind Advisory" in _AI[0]["title"], repr(_AI))
+check("collect_triggers fires at the POP threshold, inclusive, NWS days only",
+      len(_PI) == 1 and _PI[0]["kind"] == "high-pop-day" and
+      _PI[0]["date"] == "2026-09-19" and _PI[0]["pop_pct"] == 50, repr(_PI))
+
+_XML = build_digest.rss_xml(_AI, _PI, "2026-09-18T20:00:00Z")
+import xml.dom.minidom as _minidom
+_DOC = _minidom.parseString(_XML)
+check("rss_xml is well-formed XML with one item per trigger",
+      len(_DOC.getElementsByTagName("item")) == 2)
+_XSS = build_digest.rss_xml(
+    [{"kind": "nws-alert", "title": "<b>X</b>", "link": "https://x/",
+      "pubDate": "2026-09-18T20:00:00Z", "description": "a&b"}], [], "2026-09-18T20:00:00Z")
+check("rss_xml escapes markup in alert text",
+      "<b>X</b>" not in _XSS and "&lt;b&gt;X&lt;/b&gt;" in _XSS and "a&amp;b" in _XSS)
+
+# --------------------------------------------------------------------------- #
+# Per-field deep links (build_calendar.deep_links_for_*_day).  Every headline
+# field must name the exact official element behind it: the day dialog renders
+# these as "verify each number yourself" links, so a missing key or a
+# non-official host is a broken promise on the page.
+# --------------------------------------------------------------------------- #
+
+_NWS_DL = build_calendar.deep_links_for_nws_day(
+    iso="2026-09-19", hourly_url="https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
+    gridpoint_url="https://api.weather.gov/gridpoints/MTR/82,105",
+    human_url="https://forecast.weather.gov/MapClick.php?lat=37.7605&lon=-122.4839",
+    start_times=["2026-09-19T07:00:00-07:00", "2026-09-19T08:00:00-07:00"])
+check("an NWS day links all six fields plus the human forecast",
+      set(_NWS_DL) == {"temp", "humidity", "rain_chance", "rain_amount", "wind",
+                       "gust", "human"}, repr(sorted(_NWS_DL)))
+check("NWS deep links name the aggregated startTime values in their hints",
+      "2026-09-19T07:00:00-07:00" in _NWS_DL["temp"]["hint"] and
+      "2026-09-19T08:00:00-07:00" in _NWS_DL["temp"]["hint"])
+check("every NWS deep link is an official https host",
+      all(v["url"].startswith("https://") and
+          __import__("urllib.parse", fromlist=["urlsplit"]).urlsplit(v["url"]).hostname in
+          ("api.weather.gov", "forecast.weather.gov")
+          for v in _NWS_DL.values()),
+      repr({k: v["url"] for k, v in _NWS_DL.items()}))
+
+_CLIMO_DL = build_calendar.deep_links_for_climo_day(
+    mmdd="10-01", month=10, day=1,
+    ghcn_url="https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
+    ghcn_station="USW00023272",
+    gsod_base_url="https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
+    gsod_station="72494023234",
+    humidity_url="https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv",
+    daily_normals_url="https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv")
+check("a climatology day links all six fields plus the published normals",
+      set(_CLIMO_DL) == {"temp", "humidity", "rain_chance", "rain_amount", "wind",
+                         "gust", "published_normals"}, repr(sorted(_CLIMO_DL)))
+check("climatology deep links name the rows/columns to read",
+      "TMAX/TMIN" in _CLIMO_DL["temp"]["hint"] and
+      "72494023234.csv" in _CLIMO_DL["wind"]["hint"] and
+      "DLY-TMAX-NORMAL" in _CLIMO_DL["published_normals"]["hint"])
+check("every climatology deep link is an official https host",
+      all(v["url"].startswith("https://") and
+          __import__("urllib.parse", fromlist=["urlsplit"]).urlsplit(v["url"]).hostname ==
+          "www.ncei.noaa.gov" for v in _CLIMO_DL.values()),
+      repr({k: v["url"] for k, v in _CLIMO_DL.items()}))
+
+# --------------------------------------------------------------------------- #
+
+# --------------------------------------------------------------------------- #
+# Successor-id search + GHCNh probe, end to end with a stubbed transport
+# (main.fetch_isd_history / main.fetch_ghcnh_probe).  These functions only run
+# on CI (they need the network), so without this test a wrong helper name —
+# ``search_isd_history_for_station`` for ``search_isd_history``, shipped and
+# caught only by a diff review — would have crashed the nightly run.  The stub
+# serves a three-row isd-history.csv and a tiny station list; everything after
+# the transport is the real code path, including the manifest record and the
+# irregularity note.
+# --------------------------------------------------------------------------- #
+
+import lib_fetch as _fetchlib  # noqa: E402
+
+_ISD_HISTORY_FIXTURE = (
+    "USAF,WBAN,STATION NAME,CTRY,FIPS,LAT,LON,ELEV(M),BEGIN,END\n"
+    "724940,23234,SAN FRANCISCO INTERNATIONAL AIRPORT,US,US,+37.620,-122.365,+002.1,19450101,20250827\n"
+    "724940,99999,SAN FRANCISCO BAY BUOY,US,US,+37.700,-122.400,+000.0,20200101,\n"
+    "725000,11111,SOMEWHERE ELSE,US,US,+40.000,-120.000,+100.0,19900101,20200101\n"
+)
+
+
+class _StubRes:
+    def __init__(self, ok=True, body=b"x"):
+        self.ok = ok
+        self.body = body
+        self.status = 200 if ok else 404
+        self.sha256 = "0" * 64
+        self.retrieved_utc = "2026-09-18T00:00:00Z"
+        self.size = len(body)
+
+    def provenance(self, note=None, **extra):
+        return {"url": "stub", "ok": self.ok, "http_status": self.status,
+                "note": note, **extra}
+
+
+_real_get_text = _fetchlib.get_text
+
+
+def _stub_get_text(url, **kwargs):
+    if "isd-history" in url:
+        body = _ISD_HISTORY_FIXTURE.encode()
+        return _ISD_HISTORY_FIXTURE, _StubRes(True, body)
+    if "ghcnh-station-list" in url:
+        body = b"id,USW00023234\n"
+        return body.decode(), _StubRes(True, body)
+    return "", _StubRes(False, b"")
+
+
+_fetchlib.get_text = _stub_get_text
+try:
+    pipeline_main.MANIFEST.clear()
+    pipeline_main.IRREGULARITIES.clear()
+    _hist = pipeline_main.fetch_isd_history()
+    check("fetch_isd_history runs end to end and finds the KSFO row",
+          _hist is not None and (_hist.get("station") or {}).get("end") == "20250827" and
+          _hist["verdict"] == "station-found-no-successor" and _hist["successor"] is None,
+          repr(_hist))
+    check("fetch_isd_history files the retirement as an info irregularity, not a warning",
+          any(i["severity"] == "info" and "retired-dataset" in i["message"]
+              for i in pipeline_main.IRREGULARITIES),
+          repr(pipeline_main.IRREGULARITIES))
+    check("fetch_isd_history records its fetch in the manifest",
+          len(pipeline_main.MANIFEST) == 1, repr(pipeline_main.MANIFEST))
+    check("the GHCNh probe URL is the verified live station list (.csv)",
+          climo.GHCNH_STATION_LIST_URL ==
+          "https://www.ncei.noaa.gov/oa/global-historical-climatology-network/"
+          "hourly/doc/ghcnh-station-list.csv")
+    _probe = pipeline_main.fetch_ghcnh_probe()
+    check("fetch_ghcnh_probe runs end to end and confirms the successor list",
+          _probe is not None and _probe.get("station_list_ok") is True and
+          (_probe.get("contains_sfo_ids") or {}).get("USW00023234") is True,
+          repr(_probe))
+finally:
+    _fetchlib.get_text = _real_get_text
+    pipeline_main.MANIFEST.clear()
+    pipeline_main.IRREGULARITIES.clear()
+
+# A successor row (same name, later BEGIN, still open) must be reported, not
+# mistaken for a retirement.
+_HIST_WITH_SUCCESSOR = (
+    "USAF,WBAN,STATION NAME,CTRY,FIPS,LAT,LON,ELEV(M),BEGIN,END\n"
+    "724940,23234,SAN FRANCISCO INTERNATIONAL AIRPORT,US,US,+37.620,-122.365,+002.1,19450101,20250827\n"
+    "724941,23234,SAN FRANCISCO INTL AIRPORT RELO,US,US,+37.621,-122.366,+002.1,20250828,\n"
+)
+_rows = climo.parse_isd_history(_HIST_WITH_SUCCESSOR)
+_found = climo.search_isd_history(_rows)
+check("parse_isd_history reads USAF+WBAN rows with begin/end dates",
+      len(_rows) == 2 and _rows[0]["station_id"] == "72494023234" and
+      _rows[0]["end"] == "20250827", repr(_rows))
+check("search_isd_history reports a same-name row that begins after the stop",
+      (_found.get("successor") or {}).get("station_id") == "72494123234",
+      repr(_found.get("successor")))
+check("search_isd_history returns no successor when the stop is the end",
+      climo.search_isd_history(
+          climo.parse_isd_history(_ISD_HISTORY_FIXTURE))["successor"] is None)
+
+# --------------------------------------------------------------------------- #
+# Back-test manifest merge (cpc_backtest.merge_run_manifests).  The back-test is
+# its own workflow step, so without the merge its fetches would die with the
+# process: scored rows would have no recorded fetch and the run counts would no
+# longer recount.  The fixture below is a miniature run directory; the merge
+# must leave provenance, run counts, quality recounts and the human summary
+# mutually consistent.
+# --------------------------------------------------------------------------- #
+
+import tempfile as _tempfile  # noqa: E402
+
+
+class _FakeMain:
+    MANIFEST = [
+        {"url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_199508.zip",
+         "ok": True},
+        {"url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_199608.zip",
+         "ok": False, "expected_absent": "historical-archive-not-retained"},
+    ]
+    IRREGULARITIES = [{"severity": "warning", "area": "cpc", "message": "no polygon"}]
+
+    @staticmethod
+    def count_fetches(manifest):
+        return pipeline_main.count_fetches(manifest)
+
+
+class _FakeFetchlib:
+    @staticmethod
+    def iso_utc():
+        return "2026-09-18T21:00:00Z"
+
+
+_tmp = pathlib.Path(_tempfile.mkdtemp(prefix="merge_test_"))
+(_tmp / "provenance.json").write_text(json.dumps({
+    "generated_utc": "2026-09-18T20:00:00Z", "entries": [{"url": "https://x/", "ok": True}]}))
+(_tmp / "run.json").write_text(json.dumps({
+    "counts": {"manifest_entries": 1, "successful_fetches": 1, "failed_fetches": 0,
+               "expected_absences": 0, "irregularities": 0}}))
+(_tmp / "quality_report.json").write_text(json.dumps({
+    "generated_utc": "2026-09-18T20:00:00Z",
+    "counts": {"total": 0, "errors": 0, "warnings": 0, "info": 0},
+    "irregularities": []}))
+(_tmp / "summary.txt").write_text("head\nFETCHES: 1 ok / 0 failed / 0 absent by design (x)\nIRREGULARITIES: 0\n")
+cpc_backtest.merge_run_manifests(_tmp, _FakeMain, _FakeFetchlib)
+_merged_prov = json.loads((_tmp / "provenance.json").read_text())
+_merged_run = json.loads((_tmp / "run.json").read_text())
+_merged_qual = json.loads((_tmp / "quality_report.json").read_text())
+_merged_sum = (_tmp / "summary.txt").read_text()
+check("merge appends the step's fetches to the provenance manifest",
+      len(_merged_prov["entries"]) == 3 and
+      _merged_prov["generated_utc"] == "2026-09-18T21:00:00Z",
+      repr(_merged_prov)[:300])
+check("merge recomputes the run.json fetch counts from the merged manifest",
+      _merged_run["counts"] == {"manifest_entries": 3, "successful_fetches": 2,
+                                "failed_fetches": 0, "expected_absences": 1,
+                                "irregularities": 1},
+      repr(_merged_run["counts"]))
+check("merge recounts the quality report and carries the new warning",
+      _merged_qual["counts"] == {"total": 1, "errors": 0, "warnings": 1, "info": 0} and
+      _merged_qual["irregularities"][0]["message"] == "no polygon")
+check("merge keeps the human summary's counts and lists in step",
+      "FETCHES: 2 ok / 0 failed / 1 absent by design" in _merged_sum and
+      "IRREGULARITIES: 1" in _merged_sum and
+      "  [warning] cpc: no polygon" in _merged_sum,
+      _merged_sum)
+import shutil as _shutil
+_shutil.rmtree(_tmp, ignore_errors=True)
+
+# A missing run directory must degrade to a printed warning, never a crash:
+# the ledger (not an exception) reports whatever is inconsistent.
+cpc_backtest.merge_run_manifests(pathlib.Path(_tempfile.mkdtemp()), _FakeMain, _FakeFetchlib)
+check("merge into an empty directory does not raise", True)
+
+# --------------------------------------------------------------------------- #
+# Season totals across the year boundary (cpc_backtest.season_total_prcp_in).
+# NDJ 2015 must read Jan 2016, but JFM 2015 must read Jan-Mar 2015 — a fixed
+# "winter months are year+1" rule scored every JFM outlook against the wrong
+# year's rain (caught in review).  An incomplete season is None, never partial.
+# --------------------------------------------------------------------------- #
+
+import datetime as _dt  # noqa: E402
+
+
+def _ghcn_range(start_iso, end_iso, tenths_mm=10):
+    out = {}
+    d = _dt.date.fromisoformat(start_iso)
+    end = _dt.date.fromisoformat(end_iso)
+    while d <= end:
+        out[d.isoformat()] = {"PRCP": tenths_mm}
+        d += _dt.timedelta(days=1)
+    return out
+
+
+_G = {}
+_G.update(_ghcn_range("2015-10-01", "2016-03-31"))
+check("OND total sums Oct-Dec of the named year",
+      cpc_backtest.season_total_prcp_in(_G, 2015, (10, 11, 12)) ==
+      round(92 * 10 / 254.0, 3),
+      repr(cpc_backtest.season_total_prcp_in(_G, 2015, (10, 11, 12))))
+check("NDJ total takes Jan from the following year",
+      cpc_backtest.season_total_prcp_in(_G, 2015, (11, 12, 1)) ==
+      round(92 * 10 / 254.0, 3))  # Nov 30 + Dec 31 + Jan 31
+check("JFM total stays inside the named year (Jan-Mar 2015, incl. leap Feb)",
+      cpc_backtest.season_total_prcp_in(_ghcn_range("2015-01-01", "2016-03-31"),
+                                        2015, (1, 2, 3)) ==
+      round((31 + 28 + 31) * 10 / 254.0, 3))
+_G2 = dict(_G)
+del _G2["2015-12-25"]
+check("a season missing one day is None, not a partial total",
+      cpc_backtest.season_total_prcp_in(_G2, 2015, (10, 11, 12)) is None)
 
 passed = sum(1 for _n, ok, _d in RESULTS if ok)
 failed = [(n, d) for n, ok, d in RESULTS if not ok]

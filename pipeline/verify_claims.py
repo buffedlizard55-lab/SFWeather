@@ -36,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # would otherwise shadow the module - the same trap already hit
 # build_calendar.py.
 import climo as climo_lib  # noqa: E402
+from build_digest import POP_THRESHOLD_PCT  # noqa: E402
 # The Rain-related event-type set and the damage parser are used by the
 # storm-event recount below; importing them keeps one definition in the project
 # instead of a second copy that can drift.
@@ -143,6 +144,11 @@ def main() -> int:
     monthly_normals = load("monthly_normals.json")
     landlord = load("landlord.json")
     storms = load("storm_events.json")
+    cpc_backtest = load("cpc_backtest.json", default=None)
+    afd_history = load("afd_history.json", default=None)
+    digest = load("digest.json", default=None)
+    isd_history = load("isd_history.json", default=None)
+    ghcnh_probe = load("ghcnh_probe.json", default=None)
 
     # Keep every manifest row, including repeated fetches of the same URL.  A
     # dict keyed only by URL silently collapsed the two 90-day discussion
@@ -241,6 +247,7 @@ def main() -> int:
         "annual-file-not-yet-published",
         "station-without-observations-product",
         "candidate-station-without-the-product",
+        "historical-archive-not-retained",
     }
     run_year = str(run.get("generated_utc") or "")[:4]
     bad_absences = []
@@ -261,6 +268,9 @@ def main() -> int:
         elif rule == "candidate-station-without-the-product":
             if "/normals-hourly/" not in url:
                 bad_absences.append((url, "candidate rule needs an hourly-normals URL"))
+        elif rule == "historical-archive-not-retained":
+            if not re.search(r"seas(prcp|temp)_\d{6}\.zip", url):
+                bad_absences.append((url, "historical-archive rule needs a seas*_YYYYMM.zip URL"))
     ledger.check("expected-absences-justified",
                  "Every fetch classified as an expected absence carries a reason the "
                  "ledger can check against its own URL",
@@ -1948,6 +1958,249 @@ def main() -> int:
             method="Newest date present in the fetched annual files; every published "
                    "statistic is a 1991-2020 statistic and does not depend on it.",
             verified=bool(cov.get("archives")))
+
+    # --------------------------------- 12f. CPC back-test (scored or honestly pending)
+    # The back-test is real when rows exist (every row re-derived below) and
+    # honestly pending when no historical archive was retrievable.  What must
+    # never happen is a published hit-rate that the rows do not support, an EC
+    # row counted as a hit/miss, or a row sampled by any method other than the
+    # live point-in-polygon path.
+    if not cpc_backtest:
+        ledger.check("cpc-backtest-sampling-method",
+                     "CPC back-test rows (when present) use the live point-in-polygon "
+                     "path and EC rows are never scored",
+                     True,
+                     "no cpc_backtest.json in this dataset (back-fill pending); "
+                     "the site reports pending-backfill rather than a hit-rate",
+                     severity="warning")
+    else:
+        bt_problems = []
+        rows = cpc_backtest.get("rows") or []
+        for i, r in enumerate(rows):
+            if r.get("sampling") != ("lib_shape.point_in_polygon at the 94122 centroid "
+                                     "(same code path as live CPC outlooks)"):
+                bt_problems.append(f"row {i}: sampling method is not the live path")
+            cat = (r.get("category") or "").strip()
+            hit = r.get("hit")
+            if cat == "EC" and hit is not None:
+                bt_problems.append(f"row {i}: EC outlook scored as hit/miss")
+            if cat in ("Above", "Below") and hit is None and r.get("observed_tercile"):
+                bt_problems.append(f"row {i}: tilted outlook left unscored")
+            if not r.get("url") or not fetch_ok(r["url"]):
+                bt_problems.append(f"row {i}: archive URL has no recorded successful fetch")
+            if r.get("polygon_index") is None:
+                bt_problems.append(f"row {i}: no polygon_index published")
+        # Re-derive the summary hit-rate from the rows.
+        scored = [r for r in rows if r.get("hit") is True or r.get("hit") is False]
+        hits = sum(1 for r in scored if r.get("hit") is True)
+        expect_rate = round(100.0 * hits / len(scored), 1) if scored else None
+        got_rate = (cpc_backtest.get("summary") or {}).get("hit_rate_pct")
+        if expect_rate != got_rate:
+            bt_problems.append(f"hit_rate_pct {got_rate} but rows give {expect_rate}")
+        if (cpc_backtest.get("summary") or {}).get("n_rows_scored") != len(scored):
+            bt_problems.append("n_rows_scored does not match the scored rows")
+        # Pending status must not carry scored rows, and scored status must.
+        status = cpc_backtest.get("status")
+        if status == "pending-backfill" and rows:
+            bt_problems.append("status is pending-backfill but rows are present")
+        if status == "scored" and not rows:
+            bt_problems.append("status is scored but no rows are present")
+        ledger.check("cpc-backtest-sampling-method",
+                     "CPC back-test rows (when present) use the live point-in-polygon "
+                     "path and EC rows are never scored",
+                     not bt_problems,
+                     (f"{len(rows)} row(s), {len(scored)} scored, hit-rate {got_rate}%"
+                      if not bt_problems else "; ".join(bt_problems[:6])),
+                     evidence={"problems": bt_problems[:10]})
+
+    # --------------------------------- 12g. per-field deep links traceable
+    dl_problems = []
+    for d in cal.get("days") or []:
+        dl = d.get("deep_links") or {}
+        for field in ("temp", "humidity", "rain_chance", "rain_amount", "wind", "gust"):
+            e = dl.get(field) or {}
+            if not e.get("url"):
+                dl_problems.append(f"{d.get('date')}: deep link {field} has no URL")
+            elif host_of(e["url"]) not in OFFICIAL_HOSTS:
+                dl_problems.append(f"{d.get('date')}: deep link {field} is not an official host")
+            if not e.get("hint"):
+                dl_problems.append(f"{d.get('date')}: deep link {field} has no hint")
+        # NWS days must name the hourly startTimes they aggregate, and each
+        # tier must carry its 7th link (human forecast / published normals).
+        if d.get("tier") == "nws":
+            if not d.get("nws_hourly_start_times"):
+                dl_problems.append(f"{d.get('date')}: NWS day names no hourly startTimes")
+            if not (dl.get("human") or {}).get("url"):
+                dl_problems.append(f"{d.get('date')}: NWS day has no human-forecast link")
+        if d.get("tier") == "climatology" and not (dl.get("published_normals") or {}).get("url"):
+            dl_problems.append(f"{d.get('date')}: climatology day has no published-normals link")
+        if len(dl_problems) > 12:
+            break
+    if not (cal.get("days") or []):
+        dl_problems.append("no calendar days to check")
+    elif not any(d.get("deep_links") for d in cal["days"]):
+        # Datasets predating the deep-link step warn rather than fail.  The
+        # test is "no day has links", not "day zero has none": keying on one
+        # day would let a single stripped day pass as a legacy dataset.
+        ledger.check("deep-links-traceable",
+                     "Every scoreboard day carries per-field manual-verification links "
+                     "to official URLs",
+                     True,
+                     "this dataset predates per-field deep links; the next pipeline run adds them",
+                     severity="warning")
+    else:
+        ledger.check("deep-links-traceable",
+                     "Every scoreboard day carries per-field manual-verification links "
+                     "to official URLs",
+                     not dl_problems,
+                     (f"{len(cal.get('days') or [])} day(s) carry 6 deep links each"
+                      if not dl_problems else "; ".join(dl_problems[:6])),
+                     evidence={"problems": dl_problems[:10]})
+
+    # --------------------------------- 12h. AFD issuance history consistent
+    afd_lang = (cal.get("afd_language") or {})
+    hist = afd_history if isinstance(afd_history, list) else None
+    if hist is None:
+        ledger.check("afd-history-consistent",
+                     "AFD issuance history is append-only, deduped, and quotations-only",
+                     True,
+                     "no afd_history.json in this dataset; the next pipeline run starts it",
+                     severity="warning")
+    else:
+        ah_problems = []
+        seen = set()
+        prev = ""
+        for i, e in enumerate(hist):
+            iss = e.get("issuance_time")
+            if not iss:
+                ah_problems.append(f"entry {i}: no issuance_time")
+                continue
+            if iss in seen:
+                ah_problems.append(f"entry {i}: duplicate issuance_time {iss}")
+            seen.add(iss)
+            if iss < prev:
+                ah_problems.append("history is not sorted oldest-first")
+            prev = iss
+            for c in e.get("categories") or []:
+                for s in c.get("sentences") or []:
+                    for forbidden in ("date", "amount", "probability", "pop_pct", "qpf"):
+                        if forbidden in s:
+                            ah_problems.append(f"entry {i}: quotation carries {forbidden}")
+        # The live scan's last_mention block must agree with the history.
+        last_mention = ((afd_lang.get("history") or {}).get("last_mention") or {})
+        for key, blk in last_mention.items():
+            expect = None
+            for e in hist:
+                for c in e.get("categories") or []:
+                    if (c.get("id") or c.get("key")) == key and (c.get("sentence_count") or 0) > 0:
+                        expect = e.get("issuance_time")
+            if blk.get("last_issuance_time") != expect:
+                ah_problems.append(f"last_mention[{key}] does not match the history")
+        ledger.check("afd-history-consistent",
+                     "AFD issuance history is append-only, deduped, and quotations-only",
+                     not ah_problems,
+                     (f"{len(hist)} issuance(s) in history"
+                      if not ah_problems else "; ".join(ah_problems[:6])),
+                     evidence={"problems": ah_problems[:10]})
+
+    # --------------------------------- 12i. digest / RSS traceable
+    if not digest:
+        ledger.check("digest-rss-traceable",
+                     "Alert digest items trace to the verified NWS alert and forecast blocks",
+                     True,
+                     "no digest.json in this dataset; the next pipeline run builds it",
+                     severity="warning")
+    else:
+        dg_problems = []
+        if digest.get("pop_threshold_pct") != POP_THRESHOLD_PCT:
+            dg_problems.append(
+                f"pop_threshold_pct is not the published {POP_THRESHOLD_PCT}%")
+        if "stores no" not in (digest.get("privacy") or ""):
+            dg_problems.append("privacy note does not state the no-storage rule")
+        cf_days = {(d.get("date")): d for d in ((cal.get("current_forecast") or {}).get("days") or [])}
+        for it in digest.get("high_pop_days") or []:
+            d = cf_days.get(it.get("date"))
+            if not d:
+                dg_problems.append(f"digest day {it.get('date')} is not in the current forecast")
+            elif (d.get("rain_chance_pct") or 0) < POP_THRESHOLD_PCT:
+                dg_problems.append(f"digest day {it.get('date')} has POP below threshold")
+        cf_alerts = [e for e in (((cal.get("current_forecast") or {}).get("alerts") or {}).get("events") or [])
+                     if not e.get("is_test")]
+        if len(digest.get("nws_alerts") or []) != len(cf_alerts):
+            dg_problems.append("digest alert count does not match the current forecast alerts")
+        # The RSS file must exist and be well-formed XML with the same items.
+        rss_path = DATA / "alerts.xml"
+        if not rss_path.exists():
+            dg_problems.append("data/alerts.xml was not written")
+        else:
+            try:
+                import xml.etree.ElementTree as _et
+                root = _et.fromstring(rss_path.read_bytes())
+                n_items = len(root.findall(".//item"))
+                expect_items = len(digest.get("nws_alerts") or []) + len(digest.get("high_pop_days") or [])
+                if n_items != expect_items:
+                    dg_problems.append(f"RSS has {n_items} item(s) but digest.json has {expect_items}")
+            except Exception as exc:
+                dg_problems.append(f"RSS is not well-formed XML: {exc}")
+        ledger.check("digest-rss-traceable",
+                     "Alert digest items trace to the verified NWS alert and forecast blocks",
+                     not dg_problems,
+                     (f"{len(digest.get('nws_alerts') or [])} alert(s), "
+                      f"{len(digest.get('high_pop_days') or [])} high-POP day(s)"
+                      if not dg_problems else "; ".join(dg_problems[:6])),
+                     evidence={"problems": dg_problems[:10]})
+
+    # --------------------------------- 12j. model guidance never merged
+    mg_problems = []
+    for d in cal.get("days") or []:
+        if d.get("tier") not in ("nws", "climatology"):
+            mg_problems.append(f"{d.get('date')}: tier {d.get('tier')} is not nws/climatology")
+            break
+        for k in list(d.keys()):
+            if k.startswith("model_") or k in ("cfs_sst", "nmme_prob"):
+                mg_problems.append(f"{d.get('date')}: model key {k} on a scoreboard day")
+                break
+        if mg_problems:
+            break
+    ledger.check("model-guidance-separated",
+                 "No model guidance (CFSv2/NMME) is merged into the scoreboard tiers",
+                 not mg_problems,
+                 ("all scoreboard days are nws/climatology with no model keys"
+                  if not mg_problems else "; ".join(mg_problems[:6])),
+                 evidence={"problems": mg_problems[:6]})
+
+    # --------------------------------- 12k. successor probe (GSOD/ISD retirement)
+    if not isd_history and not ghcnh_probe:
+        ledger.check("successor-probe-present",
+                     "The GSOD/ISD retirement is investigated (history + successor probe)",
+                     True,
+                     "no isd_history.json / ghcnh_probe.json in this dataset; "
+                     "the next pipeline run investigates the 2025-08-27 stop",
+                     severity="warning")
+    else:
+        sp_problems = []
+        if isd_history:
+            if isd_history.get("url") != climo_lib.ISD_HISTORY_URL:
+                sp_problems.append("isd_history URL is not the official history file")
+            elif not fetch_ok(isd_history["url"]):
+                sp_problems.append("isd_history URL has no recorded successful fetch")
+            if isd_history.get("verdict") not in ("successor-id-found",
+                                                 "station-found-no-successor",
+                                                 "station-not-in-history"):
+                sp_problems.append("isd_history verdict is not from the closed set")
+        if ghcnh_probe:
+            if ghcnh_probe.get("station_list_url") != climo_lib.GHCNH_STATION_LIST_URL:
+                sp_problems.append("ghcnh probe URL is not the official station list")
+            elif ghcnh_probe.get("station_list_ok") and not fetch_ok(
+                    ghcnh_probe["station_list_url"]):
+                sp_problems.append("ghcnh station list claims ok with no recorded fetch")
+        ledger.check("successor-probe-present",
+                     "The GSOD/ISD retirement is investigated (history + successor probe)",
+                     not sp_problems,
+                     ((f"verdict={(isd_history or {}).get('verdict')}; "
+                       f"GHCNh probe ok={(ghcnh_probe or {}).get('station_list_ok')}")
+                      if not sp_problems else "; ".join(sp_problems[:6])),
+                     evidence={"problems": sp_problems[:10]})
 
     # ------------------------------------------------------------- write out
     summary = ledger.summary()
