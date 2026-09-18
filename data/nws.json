@@ -25,31 +25,14 @@
   },
   "forecast_daily": {
     "updated": "2026-09-17T20:26:16+00:00",
-    "generated_at": "2026-09-17T21:05:17+00:00",
+    "generated_at": "2026-09-18T02:37:50+00:00",
     "valid_times": "2026-09-17T14:00:00+00:00/P7DT11H",
     "elevation_m": 45.1104,
     "periods": [
       {
         "number": 1,
-        "name": "This Afternoon",
-        "start_time": "2026-09-17T14:00:00-07:00",
-        "end_time": "2026-09-17T18:00:00-07:00",
-        "is_daytime": true,
-        "temperature_f": 65,
-        "temperature_unit": "F",
-        "wind_speed": "8 mph",
-        "wind_direction": "WSW",
-        "icon": "https://api.weather.gov/icons/land/day/sct?size=medium",
-        "short_forecast": "Mostly Sunny",
-        "detailed_forecast": "Mostly sunny, with a high near 65. West southwest wind around 8 mph.",
-        "pop_pct": 0,
-        "dewpoint_f": null,
-        "relative_humidity_pct": null
-      },
-      {
-        "number": 2,
         "name": "Tonight",
-        "start_time": "2026-09-17T18:00:00-07:00",
+        "start_time": "2026-09-17T19:00:00-07:00",
         "end_time": "2026-09-18T06:00:00-07:00",
         "is_daytime": false,
         "temperature_f": 58,
@@ -64,7 +47,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 3,
+        "number": 2,
         "name": "Friday",
         "start_time": "2026-09-18T06:00:00-07:00",
         "end_time": "2026-09-18T18:00:00-07:00",
@@ -81,7 +64,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 4,
+        "number": 3,
         "name": "Friday Night",
         "start_time": "2026-09-18T18:00:00-07:00",
         "end_time": "2026-09-19T06:00:00-07:00",
@@ -98,7 +81,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 5,
+        "number": 4,
         "name": "Saturday",
         "start_time": "2026-09-19T06:00:00-07:00",
         "end_time": "2026-09-19T18:00:00-07:00",
@@ -115,7 +98,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 6,
+        "number": 5,
         "name": "Saturday Night",
         "start_time": "2026-09-19T18:00:00-07:00",
         "end_time": "2026-09-20T06:00:00-07:00",
@@ -126,13 +109,13 @@
         "wind_direction": "W",
         "icon": "https://api.weather.gov/icons/land/night/bkn?size=medium",
         "short_forecast": "Mostly Cloudy",
-        "detailed_forecast": "Mostly cloudy, with a low around 58.",
+        "detailed_forecast": "Mostly cloudy, with a low around 58. West wind 10 to 15 mph, with gusts as high as 20 mph.",
         "pop_pct": 0,
         "dewpoint_f": null,
         "relative_humidity_pct": null
       },
       {
-        "number": 7,
+        "number": 6,
         "name": "Sunday",
         "start_time": "2026-09-20T06:00:00-07:00",
         "end_time": "2026-09-20T18:00:00-07:00",
@@ -149,7 +132,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 8,
+        "number": 7,
         "name": "Sunday Night",
         "start_time": "2026-09-20T18:00:00-07:00",
         "end_time": "2026-09-21T06:00:00-07:00",
@@ -166,7 +149,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 9,
+        "number": 8,
         "name": "Monday",
         "start_time": "2026-09-21T06:00:00-07:00",
         "end_time": "2026-09-21T18:00:00-07:00",
@@ -183,7 +166,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 10,
+        "number": 9,
         "name": "Monday Night",
         "start_time": "2026-09-21T18:00:00-07:00",
         "end_time": "2026-09-22T06:00:00-07:00",
@@ -200,7 +183,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 11,
+        "number": 10,
         "name": "Tuesday",
         "start_time": "2026-09-22T06:00:00-07:00",
         "end_time": "2026-09-22T18:00:00-07:00",
@@ -217,7 +200,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 12,
+        "number": 11,
         "name": "Tuesday Night",
         "start_time": "2026-09-22T18:00:00-07:00",
         "end_time": "2026-09-23T06:00:00-07:00",
@@ -234,7 +217,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 13,
+        "number": 12,
         "name": "Wednesday",
         "start_time": "2026-09-23T06:00:00-07:00",
         "end_time": "2026-09-23T18:00:00-07:00",
@@ -251,7 +234,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 14,
+        "number": 13,
         "name": "Wednesday Night",
         "start_time": "2026-09-23T18:00:00-07:00",
         "end_time": "2026-09-24T06:00:00-07:00",
@@ -266,6 +249,23 @@
         "pop_pct": 0,
         "dewpoint_f": null,
         "relative_humidity_pct": null
+      },
+      {
+        "number": 14,
+        "name": "Thursday",
+        "start_time": "2026-09-24T06:00:00-07:00",
+        "end_time": "2026-09-24T18:00:00-07:00",
+        "is_daytime": true,
+        "temperature_f": 69,
+        "temperature_unit": "F",
+        "wind_speed": "5 to 12 mph",
+        "wind_direction": "W",
+        "icon": "https://api.weather.gov/icons/land/day/sct?size=medium",
+        "short_forecast": "Mostly Sunny",
+        "detailed_forecast": "Mostly sunny, with a high near 69.",
+        "pop_pct": 0,
+        "dewpoint_f": null,
+        "relative_humidity_pct": null
       }
     ],
     "source_url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast",
@@ -273,35 +273,9 @@
   },
   "forecast_hourly": {
     "updated": "2026-09-17T20:26:16+00:00",
-    "generated_at": "2026-09-18T00:19:35+00:00",
+    "generated_at": "2026-09-18T02:37:50+00:00",
     "elevation_m": 45.1104,
     "periods": [
-      {
-        "start_time": "2026-09-17T17:00:00-07:00",
-        "end_time": "2026-09-17T18:00:00-07:00",
-        "temperature_f": 64,
-        "dewpoint_f": 15.555555555555555,
-        "rh_pct": 88,
-        "wind_speed": "8 mph",
-        "wind_gust": null,
-        "wind_direction": "W",
-        "pop_pct": 0,
-        "qpf_mm": null,
-        "short_forecast": "Sunny"
-      },
-      {
-        "start_time": "2026-09-17T18:00:00-07:00",
-        "end_time": "2026-09-17T19:00:00-07:00",
-        "temperature_f": 63,
-        "dewpoint_f": 15.555555555555555,
-        "rh_pct": 92,
-        "wind_speed": "8 mph",
-        "wind_gust": null,
-        "wind_direction": "W",
-        "pop_pct": 0,
-        "qpf_mm": null,
-        "short_forecast": "Mostly Clear"
-      },
       {
         "start_time": "2026-09-17T19:00:00-07:00",
         "end_time": "2026-09-17T20:00:00-07:00",
@@ -2303,6 +2277,32 @@
         "pop_pct": 0,
         "qpf_mm": null,
         "short_forecast": "Partly Cloudy"
+      },
+      {
+        "start_time": "2026-09-24T05:00:00-07:00",
+        "end_time": "2026-09-24T06:00:00-07:00",
+        "temperature_f": 58,
+        "dewpoint_f": 12.777777777777779,
+        "rh_pct": 90,
+        "wind_speed": "5 mph",
+        "wind_gust": null,
+        "wind_direction": "WSW",
+        "pop_pct": 0,
+        "qpf_mm": null,
+        "short_forecast": "Mostly Cloudy"
+      },
+      {
+        "start_time": "2026-09-24T06:00:00-07:00",
+        "end_time": "2026-09-24T07:00:00-07:00",
+        "temperature_f": 59,
+        "dewpoint_f": 12.777777777777779,
+        "rh_pct": 88,
+        "wind_speed": "5 mph",
+        "wind_gust": null,
+        "wind_direction": "WSW",
+        "pop_pct": 0,
+        "qpf_mm": null,
+        "short_forecast": "Partly Sunny"
       }
     ],
     "source_url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly"
@@ -4864,10 +4864,10 @@
       "elevation_m": 45.72,
       "distance_m": 5900.9262123232,
       "observation": {
-        "timestamp": "2026-09-17T23:43:00+00:00",
-        "temperature_c": 19.33,
-        "dewpoint_c": 12.2,
-        "relative_humidity_pct": 63.376814376344,
+        "timestamp": "2026-09-18T01:43:00+00:00",
+        "temperature_c": 17.27,
+        "dewpoint_c": 13.4,
+        "relative_humidity_pct": 78.009709708938,
         "wind_speed_kmh": null,
         "wind_gust_kmh": null,
         "wind_direction_deg": null,
@@ -4884,14 +4884,14 @@
       "elevation_m": 62.419992,
       "distance_m": 17818.193337506,
       "observation": {
-        "timestamp": "2026-09-17T23:45:00+00:00",
+        "timestamp": "2026-09-18T01:45:00+00:00",
         "temperature_c": null,
         "dewpoint_c": null,
         "relative_humidity_pct": null,
         "wind_speed_kmh": null,
         "wind_gust_kmh": null,
         "wind_direction_deg": null,
-        "barometric_pressure_pa": 101750,
+        "barometric_pressure_pa": 101720,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
         "text_description": ""
@@ -4904,17 +4904,17 @@
       "elevation_m": 3.048,
       "distance_m": 19117.58413345,
       "observation": {
-        "timestamp": "2026-09-18T00:00:00+00:00",
-        "temperature_c": 21,
-        "dewpoint_c": 13,
-        "relative_humidity_pct": 60.236208780511,
+        "timestamp": "2026-09-18T02:20:00+00:00",
+        "temperature_c": 18,
+        "dewpoint_c": 14,
+        "relative_humidity_pct": 77.463474035403,
         "wind_speed_kmh": null,
         "wind_gust_kmh": null,
         "wind_direction_deg": null,
         "barometric_pressure_pa": 101930.3,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
-        "text_description": "Mostly Clear"
+        "text_description": "Haze"
       },
       "observation_url": "https://api.weather.gov/stations/KSFO/observations/latest"
     },
@@ -4924,13 +4924,13 @@
       "elevation_m": 712.9272,
       "distance_m": 20512.547709146,
       "observation": {
-        "timestamp": "2026-09-17T23:36:00+00:00",
+        "timestamp": "2026-09-18T01:36:00+00:00",
         "temperature_c": null,
-        "dewpoint_c": 11.38,
+        "dewpoint_c": 10.2,
         "relative_humidity_pct": null,
-        "wind_speed_kmh": 4.824,
-        "wind_gust_kmh": 22.536,
-        "wind_direction_deg": 220,
+        "wind_speed_kmh": 6.444,
+        "wind_gust_kmh": 14.472,
+        "wind_direction_deg": 263,
         "barometric_pressure_pa": null,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
@@ -4952,14 +4952,14 @@
       "elevation_m": 29.410152,
       "distance_m": 22798.124785519,
       "observation": {
-        "timestamp": "2026-09-17T23:54:00+00:00",
-        "temperature_c": null,
-        "dewpoint_c": null,
-        "relative_humidity_pct": null,
-        "wind_speed_kmh": null,
+        "timestamp": "2026-09-18T02:06:00+00:00",
+        "temperature_c": 18.33,
+        "dewpoint_c": 15.04,
+        "relative_humidity_pct": 81.145520199382,
+        "wind_speed_kmh": 0,
         "wind_gust_kmh": 1.62,
-        "wind_direction_deg": null,
-        "barometric_pressure_pa": null,
+        "wind_direction_deg": 9,
+        "barometric_pressure_pa": 101890,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
         "text_description": ""
@@ -4972,7 +4972,7 @@
     "count": 0,
     "test_count": 0,
     "count_including_tests": 0,
-    "updated": "2026-09-18T00:19:08+00:00",
+    "updated": "2026-09-18T02:37:30+00:00",
     "events": [],
     "source_url": "https://api.weather.gov/alerts/active?zone=CAZ006",
     "human_url": "https://www.weather.gov/mtr"
@@ -4980,12 +4980,12 @@
   "products": {
     "AFD": {
       "label": "Area Forecast Discussion",
-      "id": "2ed56265-e8b0-47dc-bbeb-bd6a948b2ea5",
-      "issuance_time": "2026-09-17T19:53:00+00:00",
+      "id": "38b36296-a7a0-471c-a845-33410d7ee472",
+      "issuance_time": "2026-09-18T00:51:00+00:00",
       "product_name": "Area Forecast Discussion",
       "wmo_collective_id": "FXUS66",
-      "text": "\n000\nFXUS66 KMTR 171953\nAFDMTR\n\nArea Forecast Discussion\nNational Weather Service San Francisco CA\n1253 PM PDT Thu Sep 17 2026\n\n...New SHORT TERM, LONG TERM...\n\n.KEY MESSAGES...\nUpdated at 1211 AM PDT Thu Sep 17 2026\n\n - Cooler temperatures continue today\n\n - Warming trend Friday into the weekend\n\n&&\n\n.SHORT TERM...\nIssued at 1241 PM PDT Thu Sep 17 2026\n(This evening through Friday night)\n\nA cut-off low overhead allowed the marine layer to expand to\nnearly 5,000 feet this morning. This brought stratus to the vast\nmajority of the Bay Area, where it still remains early this \nafternoon. The deep marine layer is also keeping temperatures \naround 10 degrees cooler than normal for this time of year.\n\nThe cut-off low will gradually weaken and move off the\nthe NE over the next 24 hours. This will allow a short wave ridge\nto slide in from the west, increasing temperatures and compressing\nthe marine layer Friday through Saturday.\n\n&&\n\n.LONG TERM...\nIssued at 1241 PM PDT Thu Sep 17 2026\n(Saturday through next Wednesday)\n\nSaturday looks like the warmest day of the weekend as the 500 mb \nshort wave ridge axis moves over the Bay Area. There is also a \nhint of weak offshore winds, but the SFO-WMC gradient isn't \nexpected to drop much below -2 mb. Another, much weaker, cut-off \nlow will move over Sunday, dropping the temperatures a bit. \nBasically Saturday will be a couple degrees warmer than normal \nand Sunday will be a couple degrees cooler than normal.\n\nIt now looks like a steady warming trend arrives next week. The \n850 mb temperature (measured at about 5,000 ft) is expected to \nhover around 20C (68F). That's around the 75th percentile for this\ntime of year. Not enough for a major heat wave, but enough to \nbring surface temperatures 5-10 degrees above normal through the \nmiddle of next week.\n\n&&\n\n.AVIATION...\n(18Z TAFS)\nIssued at 1046 AM PDT Thu Sep 17 2026\n\nLow clouds will gradually scatter out into the early afternoon\nhours, giving way to VFR conditions across area terminals. Light \nwinds will increase this afternoon with a moderate onshore breeze \ndeveloping. The marine layer is anticipated to return this \nevening. Latest models indicate the marine layer will compress \novernight resulting in lower cigs overnight into Friday. \nConfidence is moderate with respect to timing and cig heights.\n\nVicinity of SFO... VFR cigs will gradually scatter out by the\nafternoon, with a moderate onshore breeze developing in the \nafternoon. Cigs will return this evening and persist through the \novernight hours, with moderate confidence in timing and ceilings \nheight. \n\nSFO Bridge Approach... Similar to SFO.\n\nMonterey Bay Terminals... VFR cigs will scatter out by early \nafternoon with a gentle west-northwest wind developing. Winds \nwill ease overnight becoming light and locally variable with low \nclouds anticipated to return. Confidence in timing is moderate.\n\n&&\n\n.MARINE...\n(Today through Tuesday)\nIssued at 911 AM PDT Thu Sep 17 2026\n\nGentle to light breezes persist through Friday morning with mild\nseas across the coastal waters. A shift occurs Friday afternoon as\nnorthwesterly winds ramp up to fresh to strong breezes. Small\nCraft Advisories take effect Friday afternoon for Monterey Bay and\nthe southern coastal waters from Pigeon Point south down to Point\nPiedras Blancas. Winds remain enhanced through the weekend, \nmaintaining hazardous conditions for small craft while overall \nseas remain light to moderate through Sunday.\n\n&&\n\n.FIRE WEATHER...\nIssued at 421 AM PDT Thu Sep 17 2026\n\nThe coolest conditions and deepest marine layer are expected through \nthe day today as the upper level low stalls over northern \nCalifornia. Current observations suggest a marine layer depth of \nover 3000 feet, allowing for moist conditions to reach very high \ninto the higher elevations. As the low moves away on Friday, the \nmarine layer will compress, temperatures will rise, and relative \nhumidities in the higher elevations will start to decrease. Some \noffshore flow is possible on Saturday morning, but it is not \nexpected to be very strong and the bulk of the offshore influence \nwill be felt on the higher terrain of the North and East Bay.\n\nDialH\n\n&&\n\n.MTR WATCHES/WARNINGS/ADVISORIES...\nCA...None.\nPZ...Small Craft Advisory from 3 PM Friday to 3 AM PDT Saturday for \n     Mry Bay-Pigeon Pt to Pt Pinos 0-10 nm.\n\n     Small Craft Advisory from 3 PM to 9 PM PDT Friday for Pt Pinos \n     to Pt Piedras Blancas 0-10 nm.\n\n&&\n\n$$\n\nSHORT TERM...Flynn\nLONG TERM....Flynn\nAVIATION...CW\nMARINE...Heinlein\n\nVisit us at www.weather.gov/sanfrancisco\n\nFollow us on Facebook, X, and YouTube at:\nwww.facebook.com/nwsbayarea\nx.com/nwsbayarea\nwww.youtube.com/nwsbayarea\n",
-      "source_url": "https://api.weather.gov/products/2ed56265-e8b0-47dc-bbeb-bd6a948b2ea5"
+      "text": "\n000\nFXUS66 KMTR 180051\nAFDMTR\n\nArea Forecast Discussion\nNational Weather Service San Francisco CA\n551 PM PDT Thu Sep 17 2026\n\n...New AVIATION...\n\n.KEY MESSAGES...\nUpdated at 1211 AM PDT Thu Sep 17 2026\n\n - Cooler temperatures continue today\n\n - Warming trend Friday into the weekend\n\n&&\n\n.SHORT TERM...\nIssued at 1241 PM PDT Thu Sep 17 2026\n(This evening through Friday night)\n\nA cut-off low overhead allowed the marine layer to expand to\nnearly 5,000 feet this morning. This brought stratus to the vast\nmajority of the Bay Area, where it still remains early this \nafternoon. The deep marine layer is also keeping temperatures \naround 10 degrees cooler than normal for this time of year.\n\nThe cut-off low will gradually weaken and move off the\nthe NE over the next 24 hours. This will allow a short wave ridge\nto slide in from the west, increasing temperatures and compressing\nthe marine layer Friday through Saturday.\n\n&&\n\n.LONG TERM...\nIssued at 1241 PM PDT Thu Sep 17 2026\n(Saturday through next Wednesday)\n\nSaturday looks like the warmest day of the weekend as the 500 mb \nshort wave ridge axis moves over the Bay Area. There is also a \nhint of weak offshore winds, but the SFO-WMC gradient isn't \nexpected to drop much below -2 mb. Another, much weaker, cut-off \nlow will move over Sunday, dropping the temperatures a bit. \nBasically Saturday will be a couple degrees warmer than normal \nand Sunday will be a couple degrees cooler than normal.\n\nIt now looks like a steady warming trend arrives next week. The \n850 mb temperature (measured at about 5,000 ft) is expected to \nhover around 20C (68F). That's around the 75th percentile for this\ntime of year. Not enough for a major heat wave, but enough to \nbring surface temperatures 5-10 degrees above normal through the \nmiddle of next week.\n\n&&\n\n.AVIATION...\n(00Z TAFS)\nIssued at 551 PM PDT Thu Sep 17 2026\n\nVFR everywhere with gentle to moderate onshore breezes around 5-10 \nkt with breezy terminals reaching closer to 15 kt. Diurnal onshore \nwinds ease overnight and increase again Friday morning. As the upper \nlevel low moves eastward out of our area, the marine layer will \ngradually compress tonight, but will remain deep enough to reach all \n(if not, most) terminals. The pattern is rather complex, so there is \ncurrently low to medium confidence on the exact onset of stratus and \nceiling heights. Medium confidence for ceilings to remain within \nMVFR territory with STS likely to be IFR. As high pressure builds in \novernight, stratus is expected to scatter out by mid Friday morning.\n\nVicinity of SFO...VFR. Onshore winds ease overnight as the marine \nlayer rolls in. Medium confidence on when MVFR ceilings develop. \nSome model guidance hints at the possibility of borderline MVFR-IFR \nceilings around BKN007-010. The current TAF advertises BKN013-015 as \nsignificant compression is not expected overnight to allow for IFR \nceilings. Stratus is expected to scatter out earlier around mid \nFriday morning as westerly winds increase. \n\nSFO Bridge Approach...Similar to SFO, but may develop MVFR ceilings \nbefore SFO does.\n\nMonterey Bay Terminals...VFR. Onshore winds ease overnight and shift \nsouth to southwest. Low to medium confidence on the arrival of \nstratus as well as ceiling heights given the complex pattern. The \nmarine layer is not expected to compress significantly enough to dip \ninto IFR territory, though it may be close. Stratus will scatter out \nby Friday morning earlier than it did today and a moderate onshore \nbreeze around 10 kt will develop. \n\n&&\n\n.MARINE...\n(Today through Tuesday)\nIssued at 911 AM PDT Thu Sep 17 2026\n\nGentle to light breezes persist through Friday morning with mild\nseas across the coastal waters. A shift occurs Friday afternoon as\nnorthwesterly winds ramp up to fresh to strong breezes. Small\nCraft Advisories take effect Friday afternoon for Monterey Bay and\nthe southern coastal waters from Pigeon Point south down to Point\nPiedras Blancas. Winds remain enhanced through the weekend, \nmaintaining hazardous conditions for small craft while overall \nseas remain light to moderate through Sunday.\n\n&&\n\n.FIRE WEATHER...\nIssued at 421 AM PDT Thu Sep 17 2026\n\nThe coolest conditions and deepest marine layer are expected through \nthe day today as the upper level low stalls over northern \nCalifornia. Current observations suggest a marine layer depth of \nover 3000 feet, allowing for moist conditions to reach very high \ninto the higher elevations. As the low moves away on Friday, the \nmarine layer will compress, temperatures will rise, and relative \nhumidities in the higher elevations will start to decrease. Some \noffshore flow is possible on Saturday morning, but it is not \nexpected to be very strong and the bulk of the offshore influence \nwill be felt on the higher terrain of the North and East Bay.\n\nDialH\n\n&&\n\n.MTR WATCHES/WARNINGS/ADVISORIES...\nCA...None.\nPZ...Small Craft Advisory from 3 PM Friday to 3 AM PDT Saturday for \n     Mry Bay-Pigeon Pt to Pt Pinos 0-10 nm.\n\n     Small Craft Advisory from 3 PM to 9 PM PDT Friday for Pt Pinos \n     to Pt Piedras Blancas 0-10 nm.\n\n&&\n\n$$\n\nSHORT TERM...Flynn\nLONG TERM....Flynn\nAVIATION...Navarrete\nMARINE...Heinlein\n\nVisit us at www.weather.gov/sanfrancisco\n\nFollow us on Facebook, X, and YouTube at:\nwww.facebook.com/nwsbayarea\nx.com/nwsbayarea\nwww.youtube.com/nwsbayarea\n",
+      "source_url": "https://api.weather.gov/products/38b36296-a7a0-471c-a845-33410d7ee472"
     }
   }
 }

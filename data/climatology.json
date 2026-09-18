@@ -5438,7 +5438,8 @@
         "max_gust_mph": 41.3,
         "oni_ond": 1.21,
         "oni_source": "derived 3-month running mean centred on Nov 1991",
-        "enso_phase": "el_nino"
+        "enso_phase": "el_nino",
+        "enso_phase_label": "El Ni\u00f1o"
       },
       {
         "season": "1992-1993",
@@ -5463,7 +5464,8 @@
         "max_gust_mph": 55.0,
         "oni_ond": -0.28,
         "oni_source": "derived 3-month running mean centred on Nov 1992",
-        "enso_phase": "neutral"
+        "enso_phase": "neutral",
+        "enso_phase_label": "Neutral"
       },
       {
         "season": "1993-1994",
@@ -5488,7 +5490,8 @@
         "max_gust_mph": 44.8,
         "oni_ond": 0.04,
         "oni_source": "derived 3-month running mean centred on Nov 1993",
-        "enso_phase": "neutral"
+        "enso_phase": "neutral",
+        "enso_phase_label": "Neutral"
       },
       {
         "season": "1994-1995",
@@ -5513,7 +5516,8 @@
         "max_gust_mph": 56.4,
         "oni_ond": 1.0,
         "oni_source": "derived 3-month running mean centred on Nov 1994",
-        "enso_phase": "el_nino"
+        "enso_phase": "el_nino",
+        "enso_phase_label": "El Ni\u00f1o"
       },
       {
         "season": "1995-1996",
@@ -5538,7 +5542,8 @@
         "max_gust_mph": 70.0,
         "oni_ond": -1.01,
         "oni_source": "derived 3-month running mean centred on Nov 1995",
-        "enso_phase": "la_nina"
+        "enso_phase": "la_nina",
+        "enso_phase_label": "La Ni\u00f1a"
       },
       {
         "season": "1996-1997",
@@ -5563,7 +5568,8 @@
         "max_gust_mph": 50.5,
         "oni_ond": -0.45,
         "oni_source": "derived 3-month running mean centred on Nov 1996",
-        "enso_phase": "neutral"
+        "enso_phase": "neutral",
+        "enso_phase_label": "Neutral"
       },
       {
         "season": "1997-1998",
@@ -5588,7 +5594,8 @@
         "max_gust_mph": 44.9,
         "oni_ond": 2.4,
         "oni_source": "derived 3-month running mean centred on Nov 1997",
-        "enso_phase": "el_nino"
+        "enso_phase": "el_nino",
+        "enso_phase_label": "El Ni\u00f1o"
       },
       {
         "season": "1998-1999",
@@ -5613,7 +5620,8 @@
         "max_gust_mph": 50.5,
         "oni_ond": -1.48,
         "oni_source": "derived 3-month running mean centred on Nov 1998",
-        "enso_phase": "la_nina"
+        "enso_phase": "la_nina",
+        "enso_phase_label": "La Ni\u00f1a"
       },
       {
         "season": "1999-2000",
@@ -5638,7 +5646,8 @@
         "max_gust_mph": 44.9,
         "oni_ond": -1.46,
         "oni_source": "derived 3-month running mean centred on Nov 1999",
-        "enso_phase": "la_nina"
+        "enso_phase": "la_nina",
+        "enso_phase_label": "La Ni\u00f1a"
       },
       {
         "season": "2000-2001",
@@ -5663,7 +5672,8 @@
         "max_gust_mph": 43.6,
         "oni_ond": -0.75,
         "oni_source": "derived 3-month running mean centred on Nov 2000",
-        "enso_phase": "la_nina"
+        "enso_phase": "la_nina",
+        "enso_phase_label": "La Ni\u00f1a"
       },
       {
         "season": "2001-2002",
@@ -5688,7 +5698,8 @@
         "max_gust_mph": 55.2,
         "oni_ond": -0.35,
         "oni_source": "derived 3-month running mean centred on Nov 2001",
-        "enso_phase": "neutral"
+        "enso_phase": "neutral",
+        "enso_phase_label": "Neutral"
       },
       {
         "season": "2002-2003",
@@ -5713,7 +5724,8 @@
         "max_gust_mph": 64.3,
         "oni_ond": 1.31,
         "oni_source": "derived 3-month running mean centred on Nov 2002",
-        "enso_phase": "el_nino"
+        "enso_phase": "el_nino",
+        "enso_phase_label": "El Ni\u00f1o"
       },
       {
         "season": "2003-2004",
@@ -5738,7 +5750,8 @@
         "max_gust_mph": 54.1,
         "oni_ond": 0.35,
         "oni_source": "derived 3-month running mean centred on Nov 2003",
-        "enso_phase": "neutral"
+        "enso_phase": "neutral",
+        "enso_phase_label": "Neutral"
       },
       {
         "season": "2004-2005",
@@ -5763,7 +5776,8 @@
         "max_gust_mph": 58.6,
         "oni_ond": 0.66,
         "oni_source": "derived 3-month running mean centred on Nov 2004",
-        "enso_phase": "el_nino"
+        "enso_phase": "el_nino",
+        "enso_phase_label": "El Ni\u00f1o"
       },
       {
         "season": "2005-2006",
@@ -5788,7 +5802,8 @@
         "max_gust_mph": 64.3,
         "oni_ond": -0.57,
         "oni_source": "derived 3-month running mean centred on Nov 2005",
-        "enso_phase": "la_nina"
+        "enso_phase": "la_nina",
+        "enso_phase_label": "La Ni\u00f1a"
       },
       {
         "season": "2006-2007",
@@ -5813,7 +5828,8 @@
         "max_gust_mph": 57.4,
         "oni_ond": 0.94,
         "oni_source": "derived 3-month running mean centred on Nov 2006",
-        "enso_phase": "el_nino"
+        "enso_phase": "el_nino",
+        "enso_phase_label": "El Ni\u00f1o"
       },
       {
         "season": "2007-2008",
@@ -5838,7 +5854,8 @@
         "max_gust_mph": 66.9,
         "oni_ond": -1.5,
         "oni_source": "derived 3-month running mean centred on Nov 2007",
-        "enso_phase": "la_nina"
+        "enso_phase": "la_nina",
+        "enso_phase_label": "La Ni\u00f1a"
       },
       {
         "season": "2008-2009",
@@ -5863,7 +5880,8 @@
         "max_gust_mph": 54.1,
         "oni_ond": -0.56,
         "oni_source": "derived 3-month running mean centred on Nov 2008",
-        "enso_phase": "la_nina"
+        "enso_phase": "la_nina",
+        "enso_phase_label": "La Ni\u00f1a"
       },
       {
         "season": "2009-2010",
@@ -5888,7 +5906,8 @@
         "max_gust_mph": 58.8,
         "oni_ond": 1.36,
         "oni_source": "derived 3-month running mean centred on Nov 2009",
-        "enso_phase": "el_nino"
+        "enso_phase": "el_nino",
+        "enso_phase_label": "El Ni\u00f1o"
       },
       {
         "season": "2010-2011",
@@ -5913,7 +5932,8 @@
         "max_gust_mph": 58.6,
         "oni_ond": -1.64,
         "oni_source": "derived 3-month running mean centred on Nov 2010",
-        "enso_phase": "la_nina"
+        "enso_phase": "la_nina",
+        "enso_phase_label": "La Ni\u00f1a"
       },
       {
         "season": "2011-2012",
@@ -5938,7 +5958,8 @@
         "max_gust_mph": 47.2,
         "oni_ond": -1.02,
         "oni_source": "derived 3-month running mean centred on Nov 2011",
-        "enso_phase": "la_nina"
+        "enso_phase": "la_nina",
+        "enso_phase_label": "La Ni\u00f1a"
       },
       {
         "season": "2012-2013",
@@ -5963,7 +5984,8 @@
         "max_gust_mph": 54.1,
         "oni_ond": 0.12,
         "oni_source": "derived 3-month running mean centred on Nov 2012",
-        "enso_phase": "neutral"
+        "enso_phase": "neutral",
+        "enso_phase_label": "Neutral"
       },
       {
         "season": "2013-2014",
@@ -5988,7 +6010,8 @@
         "max_gust_mph": 48.3,
         "oni_ond": -0.1,
         "oni_source": "derived 3-month running mean centred on Nov 2013",
-        "enso_phase": "neutral"
+        "enso_phase": "neutral",
+        "enso_phase_label": "Neutral"
       },
       {
         "season": "2014-2015",
@@ -6013,7 +6036,8 @@
         "max_gust_mph": 48.3,
         "oni_ond": 0.71,
         "oni_source": "derived 3-month running mean centred on Nov 2014",
-        "enso_phase": "el_nino"
+        "enso_phase": "el_nino",
+        "enso_phase_label": "El Ni\u00f1o"
       },
       {
         "season": "2015-2016",
@@ -6038,7 +6062,8 @@
         "max_gust_mph": 52.9,
         "oni_ond": 2.65,
         "oni_source": "derived 3-month running mean centred on Nov 2015",
-        "enso_phase": "el_nino"
+        "enso_phase": "el_nino",
+        "enso_phase_label": "El Ni\u00f1o"
       },
       {
         "season": "2016-2017",
@@ -6063,7 +6088,8 @@
         "max_gust_mph": 61.0,
         "oni_ond": -0.6,
         "oni_source": "derived 3-month running mean centred on Nov 2016",
-        "enso_phase": "la_nina"
+        "enso_phase": "la_nina",
+        "enso_phase_label": "La Ni\u00f1a"
       },
       {
         "season": "2017-2018",
@@ -6088,7 +6114,8 @@
         "max_gust_mph": 46.0,
         "oni_ond": -0.76,
         "oni_source": "derived 3-month running mean centred on Nov 2017",
-        "enso_phase": "la_nina"
+        "enso_phase": "la_nina",
+        "enso_phase_label": "La Ni\u00f1a"
       },
       {
         "season": "2018-2019",
@@ -6113,7 +6140,8 @@
         "max_gust_mph": 61.0,
         "oni_ond": 0.97,
         "oni_source": "derived 3-month running mean centred on Nov 2018",
-        "enso_phase": "el_nino"
+        "enso_phase": "el_nino",
+        "enso_phase_label": "El Ni\u00f1o"
       },
       {
         "season": "2019-2020",
@@ -6138,7 +6166,8 @@
         "max_gust_mph": 47.2,
         "oni_ond": 0.58,
         "oni_source": "derived 3-month running mean centred on Nov 2019",
-        "enso_phase": "el_nino"
+        "enso_phase": "el_nino",
+        "enso_phase_label": "El Ni\u00f1o"
       },
       {
         "season": "2020-2021",
@@ -6163,7 +6192,8 @@
         "max_gust_mph": 52.9,
         "oni_ond": -1.2,
         "oni_source": "derived 3-month running mean centred on Nov 2020",
-        "enso_phase": "la_nina"
+        "enso_phase": "la_nina",
+        "enso_phase_label": "La Ni\u00f1a"
       }
     ],
     "distribution": {
@@ -6306,7 +6336,8 @@
         "p10": 8.85,
         "p25": 9.71,
         "p75": 17.5,
-        "p90": 22.49
+        "p90": 22.49,
+        "phase_label": "El Ni\u00f1o"
       },
       "la_nina": {
         "n": 12,
@@ -6317,7 +6348,8 @@
         "p10": 5.93,
         "p25": 7.91,
         "p75": 14.98,
-        "p90": 17.44
+        "p90": 17.44,
+        "phase_label": "La Ni\u00f1a"
       },
       "neutral": {
         "n": 7,
@@ -6328,7 +6360,8 @@
         "p10": 7.52,
         "p25": 13.35,
         "p75": 17.42,
-        "p90": 18.59
+        "p90": 18.59,
+        "phase_label": "Neutral"
       }
     },
     "wettest_seasons": [
@@ -6385,6 +6418,9 @@
       "start": "2026-10-01",
       "end": "2027-01-31"
     },
+    "station_distance_mi": {
+      "wind_ksfo": 11.9
+    },
     "precip_station": {
       "id": "USW00023272",
       "name": "SAN FRANCISCO DOWNTOWN, CA US",
@@ -6405,7 +6441,7 @@
     },
     "caveats": [
       "GSOD (wind) days are UTC days (0000Z-2359Z), i.e. roughly 16:00-16:00 local time in San Francisco, whereas GHCN-Daily (rain) days are local days. The joint wind-and-rain statistics therefore pair a local-day rain total with a UTC-day wind figure for the same calendar date. This is an approximation and is stated rather than hidden.",
-      "Wind data come from the SFO ASOS (KSFO), about 10 miles south-east of 94122. Exposure at SFO is more open than in the Sunset, so wind speeds there are typically higher than at the ZIP code itself.",
+      "Wind data come from the SFO ASOS (KSFO), about 12 miles south-east of 94122 (great-circle distance from the ZIP centroid to the station, computed from the station coordinates the NWS returns). Exposure at SFO is more open than in the Sunset, so wind speeds there are typically higher than at the ZIP code itself.",
       "GSOD 'MAX'/'MIN' are the reported daily extremes, which per NCEI are not always the true calendar-day extremes.",
       "Percentages for a single calendar date are computed from 30 seasons (1991-2020). One season adds or subtracts about 3.3 percentage points, so treat single-date percentages as indicative, not precise."
     ],

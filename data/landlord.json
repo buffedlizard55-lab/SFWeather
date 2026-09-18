@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T00:23:08Z",
+  "generated_utc": "2026-09-18T02:41:32Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset)",
@@ -41,10 +41,11 @@
       "season": "JJA",
       "year": 2026,
       "oni_c": 1.8,
+      "oni_c_fmt": "+1.80 \u00b0C",
       "phase": "el_nino",
-      "strength": "strong",
       "phase_label": "El Ni\u00f1o",
-      "oni_c_fmt": "+1.80 \u00b0C"
+      "strength": "strong",
+      "strength_label": "strong"
     },
     "season_total_prcp": {
       "n": 30,
@@ -184,7 +185,8 @@
         "p10": 8.85,
         "p25": 9.71,
         "p75": 17.5,
-        "p90": 22.49
+        "p90": 22.49,
+        "phase_label": "El Ni\u00f1o"
       },
       "la_nina": {
         "n": 12,
@@ -195,7 +197,8 @@
         "p10": 5.93,
         "p25": 7.91,
         "p75": 14.98,
-        "p90": 17.44
+        "p90": 17.44,
+        "phase_label": "La Ni\u00f1a"
       },
       "neutral": {
         "n": 7,
@@ -206,7 +209,8 @@
         "p10": 7.52,
         "p25": 13.35,
         "p75": 17.42,
-        "p90": 18.59
+        "p90": 18.59,
+        "phase_label": "Neutral"
       }
     },
     "expected_days": {
@@ -287,7 +291,7 @@
       },
       {
         "driver": "Wind + rain together \u2014 wind-driven water intrusion",
-        "why_it_costs": "Wind pushes rain sideways under shingles, laps and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. These are also fence-failure and tree-limb days. Wind is recorded at SFO, ~10 miles away and more exposed, so treat the counts as an upper bound for the Sunset.",
+        "why_it_costs": "Wind pushes rain sideways under shingles, laps and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. These are also fence-failure and tree-limb days. Wind is recorded at SFO, 11.9 miles away (computed great-circle distance from the 94122 centroid, see climatology.meta.station_distance_mi) and more exposed, so treat the counts as an upper bound for the Sunset.",
         "evidence": [
           {
             "label": "Days with rain \u2265 0.01 in and sustained wind \u2265 20 kt",
@@ -1340,6 +1344,312 @@
     "gsod_readme": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt",
     "storm_events": "https://www.ncdc.noaa.gov/stormevents/",
     "normals": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv"
+  },
+  "official_daily_normals": {
+    "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (daily, by station)",
+    "url": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv",
+    "station_id": "USW00023272",
+    "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
+    "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
+    "retrieved_utc": "2026-09-18T02:40:46Z",
+    "dates_parsed": 366,
+    "columns": {
+      "normal_high_f": "DLY-TMAX-NORMAL",
+      "normal_low_f": "DLY-TMIN-NORMAL",
+      "p_pcp_ge_0p01in_pct": "DLY-PRCP-PCTALL-GE001HI",
+      "p_pcp_ge_0p10in_pct": "DLY-PRCP-PCTALL-GE010HI",
+      "p_pcp_ge_0p25in_pct": "DLY-PRCP-PCTALL-GE025HI",
+      "p_pcp_ge_0p50in_pct": "DLY-PRCP-PCTALL-GE050HI",
+      "p_pcp_ge_1p00in_pct": "DLY-PRCP-PCTALL-GE100HI",
+      "p_pcp_ge_2p00in_pct": "DLY-PRCP-PCTALL-GE200HI",
+      "p_pcp_ge_4p00in_pct": "DLY-PRCP-PCTALL-GE400HI",
+      "p_pcp_ge_6p00in_pct": "DLY-PRCP-PCTALL-GE600HI",
+      "pcp_25pctl_in": "DLY-PRCP-25PCTL",
+      "pcp_50pctl_in": "DLY-PRCP-50PCTL",
+      "pcp_75pctl_in": "DLY-PRCP-75PCTL"
+    },
+    "comparison": {
+      "compared_dates": 366,
+      "pairs": {
+        "rain day >= 0.01 in": {
+          "n": 123,
+          "unit": "pct_points",
+          "mean_difference": -0.388,
+          "largest_absolute_difference": 21.0,
+          "largest_difference_date": "2027-01-23",
+          "largest_difference_published": 35.7,
+          "largest_difference_derived": 56.7,
+          "within_1_unit": 11,
+          "within_3_units": 35
+        },
+        "rain >= 0.25 in": {
+          "n": 123,
+          "unit": "pct_points",
+          "mean_difference": -0.056,
+          "largest_absolute_difference": 13.0,
+          "largest_difference_date": "2027-01-13",
+          "largest_difference_published": 16.3,
+          "largest_difference_derived": 3.3,
+          "within_1_unit": 31,
+          "within_3_units": 59
+        },
+        "rain >= 1.00 in": {
+          "n": 123,
+          "unit": "pct_points",
+          "mean_difference": 0.054,
+          "largest_absolute_difference": 9.1,
+          "largest_difference_date": "2026-12-28",
+          "largest_difference_published": 4.2,
+          "largest_difference_derived": 13.3,
+          "within_1_unit": 55,
+          "within_3_units": 94
+        },
+        "normal high": {
+          "n": 123,
+          "unit": "deg_f",
+          "mean_difference": -0.556,
+          "largest_absolute_difference": 3.9,
+          "largest_difference_date": "2026-10-13",
+          "largest_difference_published": 70.4,
+          "largest_difference_derived": 74.3,
+          "within_1_unit": 77,
+          "within_3_units": 122
+        },
+        "normal low": {
+          "n": 123,
+          "unit": "deg_f",
+          "mean_difference": -0.252,
+          "largest_absolute_difference": 1.6,
+          "largest_difference_date": "2026-10-25",
+          "largest_difference_published": 53.7,
+          "largest_difference_derived": 55.3,
+          "within_1_unit": 112,
+          "within_3_units": 123
+        }
+      },
+      "largest": {
+        "rain day >= 0.01 in": 21.0,
+        "rain >= 0.25 in": 13.0,
+        "rain >= 1.00 in": 9.1,
+        "normal high": 3.9,
+        "normal low": 1.6
+      },
+      "flagged": [
+        {
+          "mmdd": "01-23",
+          "quantity": "rain day >= 0.01 in",
+          "published": 35.7,
+          "derived": 56.7,
+          "difference": -21.0,
+          "date": "2027-01-23"
+        },
+        {
+          "mmdd": "12-06",
+          "quantity": "rain day >= 0.01 in",
+          "published": 35.4,
+          "derived": 53.3,
+          "difference": -17.9,
+          "date": "2026-12-06"
+        },
+        {
+          "mmdd": "12-24",
+          "quantity": "rain day >= 0.01 in",
+          "published": 36.8,
+          "derived": 20.0,
+          "difference": 16.8,
+          "date": "2026-12-24"
+        },
+        {
+          "mmdd": "12-13",
+          "quantity": "rain day >= 0.01 in",
+          "published": 36.8,
+          "derived": 53.3,
+          "difference": -16.5,
+          "date": "2026-12-13"
+        },
+        {
+          "mmdd": "01-21",
+          "quantity": "rain day >= 0.01 in",
+          "published": 35.7,
+          "derived": 50.0,
+          "difference": -14.3,
+          "date": "2027-01-21"
+        },
+        {
+          "mmdd": "01-09",
+          "quantity": "rain day >= 0.01 in",
+          "published": 36.2,
+          "derived": 50.0,
+          "difference": -13.8,
+          "date": "2027-01-09"
+        },
+        {
+          "mmdd": "12-16",
+          "quantity": "rain day >= 0.01 in",
+          "published": 36.9,
+          "derived": 23.3,
+          "difference": 13.6,
+          "date": "2026-12-16"
+        },
+        {
+          "mmdd": "12-23",
+          "quantity": "rain day >= 0.01 in",
+          "published": 36.8,
+          "derived": 23.3,
+          "difference": 13.5,
+          "date": "2026-12-23"
+        },
+        {
+          "mmdd": "01-13",
+          "quantity": "rain >= 0.25 in",
+          "published": 16.3,
+          "derived": 3.3,
+          "difference": 13.0,
+          "date": "2027-01-13"
+        },
+        {
+          "mmdd": "12-14",
+          "quantity": "rain >= 0.25 in",
+          "published": 17.8,
+          "derived": 30.0,
+          "difference": -12.2,
+          "date": "2026-12-14"
+        },
+        {
+          "mmdd": "01-29",
+          "quantity": "rain day >= 0.01 in",
+          "published": 35.4,
+          "derived": 23.3,
+          "difference": 12.1,
+          "date": "2027-01-29"
+        },
+        {
+          "mmdd": "01-31",
+          "quantity": "rain day >= 0.01 in",
+          "published": 35.4,
+          "derived": 23.3,
+          "difference": 12.1,
+          "date": "2027-01-31"
+        },
+        {
+          "mmdd": "11-18",
+          "quantity": "rain day >= 0.01 in",
+          "published": 28.0,
+          "derived": 16.7,
+          "difference": 11.3,
+          "date": "2026-11-18"
+        },
+        {
+          "mmdd": "01-22",
+          "quantity": "rain day >= 0.01 in",
+          "published": 35.7,
+          "derived": 46.7,
+          "difference": -11.0,
+          "date": "2027-01-22"
+        },
+        {
+          "mmdd": "11-20",
+          "quantity": "rain >= 0.25 in",
+          "published": 12.3,
+          "derived": 23.3,
+          "difference": -11.0,
+          "date": "2026-11-20"
+        },
+        {
+          "mmdd": "11-24",
+          "quantity": "rain day >= 0.01 in",
+          "published": 30.8,
+          "derived": 20.0,
+          "difference": 10.8,
+          "date": "2026-11-24"
+        },
+        {
+          "mmdd": "12-23",
+          "quantity": "rain >= 0.25 in",
+          "published": 17.3,
+          "derived": 6.7,
+          "difference": 10.6,
+          "date": "2026-12-23"
+        },
+        {
+          "mmdd": "11-21",
+          "quantity": "rain day >= 0.01 in",
+          "published": 29.5,
+          "derived": 40.0,
+          "difference": -10.5,
+          "date": "2026-11-21"
+        },
+        {
+          "mmdd": "11-23",
+          "quantity": "rain day >= 0.01 in",
+          "published": 30.4,
+          "derived": 20.0,
+          "difference": 10.4,
+          "date": "2026-11-23"
+        },
+        {
+          "mmdd": "12-27",
+          "quantity": "rain >= 0.25 in",
+          "published": 17.0,
+          "derived": 6.7,
+          "difference": 10.3,
+          "date": "2026-12-27"
+        },
+        {
+          "mmdd": "10-21",
+          "quantity": "rain day >= 0.01 in",
+          "published": 13.5,
+          "derived": 3.3,
+          "difference": 10.2,
+          "date": "2026-10-21"
+        },
+        {
+          "mmdd": "12-11",
+          "quantity": "rain day >= 0.01 in",
+          "published": 36.5,
+          "derived": 46.7,
+          "difference": -10.2,
+          "date": "2026-12-11"
+        },
+        {
+          "mmdd": "12-31",
+          "quantity": "rain day >= 0.01 in",
+          "published": 36.9,
+          "derived": 26.7,
+          "difference": 10.2,
+          "date": "2026-12-31"
+        },
+        {
+          "mmdd": "01-04",
+          "quantity": "rain day >= 0.01 in",
+          "published": 36.6,
+          "derived": 46.7,
+          "difference": -10.1,
+          "date": "2027-01-04"
+        },
+        {
+          "mmdd": "12-25",
+          "quantity": "rain day >= 0.01 in",
+          "published": 36.8,
+          "derived": 26.7,
+          "difference": 10.1,
+          "date": "2026-12-25"
+        }
+      ],
+      "note": "Published values are read column-for-column out of NOAA NCEI's 1991-2020 daily normals for the same station; derived values are this project's own count over the 30 seasons of GHCN-Daily in the same window. NOAA smooths its published values across neighbouring dates while this project's are raw counts in 3.33-point steps, so a few points of difference is expected. Both are shown and the difference is published rather than reconciled.",
+      "published_source_url": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv",
+      "published_station_id": "USW00023272",
+      "published_sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
+      "flag_threshold_pct_points": 10.0
+    },
+    "published_expected_days": {
+      "ge_025in_days": 14.9,
+      "ge_100in_days": 3.26,
+      "ge_010in_days": 34.01,
+      "ge_050in_days": 8.39,
+      "days_covered": 123,
+      "method": "Sum of NOAA's own published per-date probabilities (DLY-PRCP-PCTALL-GE***HI) over the 123 dates of the window - the same linearity-of-expectation arithmetic as expected_days, but using the official published probabilities instead of this project's own count."
+    }
   },
   "disclaimer": "Independent hobby project. Not affiliated with NOAA/NWS/NCEI/CPC. For life-safety decisions use weather.gov and weather.gov/mtr directly. Daily forecast beyond 7 days does not exist; climatology shown is not a forecast.",
   "verification_note": "Every number traces to a URL in data/provenance.json. No commercial providers (AccuWeather etc.) are used because they require paid keys and are not independently verifiable line by line. All hosts verified against vetted official list."
