@@ -1,12 +1,13 @@
 runner: Linux runnervmlun5p 6.17.0-1022-azure #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
 python: Python 3.11.16
-date:   Sat Sep 19 19:34:57 UTC 2026
-sha:    b52055876195b0c75f5df8dda1b4d41608ca57f9
-ref:    refs/heads/main
+date:   Sat Sep 19 20:45:43 UTC 2026
+sha:    838c6101366a0bfdd8d0c5f6d7594f7d70334c17
+ref:    refs/heads/arena/01a0bb52-sfweather
 PIPELINE_EXIT=0
 CALENDAR_EXIT=0
 CPC_BACKTEST_EXIT=0
 LANDLORD_EXIT=0
+EXEC_SUMMARY_EXIT=0
 DIGEST_EXIT=0
 MODEL_GUIDANCE_EXIT=0
 FEED_EXIT=0

@@ -282,5 +282,51 @@
         "sentences": []
       }
     ]
+  },
+  {
+    "issuance_time": "2026-09-19T20:12:00+00:00",
+    "product_id": "6dff4255-780a-4f25-93a7-e19d00480cf1",
+    "source_url": "https://api.weather.gov/products/6dff4255-780a-4f25-93a7-e19d00480cf1",
+    "text_sha256": "47c0133fda5854069f8bb8617e72e174c1c350ae41b33d18bf1ac0fbbf3f14d2",
+    "text_chars": 5421,
+    "sentences_scanned": 32,
+    "categories": [
+      {
+        "id": "atmospheric_river",
+        "label": "Atmospheric river / subtropical moisture plume",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "prolonged_rain",
+        "label": "Prolonged / multi-day rain",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "heavy_rain",
+        "label": "Heavy rain / flooding",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "strong_wind",
+        "label": "Strong wind / wind hazard",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "quoted_rainfall_amount",
+        "label": "An explicit rainfall amount in NWS's own text",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "wind_and_rain_together",
+        "label": "Wind and rain in the same sentence",
+        "sentence_count": 0,
+        "sentences": []
+      }
+    ]
   }
 ]

@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-19T19:36:55Z",
+  "generated_utc": "2026-09-19T20:50:47Z",
   "location": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset) - 37.7605N, -122.4839W",
   "season_window": "October 1, 2026 - January 31, 2027 (123 days)",
   "questions": [
@@ -547,7 +547,7 @@
     },
     "daily_forecast": {
       "days_in_this_scoreboard_with_a_real_forecast": 0,
-      "official_horizon_ends": "2026-09-25"
+      "official_horizon_ends": "2026-09-26"
     },
     "prognostic_caveats": {
       "available": true,

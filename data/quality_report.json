@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-19T19:42:14Z",
+  "generated_utc": "2026-09-19T20:56:41Z",
   "counts": {
     "total": 7,
     "errors": 0,
@@ -98,11 +98,12 @@
     {
       "severity": "warning",
       "area": "feed",
-      "message": "6 feed entries cite a URL with no successful fetch in any provenance manifest. They are marked provenance_verified=false rather than dropped, so a reader can still follow them, but no figure on the site may depend on them.",
+      "message": "8 feed entries cite a URL with no successful fetch in any provenance manifest. They are marked provenance_verified=false rather than dropped, so a reader can still follow them, but no figure on the site may depend on them.",
       "evidence": {
         "urls": [
           "https://api.weather.gov/products/1992ce78-3097-4692-ba44-844828d14b5e",
           "https://api.weather.gov/products/2f894049-4561-49f5-8f84-48f92f351edf",
+          "https://api.weather.gov/products/45988603-3827-449f-a0dd-32f751aab608",
           "https://api.weather.gov/products/6acde7c7-4bb4-4789-848b-9badc8316167",
           "https://api.weather.gov/products/eafb83e6-b2a4-4f01-bba0-8dcc8c397487",
           "https://www.cpc.ncep.noaa.gov/products/archives/long_lead/llarc.ind.php"

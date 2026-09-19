@@ -80,8 +80,8 @@
   },
   {
     "issuance_date": "2026-09-19",
-    "generated_utc": "2026-09-19T19:34:58+00:00",
-    "forecast_updated": "2026-09-19T18:27:15+00:00",
+    "generated_utc": "2026-09-19T20:45:44+00:00",
+    "forecast_updated": "2026-09-19T20:26:32+00:00",
     "days": [
       {
         "target_date": "2026-09-19",
@@ -145,6 +145,15 @@
         "qpf_in": 0.0,
         "wind_max_mph": 13.0,
         "gust_max_mph": 17.3
+      },
+      {
+        "target_date": "2026-09-26",
+        "high_f": 60,
+        "low_f": 60,
+        "pop_pct": 0,
+        "qpf_in": 0.0,
+        "wind_max_mph": 10.0,
+        "gust_max_mph": 16.1
       }
     ]
   }
