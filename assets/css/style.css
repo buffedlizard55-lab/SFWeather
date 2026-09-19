@@ -468,6 +468,14 @@ dialog form { padding: 0 22px 20px; }
 .off-label { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #175d9c; font-weight: 700; }
 .off-value { font-size: 17px; font-weight: 700; margin: 2px 0 4px; }
 .off-sub { font-size: 12.5px; color: var(--ink-soft); line-height: 1.45; }
+/* Quoted caveat sentences inside the official-outlook strip: the same
+ * quotation-only visual language as the AFD card - NOAA's own words, set as
+ * quotes, never restyled into a number. */
+.off-quote {
+  margin: 6px 0 2px; padding: 6px 10px; border-left: 3px solid #9fc2e0;
+  background: #f2f7fb; font-size: 12.5px; line-height: 1.5; color: var(--ink);
+}
+.off-quote-label { font-size: 11px; color: var(--ink-soft); margin-top: 2px; font-style: italic; }
 
 @media (max-width: 620px) {
   .official-strip { grid-template-columns: 1fr; }

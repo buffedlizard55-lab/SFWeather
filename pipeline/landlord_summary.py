@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import datetime as dt
+import re
 import sys
 from pathlib import Path
 
@@ -362,11 +363,125 @@ def cpc_tilt_summary(records):
     }
 
 
+#: Sentences this page watches for in CPC's monthly long-lead Prognostic
+#: Discussion (fxus05), the narrative behind the seasonal outlook polygons.
+#: Each pattern is written against the *kind* of statement, with the parts CPC
+#: rewrites every month (the month name, the index value, the release window)
+#: generalised, because the discussion is a new document each issuance.  What
+#: is published is the matched span, verbatim - never a paraphrase.
+PROGNOSTIC_DISCUSSION_URL = \
+    "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html"
+
+PROGNOSTIC_CAVEAT_PATTERNS = [
+    {
+        "key": "pdo_state",
+        "label": "The state of the Pacific Decadal Oscillation, in NOAA's own words",
+        "pattern": (r"The first factor is the presence of a fairly strong, "
+                    r"negatively phased Pacific Decadal Oscillation \(PDO\), "
+                    r"with the [A-Za-z]+ PDO index value of [-+\d.]+\s*\."),
+    },
+    {
+        "key": "pdo_dampening",
+        "label": ("NOAA's forecasters stating, in their own words, that this "
+                  "El Ni\u00f1o may not behave like the classic strong ones"),
+        "pattern": (r"This time, however, the PDO phase is negative and may "
+                    r"dampen the typical impacts of a strong El Ni\u00f1o in "
+                    r"certain areas\."),
+    },
+    {
+        "key": "next_issuance_may_revise",
+        "label": "NOAA's forecasters saying the probabilities themselves may move at the next issuance",
+        "pattern": (r"These probabilities may be [A-Za-z]+ further in the next "
+                    r"set of seasonal outlooks, to be released in [^,]+, "
+                    r"pending reassessment of the latest model forecasts\."),
+    },
+]
+
+_ISSUED_LINE_RE = (r"(?:\d{3,4}\s+[AP]M\s+E[SD]T\s+)?[A-Za-z]{3}\s+[A-Za-z]{3}\s+"
+                   r"\d{1,2}\s+\d{4}")
+
+
+def prognostic_caveats(cpc):
+    """Extract the cautionary sentences CPC's forecasters actually wrote.
+
+    The 90-day Prognostic Discussion is fetched, hashed and archived whole by
+    the pipeline (``data/cpc.json`` -> ``discussions``).  This function reads
+    that archived text and pulls out the sentences that *qualify* the outlook
+    this page summarises - the stated caveats, not the headline.  Design rules,
+    same as the AFD card:
+
+    * quotations only, copied verbatim (whitespace collapsed) - the reader sees
+      NOAA's words, never this project's paraphrase of them;
+    * located by pattern, so a rewritten discussion simply publishes nothing
+      rather than a stale quote;
+    * what was watched for and not found is published as ``not_found``, so an
+      absent caveat is visible rather than silent;
+    * no date, amount or probability of this project's making is attached.
+
+    The archived text occasionally carries publisher-side mojibake (broken
+    smart-quote bytes around e.g. 'Big Three').  Quotes containing characters
+    that are not printable plain text are refused, so nothing undecodable can
+    reach the page through this path.
+    """
+    discussions = (cpc or {}).get("discussions") or []
+    disc = next((d for d in discussions
+                 if "90-Day" in (d.get("label") or "")
+                 or "90day" in (d.get("url") or "")), None)
+    if not disc or not (disc.get("ok") is True) or not (disc.get("text") or "").strip():
+        return {
+            "available": False,
+            "reason": ("The archived 90-day Prognostic Discussion is absent or "
+                       "empty in this run, so no caveat can be quoted."),
+            "source_url": PROGNOSTIC_DISCUSSION_URL,
+        }
+
+    collapsed = climo.collapse_ws(disc["text"])
+    quotes, not_found = [], []
+    for spec in PROGNOSTIC_CAVEAT_PATTERNS:
+        m = re.search(spec["pattern"], collapsed)
+        if not m:
+            not_found.append(spec["key"])
+            continue
+        text = m.group(0).strip()
+        # Refuse anything that is not clean printable text: the discussion
+        # text is decoded on a best-effort basis and individual sentences can
+        # carry publisher-side broken bytes.  A refused sentence is reported,
+        # not silently dropped.
+        if any(ord(ch) < 32 or ord(ch) in (127, 0xFFFD) for ch in text):
+            not_found.append(spec["key"] + " (matched but not clean plain text)")
+            continue
+        quotes.append({"key": spec["key"], "label": spec["label"], "text": text})
+
+    issued = None
+    m = re.search(_ISSUED_LINE_RE, collapsed)
+    if m:
+        issued = m.group(0).strip()
+
+    return {
+        "available": True,
+        "issued_line": issued,
+        "quotes": quotes,
+        "not_found": not_found,
+        "patterns_watched_for": [s["key"] for s in PROGNOSTIC_CAVEAT_PATTERNS],
+        "source_url": disc.get("url") or PROGNOSTIC_DISCUSSION_URL,
+        "discussion_sha256": disc.get("sha256"),
+        "discussion_characters": disc.get("characters"),
+        "how_to_read": (
+            "Sentences copied verbatim from the long-lead Prognostic Discussion "
+            "CPC issued with the seasonal outlook, located by pattern in the "
+            "text the pipeline fetched and hashed. They are NOAA's forecasters "
+            "qualifying their own outlook; no number or date has been attached "
+            "by this project. When a later discussion no longer contains a "
+            "sentence, it stops appearing here and is listed under not_found."),
+    }
+
+
 def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
                       wind_rain, heavy_wind_and_rain, max_gust, expected_days,
                       severity, latest_oni, oni_when, diagnostic_status,
                       tilt, storms, days_in_horizon, horizon_last_day,
-                      enso_strat=None, hourly_wind_rain=None):
+                      enso_strat=None, hourly_wind_rain=None,
+                      caveats=None):
     """The landlord's questions, answered in the order they were asked.
 
     Every value is copied from an already-verified structure; nothing here is
@@ -714,6 +829,12 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
             "official_horizon_ends": horizon_last_day,
         },
     }
+    # What the outlook's own authors wrote to qualify it, copied verbatim from
+    # the discussion the pipeline archived (or a visible statement that the
+    # discussion could not be read).  Quotations only - never a number of this
+    # project's making.
+    if caveats is not None:
+        official["prognostic_caveats"] = caveats
 
     # The only bridge this project is entitled to draw between "the official
     # outlook says X" and "that costs Y": the same 30 seasons, split by the
@@ -1493,7 +1614,8 @@ def main():
         storms=storms,
         days_in_horizon=(calendar.get("nws_window") or {}).get("scoreboard_days_in_horizon"),
         horizon_last_day=(calendar.get("nws_window") or {}).get("last_day"),
-        enso_strat=enso_strat, hourly_wind_rain=hourly_wind_rain)
+        enso_strat=enso_strat, hourly_wind_rain=hourly_wind_rain,
+        caveats=prognostic_caveats(cpc))
 
     # Phase-aware ENSO sentence for the key finding: the tilt wording has to
     # follow the phase NOAA actually published, not a template that always

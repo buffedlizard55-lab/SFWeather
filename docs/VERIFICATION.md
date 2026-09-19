@@ -707,3 +707,95 @@ shrinkage.
 * Model guidance, live: 7 pages retrieved (all HTTP 200, all hashed), 10 maps
   archived under `assets/model_guidance/`, 7 verbatim definition sentences,
   2 availability probes ok and neither decoded.
+
+## Session 10 — 19 September 2026 (pass 10): review of the merged main, time-bomb test
+
+Starting point: `main` at `0d82db5` (the 19 Sep 07:15 UTC nightly data refresh,
+all 69 ledger checks passing, Pages deployment green). The full offline suite
+was re-run in the sandbox before any change was made; everything passed except
+one check, found and fixed as bug 70 below.
+
+| # | Symptom | Root cause | Fix |
+| --- | --- | --- | --- |
+| 70 | `tests/test_parsers.py` failed 1 of 409 checks against the freshly refreshed data: *"derived gust for 2026-09-18 matches NWS's stated 18 mph within 2 mph: None"* — even though the nightly ledger (69 checks) was green and the site healthy | A **time bomb**: the check hard-coded two dates and values ("18 Sep = 18 mph, 19 Sep = 20 mph") taken from the NWS text forecast *as it stood on 18 Sep*. The `Tests` workflow runs on push, not on the nightly data commit, so nothing tripped until the next push after the forecast window had moved past 18 Sep — then the date was no longer inside `current_forecast.days`, the derived gust was `None`, and any PR would have failed CI through no fault of its own | The check now **reads the dates and values from the product this run fetched** instead of trusting a transcription: every `forecast_daily` period whose `detailed_forecast` states "gusts as high as N mph" is parsed, its stated gust is attributed to the local dates the period covers, and two guards run: (a) each stated gust must appear in the derived daily maxima within 2 mph in at least one covered date (lower bound per period — the text is generated from the same grid the calendar reads); (b) the window's derived gust max must lie within −2/+8 mph of the stated text max (the +8 upper margin absorbs gusts the text omits when they are not far above sustained wind, while a km/h↔mph or doubling bug overshoots it by far). Both guards were falsified before being kept: understating 19 Sep's gust to 10 mph fails guard (a); overstating the window max to 48 mph fails guard (b). A run whose text states no gust at all (deep calm) passes with the stated/checked counts printed in the detail rather than vacuously pretending to have cross-checked something |
+
+Pass-2 review of this diff also corrected the stale method note in
+`docs/LIMITATIONS.md` §12, which still described the hard-coded 18/20 mph
+example; it now describes the dynamic check.
+
+### Feature added the same session: the outlook's own caveats, verbatim
+
+**Why.** Reviewing the site's official-outlook strip against the live CPC
+Prognostic Discussion (fxus05, issued 17 Sep 2026 — fetched and checked by
+hand from the sandbox, both the discussion page and the official ONI file)
+found an asymmetry: the strip said *"El Niño Advisory, +1.80 °C, JFM 2027
+Above 50%"*, while NOAA's own discussion — a file the pipeline already
+fetched, hashed and archived — stated, in its forecasters' own words, that
+this El Niño is *unlike* the Big Three because the PDO is strongly negative
+(August index −1.11) and "may dampen the typical impacts of a strong El Niño
+in certain areas", and that the DJF/JFM precipitation probabilities
+themselves "may be increased further in the next set of seasonal outlooks, to
+be released in mid-late October". A landlord budgeting on "wet winter ahead"
+was seeing the tilt without the tilt's own stated caveats.
+
+**What was built** (`prognostic_caveats()` in `pipeline/landlord_summary.py`,
+rendered in the outlook strip, `#landlord-official`):
+
+* Three pattern-located sentences are extracted from the *archived* 90-day
+  discussion in `data/cpc.json` (which itself carries the URL, SHA-256 and
+  byte count of the fetch): the PDO state sentence, the PDO-dampening
+  sentence, and the "probabilities may move at the next issuance" sentence.
+  Patterns generalise the parts CPC rewrites monthly (month name, index
+  value, release window) because the discussion is a new document each
+  issuance.
+* Quotations only, copied verbatim (whitespace-collapsed). A matched sentence
+  that contains non-printable characters is refused — the publisher's page
+  carries broken smart-quote bytes (e.g. around "Big Three") that must never
+  reach the page through this path.
+* What was watched for and not found is published (`not_found`), the
+  discussion's own issuance line is quoted as-is, and the card states that no
+  number or date was attached by this project. A missing archive degrades to
+  an honest `available: false` with a reason, never an empty silence.
+* When CPC rewrites the discussion in mid-late October and a sentence
+  disappears, it stops being published and is listed as not found — the card
+  cannot hold a stale quote over.
+
+**Guardrails added** (each falsified before being kept):
+
+* Ledger check `prognostic-caveats-verbatim` (**check 70**): every published
+  quote must be a whitespace-collapsed substring of the archived discussion
+  text; the archived discussion must trace to a recorded fetch; a quote key
+  must be one the extractor declares in `patterns_watched_for`; an
+  `available` block must actually have the archive; an unavailable block must
+  state a reason and carry no quotes; no quote may contain control
+  characters. Falsified by 7 new cases in `tests/falsify_guards.py`
+  (edited quote, hand-added key, block removed, archive deleted, honest
+  unavailability passing, mojibake smuggling, U+FFFD smuggling) — 63 cases
+  total.
+* Render guard 30 in `tests/smoke.js`: every quote in the dataset must render
+  inside the outlook strip, the "no number or date attached" marker and the
+  source link must be present. Falsified by 4 new cases in
+  `tests/falsify_smoke.py` (renderer drops a quote, marker removed, link
+  removed, unavailable card without its reason) — 27 cases total.
+* 9 new offline assertions in `tests/test_parsers.py` pin the extractor
+  itself against synthetic discussions: full extraction, verbatim text,
+  issuance line, rewritten discussion (all three absent, named), mojibake
+  refusal, missing archive, empty cpc file, and the committed
+  `landlord.json` block equal to a fresh extraction over the committed
+  `cpc.json` — **419 assertions total** (the last covers both the C1 control-character refusal and the U+FFFD replacement-character refusal).
+
+### Standings after this pass
+
+* `pipeline/verify_claims.py`: **70 checks pass, 0 fail, 0 warnings** (69 + 1
+  new), 19 recorded claims, against the current committed dataset.
+* `tests/test_parsers.py`: **419/419 assertions pass** (409 + 10 new; the two
+  dynamic gust guards replace the two hard-coded iterations of the old loop
+  check).
+* `tests/falsify_guards.py`: **63 cases** behave. `tests/falsify_smoke.py`:
+  **27 cases** behave. `npm test` (jsdom render, guards 1–30) and
+  `pipeline/verify_sources.py` pass against the committed data.
+* Data files changed: `data/landlord.json` (regenerated from the same
+  verified inputs to carry the caveats block — the extraction is re-derived
+  and checked by the ledger), `data/verify.json` / `verify_report.txt`
+  (regenerated, 70 checks). Everything else remains the dataset the
+  19 Sep 07:15 UTC CI run fetched and verified.

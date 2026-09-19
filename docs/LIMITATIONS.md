@@ -128,9 +128,13 @@ two fields come from the raw gridpoint series at the same point.
   `0.00 in` is one where NWS published a zero accumulation — those are different
   statements and the site keeps them different.
 
-Cross-check available by hand: NWS's own text forecast for this run says "gusts as
-high as 18 mph" for Friday 18 Sep and "20 mph" for Saturday 19 Sep; the derived
-daily maxima are 18.4 and 19.6 mph.
+Cross-check available by hand: NWS's own text forecast states a public gust
+value per 12-hour period ("... with gusts as high as 18 mph"), and
+`tests/test_parsers.py` re-reads every period each run actually fetched and
+requires the derived daily maxima to show every gust the text states (within
+rounding), plus agreement of the window maxima. The check is dynamic — the
+dates and values are read from the fetched product, never hard-coded — so it
+follows the forecast window as it moves.
 
 ### 13. Two official answers can disagree on a single date
 Since this session the site publishes NOAA's own per-date daily normals beside this
@@ -230,6 +234,26 @@ more complete, than the datasets behind it — and it inherits their limits:
   not retrieve — a different office's discussion, a marine forecast, a river
   statement — simply is not in it, and absence from the feed is not evidence that
   NOAA published nothing.
+
+### 19. The outlook-caveat card watches for three kinds of sentence, not every caveat
+
+The "What the outlook's own authors caution" card quotes the long-lead Prognostic
+Discussion **verbatim** - but only the sentences a fixed pattern list can find
+(the PDO state, the PDO-may-dampen statement, and the "probabilities may move at
+the next issuance" note), because a discussion is rewritten from scratch every
+month and a looser "find the caveats" scan would have to paraphrase what it
+found. Consequences a reader should know:
+
+* A caveat CPC words differently - or states in a section the patterns do not
+  cover - does not appear on the card. Its absence is **not** evidence the
+  discussion contained no caveat; the card's "watched for but not stated" line
+  says exactly what was looked for and not found.
+* When CPC's next discussion (due mid-late October 2026) drops a sentence, the
+  card drops it the same run and lists it under `not_found`. The card cannot
+  hold a quote over from a previous issuance.
+* The matched sentences are publisher text with publisher-side quirks intact
+  (e.g. the spacing in "-1.11 ."). Sentences containing undecodable bytes are
+  refused rather than rendered as mojibake.
 
 ---
 

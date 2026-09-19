@@ -1239,6 +1239,37 @@
         "days_in_this_scoreboard_with_a_real_forecast": 0,
         "official_horizon_ends": "2026-09-25"
       },
+      "prognostic_caveats": {
+        "available": true,
+        "issued_line": "830 AM EDT Thu Sep 17 2026",
+        "quotes": [
+          {
+            "key": "pdo_state",
+            "label": "The state of the Pacific Decadal Oscillation, in NOAA's own words",
+            "text": "The first factor is the presence of a fairly strong, negatively phased Pacific Decadal Oscillation (PDO), with the August PDO index value of -1.11 ."
+          },
+          {
+            "key": "pdo_dampening",
+            "label": "NOAA's forecasters stating, in their own words, that this El Ni\u00f1o may not behave like the classic strong ones",
+            "text": "This time, however, the PDO phase is negative and may dampen the typical impacts of a strong El Ni\u00f1o in certain areas."
+          },
+          {
+            "key": "next_issuance_may_revise",
+            "label": "NOAA's forecasters saying the probabilities themselves may move at the next issuance",
+            "text": "These probabilities may be increased further in the next set of seasonal outlooks, to be released in mid-late October, pending reassessment of the latest model forecasts."
+          }
+        ],
+        "not_found": [],
+        "patterns_watched_for": [
+          "pdo_state",
+          "pdo_dampening",
+          "next_issuance_may_revise"
+        ],
+        "source_url": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
+        "discussion_sha256": "c6307e499e46cf2c0047f87de6a3169ed484923b62755f5e4350d786589ea781",
+        "discussion_characters": 16942,
+        "how_to_read": "Sentences copied verbatim from the long-lead Prognostic Discussion CPC issued with the seasonal outlook, located by pattern in the text the pipeline fetched and hashed. They are NOAA's forecasters qualifying their own outlook; no number or date has been attached by this project. When a later discussion no longer contains a sentence, it stops appearing here and is listed under not_found."
+      },
       "enso_conditioned_record": {
         "phase": "el_nino",
         "phase_label": "El Ni\u00f1o",

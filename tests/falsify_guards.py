@@ -901,6 +901,105 @@ def _fd6(tmp):
         f["counts"]["provenance_unverified"] = f["counts"].get("provenance_unverified", 0) + 1
     return feed_fixture(mutate)(tmp)
 
+
+# --------------------------------------------------------------------------
+# Prognostic-discussion caveats (ledger check prognostic-caveats-verbatim).
+# The block publishes CPC's own cautionary sentences verbatim; each mutation
+# below is a way that block could lie.
+# --------------------------------------------------------------------------
+
+def _copy_all(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+
+
+def _patch_caveats(tmp, fn):
+    ll = load("landlord.json")
+    cav = ll["executive_summary"]["official_outlook"]["prognostic_caveats"]
+    fn(cav)
+    dump(tmp / "landlord.json", ll)
+
+
+@case("a prognostic caveat quote edited (no longer verbatim)", "fail",
+      "prognostic-caveats-verbatim")
+def _pc1(tmp):
+    _copy_all(tmp)
+    def fn(cav):
+        cav["quotes"][0]["text"] = "A PARAPHRASE THIS PROJECT WROTE ITSELF."
+    _patch_caveats(tmp, fn)
+    return tmp
+
+
+@case("a prognostic caveat quote with a hand-added key outside the patterns", "fail",
+      "prognostic-caveats-verbatim")
+def _pc2(tmp):
+    _copy_all(tmp)
+    def fn(cav):
+        cav["quotes"][0]["key"] = "hand_added_opinion"
+    _patch_caveats(tmp, fn)
+    return tmp
+
+
+@case("the prognostic caveats block removed from the dataset", "fail",
+      "prognostic-caveats-verbatim")
+def _pc3(tmp):
+    _copy_all(tmp)
+    ll = load("landlord.json")
+    ll["executive_summary"]["official_outlook"].pop("prognostic_caveats", None)
+    dump(tmp / "landlord.json", ll)
+    return tmp
+
+
+@case("caveats claimed available but the archived discussion is gone", "fail",
+      "prognostic-caveats-verbatim")
+def _pc4(tmp):
+    _copy_all(tmp)
+    cpc = load("cpc.json")
+    cpc["discussions"] = [d for d in cpc.get("discussions", [])
+                          if "90-Day" not in (d.get("label") or "")]
+    dump(tmp / "cpc.json", cpc)
+    return tmp
+
+
+@case("an honestly unavailable caveats block (reason stated, no quotes)", "pass",
+      "prognostic-caveats-verbatim")
+def _pc5(tmp):
+    _copy_all(tmp)
+    def fn(cav):
+        cav.clear()
+        cav.update({
+            "available": False,
+            "reason": "The archived 90-day Prognostic Discussion is absent or "
+                      "empty in this run, so no caveat can be quoted.",
+            "source_url": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
+            "quotes": [],
+        })
+    _patch_caveats(tmp, fn)
+    return tmp
+
+
+@case("a control-character (mojibake) sentence smuggled into the quotes", "fail",
+      "prognostic-caveats-verbatim")
+def _pc6(tmp):
+    _copy_all(tmp)
+    def fn(cav):
+        # A sentence that is otherwise ordinary prose but carries the
+        # publisher-side broken smart-quote bytes (\u0080\u009c) inside it.
+        cav["quotes"][0]["text"] = "clean text \u0080\u009c with mojibake inside."
+    _patch_caveats(tmp, fn)
+    return tmp
+
+
+@case("a Unicode replacement character smuggled into the quotes", "fail",
+      "prognostic-caveats-verbatim")
+def _pc7(tmp):
+    _copy_all(tmp)
+    def fn(cav):
+        cav["quotes"][0]["text"] = "decoded with replacement \ufffd somewhere."
+    _patch_caveats(tmp, fn)
+    return tmp
+
+
 def main():
     failures = []
     for name, expect, check_id, build in CASES:

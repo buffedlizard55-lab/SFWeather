@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-19T12:04:26Z
+generated_utc: 2026-09-19T18:56:02Z
 
-checks: 69 passed, 0 failed, 0 warning(s)  (of 69)
+checks: 70 passed, 0 failed, 0 warning(s)  (of 70)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         189 recorded fetches (187 unique URLs)
@@ -44,7 +44,7 @@ checks: 69 passed, 0 failed, 0 warning(s)  (of 69)
 [PASS] cost-driver-expected-days-arithmetic: The published expected heavy-rain day counts equal the sum of the per-date 1991-2020 probabilities in the committed climatology table
         ge_025in_days: published 14.97 vs recomputed 14.97 over 123 season dates; ge_100in_days: published 3.19 vs recomputed 3.19 over 123 season dates
 [PASS] raw-phase-tokens-dataset: No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)
-        0 raw tokens across 22748 scanned string(s)
+        0 raw tokens across 22763 scanned string(s)
 [PASS] phase-label-present: Every ENSO phase value a renderer can reach ships with a reader-facing label (no underscore token, correct capitalisation)
         3 label(s) published
 [PASS] raw-phase-tokens: No raw ENSO data token (el_nino / la_nina) appears in any reader-facing executive-summary string
@@ -115,6 +115,8 @@ checks: 69 passed, 0 failed, 0 warning(s)  (of 69)
         123 day(s) carry 6 deep links each
 [PASS] afd-history-consistent: AFD issuance history is append-only, deduped, and quotations-only
         4 issuance(s) in history
+[PASS] prognostic-caveats-verbatim: CPC prognostic-discussion caveats are present, verbatim, and source-traced
+        3 quoted sentence(s) all verbatim in the archived 90-day discussion (16603 collapsed characters)
 [PASS] digest-rss-traceable: Alert digest items trace to the verified NWS alert and forecast blocks
         0 alert(s), 0 high-POP day(s)
 [PASS] model-guidance-separated: No model guidance (CFSv2/NMME) is merged into the scoreboard tiers

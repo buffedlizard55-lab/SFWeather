@@ -923,6 +923,47 @@ setTimeout(() => {
     }
   }
 
+  // 30. The prognostic-discussion caveats: when the dataset carries verbatim
+  //     CPC caveats, every one must render inside the official-outlook strip
+  //     with its source link; when the discussion could not be archived, the
+  //     strip must say so instead of silently dropping the card.  A caveat
+  //     that rendered without the "no number attached" marker would read as
+  //     a project claim rather than NOAA's own sentence.
+  {
+    const stripText = text('#landlord-official');
+    let caveats = null;
+    try {
+      caveats = (((JSON.parse(fs.readFileSync(path.join(repo, 'data/landlord.json'), 'utf8'))
+        .executive_summary || {}).official_outlook || {}).prognostic_caveats) || null;
+    } catch (e) { caveats = null; }
+    if (!caveats) {
+      if (!/official ENSO state/i.test(stripText)) {
+        problems.push('no prognostic_caveats block and the official strip did not render at all');
+      }
+    } else if (caveats.available) {
+      (caveats.quotes || []).forEach(q => {
+        if (!stripText.includes(q.text || '')) {
+          problems.push('caveat "' + (q.key || '?') + '" is in the dataset but not rendered: ' +
+            (q.text || '').slice(0, 90));
+        }
+      });
+      if ((caveats.quotes || []).length && !/no number or date attached/i.test(stripText)) {
+        problems.push('rendered caveats do not carry the "no number or date attached" marker');
+      }
+      if (!/Read CPC\u2019s prognostic discussion|Read CPC's prognostic discussion/.test(stripText)) {
+        problems.push('the caveats card does not link the prognostic discussion');
+      }
+    } else {
+      // The card must still render, stating its reason verbatim, so an absent
+      // archive is disclosed on the page rather than silently dropped.
+      if (!/What the outlook/.test(stripText)) {
+        problems.push('caveats block is unavailable but no caveat card rendered to say so');
+      } else if (!caveats.reason || !stripText.includes(caveats.reason.slice(0, 40))) {
+        problems.push('the unavailable caveats card does not state its reason');
+      }
+    }
+  }
+
   if (problems.length) {
     console.error('SMOKE TEST FAILED');
     problems.forEach(p => console.error(' - ' + p));
