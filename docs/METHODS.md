@@ -535,3 +535,170 @@ functions each defined the set of event types themselves.  The set now lives onc
 Debris Flow), both cards name the types in the label, and the ledger re-derives
 every published Storm Events count from `storm_events.json` and fails the run if
 the two cards disagree (`storm-events-counts-recompute`).
+
+## 21. CPC coverage across New Year (added 18 Sep 2026, pass 9)
+
+CPC writes a season label in two forms: `OND 2026` for a season inside one
+calendar year, and `NDJ 2026-2027` for one that crosses New Year. The parser
+handled only the first, so the two rainy-season outlooks were sampled from the
+official shapefiles, printed in the season table, and then attached to **no day at
+all** — a reader opening 15 December never saw the DJF outlook that covers it.
+
+The fix is in `build_calendar.parse_season_year` / `parse_season_key`:
+
+* `2026` → `(2026, None)`; `2026-2027` and `2026/2027` → `(2026, 2027)`;
+  non-consecutive years (`2026-2028`) → `(None, None)`;
+* a two-year label is only accepted for a season that actually crosses New Year
+  (`NDJ`, `DJF`), and a one-year label only for one that does not. A contradiction
+  means the label was misread, so nothing is returned rather than a wrong set of
+  months being attached to days;
+* coverage keys are zero-padded `YYYY-MM` strings, which is the contract the
+  ledger's completeness check re-derives.
+
+The monthly roll-up no longer uses a hand-written month→year map either: it walks
+`SEASON_START` forward one month at a time, so a season crossing New Year yields
+`2026-12` then `2027-01` by construction.
+
+Three ledger checks keep it honest, and each was falsified before being kept
+(`tests/falsify_guards.py`): `cpc-record-coverage-declared` (every record declares
+coverage exactly one way — month keys, or a start and end date),
+`cpc-season-covers-complete` (all 123 days × 38 records recounted: every day
+carries exactly the records that cover it, and no record is attached to a day it
+does not cover) and `cpc-record-reach` (each month/season record reaches every day
+it covers; a record covering nothing in this season reaches no day).
+
+## 22. The model-guidance tier (added 18 Sep 2026, pass 9)
+
+`pipeline/model_guidance.py` retrieves NMME material and publishes
+`data/model_guidance.json` plus `data/model_guidance_provenance.json`. The rules
+are structural, not stylistic:
+
+1. **The warning is data.** It lives in the file, renders before any content, and
+   repeats on every item. The ledger requires the exact phrases, so a rewrite that
+   softened it would fail the build.
+2. **Nothing is read out of an image.** The seasonal PNGs are archived locally with
+   their byte count and SHA-256 (so the picture cannot change under a reader), and
+   the ledger re-hashes the file on disk against the recorded hash. No probability,
+   amount or wind speed is transcribed, estimated or republished.
+3. **No month range is invented.** The period the maps cover is quoted from NOAA's
+   index page. A `season N` image's month range is printed inside the image by
+   NOAA; the filename is not treated as a date.
+4. **Quotes are substrings.** Definition sentences are extracted from the fetched
+   page text and re-checked — in the module, in its self-test, and again by the
+   ledger against the full page text stored beside them. The page is CP1252, so it
+   is decoded with `lib_fetch.decode_text` (publisher encoding first) and any
+   character that still cannot be represented is counted and reported rather than
+   published as U+FFFD.
+5. **Raw model output is located, not decoded.** The NMME archive directory and
+   NOMADS CFSv2 are probed for availability; each probe records `decoded: false`
+   and the reason. A location that does not answer is reported as not reachable and
+   is not published as a working link.
+6. **Isolation is enforced, not promised.** `model-guidance-isolation` fails the
+   run if `merged_into_scoreboard` is not false, if `not_an_official_forecast` is
+   not true, if the warning loses its wording, if any day cell or dataset grows a
+   model-shaped field, or if a model-guidance mention appears anywhere in
+   `calendar.json` / `landlord.json` **outside a quoted official document** — the
+   last clause matters because CPC's own prognostic discussion says the official
+   outlook was made using NMME and CFSv2, and this project quotes that discussion
+   verbatim. A token scan would have flagged NOAA's own words as contamination.
+
+## 23. The official-product feed (added 18 Sep 2026, pass 9)
+
+`pipeline/build_feed.py` makes no network request. It reads the datasets already in
+`data/` and emits one chronological list, newest first, of what NOAA published and
+what this project fetched. Two distinctions keep it honest:
+
+* **`url` vs `evidence_url`.** `url` is the link the reader gets; `evidence_url` is
+  the URL whose recorded fetch justifies the row's content. They differ for NWS's
+  human-facing pages (`forecast.weather.gov/MapClick.php`, an alert object's
+  `@id`), which are linked for convenience but were never fetched themselves. Each
+  row publishes `link_verified` (was that link fetched?) and `provenance_verified`
+  (does a recorded fetch stand behind the content?), and a row with neither is
+  labelled a pointer for manual review and raises a warning.
+* **Dates the publisher did not give are not invented.** An NWS period's local
+  `startTime` is converted to UTC; a CPC issue date printed as `18 Sep 2026` or
+  `September 17, 2026` becomes a **date with no clock time** (`time_known: false`,
+  the publisher's own wording kept beside it); a product with no issue date is
+  listed undated; and a timestamp that will not parse is dropped with a warning
+  rather than guessed at.
+
+Model-guidance rows carry `official: false` and the tier's warning into the same
+list, so the difference is visible where a reader might otherwise blur it. The
+ledger check `feed-traceable` re-derives every count, checks the sort order, the
+date/timestamp agreement, the host of every link, and that no model-guidance row is
+marked official.
+
+## 24. Classifying a stale archive instead of merely disclosing it (pass 9)
+
+The GSOD and hourly ISD files for the wind station stop well before the daily
+rain/temperature record. Disclosing that is necessary but not sufficient: the two
+explanations have different consequences, so `pipeline/ncei_archive_probe.py`
+decides between them with evidence.
+
+1. **Successor search.** `isd-history.csv` is parsed by header name (the header
+   differs between releases: `LAT`/`LON` vs `LAT(LON)`), dates are normalised to
+   ISO, and rows for the same airport (same ICAO, same name, or within 2 mi) are
+   split into *same-airport rows* — which are successor candidates, never controls
+   — and everything else.
+2. **Control comparison.** Up to four stations within ~100 mi, excluding
+   same-airport rows and stations that also stopped. The subject's and each
+   control's GSOD file are compared **per year**, and the verdict comes from the
+   latest year in which both sides have data — comparing a complete 2024 file with
+   a partial 2025 one would have produced a meaningless gap.
+3. **Verdict.** A gap within `SAME_STOP_SLACK_DAYS` (15) is an `archive-wide-lag`;
+   a larger gap is a `station-specific-gap`; if no year had both sides readable it
+   is `not-determinable`. Each carries the measured gap, the slack allowed, the
+   year compared, the control identifiers, and whether a successor was found.
+4. **Corroboration and alternatives.** NCEI's service-alerts page is parsed for
+   active data-access delay notices, and GHCN-Daily is probed for wind elements so
+   the card can say whether current wind exists in another official product (it is
+   labelled with its own element names — AWND is a daily mean, WSF2/WSF5 the
+   fastest 2-minute and 5-second winds — and never mixed into the GSOD-based
+   statistics).
+5. **Recommendations are recommendations.** Stitching a successor identifier into
+   the wind archive would move every published 1991–2020 wind statistic, so the
+   probe recommends it and does not do it.
+
+The ledger (`ncei-archive-probe-consistent`) requires the verdict to be one of the
+three, to be supported by its own gap and slack, to use the dates `run.json`
+publishes, to have every URL it touched recorded in its manifest, and to have
+passed its findings to the quality report.
+
+## 25. Per-day deep links (pass 9)
+
+Each day cell carries the official URLs holding that one date's rows: one
+station-day from NCEI's Access Data Service for rain and temperature, the GSOD and
+hourly ISD annual files holding that date's wind rows, and — inside the horizon —
+the NWS product the day's numbers came from. Each link states whether this run
+fetched that exact URL (`fetched_by_this_run`, read from the union of the
+provenance manifests) or is only offering it, and link-only rows carry a note
+saying what they are.
+
+Because 123 links built from an untested URL template would be exactly the kind of
+unverified claim this project refuses, `pipeline/main.py` fetches **one** such
+request per run — for the newest date the station file actually holds, never a
+future date — and records the response (status, size, SHA-256, first lines, row
+count) in `data/ghcn_probe.json`. `day-deep-links-vetted` (error) checks every
+link's host, station and date; `day-deep-link-shape-verified` (warning) re-derives
+the probe URL with the same builder the site uses and requires a recorded response.
+
+## 26. Auxiliary manifests and one quality report (pass 9)
+
+`data/provenance.json` is written by `pipeline/main.py` and by nothing else,
+because `data/run.json` publishes its entry count and the ledger re-derives the
+ok/failed/absent split from it. A second script appending rows would desynchronise
+those numbers and silently stop the nightly publish.
+
+So `pipeline/lib_provenance.py` owns one convention: every auxiliary script writes
+`data/<area>_provenance.json` with the same `{"entries": [...]}` shape, names its
+`area`, and says what it fetched; findings are merged into
+`data/quality_report.json` under a removable `"source": area` tag, which makes the
+merge idempotent (running a script twice cannot double-count a finding, and a
+finding fixed on a later run cannot survive). Counts in the quality report are
+recomputed from the entries, so published totals cannot disagree with them.
+
+`pipeline/verify_sources.py` scans **every** manifest, not just the nightly one, so
+a new script fetching from an unvetted host is caught on its first run. The ledger
+adds `auxiliary-manifests-vetted` (host, HTTPS, evidence, area/note labelling) and
+`auxiliary-manifests-separate` (no fetch double-recorded, and `run.json`'s
+published total still describes the nightly manifest alone).

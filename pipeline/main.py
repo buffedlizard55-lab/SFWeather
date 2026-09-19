@@ -30,6 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import lib_fetch as fetchlib          # noqa: E402
 import lib_shape as shapelib          # noqa: E402
+import lib_cpc as cpclib              # noqa: E402
 import climo                          # noqa: E402
 
 # --------------------------------------------------------------------------
@@ -600,106 +601,21 @@ def fetch_nws(lat, lon):
 # ==========================================================================
 
 def _sample_one_bundle(bundle, lat, lon, label, zip_url):
-    """Point-sample a single shapefile bundle at (lat, lon)."""
-    if not bundle["shp"] or not bundle["dbf"]:
-        return {"stem": bundle["stem"], "ok": False,
-                "error": "no .shp/.dbf pair for this bundle"}
-    prj = shapelib.read_prj(bundle["prj"])
-    geographic = shapelib.is_geographic(prj)
-    if geographic is False:
-        note_irregularity("warning", "cpc",
-                          f"CPC shapefile {bundle['stem']} uses a projected CRS; "
-                          "point-sampling was skipped rather than guessing at a reprojection.",
-                          {"url": zip_url, "prj": (prj or "")[:300]})
-        return {"stem": bundle["stem"], "ok": False,
-                "error": "projected CRS - point sampling skipped", "prj": (prj or "")[:300]}
+    """Point-sample a single shapefile bundle at (lat, lon).
 
-    _stype, shapes = shapelib.read_shp(Path(bundle["shp"]))
-    fields, rows = shapelib.read_dbf(Path(bundle["dbf"]))
-    if len(rows) != len(shapes):
-        note_irregularity("warning", "cpc",
-                          f"CPC shapefile {bundle['stem']}: .shp has {len(shapes)} records "
-                          f"but .dbf has {len(rows)}. Attributes matched by index; verify "
-                          "against the official map before relying on this.",
-                          {"url": zip_url})
-
-    hits, used_nearest = [], False
-    for i, shape in enumerate(shapes):
-        if not shape.rings:
-            continue
-        if not shapelib.bbox_contains(shape.bbox, lon, lat):
-            continue
-        if shapelib.point_in_polygon(lon, lat, shape.rings):
-            hits.append({"index": i, "attrs": rows[i] if i < len(rows) else None,
-                         "bbox": [round(v, 4) for v in shape.bbox],
-                         "rings": len(shape.rings),
-                         "vertices": sum(len(r) for r in shape.rings)})
-
-    if not hits:
-        best, bestd = None, None
-        for i, shape in enumerate(shapes):
-            if not shape.rings or not shape.rings[0]:
-                continue
-            xs = [pt[0] for pt in shape.rings[0]]
-            ys = [pt[1] for pt in shape.rings[0]]
-            cx, cy = sum(xs) / len(xs), sum(ys) / len(ys)
-            d = (cx - lon) ** 2 + (cy - lat) ** 2
-            if bestd is None or d < bestd:
-                bestd, best = d, i
-        if best is not None:
-            used_nearest = True
-            shape = shapes[best]
-            hits.append({"index": best, "attrs": rows[best] if best < len(rows) else None,
-                         "bbox": [round(v, 4) for v in shape.bbox],
-                         "rings": len(shape.rings),
-                         "vertices": sum(len(r) for r in shape.rings)})
-            note_irregularity("warning", "cpc",
-                              f"CPC polygon miss: ({lon:.4f}, {lat:.4f}) fell in no polygon of "
-                              f"{bundle['stem']} (common for coastal cells). Used the nearest "
-                              "polygon instead - flagged for manual review.",
-                              {"url": zip_url})
-
-    return {
-        "stem": bundle["stem"], "ok": bool(hits), "fields": fields,
-        "n_polygons": len(shapes), "n_hits": len(hits),
-        "used_nearest_polygon": used_nearest,
-        "is_geographic": geographic,
-        "hits": hits,
-    }
+    Thin wrapper kept for the existing call sites and tests; the sampler itself
+    lives in :mod:`lib_cpc` so the historical back-test in
+    ``pipeline/cpc_backtest.py`` runs through the *same* code path (a hit-rate
+    measured with a second sampler would measure that sampler, not CPC).
+    """
+    return cpclib.sample_one_bundle(bundle, lat, lon, label, zip_url,
+                                    note=note_irregularity)
 
 
 def _sample_shapefile_archive(zip_url, lat, lon, label, workdir):
     """Download a CPC outlook ZIP and point-sample every shapefile inside it."""
-    res = fetchlib.get(zip_url, timeout=240)
-    prov = record(res, note=f"CPC outlook shapefile archive: {label}")
-    if not res.ok or not res.body or res.body[:2] != b"PK":
-        return {"label": label, "ok": False, "status": res.status, "url": zip_url,
-                "error": res.error or "response was not a ZIP archive"}
-
-    tmp = Path(tempfile.mkdtemp(dir=workdir))
-    zpath = tmp / "outlook.zip"
-    zpath.write_bytes(res.body)
-    try:
-        extracted = shapelib.extract_all_shapefiles(zpath, tmp / "shp")
-    except Exception as exc:  # noqa: BLE001
-        return {"label": label, "ok": False, "status": res.status, "url": zip_url,
-                "error": f"zip extract failed: {exc}"}
-
-    bundles = extracted["bundles"]
-    if not bundles:
-        return {"label": label, "ok": False, "status": res.status, "url": zip_url,
-                "error": f"no .shp inside archive; members={extracted['members'][:10]}"}
-
-    sampled = [_sample_one_bundle(b, lat, lon, label, zip_url) for b in bundles]
-    ok_count = sum(1 for smp in sampled if smp["ok"])
-    if ok_count == 0:
-        note_irregularity("warning", "cpc",
-                          f"No CPC outlook polygon could be sampled for {label}.",
-                          {"url": zip_url, "n_bundles": len(bundles)})
-
-    return {"label": label, "ok": ok_count > 0, "url": zip_url, "sha256": res.sha256,
-            "n_shapefiles": len(bundles), "n_sampled_ok": ok_count,
-            "members": extracted["members"], "sampled": sampled}
+    return cpclib.sample_shapefile_archive(zip_url, lat, lon, label, workdir,
+                                           note=note_irregularity, record=record)
 
 
 CPC_SHORTRANGE = [
@@ -1209,6 +1125,69 @@ def fetch_ghcn(outdir: Path):
     note_irregularity("error", "ncei", "No GHCN-Daily station file could be retrieved.",
                       {"candidates": [c[0] for c in GHCN_CANDIDATES]})
     return None
+
+
+def probe_day_link_service(outdir: Path, station_id, date_iso):
+    """Fetch ONE station-day through NCEI's Access Data Service and record it.
+
+    The scoreboard publishes a per-day deep link into that service for all 123
+    days.  Publishing 123 links whose URL shape was never tried would be exactly
+    the kind of unverified claim this project refuses to make, so one of them is
+    actually fetched every run: same service, same dataset, same station, same
+    parameter names, for a date the station file is known to hold.
+
+    The response is recorded in ``data/ghcn_probe.json`` (status, size, SHA-256
+    and the first lines NCEI returned) and in the provenance manifest.  If the
+    service does not answer, the deep links are still published - they are
+    NOAA's own service - but the run says so, and the ledger downgrades them from
+    verified to unverified rather than letting the claim stand.
+    """
+    url = climo.ncei_day_link(station_id, date_iso)
+    if not url:
+        return None
+    res = fetchlib.get(url, timeout=180)
+    record(res, note=("NCEI Access Data Service - one station-day of GHCN-Daily "
+                      f"({station_id}, {date_iso}); verifies the per-day deep-link URL "
+                      "shape published on the scoreboard"))
+    body = ""
+    if res.ok and res.body:
+        body, _enc = fetchlib.decode_text(res.body)
+    lines = [ln for ln in body.splitlines() if ln.strip()]
+    probe = {
+        "url": url,
+        "station_id": station_id,
+        "date": date_iso,
+        "http_status": res.status,
+        "ok": bool(res.ok),
+        "bytes": res.size,
+        "sha256": res.sha256,
+        "retrieved_utc": res.retrieved_utc,
+        "n_rows": max(0, len(lines) - 1),
+        "response_first_lines": [ln[:200] for ln in lines[:4]],
+        "url_shape_verified": bool(res.ok and len(lines) >= 1),
+        "note": ("Fetched so that the 123 per-day deep links on the site are a URL "
+                 "shape this run actually tried, not a plausible guess. The links "
+                 "themselves are for dates this run did not fetch, and each is "
+                 "labelled accordingly."),
+    }
+    if not res.ok:
+        note_irregularity(
+            "warning", "ncei",
+            "NCEI's Access Data Service did not answer for a single station-day, so the "
+            "per-day deep links published on the scoreboard are unverified this run. They "
+            "are still published (they point at NOAA's own documented service), and each "
+            "one says it was not fetched by this run.",
+            {"url": url, "status": res.status, "error": res.error})
+    path = Path(outdir) / "ghcn_probe.json"
+    doc = {}
+    if path.exists():
+        try:
+            doc = json.loads(path.read_text())
+        except Exception:  # noqa: BLE001 - never lose the run over a probe file
+            doc = {}
+    doc["data_service_probe"] = probe
+    write_json(path, doc)
+    return probe
 
 
 def fetch_gsod(years):
@@ -1756,6 +1735,13 @@ def main():
                               "rain climatology is unavailable.",
                               {"station": ghcn["station_id"], "url": ghcn["url"],
                                "bytes": ghcn["bytes"]})
+        if keys:
+            # Verify the deep-link URL shape against a date the file is known to
+            # hold - the newest one - rather than against a date in the future.
+            probe = probe_day_link_service(outdir, ghcn["station_id"], keys[-1])
+            if probe:
+                log(f"      NCEI Access Data Service probe ({keys[-1]}): "
+                    f"HTTP {probe['http_status']}, {probe['n_rows']} row(s) returned")
     # Fetch through the current calendar year: the 1991-2020 statistics below are
     # restricted to the normals period either way, but the newest rows are what
     # tells a reader whether an archive is still being updated.

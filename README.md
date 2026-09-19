@@ -128,17 +128,73 @@ retrieval time of the exact file.
 
 ---
 
+## Three tiers that are deliberately kept apart
+
+The dashboard above answers the landlord's questions. These three additions answer
+the follow-up questions a careful reader asks, and each is kept structurally
+separate from the scoreboard so nothing can be mistaken for something it is not.
+
+**1. Model guidance — `NMME`, labelled *not an official forecast*.**
+The North American Multi-Model Ensemble is the raw model output behind CPC's
+official outlook. It is worth looking at and it is *not* a forecast, so the site
+gives it its own section, its own dataset (`data/model_guidance.json`), its own
+provenance manifest and a warning that renders **before** any content and again on
+every item. The section archives NOAA's own seasonal probability maps locally
+(hashed, so the picture cannot change under the reader), quotes NOAA's definition
+of what the contours mean verbatim, prints the period NOAA says the maps cover
+("October 2026 – April 2027" at the time of writing, read from NOAA's index page
+rather than derived from a filename), and records where the raw archive lives.
+What it never does: read a value out of an image, decode a GRIB2/netCDF file,
+convert an ensemble into a probability for one ZIP code, or blend model output with
+the official outlook. The ledger check `model-guidance-isolation` fails the build if
+a model-guidance field or value ever reaches `data/calendar.json` or
+`data/landlord.json`.
+
+**2. The official-product feed — what NOAA published, and when.**
+`data/feed.json` is one chronological list of every official product behind the
+page: NWS forecast issuances and periods, NWS alerts, the Area Forecast Discussion
+(including verbatim quotations from recent discussions, retrieved by
+`pipeline/afd_history.py`), CPC outlook issue dates, archived CPC shapefiles and
+maps, and every recorded fetch with its status and SHA-256. It is *derived*: each
+row is assembled from a dataset that came from a recorded fetch, each row says
+whether the link it offers was itself fetched or is a convenience page verified
+through the machine-readable product behind it, and rows from the model-guidance
+tier appear in the same list labelled `NOT OFFICIAL`. Dates NOAA printed without a
+clock time are shown as date-only; entries with no published date are listed as
+undated. Nothing is given a timestamp it did not carry.
+
+**3. Archive status — why the wind record stops before this month.**
+The rain/temperature archive runs to this month; NCEI's GSOD and hourly ISD files
+for the wind station stop well before it. `pipeline/ncei_archive_probe.py`
+investigates rather than merely discloses: it reads NCEI's own station history for
+a successor identifier, compares this station's annual file against nearby
+stations **year by year**, checks whether current wind exists in GHCN-Daily
+instead, and reads NCEI's service-alerts page. It then reports exactly one of
+three verdicts — *station-specific gap*, *archive-wide lag*, or *not determinable*
+— with the gap it measured, the slack it allows, and the action that follows. A
+verdict the evidence does not support fails the ledger.
+
+**Plus: every day can now be checked at the source.** Each of the 123 day cells
+carries deep links to the official rows for that one date — NCEI's Access Data
+Service narrowed to that station-day, the GSOD and hourly ISD annual files that
+hold that date's wind rows, and (inside the forecast horizon) the NWS product the
+day's numbers came from. Each link states plainly whether this run fetched that
+exact URL or is only offering it, and one such request *is* fetched every run so
+the URL shape rests on a recorded response rather than on an assumption.
+
+---
+
 ## How "no hallucination" is enforced
 
 | Layer | What it does |
 | --- | --- |
 | `pipeline/verify_sources.py` | Fails the build if any host outside the official list is used. There is no path to a commercial or unofficial source. |
-| `pipeline/verify_claims.py` (47 checks) | Re-derives every headline number from the same file and checks the project's rules: no `NWS FORECAST` badge outside the official horizon, no invented daily value, no humidity presented as an observation when it is a derivation, no NOAA *test* message shown as a real alert, quotes are plain text with no HTML entities left in them, and every source URL printed on the site is traced to a recorded fetch; no published text carries a Unicode replacement character; every CPC polygon sitting on the 33.3% baseline is flagged as such wherever it appears; and every figure in the executive bottom line is found in the dataset it claims to read. New this pass: every quoted forecaster sentence must be a whitespace-collapsed substring of the fetched discussion text, no quotation may carry a date or an amount, the named Census geography must be traceable to a recorded fetch with nesting GEOIDs, and every published day-value must name its own basis. Warnings (not failures) also catch documentation drift: a figure quoted in the README that the dataset does not publish, or a date in the docs near the run date that this run never published. **Each guard is falsified before it is kept** — a guard that cannot be made to fail by mutating a fixture copy of `data/` is treated as a bug in the guard. The harnesses are committed: `tests/falsify_guards.py` (15 ledger cases) and `tests/falsify_smoke.py` (8 render cases), both run in CI. |
+| `pipeline/verify_claims.py` (65 checks) | Re-derives every headline number from the same file and checks the project's rules: no `NWS FORECAST` badge outside the official horizon, no invented daily value, no humidity presented as an observation when it is a derivation, no NOAA *test* message shown as a real alert, quotes are plain text with no HTML entities left in them, and every source URL printed on the site is traced to a recorded fetch; no published text carries a Unicode replacement character; every CPC polygon sitting on the 33.3% baseline is flagged as such wherever it appears; and every figure in the executive bottom line is found in the dataset it claims to read. New this pass: every quoted forecaster sentence must be a whitespace-collapsed substring of the fetched discussion text, no quotation may carry a date or an amount, the named Census geography must be traceable to a recorded fetch with nesting GEOIDs, and every published day-value must name its own basis. Also new: every CPC record must declare its coverage and reach every day it covers (the cross-year `NDJ 2026-2027` / `DJF 2026-2027` regression that silently detached two rainy-season outlooks from January days is now recounted day by day); auxiliary manifests are held to the same host and evidence rules as the nightly one and may not double-record a fetch; model guidance must be flagged, quoted verbatim, linked only to URLs that were fetched, and kept out of the scoreboard; the feed must be internally consistent, sorted, dated only where the publisher gave a date, and must never mark model guidance official; the archive-staleness verdict must be one of the three the probe can reach and must agree with the dates `run.json` publishes; and every per-day deep link must point at a vetted host, at that day's own date and station. Warnings (not failures) also catch documentation drift: a figure quoted in the README that the dataset does not publish, or a date in the docs near the run date that this run never published. **Each guard is falsified before it is kept** — a guard that cannot be made to fail by mutating a fixture copy of `data/` is treated as a bug in the guard. The harnesses are committed: `tests/falsify_guards.py` (65 ledger cases) and `tests/falsify_smoke.py` (29 render cases), both run in CI. |
 | Workflow gate | `summary.failed > 0` → **the run publishes nothing**. It commits diagnostics only ("refresh NOT published") and the site keeps the last verified dataset. |
 | `data/provenance.json` | The full fetch log: every URL, status, size, SHA-256, timestamp. |
 | `data/verify.json` + `verify_report.txt` | The claim ledger as machine-readable JSON and as plain text. |
-| `tests/test_parsers.py` | 316 offline assertions (stdlib only, no network) on the parsing/derivation code and exact official-host allow-list — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, an end-to-end aggregation over a synthetic file with hand-computable expected values, the rule that a CPC explanation must describe the category actually displayed, the NWS gridpoint gust/QPF aggregation including the local-midnight accumulation split, and the maintenance cost-driver rules (expected-days summation, Storm Events damage parsing, ENSO display formatting, no claim without evidence), the Area Forecast Discussion scanner (positive detection of all six storm-language categories, marine/aviation exclusion, product-furniture filtering, hyphen-wrap and bullet handling, the bare-`AR` gate, dry-discussion and missing-product behaviour, and the verbatim rule), and the Census reverse geocode against the recorded real response. |
-| `tests/smoke.js` (`npm test`) | Renders the whole page in jsdom against the committed data and fails on an empty section, a broken day dialog or CSV export, a truncated source label, a mislabelled source link, a CPC note that does not explain its own category, an unlabelled rain/temperature outlook, an unrounded humidity, a forecast day missing its gust or rain amount, an AFD card that omits a published quotation or a published caveat, a quotation carrying a date or amount, or a headline number in the day dialog with no stated basis. |
+| `tests/test_parsers.py` | 369 offline assertions (stdlib only, no network) on the parsing/derivation code and exact official-host allow-list — the ONI season convention against the published file, exact column matching in the NCEI normals, the humidity derivation against an independent Magnus formulation, quote integrity, an end-to-end aggregation over a synthetic file with hand-computable expected values, the rule that a CPC explanation must describe the category actually displayed, the NWS gridpoint gust/QPF aggregation including the local-midnight accumulation split, and the maintenance cost-driver rules (expected-days summation, Storm Events damage parsing, ENSO display formatting, no claim without evidence), the Area Forecast Discussion scanner (positive detection of all six storm-language categories, marine/aviation exclusion, product-furniture filtering, hyphen-wrap and bullet handling, the bare-`AR` gate, dry-discussion and missing-product behaviour, and the verbatim rule), the Census reverse geocode against the recorded real response, the CPC season-label parser against both published forms (`OND 2026` and `NDJ 2026-2027`) including the contradictions that must return nothing, the monthly roll-up walk across a New-Year-crossing season, and the source gate's exact-host allow-list against look-alike domains, plain-HTTP URLs, thin evidence rows and anonymous auxiliary manifests. |
+| `tests/smoke.js` (`npm test`) | Renders the whole page in jsdom against the committed data and fails on an empty section, a broken day dialog or CSV export, a truncated source label, a mislabelled source link, a CPC note that does not explain its own category, an unlabelled rain/temperature outlook, an unrounded humidity, a forecast day missing its gust or rain amount, an AFD card that omits a published quotation or a published caveat, a quotation carrying a date or amount, or a headline number in the day dialog with no stated basis, a model-guidance image without its own warning, a coverage string or definition sentence that is not rendered verbatim, any model-guidance token inside the scoreboard grid, a feed that misreports its own counts or is rendered oldest first, a feed row without its official/not-official or provenance pill, an archive-status card that drops the probe's verdict or a recommended action, and a deep link that leaves the official hosts, asks for the wrong date, or does not say whether this run fetched it. |
 
 **Every forecast day can be checked by hand:** open the day's dialog, follow the
 source link, and compare. The site's *Verification* section lists all 18 recorded
@@ -163,6 +219,10 @@ pipeline flagged rather than smoothed over.
 | Independent climatology cross-check | NCEI [1991–2020 monthly normals `USW00023272`](https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv) |
 | Humidity normals | NCEI [1991–2020 hourly normals `USW00023234`](https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv) — relative humidity is **derived** by the Magnus formula from the official hourly temperature and dew-point normals and labelled as a derivation |
 | Storm severity history | NCEI [Storm Events](https://www.ncdc.noaa.gov/stormevents/) for San Francisco County |
+| Model guidance (**not an official forecast**) | CPC [NMME probability forecasts](https://www.cpc.ncep.noaa.gov/products/NMME/probindex.shtml), [how to read them](https://www.cpc.ncep.noaa.gov/products/NMME/NMME_PROB_descr.html), [real-time archive](https://ftp.cpc.ncep.noaa.gov/NMME/archive/) — maps archived locally and hashed; no value is read out of them |
+| Forecaster discussion history | NWS [Area Forecast Discussion products for MTR](https://api.weather.gov/products/types/AFD/locations/MTR) — recent issuances downloaded in full, quoted verbatim, never converted into a number |
+| Per-day deep links | NCEI [Access Data Service](https://www.ncei.noaa.gov/support/access-data-service-api-user-documentation) narrowed to one station-day, plus the [GSOD](https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/) and [hourly ISD](https://www.ncei.noaa.gov/data/global-hourly/access/) annual files holding that date |
+| Archive staleness | NCEI [ISD station history](https://www.ncei.noaa.gov/pub/data/ISD/history/isd-history.csv) and [service alerts](https://www.ncei.noaa.gov/alerts) |
 
 ### Why AccuWeather is not used
 
@@ -191,6 +251,17 @@ the source; this site will not republish what it cannot check.
   covers the coast or starts inland.
 * ENSO-stratified means rest on 7–12 seasons — indicative, not precise.
 * No downscaling, no bias correction: numbers are used exactly as published.
+* **Model guidance is not a forecast and is not used anywhere else on the site.**
+  The NMME section archives NOAA's own maps and quotes NOAA's own definitions; it
+  publishes no probability, amount or wind speed of this project's making, and the
+  ledger fails the build if a model value reaches the scoreboard. Raw model output
+  (GRIB2/netCDF) is located and recorded but not decoded — decoding it would need a
+  third-party library this project does not take, and a re-gridded field would be a
+  new forecast this project could not verify against a published official product.
+* The discussion history covers the issuances NWS currently publishes (a few
+  weeks), not a multi-year archive; the window is stated rather than padded.
+* Per-day deep links are offered for dates this run did not fetch, and each says
+  so. One such request is fetched per run to verify the URL shape.
 
 ---
 
@@ -201,32 +272,49 @@ pipeline/main.py            fetch every official source, record provenance, dump
 pipeline/climo.py           parsing + climatology, ENSO helpers, humidity derivation
 pipeline/build_calendar.py  builds data/calendar.json (scoreboard + current forecast)
 pipeline/landlord_summary.py builds data/landlord.json (landlord dashboard)
-pipeline/verify_sources.py  rejects non-official hosts
+pipeline/cpc_backtest.py    back-tests archived CPC tilts against observed seasons
+pipeline/ncei_archive_probe.py  classifies why the GSOD/ISD wind archive is stale
+pipeline/model_guidance.py  the NMME tier: maps archived, wording quoted, nothing decoded
+pipeline/afd_history.py     recent NWS Area Forecast Discussions, quoted verbatim
+pipeline/build_feed.py      derives data/feed.json, the chronological official-product feed
+pipeline/verify_sources.py  rejects non-official hosts (every manifest, not just the nightly one)
 pipeline/verify_claims.py   re-derives every headline number; writes verify.json/report
-pipeline/lib_*.py           shared fetch/shapefile helpers
+pipeline/lib_*.py           shared fetch/shapefile/CPC/provenance helpers
+pipeline/selftest_*.py      offline self-tests for each auxiliary tier
 assets/js/app.js            renders the data (invariant: it never invents a number)
 assets/css/style.css        styles
 index.html                  the page
 data/                       committed datasets + provenance + verification ledger
 docs/                       VERIFICATION.md (claims audit), DATA_SOURCES.md, LIMITATIONS.md, NEXT_SESSION.md
+assets/model_guidance/      locally archived NMME maps (hashed; not official forecasts)
 tests/                      test_parsers.py (offline), smoke.js (jsdom render)
 tests/fixtures/             recorded real official responses used by the offline tests
-tests/falsify_guards.py     proves each ledger guard can fail (15 mutated fixtures)
-tests/falsify_smoke.py      proves each render guard can fail (8 mutated copies)
+tests/falsify_guards.py     proves each ledger guard can fail (65 mutated fixtures)
+tests/falsify_smoke.py      proves each render guard can fail (29 mutated copies)
 .github/workflows/          update-data.yml (nightly), site-test.yml (on push)
 ```
 
 Run the whole thing locally (Python 3.11+, standard library only):
 
 ```bash
-python3 pipeline/main.py --outdir data
-python3 pipeline/build_calendar.py
-python3 pipeline/landlord_summary.py
-python3 pipeline/verify_claims.py
-python3 tests/test_parsers.py       # offline unit tests (316 assertions)
-python3 tests/falsify_guards.py     # ledger guards can fail (15 cases)
+python3 pipeline/main.py --outdir data          # fetch everything, record provenance
+python3 pipeline/build_calendar.py              # the 123-day scoreboard
+python3 pipeline/landlord_summary.py            # the landlord dashboard
+python3 pipeline/cpc_backtest.py                # CPC tilt hit-rates (needs archived issuances)
+python3 pipeline/ncei_archive_probe.py          # why the wind archive is stale
+python3 pipeline/model_guidance.py              # NMME tier (not an official forecast)
+python3 pipeline/afd_history.py                 # recent forecaster discussions, verbatim
+python3 pipeline/build_feed.py                  # the official-product feed (run last: it reads the rest)
+python3 pipeline/verify_sources.py              # host gate, every manifest
+python3 pipeline/verify_claims.py               # the claim ledger (65 checks)
+
+python3 tests/test_parsers.py       # offline unit tests (369 assertions)
+python3 tests/falsify_guards.py     # ledger guards can fail (65 cases)
 npm test                            # render the page in jsdom (needs: npm install)
-python3 tests/falsify_smoke.py      # render guards can fail (8 cases)
+python3 tests/falsify_smoke.py      # render guards can fail (29 cases)
+for m in cpc_backtest ncei_archive_probe model_guidance afd_history build_feed; do
+  python3 pipeline/$m.py --selftest  # 143 offline self-checks across the five tiers
+done
 python3 -m http.server 8000         # open http://localhost:8000
 ```
 

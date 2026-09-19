@@ -60,6 +60,7 @@ const REQUIRED_SECTIONS = [
   '#now-current', '#nws-forecast', '#nws-obs', '#nws-alerts', '#calendar-grid',
   '#streak-table', '#streak-chart', '#wind-table', '#gust-table', '#storm-summary',
   '#provenance', '#nws-verification-body', '#cpc-backtest-body',
+  '#model-guidance-body', '#feed-body', '#archive-probe-body',
   '#verify-body', '#quality-report', '#caveats'
 ];
 
@@ -705,6 +706,183 @@ setTimeout(() => {
       if (absences.length && !/absent by design/.test(meta)) {
         problems.push('the status line hides ' + absences.length +
           ' expected absence(s) instead of publishing them');
+      }
+    }
+  }
+
+  // 24. The model-guidance tier must be impossible to read as a forecast:
+  //     the warning comes before any content, every item repeats it, and not one
+  //     model token may reach the scoreboard grid.
+  {
+    const sec = text('#model-guidance-body');
+    let mg = null;
+    try {
+      mg = JSON.parse(fs.readFileSync(path.join(repo, 'data/model_guidance.json'), 'utf8'));
+    } catch (e) { mg = null; }
+    if (!mg) {
+      if (!/Not yet built/i.test(sec)) {
+        problems.push('model_guidance.json is absent but the section does not say so: ' +
+          sec.slice(0, 160));
+      }
+    } else {
+      if (!/NOT AN OFFICIAL FORECAST/i.test(sec)) {
+        problems.push('the model-guidance warning is not rendered');
+      }
+      const warnAt = sec.search(/NOT AN OFFICIAL FORECAST/i);
+      const firstMap = sec.search(/Archived NMME probability maps/i);
+      if (firstMap > -1 && warnAt > firstMap) {
+        problems.push('the model-guidance warning appears after the maps, not before them');
+      }
+      const figs = Array.from(doc.querySelectorAll('#model-guidance-body .mg-figure'));
+      const imgs = (mg.images || []).filter(i => i.local_path);
+      if (imgs.length && figs.length !== imgs.length) {
+        problems.push('model-guidance images rendered ' + figs.length + ' figure(s) for ' +
+          imgs.length + ' archived image(s)');
+      }
+      figs.forEach(f => {
+        if (!/not an official forecast/i.test(f.textContent)) {
+          problems.push('a model-guidance image carries no warning of its own');
+        }
+      });
+      const grid = text('#calendar-grid');
+      if (/NMME|model guidance/i.test(grid)) {
+        problems.push('the scoreboard grid mentions the model-guidance tier');
+      }
+      if (mg.coverage_verbatim && !sec.includes(mg.coverage_verbatim)) {
+        problems.push('NOAA\'s own coverage string is not rendered verbatim: ' +
+          mg.coverage_verbatim);
+      }
+      ((mg.pages || {}).description || {}).verbatim_sentences &&
+        ((mg.pages.description.verbatim_sentences || []).forEach(q => {
+          if (!sec.includes(q)) {
+            problems.push('an NMME definition sentence is not rendered verbatim: ' +
+              q.slice(0, 70));
+          }
+        }));
+    }
+  }
+
+  // 25. The official-product feed must render what it counted, newest first,
+  //     with a tier pill on every row and no row pretending to a date NOAA did
+  //     not publish.
+  {
+    const sec = text('#feed-body');
+    let feed = null;
+    try {
+      feed = JSON.parse(fs.readFileSync(path.join(repo, 'data/feed.json'), 'utf8'));
+    } catch (e) { feed = null; }
+    if (!feed) {
+      if (!/Not yet built/i.test(sec)) {
+        problems.push('feed.json is absent but the section does not say so: ' + sec.slice(0, 160));
+      }
+    } else {
+      const c = feed.counts || {};
+      if (!sec.includes(String(c.entries || 0) + ' entries')) {
+        problems.push('the feed section does not report its own entry count (' +
+          (c.entries || 0) + '): ' + sec.slice(0, 180));
+      }
+      const rows = Array.from(doc.querySelectorAll('#feed-rows tbody tr'));
+      if (!rows.length) problems.push('the feed rendered no rows');
+      rows.forEach(tr => {
+        const pill = tr.querySelector('.pill');
+        if (!pill || !/OFFICIAL|NOT OFFICIAL/.test(pill.textContent)) {
+          problems.push('a feed row carries no official/not-official pill: ' +
+            tr.textContent.replace(/\s+/g, ' ').slice(0, 120));
+        }
+        const prov = tr.querySelectorAll('.pill')[1];
+        if (!prov || !/fetch recorded|no fetch recorded|local copy/.test(prov.textContent)) {
+          problems.push('a feed row does not say whether a fetch stands behind it');
+        }
+      });
+      const shownDates = rows.map(tr => (tr.cells[0] || {}).textContent || '');
+      const stamps = shownDates.filter(t => /^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d/.test(t.trim()));
+      const sorted = stamps.slice().sort().reverse();
+      if (stamps.length > 1 && JSON.stringify(stamps) !== JSON.stringify(sorted)) {
+        problems.push('the feed is not rendered newest first');
+      }
+      if ((feed.undated_entries || []).length && !/undated by the publisher/i.test(sec)) {
+        problems.push('the feed has undated entries but never says a publisher gave no date');
+      }
+      const dateOnly = (feed.entries || []).filter(e => e.date_utc && !e.timestamp_utc).length;
+      if (dateOnly && !/date but no time/i.test(sec)) {
+        problems.push('the feed has date-only entries but never says no clock time was published');
+      }
+      const modelRows = (feed.entries || []).filter(e =>
+        String(e.kind || '').indexOf('model-guidance') === 0);
+      if (modelRows.length && !/NOT OFFICIAL/.test(sec)) {
+        problems.push('model-guidance feed rows are not labelled NOT OFFICIAL');
+      }
+    }
+  }
+
+  // 26. The archive-status card must either show the probe's verdict or say the
+  //     probe has not run - and it must not soften the stale-archive flag.
+  {
+    const sec = text('#archive-probe-body');
+    let pr = null;
+    try {
+      pr = JSON.parse(fs.readFileSync(path.join(repo, 'data/ncei_archive_probe.json'), 'utf8'));
+    } catch (e) { pr = null; }
+    if (!pr) {
+      if (!/Not yet built/i.test(sec)) {
+        problems.push('ncei_archive_probe.json is absent but the card does not say so: ' +
+          sec.slice(0, 160));
+      }
+    } else {
+      const cls = ((pr.verdict || {}).classification) || '';
+      if (cls && !sec.includes(cls)) {
+        problems.push('the archive probe verdict is not rendered: ' + cls);
+      }
+      if (pr.last_date_published_by_the_site &&
+          !sec.includes(pr.last_date_published_by_the_site)) {
+        problems.push('the archive card does not show the stale date run.json publishes');
+      }
+      (pr.recommended_actions || []).forEach(a => {
+        if (a.action && !sec.includes(a.action)) {
+          problems.push('a recommended action from the probe is not rendered: ' +
+            String(a.action).slice(0, 60));
+        }
+      });
+    }
+  }
+
+  // 27. Deep links in the day dialog: each must name the day's own date, say
+  //     whether this run fetched it, and point at an official host.
+  {
+    const cell = doc.querySelector('.day[data-date]');
+    if (cell) {
+      cell.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      const body = doc.querySelector('#day-dialog-body');
+      const dlg = text('#day-dialog-body');
+      const date = cell.getAttribute('data-date');
+      const links = Array.from(body.querySelectorAll('.deep-links a'));
+      if (!links.length) {
+        problems.push('the day dialog offers no deep link for ' + date);
+      } else {
+        if (!dlg.includes('Check this exact date at the source')) {
+          problems.push('the deep-link block has no heading a reader can find');
+        }
+        links.forEach(a => {
+          const href = a.getAttribute('href') || '';
+          if (!/^https:\/\/([a-z0-9.-]+\.)?(noaa|weather|census)\.gov\//.test(href)) {
+            problems.push('a deep link leaves the official hosts: ' + href);
+          }
+          if (/access\/services\/data\/v1/.test(href) &&
+              (href.indexOf('startDate=' + date) < 0 || href.indexOf('endDate=' + date) < 0)) {
+            problems.push('a station-day deep link does not ask for ' + date + ': ' + href);
+          }
+        });
+        const pills = Array.from(body.querySelectorAll('.deep-links .pill'));
+        if (pills.length !== links.length) {
+          problems.push('deep links rendered ' + links.length + ' link(s) but ' +
+            pills.length + ' fetched/link-only label(s)');
+        }
+        pills.forEach(pl => {
+          if (!/fetched this run|link only/.test(pl.textContent)) {
+            problems.push('a deep link does not say whether this run fetched it: ' +
+              pl.textContent);
+          }
+        });
       }
     }
   }

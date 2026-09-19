@@ -2013,6 +2013,235 @@ check("a 200 is never recorded as an expected absence",
 pipeline_main.MANIFEST.clear()
 
 # --------------------------------------------------------------------------- #
+# CPC season labels that cross New Year (bug found and fixed 18 Sep 2026).
+#
+# "NDJ 2026-2027" and "DJF 2026-2027" are the rainy-season outlooks.  A parser
+# that only understood "OND 2026" returned no months for them, so the outlooks
+# were sampled, printed in the season table, and attached to *no day at all*:
+# a reader opening 15 December never saw the DJF outlook that covers it.  These
+# checks pin the convention down, including the contradictions that must return
+# nothing rather than a wrong set of months.
+# --------------------------------------------------------------------------- #
+
+check("a season inside one calendar year parses to that year alone",
+      build_calendar.parse_season_year("2026") == (2026, None),
+      str(build_calendar.parse_season_year("2026")))
+check("a season crossing New Year parses to both years",
+      build_calendar.parse_season_year("2026-2027") == (2026, 2027),
+      str(build_calendar.parse_season_year("2026-2027")))
+check("CPC's slash form of a two-year label parses the same way",
+      build_calendar.parse_season_year("2026/2027") == (2026, 2027),
+      str(build_calendar.parse_season_year("2026/2027")))
+check("a two-year label whose years are not consecutive is rejected",
+      build_calendar.parse_season_year("2026-2028") == (None, None),
+      str(build_calendar.parse_season_year("2026-2028")))
+check("an empty or malformed year label yields nothing",
+      build_calendar.parse_season_year("") == (None, None)
+      and build_calendar.parse_season_year(None) == (None, None)
+      and build_calendar.parse_season_year("26-27") == (None, None)
+      and build_calendar.parse_season_year("winter") == (None, None),
+      "empty/None/two-digit/word forms")
+
+_m, _kind = build_calendar.parse_season_key("OND 2026", "lead1_OND_prcp")
+check("OND 2026 covers Oct, Nov and Dec of 2026",
+      _m == [(2026, 10), (2026, 11), (2026, 12)] and _kind == "season", str((_m, _kind)))
+_m, _kind = build_calendar.parse_season_key("NDJ 2026-2027", "lead2_NDJ_prcp")
+check("NDJ 2026-2027 covers Nov and Dec 2026 *and* Jan 2027",
+      _m == [(2026, 11), (2026, 12), (2027, 1)] and _kind == "season", str((_m, _kind)))
+_m, _kind = build_calendar.parse_season_key("DJF 2026-2027", "lead3_DJF_prcp")
+check("DJF 2026-2027 covers Dec 2026 and Jan and Feb 2027",
+      _m == [(2026, 12), (2027, 1), (2027, 2)] and _kind == "season", str((_m, _kind)))
+_m, _kind = build_calendar.parse_season_key("JFM 2027", "lead4_JFM_prcp")
+check("JFM 2027 covers Jan, Feb and Mar 2027",
+      _m == [(2027, 1), (2027, 2), (2027, 3)] and _kind == "season", str((_m, _kind)))
+_m, _kind = build_calendar.parse_season_key("Sep 2026", "lead14_Sep_prcp")
+check("a single-month outlook parses as one month of that year",
+      _m == [(2026, 9)] and _kind == "month", str((_m, _kind)))
+check("a one-year label on a season that crosses New Year is rejected",
+      build_calendar.parse_season_key("NDJ 2026", "lead2_NDJ_prcp") == (None, None),
+      str(build_calendar.parse_season_key("NDJ 2026", "lead2_NDJ_prcp")))
+check("a two-year label on a season inside one year is rejected",
+      build_calendar.parse_season_key("OND 2026-2027", "lead1_OND_prcp") == (None, None),
+      str(build_calendar.parse_season_key("OND 2026-2027", "lead1_OND_prcp")))
+check("a two-year label on a single-month outlook is rejected",
+      build_calendar.parse_season_key("Sep 2026-2027", "lead14_Sep_prcp") == (None, None),
+      str(build_calendar.parse_season_key("Sep 2026-2027", "lead14_Sep_prcp")))
+check("a missing or malformed Valid_Seas yields nothing rather than a guess",
+      build_calendar.parse_season_key("", "x") == (None, None)
+      and build_calendar.parse_season_key(None, "x") == (None, None)
+      and build_calendar.parse_season_key("OND", "x") == (None, None)
+      and build_calendar.parse_season_key("XYZ 2026", "x") == (None, None),
+      "empty/None/no-year/unknown-token forms")
+
+# The month keys the calendar stores are what the ledger's completeness check
+# re-derives, so the zero-padded form is part of the contract, not a detail.
+check("coverage keys are zero-padded year-month strings",
+      [f"{y:04d}-{m:02d}" for (y, m) in
+       (build_calendar.parse_season_key("NDJ 2026-2027", "x")[0])]
+      == ["2026-11", "2026-12", "2027-01"],
+      str([f"{y:04d}-{m:02d}" for (y, m) in
+           (build_calendar.parse_season_key("NDJ 2026-2027", "x")[0])]))
+
+# The monthly roll-up must walk the season window rather than a hand-written
+# month-to-year mapping, which is the other half of the same bug class.
+if os.path.exists(os.path.join(ROOT, "data", "calendar.json")):
+    _cal = json.loads(open(os.path.join(ROOT, "data", "calendar.json")).read())
+    _monthly = _cal.get("monthly") or []
+    check("the published monthly roll-up walks Oct 2026 to Jan 2027 in order",
+          [(m.get("year"), m.get("month")) for m in _monthly]
+          == [(2026, 10), (2026, 11), (2026, 12), (2027, 1)],
+          str([(m.get("year"), m.get("month")) for m in _monthly]))
+    check("each monthly row's year_month agrees with its own year and month",
+          all(m.get("year_month") == f"{m.get('year'):04d}-{m.get('month'):02d}"
+              for m in _monthly),
+          str([(m.get("year_month"), m.get("year"), m.get("month")) for m in _monthly]))
+    check("every monthly row counts the days the calendar actually holds for it",
+          all(m.get("days") == sum(1 for d in (_cal.get("days") or [])
+                                   if d["date"][:7] == m.get("year_month"))
+              for m in _monthly),
+          str([(m.get("year_month"), m.get("days")) for m in _monthly]))
+    check("every outlook listed under a month really covers that month",
+          all(m.get("year_month") in (r.get("covers") or [])
+              for m in _monthly for r in (m.get("cpc_seasonal") or [])),
+          "a month listing an outlook that does not cover it")
+    check("a month lists every seasonal outlook that covers it",
+          all(sum(1 for r in ((_cal.get("cpc") or {}).get("records") or [])
+                  if m.get("year_month") in (r.get("covers") or []))
+              == len(m.get("cpc_seasonal") or [])
+              for m in _monthly),
+          str([(m.get("year_month"), len(m.get("cpc_seasonal") or [])) for m in _monthly]))
+    _by_month = {}
+    for _d in (_cal.get("days") or []):
+        _by_month.setdefault(_d["date"][:7], set()).update(
+            (r.get("url"), r.get("stem")) for r in (_d.get("cpc") or []))
+    _expected = {}
+    for _m in _monthly:
+        _expected[_m["year_month"]] = {
+            (r.get("url"), r.get("stem"))
+            for r in ((_cal.get("cpc") or {}).get("records") or [])
+            if _m["year_month"] in (r.get("covers") or [])}
+    check("every day of a month carries at least that month's seasonal outlooks",
+          all(_expected[ym] <= _by_month.get(ym, set()) for ym in _expected),
+          str({ym: sorted(_expected[ym] - _by_month.get(ym, set()))[:2]
+               for ym in _expected if not _expected[ym] <= _by_month.get(ym, set())}))
+
+# --------------------------------------------------------------------------- #
+# verify_sources.py: the host allow-list is exact, and every manifest - not just
+# the nightly one - is held to it.  A commercial provider or a look-alike domain
+# must fail the workflow, and an auxiliary manifest must say who wrote it.
+# --------------------------------------------------------------------------- #
+
+check("the vetted host list holds exact hostnames only (no wildcard suffixes)",
+      all("." in h and not h.startswith((".", "*")) for h in verify_sources.ALLOWED_HOSTS)
+      and verify_sources.host_allowed("www2.census.gov")
+      and verify_sources.host_allowed("api.weather.gov"),
+      str(sorted(verify_sources.ALLOWED_HOSTS))[:120])
+check("a look-alike domain is not accepted by a suffix match",
+      not verify_sources.host_allowed("evilcensus.gov")
+      and not verify_sources.host_allowed("notapi.weather.gov")
+      and not verify_sources.host_allowed("cpc.ncep.noaa.gov.attacker.example")
+      and not verify_sources.host_allowed(""),
+      "look-alike hosts rejected")
+check("a trailing dot in a hostname is tolerated but nothing else",
+      verify_sources.host_allowed("api.weather.gov.")
+      and not verify_sources.host_allowed("API.WEATHER.GOV.EU"),
+      "trailing dot")
+
+
+def _run_verify_sources(datadir):
+    """Run verify_sources.main() against *datadir*, capturing its output."""
+    import contextlib
+    argv = list(sys.argv)
+    sys.argv = ["verify_sources.py", str(datadir)]
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            code = verify_sources.main()
+    finally:
+        sys.argv = argv
+    return code, buf.getvalue()
+
+
+def _manifest(datadir, name, entries, area=None, note="fixture manifest"):
+    obj = {"generated_utc": "2026-09-18T21:00:00Z",
+           "area": area if area is not None else name[:-len("_provenance.json")]
+           if name.endswith("_provenance.json") else "primary",
+           "note": note, "entries": entries}
+    with open(os.path.join(str(datadir), name), "w") as fh:
+        fh.write(json.dumps(obj, indent=2))
+
+
+def _row(url, ok=True, status=200, size=1000, sha="0" * 64):
+    return {"url": url, "http_status": status, "ok": ok, "bytes": size if ok else 0,
+            "sha256": sha if ok else None, "content_type": "text/csv",
+            "retrieved_utc": "2026-09-18T20:40:00Z" if ok else None,
+            "elapsed_s": 0.1, "note": "fixture"}
+
+
+import tempfile as _tempfile  # noqa: E402
+import shutil as _shutil  # noqa: E402
+
+_tmp = _tempfile.mkdtemp(prefix="vs_")
+try:
+    _manifest(_tmp, "provenance.json",
+              [_row("https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/2025/x.csv")],
+              area="primary")
+    _code, _out = _run_verify_sources(_tmp)
+    check("a clean manifest of vetted hosts passes", _code == 0, _out[-300:])
+
+    _manifest(_tmp, "model_guidance_provenance.json",
+              [_row("https://www.cpc.ncep.noaa.gov/products/NMME/probindex.shtml")])
+    _code, _out = _run_verify_sources(_tmp)
+    check("an auxiliary manifest is scanned as well as the nightly one",
+          _code == 0 and "model_guidance_provenance.json" in _out
+          and "2 manifest file(s)" in _out, _out[-400:])
+
+    _manifest(_tmp, "model_guidance_provenance.json",
+              [_row("https://accuweather.example/api/forecast.json")])
+    _code, _out = _run_verify_sources(_tmp)
+    check("a commercial host in an auxiliary manifest fails the workflow",
+          _code == 1 and "NOT ON THE VETTED LIST" in _out
+          and "accuweather.example" in _out, _out[-400:])
+
+    _manifest(_tmp, "model_guidance_provenance.json",
+              [_row("http://www.ncei.noaa.gov/insecure.csv")])
+    _code, _out = _run_verify_sources(_tmp)
+    check("a plain-HTTP fetch fails even on a vetted host",
+          _code == 1 and "not HTTPS" in _out, _out[-400:])
+
+    _manifest(_tmp, "model_guidance_provenance.json",
+              [_row("https://www.ncei.noaa.gov/x.csv", ok=True, status=200, size=0, sha=None)])
+    _code, _out = _run_verify_sources(_tmp)
+    check("a successful fetch with no size or hash fails",
+          _code == 1 and "lacks HTTP/size/hash evidence" in _out, _out[-400:])
+
+    _manifest(_tmp, "model_guidance_provenance.json",
+              [_row("https://www.ncei.noaa.gov/x.csv", ok=False, status=404)],
+              area="some_other_area", note="")
+    _code, _out = _run_verify_sources(_tmp)
+    check("an anonymous auxiliary manifest (wrong area, no note) fails",
+          _code == 1 and "area is 'some_other_area'" in _out
+          and "no note saying what the script fetched" in _out, _out[-400:])
+
+    _manifest(_tmp, "model_guidance_provenance.json",
+              [_row("https://www.ncei.noaa.gov/x.csv", ok=False, status=404)])
+    _code, _out = _run_verify_sources(_tmp)
+    check("a recorded 404 is reported but does not fail the source gate",
+          _code == 0, _out[-300:])
+
+    with open(os.path.join(_tmp, "model_guidance_provenance.json"), "w") as fh:
+        fh.write("{not json")
+    _code, _out = _run_verify_sources(_tmp)
+    check("a corrupt manifest fails loudly instead of being skipped",
+          _code == 1 and "not valid JSON" in _out, _out[-300:])
+finally:
+    _shutil.rmtree(_tmp, ignore_errors=True)
+
+_code, _out = _run_verify_sources(os.path.join(ROOT, "data", "no-such-dir"))
+check("a missing manifest directory fails rather than passing silently",
+      _code == 1 and "no provenance manifest" in _out, _out[-200:])
+
+# --------------------------------------------------------------------------- #
 
 passed = sum(1 for _n, ok, _d in RESULTS if ok)
 failed = [(n, d) for n, ok, d in RESULTS if not ok]

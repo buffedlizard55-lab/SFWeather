@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-18T20:42:23Z
+generated_utc: 2026-09-19T00:56:12Z
 
-checks: 53 passed, 0 failed, 0 warning(s)  (of 53)
+checks: 64 passed, 0 failed, 1 warning(s)  (of 65)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         143 recorded fetches (142 unique URLs)
@@ -44,7 +44,7 @@ checks: 53 passed, 0 failed, 0 warning(s)  (of 53)
 [PASS] cost-driver-expected-days-arithmetic: The published expected heavy-rain day counts equal the sum of the per-date 1991-2020 probabilities in the committed climatology table
         ge_025in_days: published 14.97 vs recomputed 14.97 over 123 season dates; ge_100in_days: published 3.19 vs recomputed 3.19 over 123 season dates
 [PASS] raw-phase-tokens-dataset: No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)
-        0 raw tokens across 15624 scanned string(s)
+        0 raw tokens across 22585 scanned string(s)
 [PASS] phase-label-present: Every ENSO phase value a renderer can reach ships with a reader-facing label (no underscore token, correct capitalisation)
         3 label(s) published
 [PASS] raw-phase-tokens: No raw ENSO data token (el_nino / la_nina) appears in any reader-facing executive-summary string
@@ -109,6 +109,30 @@ checks: 53 passed, 0 failed, 0 warning(s)  (of 53)
         station 72494023234, 35 year file(s) retrieved, source_url https://www.ncei.noaa.gov/data/global-hourly/access/
 [PASS] record-coverage-published: The published archive dates and ages are re-derived from the datasets, and a stale archive is flagged rather than presented as current
         3 archive(s); stale: ['wind', 'isd_hourly']
+[PASS] cpc-record-coverage-declared: Every CPC record declares its coverage exactly one way: month keys, or a start and end date
+        38 records: 32 month-covered, 6 date-ranged
+[PASS] cpc-season-covers-complete: Every day of the season carries exactly the CPC records that cover it - no month is silently under-covered, and no record is attached to a day it does not cover
+        123 days x 38 records checked; per-month attachment counts {'2026-10': 218, '2026-11': 180, '2026-12': 186, '2027-01': 186}
+[PASS] cpc-record-reach: Each month/season CPC record reaches every day it covers, and records that cover nothing in this season are attached to no day
+        32 month/season records each attached to all the days they cover; 6 short-range records attached only inside their date range
+[PASS] auxiliary-manifests-vetted: Every fetch recorded by an auxiliary script is on a vetted official HTTPS host and carries status, byte count and SHA-256, and every auxiliary manifest names its area and purpose
+        1 manifest file(s): provenance.json; 0 auxiliary fetch record(s)
+[PASS] auxiliary-manifests-separate: Auxiliary scripts keep their fetches in their own manifest: nothing is double-recorded, and run.json's published total still recounts from data/provenance.json alone
+        143 nightly row(s) and 0 auxiliary row(s) across 1 manifest file(s), no overlap
+[PASS] model-guidance-isolation: Model guidance, if published, is flagged as not an official forecast and kept out of the scoreboard
+        data/model_guidance.json is not published by this run; the site must then show the model-guidance section as not yet built, and no model value can have reached the scoreboard
+[PASS] afd-quotes-verbatim: Area Forecast Discussion quotes, if published, are verbatim
+        data/afd_history.json is not published by this run, so the site shows no discussion quotes at all
+[PASS] ncei-archive-probe-consistent: The archive-staleness verdict, if published, is one of the three the probe can reach and agrees with run.json
+        data/ncei_archive_probe.json is not published by this run; run.json still carries the archive dates and flags the stale ones
+[PASS] feed-traceable: The official-product feed is internally consistent, sorted, dated only where the publisher gave a date, links only vetted hosts, and never marks model guidance as official
+        186 entries (+1 undated) across 9 dates; 185 verified against a recorded fetch
+[PASS] feed-provenance: Every feed entry whose content comes from a fetch points at a URL that was fetched successfully; entries that do not are labelled, not trusted
+        185 of 186 entries trace to a recorded fetch; 0 labelled as pointers only
+[PASS] day-deep-links-vetted: Every per-day deep link points at a vetted official host, at that day's own date and station, and says whether this run fetched it
+        369 deep link(s) across 123 days (gsod-annual-file, isd-annual-file, ncei-data-service)
+[WARN] day-deep-link-shape-verified: The NCEI Access Data Service URL shape used by the per-day deep links was actually fetched once this run, with the response recorded
+        data/ghcn_probe.json carries no successful Access Data Service probe, so the per-day deep links are published unverified this run
 
 claims recorded: 19
 

@@ -26,6 +26,54 @@ from collections import defaultdict
 MM_PER_INCH = 25.4
 KT_TO_MPH = 1.15078
 
+# --------------------------------------------------------------------------- #
+# Deep links into NCEI's own Access Data Service.
+#
+# A reader who is told "this is the 15 December climatology" should be able to
+# click through to the one station-day that supports it, in the same official
+# dataset, without this project sitting in between.  The URL is assembled from the
+# parameter names in NCEI's published API documentation
+# (https://www.ncei.noaa.gov/support/access-data-service-api-user-documentation):
+# dataset, stations, startDate, endDate, dataTypes, units, format.
+#
+# The exact URL shape is fetched once per run by pipeline/main.py and recorded in
+# data/ghcn_probe.json plus the provenance manifest, and the claim ledger fails
+# the run if it was not (day-deep-links-vetted).  So these links are a verified
+# URL shape rather than a plausible-looking guess, and a change in NCEI's
+# parameters breaks the build instead of quietly breaking every link on the site.
+# --------------------------------------------------------------------------- #
+
+NCEI_DATA_SERVICE = "https://www.ncei.noaa.gov/access/services/data/v1"
+GHCN_DAILY_DATASET = "daily-summaries"
+RAIN_TEMP_ELEMENTS = ("PRCP", "TMAX", "TMIN")
+GHCN_WIND_ELEMENTS = ("AWND", "WSF2", "WSF5")
+
+
+def ncei_day_link(station_id, date_iso, elements=RAIN_TEMP_ELEMENTS,
+                  dataset=GHCN_DAILY_DATASET, base=NCEI_DATA_SERVICE):
+    """One station-day from NCEI's Access Data Service, as a CSV download link."""
+    if not station_id or not date_iso:
+        return None
+    return (f"{base}?dataset={dataset}&stations={station_id}"
+            f"&startDate={date_iso}&endDate={date_iso}"
+            f"&dataTypes={','.join(elements)}&units=standard&format=csv")
+
+
+def gsod_year_link(station_id, year, base="https://www.ncei.noaa.gov/data/"
+                                        "global-summary-of-the-day/access/"):
+    """The GSOD annual file that holds one date's wind rows."""
+    if not station_id or not year:
+        return None
+    return f"{base}{int(year)}/{station_id}.csv"
+
+
+def isd_year_link(station_id, year, base="https://www.ncei.noaa.gov/data/"
+                                       "global-hourly/access/"):
+    """The hourly ISD annual file that holds one date's hour-by-hour rows."""
+    if not station_id or not year:
+        return None
+    return f"{base}{int(year)}/{station_id}.csv"
+
 # --------------------------------------------------------------------- utils
 
 def _f(x, ndigits=2):

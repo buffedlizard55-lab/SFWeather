@@ -156,6 +156,66 @@ formula, per calendar date, and is labelled as a derivation everywhere it appear
 (the day dialog states the station and the method). Where the file is unavailable,
 the field is left empty — the pipeline never estimates a missing number.
 
+## 5. NOAA CPC NMME &mdash; model guidance, **not an official forecast**
+
+| What | Where | How it is used |
+| --- | --- | --- |
+| NMME probability forecast index | <https://www.cpc.ncep.noaa.gov/products/NMME/probindex.shtml> | The page states the period the maps cover ("For: &hellip;"). That string is quoted verbatim; this project never derives a month range from a filename. |
+| How to read the maps | <https://www.cpc.ncep.noaa.gov/products/NMME/NMME_PROB_descr.html> | Definition sentences (ensemble size and weighting, terciles, the &gt;38 % / &lt;33 % contour rule, hindcast-derived tercile limits) are copied verbatim and re-checked as substrings of the fetched text on every run. **The page is CP1252**, so it is decoded with the publisher's own encoding; decoding it as UTF-8-with-replacement would turn its typographic quotes into U+FFFD and break the substring check. |
+| Seasonal probability maps (precipitation rate, 2 m temperature) | <https://www.cpc.ncep.noaa.gov/products/NMME/prob/usPROBprate.S.html>, <https://www.cpc.ncep.noaa.gov/products/NMME/prob/usPROBtmp2m.S.html> | The full-size PNGs are downloaded to `assets/model_guidance/` and stored with their byte count and SHA-256, so the picture a reader sees cannot change afterwards. Thumbnails are skipped. **No value is read out of an image.** |
+| Skill (RPSS) and real-time verification | <https://www.cpc.ncep.noaa.gov/products/NMME/prob/rpss.probindex.html>, <https://www.cpc.ncep.noaa.gov/products/NMME/verif/index.html> | Linked next to the maps so they are not read as more skilful than NOAA's own verification says they are. |
+| Raw real-time archive | <https://ftp.cpc.ncep.noaa.gov/NMME/archive/> | Monthly run directories back to 2019, each labelled by CPC with the period it covers. The newest directory is recorded with NOAA's own label. **The GRIB2/netCDF inside is not decoded** (see LIMITATIONS §17). |
+| CFSv2 production output (NOMADS) | <https://nomads.ncep.noaa.gov/pub/data/nccf/com/cfs/prod/> | Probed for availability only. If it does not answer, the location is reported as not reachable and is not published as a working link. |
+
+All six hosts are on the vetted allow-list. Everything this tier publishes lives in
+`data/model_guidance.json` with its own manifest
+(`data/model_guidance_provenance.json`), its own site section and a warning that
+renders before the content and again on every item.
+
+## 6. NCEI Access Data Service &mdash; the per-day deep links
+
+<https://www.ncei.noaa.gov/access/services/data/v1>, documented at
+<https://www.ncei.noaa.gov/support/access-data-service-api-user-documentation>.
+
+Each of the 123 day cells links one station-day of the official record:
+
+```
+?dataset=daily-summaries&stations=USW00023272&startDate=2026-12-15&endDate=2026-12-15
+&dataTypes=PRCP,TMAX,TMIN&units=standard&format=csv
+```
+
+Plus the annual files that hold the same date's wind rows
+(`global-summary-of-the-day/access/<year>/72494023234.csv`,
+`global-hourly/access/<year>/72494023234.csv`) and, inside the forecast horizon,
+the NWS product the day's numbers came from.
+
+These links are **not** evidence for a number, and the site says so: each is
+labelled *fetched this run* only when that exact URL appears in a provenance
+manifest with a successful fetch, otherwise *link only*. So that 123 published
+links do not rest on an untested assumption, `pipeline/main.py` fetches **one**
+such request per run (the newest date the station file actually holds) and records
+the response in `data/ghcn_probe.json` under `data_service_probe`. The ledger check
+`day-deep-link-shape-verified` re-derives that URL with the same builder the site
+uses and fails to pass unless the recorded response matches.
+
+## 7. ISD station history and NCEI service alerts &mdash; the archive probe
+
+| What | Where | Why |
+| --- | --- | --- |
+| ISD station history | <https://www.ncei.noaa.gov/pub/data/ISD/history/isd-history.csv> | The authoritative list of USAF-WBAN identifiers with BEGIN/END dates. Used to look for a *successor* identifier for the same airport, and for control stations within ~100 mi. The header differs between releases (`LAT`/`LON` vs `LAT(LON)`), so it is parsed by name, never by position. |
+| NCEI service alerts | <https://www.ncei.noaa.gov/alerts> | Read for active "data access delay" notices. When NCEI itself publishes a delay, that is cited as corroboration rather than this project speculating about why an archive is stale. |
+| GHCN-Daily (SFO) | <https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023234.csv> | Probed for daily wind elements (AWND, WDF2, WDF5, WSF2, WSF5, WDMV, TSUN) and their last dates, read from the file's own header and rows. It is a *different product* from GSOD, so it is labelled with its own element names and never mixed into the GSOD-based statistics. |
+
+## 8. NWS Area Forecast Discussion history
+
+<https://api.weather.gov/products/types/AFD/locations/MTR> lists the office's
+recent issuances; <https://api.weather.gov/products/{id}> carries each full text.
+Recent discussions are downloaded in full and stored with their SHA-256 beside the
+verbatim sentences quoted from them, so the ledger can re-check every quote
+offline. The API lists only what NWS currently publishes (typically a few weeks),
+so this is a history of recent discussions, not a multi-year archive; the window is
+stated on the page rather than padded from a second-hand source.
+
 ## Explicitly excluded
 
 | Provider | Why |
@@ -164,3 +224,10 @@ the field is left empty — the pipeline never estimates a missing number.
 | Scraped pages (weather.com, wunderground, accuweather.com HTML) | Not an authorised interface, unstable, and unverifiable. |
 | CW3E / Scripps atmospheric-river products | Valuable research, but not an official NOAA operational product. |
 | Anything behind a login, paywall or CAPTCHA | Cannot be verified or reproduced. |
+
+Also excluded, though not commercial: the **IRI Data Library**
+(`iridl.ldeo.columbia.edu`), which holds CPC seasonal shapefile issuances back to
+1995 and would unlock a long back-test. It redirects to a login, so it is not an
+anonymous public source, and it was not added to `ALLOWED_HOSTS`. If a future
+session decides otherwise, the host must be vetted deliberately and the decision
+recorded here.

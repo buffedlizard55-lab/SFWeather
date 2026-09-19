@@ -186,6 +186,62 @@ Sunset" as a municipal unit; it covers the ZCTA centroid and names the geography
 the Census reports. If the geocoder is unreachable on a run, no name is printed —
 the card says the geography was not retrieved and the irregularity is recorded.
 
+### 17. Model guidance is archived, not interpreted
+The NMME tier gives a reader NOAA's own ensemble maps and NOAA's own explanation of
+what the contours mean. It deliberately stops there:
+
+* **No value is read out of an image.** Transcribing "41 % above" from a pixel would
+  be a number this project cannot trace to a fetched field, so it does not exist here.
+* **No GRIB2 or netCDF is decoded.** Decoding the raw archive would need a
+  third-party library this project does not take (the pipeline is standard library
+  only, so any reviewer can run it), and a decoded field re-gridded to one ZIP code
+  would be a *new forecast* — one that could not be checked against a published
+  official product, which is the standard everything else on the site meets. The
+  archive's location, its newest run and CPC's own coverage label are recorded
+  instead, with `decoded: false` on every probe.
+* **No ensemble is converted into a probability for 94122.** NMME grids are
+  continental; the polygons CPC publishes for the official outlook are already
+  sampled point-in-polygon, with their geometry published. Doing the same to raw
+  model output would produce a number with no official product to compare it to.
+* **Skill is linked, not summarised.** NOAA publishes RPSS maps and real-time
+  verification for these ensembles; the site links them next to the maps rather than
+  restating a skill score in this project's own words.
+
+If a future session wants model numbers on the page, the honest route is to quote a
+value NOAA itself publishes in text or a machine-readable field — not to read one
+off a picture.
+
+### 18. The discussion history covers what NWS currently publishes
+`pipeline/afd_history.py` reads the NWS products API, which lists the office's
+recent issuances (typically a few weeks). There is no anonymous official archive of
+older discussions, so the history is a window, not a record: it cannot answer "when
+was the last atmospheric river mentioned in November 2024?". The window is stated
+on the page. Quotations are verbatim, stored with the product text and its SHA-256
+so the ledger can re-check them offline, and — as with the AFD card — no date,
+amount or probability is ever attached to one.
+
+### 19. Per-day deep links are offered for dates this run did not fetch
+Each day cell links the official rows for that one date. For the 123 days of the
+season those URLs were **not** individually fetched (that would be 369 requests a
+night for links, not for data), so each is labelled *link only* rather than
+presented as evidence. What *is* verified every run: the URL shape — one Access
+Data Service request for a date the station file actually holds, recorded in
+`data/ghcn_probe.json` — plus every link's host, station and date
+(`day-deep-links-vetted`). Note also that NCEI publishes GSOD and hourly ISD annual
+files after the year ends, so a link into the current year may legitimately 404
+until it exists; the note on each link says so.
+
+### 20. The archive probe answers one question, and only about one station
+`pipeline/ncei_archive_probe.py` classifies why the wind archive stops where it
+does. It does not repair the archive, and its verdict is only as good as the
+comparison it can make: if no control station's file is readable for a year, the
+verdict is `not-determinable` rather than a guess. Control stations are within
+~100 mi of SFO and are not microclimate equivalents — they are used to answer "did
+the archive stop for everyone?", never to substitute wind values for 94122. If a
+successor identifier exists, the probe recommends stitching it and does not do it:
+changing the wind station would move every published 1991–2020 wind statistic, so
+that is a documented maintainer decision, not a side effect of a nightly run.
+
 ---
 
 ## Recommended next work, in priority order

@@ -487,3 +487,21 @@ dialog form { padding: 0 22px 20px; }
   text-transform: uppercase; color: var(--ink-soft);
 }
 .afd-quote { font-size: 14px; line-height: 1.5; }
+
+/* ------------------------------------------------------- model-guidance tier */
+/* The warning is styled to be unmissable: this tier is not an official forecast
+   and must not be readable as one even by someone skimming. */
+.mg-warning { border-left-width: 6px; }
+.mg-warning h3 { text-transform: uppercase; letter-spacing: 0.04em; }
+.mg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.mg-figure { margin: 0; border: 1px solid var(--line-soft); border-radius: 10px; padding: 10px; background: #fff; }
+.mg-figure img { width: 100%; height: auto; display: block; border-radius: 6px; }
+.mg-figure figcaption { margin-top: 8px; }
+.mg-warn { color: #8f1d1d; font-weight: 600; margin: 4px 0; }
+.verbatim { font-family: var(--mono, ui-monospace, SFMono-Regular, Menlo, monospace); }
+.verbatim-list { margin: 6px 0 10px; padding-left: 20px; }
+.verbatim-list li { margin-bottom: 6px; }
+.feed-more { display: flex; gap: 12px; align-items: center; margin-top: 10px; }
+.deep-links { margin: 6px 0 12px; padding-left: 20px; }
+.deep-links li { margin-bottom: 8px; }
+.deep-links .pill { margin-left: 8px; }

@@ -237,6 +237,61 @@ Commercial providers require paid key, license redistribution, and their numbers
 
 If you want a second opinion from AccuWeather, you must read it directly — this project cannot vouch for it.
 
+## Checking any single day yourself (the deep links)
+
+Every day card on the site carries the official URLs that hold **that one date's**
+rows, so you never have to take this project's word for a number:
+
+* **Rain and temperature for that date** — one station-day from NOAA's Access Data
+  Service (`dataset=daily-summaries`, station `USW00023272`, `startDate` = `endDate`
+  = that day, `units=standard`, `format=csv`). Opens as a small CSV in your browser.
+* **Wind for that date** — the annual GSOD file
+  (`global-summary-of-the-day/access/<year>/72494023234.csv`) and the hourly ISD file
+  (`global-hourly/access/<year>/72494023234.csv`) for the year the day falls in.
+  These are large files; use your browser's find for the date (GSOD rows start
+  `2026-12-15`, ISD rows carry the timestamp `2026-12-15T…Z`).
+* **Inside the 7-day forecast horizon** — the NWS product that day's numbers came
+  from, so you can read the forecaster's own words for it.
+
+Each link is labelled honestly: **fetched this run** means this project recorded a
+successful request for that exact URL (with byte count and SHA-256); **link only**
+means the link is offered for your review but was not fetched. For the 123 days of
+this season almost every link is *link only* — the days are in the future or the
+archive for them is not published yet, and inventing a fetch record would be worse
+than saying so. What *is* fetched every run is one such request for a date the
+station file actually holds, recorded in `data/ghcn_probe.json`, so the URL shape
+itself is tested rather than assumed.
+
+Two practical notes: NOAA publishes the GSOD and hourly ISD annual files **after
+the year ends**, so a link into the current year may 404 until it exists; and a CSV
+of one station-day with no rows means the station reported nothing that day, not
+that the link is broken.
+
+## Reading the model-guidance section (and why it is kept apart)
+
+The site has a section showing NOAA's NMME ensemble probability maps for the coming
+seasons. Read it as **background**, never as a forecast for your property:
+
+* It is NOAA's own experimental ensemble product. It is not an official NWS
+  forecast, it is not for 94122 specifically (the maps are continental), and the
+  section says so before the maps and again on each one.
+* The maps show where NOAA's contours put the odds of a season being **Above /
+  Below / Neutral** its own 1982–2010 terciles — not inches of rain, not wind
+  speeds, not dates. NOAA's own definition sentences are quoted verbatim next to
+  them (including the rule that a contour appears when one class exceeds 38 % of the
+  79 equally weighted ensemble members and the opposite class is below 33 %).
+* Nothing in that section is merged into the day-by-day scoreboard, and a ledger
+  check fails the nightly build if it ever is. If a model ever disagrees with the
+  official outlook, the official outlook is what the scoreboard shows.
+* NOAA also publishes skill maps (RPSS) and real-time verification for these
+  ensembles; the site links them so you can judge for yourself how much weight they
+  deserve.
+
+For maintenance planning, use the CPC outlook probabilities (official, sampled
+point-in-polygon for your centroid) and the climatology/Storm-Events history. Use
+the model maps only to notice whether the seasonal signal is unusually strong or
+unusually weak.
+
 ## Limitations
 
 See `docs/LIMITATIONS.md` for full list. Key ones:

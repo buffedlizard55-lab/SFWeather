@@ -28,6 +28,10 @@ from pathlib import Path
 # which silently shadowed the module.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import climo as climo_lib  # noqa: E402
+# Deep links published on each day are marked with whether the exact URL was
+# fetched this run, which is read from the union of the provenance manifests
+# rather than assumed.
+import lib_provenance as provlib  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -266,12 +270,42 @@ def season_months(token):
     return None
 
 
+def parse_season_year(year_s):
+    """Parse the year part of a CPC ``Valid_Seas`` label.
+
+    CPC writes two forms and this project only handled the first one:
+
+    * ``OND 2026``        - a season inside one calendar year;
+    * ``NDJ 2026-2027``   - a season that crosses New Year.
+
+    Returning ``None`` for the second form was a real bug, not a corner case:
+    the affected labels are exactly the rainy-season ones (Nov-Dec-Jan and
+    Dec-Jan-Feb), so those two official outlooks were sampled, published in the
+    season table, and then attached to *no day at all* on the scoreboard -
+    a reader opening 15 December never saw the DJF outlook that covers it.
+
+    Returns ``(start_year, end_year_or_None)`` or ``(None, None)``.
+    """
+    if not year_s:
+        return None, None
+    s = str(year_s).strip()
+    m = re.match(r"^(\d{4})\s*[-/]\s*(\d{4})$", s)
+    if m:
+        y1, y2 = int(m.group(1)), int(m.group(2))
+        # A two-year label is only coherent if the years are consecutive.
+        return (y1, y2) if y2 == y1 + 1 else (None, None)
+    if re.match(r"^\d{4}$", s):
+        return int(s), None
+    return None, None
+
+
 def parse_season_key(valid_season, stem):
     """Turn a CPC 'Valid_Seas' string into the (year, month) pairs it covers.
 
-    CPC writes 3-month seasons in upper case (``OND 2026``) and single months
-    in mixed case (``Sep 2026``); the shapefile stem repeats the same
-    convention (``lead2_OND_prcp`` vs ``lead14_Sep_prcp``).
+    CPC writes 3-month seasons in upper case (``OND 2026``, or ``DJF 2026-2027``
+    when the season crosses New Year) and single months in mixed case
+    (``Sep 2026``); the shapefile stem repeats the same convention
+    (``lead2_OND_prcp`` vs ``lead14_Sep_prcp``).
     """
     if not valid_season:
         return None, None
@@ -279,17 +313,25 @@ def parse_season_key(valid_season, stem):
     if len(parts) < 2:
         return None, None
     token, year_s = parts[0], parts[1]
-    try:
-        year = int(year_s)
-    except ValueError:
+    year, year2 = parse_season_year(year_s)
+    if year is None:
         return None, None
 
     if token.isupper():
         triple = season_months(token)
         if triple:
             start = triple[0]
+            crosses = triple[-1] < start          # e.g. NDJ -> (11, 12, 1)
+            # A two-year label must belong to a season that actually crosses
+            # New Year, and a one-year label must belong to one that does not.
+            # A contradiction means the label was misread, so nothing is
+            # returned rather than a wrong set of months being attached to days.
+            if (year2 is not None) != crosses:
+                return None, None
             return [(year + (1 if m < start else 0), m) for m in triple], "season"
     # mixed-case (or word) single month, e.g. "Sep"
+    if year2 is not None:
+        return None, None
     if token.upper()[:3] in MONTH_ABBR:
         return [(year, MONTH_ABBR[token.upper()[:3]])], "month"
     return None, None
@@ -434,6 +476,58 @@ def collect_cpc(cpc, default_year):
     return deduped
 
 
+def deep_links_for(day, iso, tier, precip_station, wind_station,
+                   nws_forecast_url, evidenced):
+    """The official URLs that hold this one date's rows.
+
+    Nothing here is a value: these are links into NOAA's own services and
+    archives.  ``fetched_by_this_run`` is True only when that exact URL appears
+    in a provenance manifest with a successful fetch, so the page can show which
+    links this run actually retrieved and which are offered for the reader to
+    check by hand.
+    """
+    out = []
+
+    def add(label, url, kind, note, **extra):
+        if not url:
+            return
+        item = {"label": label, "url": url, "kind": kind, "note": note,
+                "fetched_by_this_run": url in evidenced}
+        item.update(extra)
+        out.append(item)
+
+    if precip_station:
+        add(f"Rain and temperature for {iso} at GHCN-Daily {precip_station} "
+            f"(one station-day, CSV)",
+            climo_lib.ncei_day_link(precip_station, iso),
+            "ncei-data-service",
+            "NCEI's Access Data Service narrowed to this date and station - the same "
+            "official dataset this day's climatology was counted from. The URL shape is "
+            "fetched once per run and recorded in data/ghcn_probe.json.",
+            dataset=climo_lib.GHCN_DAILY_DATASET,
+            elements=list(climo_lib.RAIN_TEMP_ELEMENTS))
+    # A GHCN-Daily wind link (AWND / WSF2 / WSF5 at the SFO GHCN station) is
+    # deliberately *not* published per day: this run does not fetch that station's
+    # GHCN-Daily file, so the link would be offered without the run having touched
+    # it.  The archive-status probe does fetch it, and publishes it there with its
+    # recorded status - see pipeline/ncei_archive_probe.py.
+    if wind_station:
+        year = day.year
+        add(f"GSOD annual file holding {iso} for wind station {wind_station}",
+            climo_lib.gsod_year_link(wind_station, year), "gsod-annual-file",
+            "NCEI publishes this file after the year ends, so the current year may not "
+            "exist yet; that is recorded as an expected absence, not a failure.")
+        add(f"Hourly ISD annual file holding {iso} hour by hour for {wind_station}",
+            climo_lib.isd_year_link(wind_station, year), "isd-annual-file",
+            "Hour-by-hour wind and precipitation rows. Same annual-file caveat as GSOD.")
+    if tier == "nws" and nws_forecast_url:
+        add("NWS gridded forecast product this day's numbers came from",
+            nws_forecast_url, "nws-forecast-product",
+            "The official forecast product behind this day's badged NWS values. NWS "
+            "publishes no per-date parameter for it, so the link is to the whole product.")
+    return out
+
+
 def main():
     run = load("run.json")
     nws = load("nws.json")
@@ -541,6 +635,13 @@ def main():
     seasonal = [r for r in cpc_records if r["covers"]]
 
     calendar = []
+    # Inputs to the per-day deep links, resolved once rather than per day.
+    # `meta` is already loaded above with the station table.
+    p_station_id = (meta.get("precip_station") or {}).get("id")
+    w_station_id = (meta.get("wind_station") or {}).get("id")
+    nws_forecast_url = ((nws.get("forecast_daily") or {}).get("source_url"))
+    evidenced_urls = provlib.urls_with_evidence(DATA)
+
     d = SEASON_START
     while d <= SEASON_END:
         mmdd = f"{d.month:02d}-{d.day:02d}"
@@ -717,6 +818,16 @@ def main():
             official["derived_comparison"] = comparison
             official["published_columns"] = official_column_names
             entry["official_normal"] = official
+        # ---- deep links to the official record for this exact date ---------
+        # A day cell is a summary.  These are the URLs that hold the underlying
+        # official rows for that one date, so a reader can check any number
+        # without this project in between.  Each says whether the exact URL was
+        # fetched on this run (read from the provenance manifests) or is a link
+        # only - a link is never presented as evidence it does not carry.
+        entry["deep_links"] = deep_links_for(d, iso, entry["tier"],
+                                             p_station_id, w_station_id,
+                                             nws_forecast_url, evidenced_urls)
+
         # CPC outlooks that validly cover this day
         covering = []
         for r in short_range:
@@ -758,21 +869,28 @@ def main():
     # ---- monthly roll-ups -------------------------------------------------
     dist = season_climo.get("distribution", {})
     monthly = []
-    for month in (10, 11, 12, 1):
-        key = {10: "october_total_prcp_in", 11: "november_total_prcp_in",
-               12: "december_total_prcp_in", 1: "january_total_prcp_in"}[month]
-        days_in_month = [x for x in calendar if x["month"] == month]
+    # The months are walked from SEASON_START, so a season that crosses New Year
+    # yields "2026-12" then "2027-01" instead of relying on a hand-written
+    # month-to-year mapping.  That mapping is what silently dropped the NDJ and
+    # DJF outlooks from January days before it was fixed, and the day cells above
+    # already derive their year-month the same way.
+    first_of_month = dt.date(SEASON_START.year, SEASON_START.month, 1)
+    while first_of_month <= SEASON_END:
+        ym = f"{first_of_month.year:04d}-{first_of_month.month:02d}"
+        key = f"{first_of_month.strftime('%B').lower()}_total_prcp_in"
+        days_in_month = [x for x in calendar if x["date"][:7] == ym]
         exp_wet = round(sum((x["climo"]["p_rain_day_pct"] or 0) for x in days_in_month) / 100.0, 1)
         monthly.append({
-            "month": month,
-            "label": dt.date(2026, month, 1).strftime("%B"),
-            "year": 2026 if month >= 10 else 2027,
+            "month": first_of_month.month,
+            "label": first_of_month.strftime("%B"),
+            "year": first_of_month.year,
+            "year_month": ym,
             "total_prcp": dist.get(key),
             "expected_wet_days": exp_wet,
             "days": len(days_in_month),
-            "cpc_seasonal": [r for r in seasonal
-                             if f"{2026 if month >= 10 else 2027:04d}-{month:02d}" in (r["covers"] or [])],
+            "cpc_seasonal": [r for r in seasonal if ym in (r["covers"] or [])],
         })
+        first_of_month = (first_of_month.replace(day=28) + dt.timedelta(days=4)).replace(day=1)
 
     # ---- the *current* official forecast (outside the Oct-Jan window too) ----
     # The day-by-day calendar only starts on 1 Oct, but a landlord asking "what

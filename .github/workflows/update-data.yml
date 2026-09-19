@@ -45,7 +45,7 @@ jobs:
 
       - name: Environment diagnostics
         run: |
-          mkdir -p data assets/cpc
+          mkdir -p data assets/cpc assets/model_guidance
           {
             echo "runner: $(uname -a)"
             echo "python: $(python3 --version)"
@@ -78,6 +78,52 @@ jobs:
           python3 -u pipeline/landlord_summary.py 2>&1 | tee -a pipeline_run.log
           code=${PIPESTATUS[0]}
           echo "LANDLORD_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
+
+      # ---- auxiliary tiers -------------------------------------------------
+      # Each of these publishes its own dataset AND its own provenance manifest
+      # (data/<area>_provenance.json), so the nightly manifest - and the counts
+      # run.json publishes from it - are never touched by them.  They run before
+      # the ledger so every check below sees the complete set of datasets, and
+      # before build_feed.py so the feed can include what they produced.
+      - name: Back-test archived CPC outlooks against observed seasons
+        run: |
+          set +e
+          python3 -u pipeline/cpc_backtest.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "CPC_BACKTEST_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
+
+      - name: Probe why the NCEI wind archive stops where it does
+        run: |
+          set +e
+          python3 -u pipeline/ncei_archive_probe.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "NCEI_PROBE_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
+
+      - name: Retrieve the model-guidance tier (NMME maps, kept out of the scoreboard)
+        run: |
+          set +e
+          python3 -u pipeline/model_guidance.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "MODEL_GUIDANCE_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
+
+      - name: Retrieve the NWS Area Forecast Discussion history
+        run: |
+          set +e
+          python3 -u pipeline/afd_history.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "AFD_HISTORY_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
+
+      - name: Build the chronological feed of official products
+        run: |
+          set +e
+          python3 -u pipeline/build_feed.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "FEED_EXIT=$code" >> data/run_diagnostics.txt
           exit $code
 
       - name: Verify that every source URL is an official domain
@@ -126,7 +172,7 @@ jobs:
           BRANCH: ${{ github.ref_name }}
         run: |
           set -x
-          mkdir -p data assets/cpc
+          mkdir -p data assets/cpc assets/model_guidance
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -149,7 +195,7 @@ jobs:
           echo "CLAIM_LEDGER_VERDICT=$VERDICT"
 
           if [ "$VERDICT" = "pass" ]; then
-            git add -A data assets/cpc
+            git add -A data assets/cpc assets/model_guidance
             MSG="data: refresh NOAA/NWS/NCEI/CPC sources [skip ci]"
           else
             git add -f data/pipeline.log data/run_diagnostics.txt data/quality_report.json \

@@ -1,10 +1,10 @@
 {
   "generated_utc": "2026-09-18T20:42:23Z",
   "counts": {
-    "total": 4,
+    "total": 6,
     "errors": 0,
     "warnings": 2,
-    "info": 2
+    "info": 4
   },
   "irregularities": [
     {
@@ -72,6 +72,31 @@
           }
         ]
       }
+    },
+    {
+      "severity": "info",
+      "area": "feed",
+      "message": "Some datasets were not present when the feed was built, so the feed covers fewer sources than a complete run would. Nothing was invented to fill the gap.",
+      "evidence": {
+        "missing": [
+          "data/afd_history.json",
+          "data/model_guidance.json",
+          "data/ncei_archive_probe.json"
+        ]
+      },
+      "source": "feed"
+    },
+    {
+      "severity": "info",
+      "area": "feed",
+      "message": "16 feed entries link a publisher's human-facing page that was not itself fetched (the underlying product was). Each is labelled link_kind=human-page or api-object-id and verified through its evidence_url.",
+      "evidence": {
+        "distinct_links": [
+          "https://forecast.weather.gov/MapClick.php?lat=37.760459&lon=-122.483894&unit=0&lg=english&FcstType=text&TextType=1",
+          "https://www.weather.gov/mtr"
+        ]
+      },
+      "source": "feed"
     }
   ]
 }

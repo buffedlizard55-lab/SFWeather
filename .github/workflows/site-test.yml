@@ -60,3 +60,17 @@ jobs:
         run: python3 tests/test_parsers.py
       - name: Falsify the claim-ledger guards
         run: python3 tests/falsify_guards.py
+      # Each auxiliary tier ships its own offline self-test.  They exist because
+      # these modules fetch pages this project cannot reach from a sandbox, so
+      # the only way to prove the parsing, the quote handling and the failure
+      # paths is to run them against synthetic NOAA-shaped fixtures.
+      - name: CPC back-test self-test (offline)
+        run: python3 pipeline/cpc_backtest.py --selftest
+      - name: NCEI archive-staleness probe self-test (offline)
+        run: python3 pipeline/ncei_archive_probe.py --selftest
+      - name: Model-guidance tier self-test (offline)
+        run: python3 pipeline/model_guidance.py --selftest
+      - name: NWS discussion-history self-test (offline)
+        run: python3 pipeline/afd_history.py --selftest
+      - name: Official-product feed self-test (offline)
+        run: python3 pipeline/build_feed.py --selftest

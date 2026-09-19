@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T20:42:23Z",
+  "generated_utc": "2026-09-19T00:56:12Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,12 +9,14 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 53,
-    "passed": 53,
+    "total": 65,
+    "passed": 64,
     "failed": 0,
-    "warnings": 0,
+    "warnings": 1,
     "failed_checks": [],
-    "warning_checks": []
+    "warning_checks": [
+      "day-deep-link-shape-verified"
+    ]
   },
   "checks": [
     {
@@ -232,7 +234,7 @@
       "id": "raw-phase-tokens-dataset",
       "title": "No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)",
       "status": "pass",
-      "detail": "0 raw tokens across 15624 scanned string(s)",
+      "detail": "0 raw tokens across 22585 scanned string(s)",
       "evidence": []
     },
     {
@@ -868,6 +870,162 @@
           }
         ]
       }
+    },
+    {
+      "id": "cpc-record-coverage-declared",
+      "title": "Every CPC record declares its coverage exactly one way: month keys, or a start and end date",
+      "status": "pass",
+      "detail": "38 records: 32 month-covered, 6 date-ranged",
+      "evidence": {
+        "no_coverage": [],
+        "bad_months": []
+      }
+    },
+    {
+      "id": "cpc-season-covers-complete",
+      "title": "Every day of the season carries exactly the CPC records that cover it - no month is silently under-covered, and no record is attached to a day it does not cover",
+      "status": "pass",
+      "detail": "123 days x 38 records checked; per-month attachment counts {'2026-10': 218, '2026-11': 180, '2026-12': 186, '2027-01': 186}",
+      "evidence": {
+        "problems": [],
+        "uncovered": [],
+        "month_set_sizes": {
+          "2026-10": 6,
+          "2026-11": 6,
+          "2026-12": 6,
+          "2027-01": 6
+        }
+      }
+    },
+    {
+      "id": "cpc-record-reach",
+      "title": "Each month/season CPC record reaches every day it covers, and records that cover nothing in this season are attached to no day",
+      "status": "pass",
+      "detail": "32 month/season records each attached to all the days they cover; 6 short-range records attached only inside their date range",
+      "evidence": {
+        "outside": [],
+        "thin": {}
+      }
+    },
+    {
+      "id": "auxiliary-manifests-vetted",
+      "title": "Every fetch recorded by an auxiliary script is on a vetted official HTTPS host and carries status, byte count and SHA-256, and every auxiliary manifest names its area and purpose",
+      "status": "pass",
+      "detail": "1 manifest file(s): provenance.json; 0 auxiliary fetch record(s)",
+      "evidence": {
+        "bad_hosts": [],
+        "thin_rows": [],
+        "manifests": []
+      }
+    },
+    {
+      "id": "auxiliary-manifests-separate",
+      "title": "Auxiliary scripts keep their fetches in their own manifest: nothing is double-recorded, and run.json's published total still recounts from data/provenance.json alone",
+      "status": "pass",
+      "detail": "143 nightly row(s) and 0 auxiliary row(s) across 1 manifest file(s), no overlap",
+      "evidence": {
+        "problems": [],
+        "primary": 143,
+        "aux": 0,
+        "manifest_files": [
+          "provenance.json"
+        ]
+      }
+    },
+    {
+      "id": "model-guidance-isolation",
+      "title": "Model guidance, if published, is flagged as not an official forecast and kept out of the scoreboard",
+      "status": "pass",
+      "detail": "data/model_guidance.json is not published by this run; the site must then show the model-guidance section as not yet built, and no model value can have reached the scoreboard",
+      "evidence": null
+    },
+    {
+      "id": "afd-quotes-verbatim",
+      "title": "Area Forecast Discussion quotes, if published, are verbatim",
+      "status": "pass",
+      "detail": "data/afd_history.json is not published by this run, so the site shows no discussion quotes at all",
+      "evidence": null
+    },
+    {
+      "id": "ncei-archive-probe-consistent",
+      "title": "The archive-staleness verdict, if published, is one of the three the probe can reach and agrees with run.json",
+      "status": "pass",
+      "detail": "data/ncei_archive_probe.json is not published by this run; run.json still carries the archive dates and flags the stale ones",
+      "evidence": null
+    },
+    {
+      "id": "feed-traceable",
+      "title": "The official-product feed is internally consistent, sorted, dated only where the publisher gave a date, links only vetted hosts, and never marks model guidance as official",
+      "status": "pass",
+      "detail": "186 entries (+1 undated) across 9 dates; 185 verified against a recorded fetch",
+      "evidence": {
+        "problems": [],
+        "counts": {
+          "entries": 186,
+          "undated_entries": 1,
+          "kinds": {
+            "afd": 1,
+            "cpc-discussion": 4,
+            "cpc-map": 8,
+            "cpc-outlook": 3,
+            "cpc-shapefile": 12,
+            "forecast-snapshot": 1,
+            "nws-alerts": 1,
+            "nws-forecast": 2,
+            "nws-hourly": 1,
+            "nws-period": 14,
+            "official-fetch": 139
+          },
+          "official": 186,
+          "not_official": 0,
+          "provenance_verified": 185,
+          "provenance_unverified": 0,
+          "links_that_are_convenience_pages": 16,
+          "distinct_dates": 9,
+          "entries_inside_season_window": 0
+        }
+      }
+    },
+    {
+      "id": "feed-provenance",
+      "title": "Every feed entry whose content comes from a fetch points at a URL that was fetched successfully; entries that do not are labelled, not trusted",
+      "status": "pass",
+      "detail": "185 of 186 entries trace to a recorded fetch; 0 labelled as pointers only",
+      "evidence": {
+        "unverified": []
+      }
+    },
+    {
+      "id": "day-deep-links-vetted",
+      "title": "Every per-day deep link points at a vetted official host, at that day's own date and station, and says whether this run fetched it",
+      "status": "pass",
+      "detail": "369 deep link(s) across 123 days (gsod-annual-file, isd-annual-file, ncei-data-service)",
+      "evidence": {
+        "problems": [],
+        "links": 369,
+        "kinds": [
+          "gsod-annual-file",
+          "isd-annual-file",
+          "ncei-data-service"
+        ]
+      }
+    },
+    {
+      "id": "day-deep-link-shape-verified",
+      "title": "The NCEI Access Data Service URL shape used by the per-day deep links was actually fetched once this run, with the response recorded",
+      "status": "warn",
+      "detail": "data/ghcn_probe.json carries no successful Access Data Service probe, so the per-day deep links are published unverified this run",
+      "evidence": {
+        "probe": {
+          "url": null,
+          "http_status": null,
+          "ok": null,
+          "bytes": null,
+          "n_rows": null,
+          "date": null,
+          "station_id": null
+        }
+      }
     }
   ],
   "claims": [
@@ -1474,6 +1632,31 @@
           }
         ]
       }
+    },
+    {
+      "severity": "info",
+      "area": "feed",
+      "message": "Some datasets were not present when the feed was built, so the feed covers fewer sources than a complete run would. Nothing was invented to fill the gap.",
+      "evidence": {
+        "missing": [
+          "data/afd_history.json",
+          "data/model_guidance.json",
+          "data/ncei_archive_probe.json"
+        ]
+      },
+      "source": "feed"
+    },
+    {
+      "severity": "info",
+      "area": "feed",
+      "message": "16 feed entries link a publisher's human-facing page that was not itself fetched (the underlying product was). Each is labelled link_kind=human-page or api-object-id and verified through its evidence_url.",
+      "evidence": {
+        "distinct_links": [
+          "https://forecast.weather.gov/MapClick.php?lat=37.760459&lon=-122.483894&unit=0&lg=english&FcstType=text&TextType=1",
+          "https://www.weather.gov/mtr"
+        ]
+      },
+      "source": "feed"
     }
   ]
 }
