@@ -225,6 +225,47 @@ def run():
           rep2["counts"]["total"] == len(rep2["irregularities"]),
           f"counts={rep2['counts']}")
 
+    # ---- the failure the first live CI run found ---------------------------
+    # On 19 Sep 2026 the nightly run published a raw-archive probe with
+    # ok=false and *no* error field, because the archive page had listed no run
+    # directories.  The ledger failed the build (model-guidance-links-fetched:
+    # "1 guidance item(s) that failed to fetch publish no error").  A probe that
+    # could not run must say why, and must distinguish "NOAA was unreachable"
+    # from "this project stopped understanding NOAA's page".
+    for label, archive_body, expect_fragment in (
+            ("lists no run directories", b"<html><body><table></table></body></html>",
+             "listed no run directories"),
+            ("is unreachable", None, "could not be retrieved")):
+        files2 = dict(files)
+        if archive_body is None:
+            files2.pop("https://ftp.cpc.ncep.noaa.gov/NMME/archive/", None)
+        else:
+            files2["https://ftp.cpc.ncep.noaa.gov/NMME/archive/"] = archive_body
+
+        def fake_fetch2(url, timeout=120, **kw):
+            return _Res(url, files2.get(url), 200 if url in files2 else 404)
+
+        tmp_assets2 = Path(tempfile.mkdtemp(prefix="mg_assets2_"))
+        tmp_data2 = Path(tempfile.mkdtemp(prefix="mg_data2_"))
+        out2, _m2 = mg.build(assetsdir=tmp_assets2, datadir=tmp_data2, fetch=fake_fetch2)
+        skipped = [pr for pr in out2["probes"]
+                   if pr["key"] == "nmme_archive_latest" and pr.get("ok") is False]
+        check(f"a raw-archive probe skipped because the page {label} publishes its reason",
+              len(skipped) == 1 and bool(skipped[0].get("error"))
+              and expect_fragment in skipped[0]["error"],
+              f"error={str(skipped[0].get('error'))[:120] if skipped else 'no skipped probe'}")
+        check(f"an archive probe skipped because the page {label} raises an irregularity",
+              any(i["area"] == "model_guidance" and "not probed" in i["message"]
+                  for i in out2["irregularities"]),
+              f"irregularities={[i['message'][:60] for i in out2['irregularities']][:3]}")
+        check(f"no guidance item is ok=false without an error ({label})",
+              not [i for i in ([pg for pg in out2["pages"].values() if isinstance(pg, dict)]
+                               + list(out2["images"]) + list(out2["probes"]))
+                   if i.get("ok") is False and not i.get("error")],
+              "every undisclosed failure is the ledger's model-guidance-links-fetched case")
+        shutil.rmtree(tmp_assets2, ignore_errors=True)
+        shutil.rmtree(tmp_data2, ignore_errors=True)
+
     shutil.rmtree(tmp_assets, ignore_errors=True)
     shutil.rmtree(tmp_data, ignore_errors=True)
 

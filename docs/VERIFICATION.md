@@ -606,6 +606,28 @@ committed data proves was live:
 | 66 | Six renderer strings in `assets/js/app.js` contained double escapes (`\\u2014`, `\\u00b0`, `\\u2265`) that print a literal `\u2014` on the page instead of an em dash, a degree sign or `≥` | `grep -c '\\\\u' assets/js/app.js` → 6 on the merged tree (the same class of defect this pass had already fixed 13 of on its own branch) | Replaced with the real characters; `node --check` and `npm test` re-run |
 | 67 | A ledger check written on this pass's branch (`auxiliary-manifests-separate`) was tautological — it compared a manifest to itself, so it could never fail | Read of the check's source before the merge | Rewritten against the real schemas: every fetch recorded in exactly one manifest, and `run.json`'s totals re-derived from the nightly manifest alone |
 
+### What the first live CI run of these tiers found (bug 68)
+
+The nightly workflow ran on this branch at `3941ac6` before the merge, with real
+network access — the first time the new tiers had ever touched NOAA's live servers.
+Every step exited 0 (`PIPELINE`, `CALENDAR`, `LANDLORD`, `CPC_BACKTEST`,
+`NCEI_PROBE`, `MODEL_GUIDANCE`, `AFD_HISTORY`, `FEED`, `VERIFY`) and the ledger
+then failed the run, so the gate correctly refused to publish:
+
+> `[FAIL] model-guidance-links-fetched` — *1 guidance item(s) that failed to fetch
+> publish no error, so a reader cannot tell they are missing*
+
+| # | Bug | Root cause | Fix |
+| --- | --- | --- | --- |
+| 68 | A model-guidance probe that could not run was published with `ok: false` and **no `error` field** | The raw-archive probe resolves its URL from the newest run directory listed on CPC's archive page. When that page lists no runs, the code appended `{ok: false, skipped: "..."}` and moved on — a `skipped` note is not an error, and the ledger requires every failed item to say why | The probe now publishes the cause and distinguishes the two: *"the archive page was retrieved but listed no run directories … if NOAA changed the layout of that page, `ARCHIVE_ROW_RE` needs updating"* versus *"the archive page could not be retrieved (HTTP …)"*. It also raises a `model_guidance` irregularity, so the failure surfaces in *Data quality* and not only in the ledger. Six new self-checks reproduce both paths (31/31) |
+
+This is the guard working as designed rather than a false alarm: a silent
+`ok: false` is exactly how a missing dataset starts looking like an empty one, and
+the check that stopped the publish was written before the tier had ever run live.
+The run's diagnostics were committed by the workflow as
+`chore(data): refresh NOT published`, and are merged here for the record; the
+regenerated diagnostics in this tree describe the merged code instead.
+
 ### How the collision with pass 8 was resolved
 
 Pass 8 merged first, so it is the baseline. The rule applied was: **where both

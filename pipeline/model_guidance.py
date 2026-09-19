@@ -277,11 +277,31 @@ def build(assetsdir=Path("assets/model_guidance"), datadir=Path("data"),
     for probe in PROBES:
         url = probe["url"]
         if url is None:
-            runs = (pages.get("archive") or {}).get("archived_runs") or []
+            arch = pages.get("archive") or {}
+            runs = arch.get("archived_runs") or []
             if not runs:
+                # A probe that could not run must say why on the page, not merely
+                # sit there with ok=false: the ledger treats an undisclosed
+                # failure as a defect (model-guidance-links-fetched), and a reader
+                # deserves to know whether NOAA was unreachable or whether this
+                # project stopped understanding their page.
+                if arch.get("ok"):
+                    reason = ("the archive page was retrieved but listed no run "
+                              "directories on this pass, so there was nothing to "
+                              "probe - if NOAA changed the layout of that page, "
+                              "ARCHIVE_ROW_RE needs updating")
+                else:
+                    reason = (f"the archive page could not be retrieved "
+                              f"({arch.get('error') or 'HTTP ' + str(arch.get('http_status'))}), "
+                              f"so no run directory was available to probe")
                 probes.append({**probe, "url": None, "ok": False,
+                               "error": reason,
                                "note": probe["note"],
                                "skipped": "the archive page listed no runs on this pass"})
+                note("warning",
+                     f"The raw model archive was not probed: {reason}",
+                     {"archive_url": arch.get("url"),
+                      "runs_listed": arch.get("n_archived_runs_listed")})
                 continue
             url = runs[0]["url"]
         res = fetch(url, timeout=180)

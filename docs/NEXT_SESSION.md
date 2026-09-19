@@ -156,11 +156,14 @@ pass 9's `model-guidance-isolation` also audits the guidance file and scans
 official text. **Open:** the tier has never run live, so the first CI run should be
 watched (see §2.7).
 
-### 7. Watch the first live CI run of the two new tiers
+### 7. Watch the next live CI run of the two new tiers
 
-`model_guidance.py` and `build_feed.py` have only ever run against synthetic
-fixtures and committed data — the sandbox has no egress to NOAA. On the first
-nightly run, check that:
+The first live run happened on 19 Sep 2026 at `3941ac6`: every step exited 0 and
+the ledger then **failed the publish** on `model-guidance-links-fetched`, because a
+raw-archive probe that could not run published `ok: false` with no `error`. That is
+fixed (bug 68 in `docs/VERIFICATION.md`) and covered by six new self-checks, but the
+run did not publish, so `data/model_guidance.json` and its archived PNGs are still
+unseen. On the next nightly run, check that:
 
 * `MODEL_GUIDANCE_EXIT=0` and `FEED_EXIT=0` appear in `data/run_diagnostics.txt`
   (the publish gate now requires all nine exit codes);
@@ -170,7 +173,10 @@ nightly run, check that:
   `model-guidance-links-fetched` appear in `data/verify.json` and pass — if a
   NOAA page moved, they fail rather than silently dropping;
 * `data/feed.json` gains the model-guidance rows labelled `NOT OFFICIAL`, and the
-  feed's `provenance_unverified` count stays small and explained.
+  feed's `provenance_unverified` count stays small and explained;
+* if the raw-archive probe is skipped again, the reason it publishes tells you
+  whether NOAA was unreachable or whether `ARCHIVE_ROW_RE` no longer matches their
+  page — the second needs a code fix, the first needs nothing.
 
 ### 8. Still open from earlier passes
 
