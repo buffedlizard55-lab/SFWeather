@@ -25,7 +25,7 @@
   },
   "forecast_daily": {
     "updated": "2026-09-18T20:26:33+00:00",
-    "generated_at": "2026-09-19T04:14:03+00:00",
+    "generated_at": "2026-09-19T04:27:00+00:00",
     "valid_times": "2026-09-18T14:00:00+00:00/P7DT11H",
     "elevation_m": 45.1104,
     "periods": [
@@ -273,7 +273,7 @@
   },
   "forecast_hourly": {
     "updated": "2026-09-18T20:26:33+00:00",
-    "generated_at": "2026-09-19T04:14:04+00:00",
+    "generated_at": "2026-09-19T04:27:00+00:00",
     "elevation_m": 45.1104,
     "periods": [
       {
@@ -4929,7 +4929,7 @@
       "elevation_m": 3.048,
       "distance_m": 19117.58413345,
       "observation": {
-        "timestamp": "2026-09-19T03:50:00+00:00",
+        "timestamp": "2026-09-19T04:05:00+00:00",
         "temperature_c": 15,
         "dewpoint_c": 13,
         "relative_humidity_pct": 87.83845905654,
@@ -4951,7 +4951,7 @@
       "observation": {
         "timestamp": "2026-09-19T03:36:00+00:00",
         "temperature_c": null,
-        "dewpoint_c": null,
+        "dewpoint_c": 2.5,
         "relative_humidity_pct": null,
         "wind_speed_kmh": 25.74,
         "wind_gust_kmh": 41.832,
@@ -4997,7 +4997,7 @@
     "count": 0,
     "test_count": 0,
     "count_including_tests": 0,
-    "updated": "2026-09-19T04:13:13+00:00",
+    "updated": "2026-09-19T04:26:40+00:00",
     "events": [],
     "source_url": "https://api.weather.gov/alerts/active?zone=CAZ006",
     "human_url": "https://www.weather.gov/mtr"

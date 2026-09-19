@@ -3,7 +3,7 @@
   "station_name": "SAN FRANCISCO INTL AP, CA US",
   "url": "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv",
   "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
-  "retrieved_utc": "2026-09-19T04:18:19Z",
+  "retrieved_utc": "2026-09-19T04:31:58Z",
   "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (hourly, by station)",
   "method": "mean of hourly relative humidity computed from the official hourly temperature and dew-point normals with the Magnus formula",
   "month_rh_pct": {
