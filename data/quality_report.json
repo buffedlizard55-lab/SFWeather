@@ -1,9 +1,9 @@
 {
-  "generated_utc": "2026-09-18T20:42:23Z",
+  "generated_utc": "2026-09-19T01:00:44Z",
   "counts": {
-    "total": 6,
+    "total": 7,
     "errors": 0,
-    "warnings": 2,
+    "warnings": 3,
     "info": 4
   },
   "irregularities": [
@@ -61,13 +61,13 @@
           {
             "area": "wind",
             "last_date": "2025-08-27",
-            "age_days": 387,
+            "age_days": 388,
             "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
           },
           {
             "area": "isd_hourly",
             "last_date": "2025-08-27",
-            "age_days": 387,
+            "age_days": 388,
             "url": "https://www.ncei.noaa.gov/data/global-hourly/access/"
           }
         ]
@@ -75,13 +75,28 @@
     },
     {
       "severity": "info",
-      "area": "feed",
-      "message": "Some datasets were not present when the feed was built, so the feed covers fewer sources than a complete run would. Nothing was invented to fill the gap.",
+      "area": "ncei_archive_probe",
+      "message": "GHCN-Daily USW00023234 carries AWND, WDF2, WDF5, WSF2, WSF5, TSUN; the most recent date with a wind value is 2026-09-15.",
       "evidence": {
-        "missing": [
-          "data/afd_history.json",
-          "data/model_guidance.json",
-          "data/ncei_archive_probe.json"
+        "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023234.csv",
+        "last_date_by_element": {
+          "AWND": "2026-09-15",
+          "WDF2": "2026-09-15",
+          "WDF5": "2026-09-15",
+          "WSF2": "2026-09-15",
+          "WSF5": "2026-09-15",
+          "TSUN": "2005-03-20"
+        }
+      },
+      "source": "ncei_archive_probe"
+    },
+    {
+      "severity": "warning",
+      "area": "feed",
+      "message": "1 feed entries cite a URL with no successful fetch in any provenance manifest. They are marked provenance_verified=false rather than dropped, so a reader can still follow them, but no figure on the site may depend on them.",
+      "evidence": {
+        "urls": [
+          "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
         ]
       },
       "source": "feed"
