@@ -6,7 +6,7 @@ SFWeather pipeline - 2026-09-19
 [3/7] CPC outlooks
 [4/7] ENSO / ONI
 [5/7] NCEI climatology archives
-      GHCN USW00023272: 38572 station-days parsed; range 1921-01-01 .. 2026-09-15
+      GHCN USW00023272: 38573 station-days parsed; range 1921-01-01 .. 2026-09-16
       sample record: 1973-10-21 -> {'PRCP': 8.0, 'TMAX': 206.0, 'TMIN': 156.0, 'SNOW': None, 'SNWD': None}
 [6/7] computing rainy-season climatology
 [7/7] Storm Events + writing outputs

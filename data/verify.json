@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-19T18:56:02Z",
+  "generated_utc": "2026-09-19T19:07:57Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -120,7 +120,7 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-19T11:57:24Z"
+        "retrieved_utc": "2026-09-19T19:00:12Z"
       }
     },
     {
@@ -666,12 +666,12 @@
       "id": "afd-language-verbatim",
       "title": "Every quoted AFD sentence is verbatim in the fetched product text, the counts are not smaller than the published lists, and the scan state agrees with the fetched text",
       "status": "pass",
-      "detail": "2 quoted sentence(s) all found verbatim in 6408 fetched characters",
+      "detail": "2 quoted sentence(s) all found verbatim in 6044 fetched characters",
       "evidence": {
         "offenders": [],
         "count_problems": [],
         "scanned": true,
-        "afd_text_chars": 6408,
+        "afd_text_chars": 6044,
         "excluded_within_declared": true,
         "source_traced": true
       }
@@ -848,8 +848,8 @@
           {
             "area": "rain_temp",
             "label": "GHCN-Daily USW00023272 (rain, daily high/low)",
-            "last_date": "2026-09-15",
-            "age_days": 4,
+            "last_date": "2026-09-16",
+            "age_days": 3,
             "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
             "note": "Daily summaries, so this is the most current of the three archives."
           },
@@ -894,7 +894,7 @@
       "id": "afd-history-consistent",
       "title": "AFD issuance history is append-only, deduped, and quotations-only",
       "status": "pass",
-      "detail": "4 issuance(s) in history",
+      "detail": "5 issuance(s) in history",
       "evidence": {
         "problems": []
       }
@@ -1043,15 +1043,15 @@
       "id": "feed-traceable",
       "title": "The official-product feed is internally consistent, sorted, dated only where the publisher gave a date, links only vetted hosts, and never marks model guidance as official",
       "status": "pass",
-      "detail": "226 entries (+13 undated) across 9 dates; 219 verified against a recorded fetch",
+      "detail": "228 entries (+13 undated) across 10 dates; 219 verified against a recorded fetch",
       "evidence": {
         "problems": [],
         "counts": {
-          "entries": 226,
+          "entries": 228,
           "undated_entries": 13,
           "kinds": {
             "afd": 1,
-            "afd-quote": 5,
+            "afd-quote": 7,
             "cpc-backtest": 1,
             "cpc-discussion": 4,
             "cpc-map": 8,
@@ -1066,12 +1066,12 @@
             "nws-period": 14,
             "official-fetch": 170
           },
-          "official": 225,
+          "official": 227,
           "not_official": 1,
           "provenance_verified": 219,
-          "provenance_unverified": 4,
+          "provenance_unverified": 6,
           "links_that_are_convenience_pages": 16,
-          "distinct_dates": 9,
+          "distinct_dates": 10,
           "entries_inside_season_window": 0
         }
       }
@@ -1080,12 +1080,20 @@
       "id": "feed-provenance",
       "title": "Every feed entry whose content comes from a fetch points at a URL that was fetched successfully; entries that do not are labelled, not trusted",
       "status": "pass",
-      "detail": "219 of 226 entries trace to a recorded fetch; 4 labelled as pointers only",
+      "detail": "219 of 228 entries trace to a recorded fetch; 6 labelled as pointers only",
       "evidence": {
         "unverified": [
           {
             "kind": "cpc-backtest",
             "url": "https://www.cpc.ncep.noaa.gov/products/archives/long_lead/llarc.ind.php"
+          },
+          {
+            "kind": "afd-quote",
+            "url": "https://api.weather.gov/products/1992ce78-3097-4692-ba44-844828d14b5e"
+          },
+          {
+            "kind": "afd-quote",
+            "url": "https://api.weather.gov/products/1992ce78-3097-4692-ba44-844828d14b5e"
           },
           {
             "kind": "afd-quote",
@@ -1120,7 +1128,7 @@
         "http_status": 200,
         "bytes": 1013803,
         "sha256": "7b85c04a131672f58b38a950eb82855d5fd4054f0bd9bc3f69aa28897a714e3d",
-        "retrieved_utc": "2026-09-19T11:56:45Z",
+        "retrieved_utc": "2026-09-19T18:58:13Z",
         "host": "www2.census.gov"
       },
       "verified": true,
@@ -1147,7 +1155,7 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-19T11:57:24Z",
+        "retrieved_utc": "2026-09-19T19:00:12Z",
         "host": "www.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1174,9 +1182,9 @@
         "label": "NWS hourly gridded forecast",
         "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
         "http_status": 200,
-        "bytes": 162335,
-        "sha256": "4f3b1bc5eb750b33466459cb43e77044fe9c34ac28a8a613ec6b33a49075f565",
-        "retrieved_utc": "2026-09-19T11:56:46Z",
+        "bytes": 162440,
+        "sha256": "1f8cc879d6326ca1ff72e7bccabd7b7cdc64c33b755c866948d15bae3b703a4f",
+        "retrieved_utc": "2026-09-19T18:58:15Z",
         "host": "api.weather.gov"
       },
       "verified": true
@@ -1218,7 +1226,7 @@
         "http_status": 200,
         "bytes": 6423708,
         "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
-        "retrieved_utc": "2026-09-19T11:58:24Z",
+        "retrieved_utc": "2026-09-19T19:01:41Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true
@@ -1233,9 +1241,9 @@
         "label": "NCEI GHCN-Daily daily precipitation",
         "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
         "http_status": 200,
-        "bytes": 7488416,
-        "sha256": "d8c136ab1aa91450cffbd608be270be0df6c699a744985529d1fed9923aa5084",
-        "retrieved_utc": "2026-09-19T11:58:45Z",
+        "bytes": 7488620,
+        "sha256": "09f24c542288582f95610d084ab60fe546c7d1626ca2f3cc841e8fe0ef33817d",
+        "retrieved_utc": "2026-09-19T19:02:12Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1260,7 +1268,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-19T11:58:14Z",
+        "retrieved_utc": "2026-09-19T19:01:31Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1285,7 +1293,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-19T11:58:14Z",
+        "retrieved_utc": "2026-09-19T19:01:31Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1310,7 +1318,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-19T11:58:14Z",
+        "retrieved_utc": "2026-09-19T19:01:31Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1335,7 +1343,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-19T11:58:14Z",
+        "retrieved_utc": "2026-09-19T19:01:31Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1366,7 +1374,7 @@
         "http_status": 200,
         "bytes": 462174,
         "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-        "retrieved_utc": "2026-09-19T11:58:14Z",
+        "retrieved_utc": "2026-09-19T19:01:30Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1394,7 +1402,7 @@
         "http_status": 200,
         "bytes": 3607956,
         "sha256": "6e1955b1e38868c38685acd83a0ef92df9bcc52a3acaec11a583e759c46414dc",
-        "retrieved_utc": "2026-09-19T11:57:21Z",
+        "retrieved_utc": "2026-09-19T19:00:04Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1432,7 +1440,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-19T11:57:04Z",
+        "retrieved_utc": "2026-09-19T18:58:58Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1470,7 +1478,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-19T11:57:04Z",
+        "retrieved_utc": "2026-09-19T18:58:58Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1508,7 +1516,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-19T11:57:04Z",
+        "retrieved_utc": "2026-09-19T18:58:58Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1546,7 +1554,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-19T11:57:04Z",
+        "retrieved_utc": "2026-09-19T18:58:58Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1584,7 +1592,7 @@
         "http_status": 200,
         "bytes": 3621792,
         "sha256": "6119ef340649ba4ba21072ef910e1579b7ed01251708cb81531082ab6627ab2f",
-        "retrieved_utc": "2026-09-19T11:57:21Z",
+        "retrieved_utc": "2026-09-19T19:00:05Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1623,7 +1631,7 @@
       "id": "archive-recency",
       "statement": "Newest observation available in each NCEI archive this project reads",
       "value": {
-        "rain_temp": "2026-09-15",
+        "rain_temp": "2026-09-16",
         "wind": "2025-08-27",
         "isd_hourly": "2025-08-27"
       },
@@ -1635,7 +1643,7 @@
         "http_status": 200,
         "bytes": 4903856,
         "sha256": "1221e6eb7256be93b1a3f82d1a0695e5d85c5398bbe87cfd9664855936278c54",
-        "retrieved_utc": "2026-09-19T11:58:03Z",
+        "retrieved_utc": "2026-09-19T19:01:18Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true
@@ -1733,9 +1741,10 @@
     {
       "severity": "warning",
       "area": "feed",
-      "message": "4 feed entries cite a URL with no successful fetch in any provenance manifest. They are marked provenance_verified=false rather than dropped, so a reader can still follow them, but no figure on the site may depend on them.",
+      "message": "6 feed entries cite a URL with no successful fetch in any provenance manifest. They are marked provenance_verified=false rather than dropped, so a reader can still follow them, but no figure on the site may depend on them.",
       "evidence": {
         "urls": [
+          "https://api.weather.gov/products/1992ce78-3097-4692-ba44-844828d14b5e",
           "https://api.weather.gov/products/2f894049-4561-49f5-8f84-48f92f351edf",
           "https://api.weather.gov/products/6acde7c7-4bb4-4789-848b-9badc8316167",
           "https://api.weather.gov/products/eafb83e6-b2a4-4f01-bba0-8dcc8c397487",

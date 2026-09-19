@@ -4,7 +4,7 @@
   "url": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv",
   "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
   "bytes": 462174,
-  "retrieved_utc": "2026-09-19T11:58:14Z",
+  "retrieved_utc": "2026-09-19T19:01:30Z",
   "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (daily, by station)",
   "units": {
     "normal_high_f": "degrees Fahrenheit (DLY-TMAX-NORMAL, as published)",
