@@ -225,6 +225,105 @@ def run():
           rep2["counts"]["total"] == len(rep2["irregularities"]),
           f"counts={rep2['counts']}")
 
+    # ---- markup shapes NOAA actually serves --------------------------------
+    # The first live run fetched every page with HTTP 200 and still archived
+    # zero maps and zero run directories, because the patterns required an
+    # absolute href in double quotes with the label sitting bare between ">" and
+    # "<".  Each shape below is one the live pages can present; all must parse.
+    PRATE_PAGE = "https://www.cpc.ncep.noaa.gov/products/NMME/prob/usPROBprate.S.html"
+    ARCHIVE_PAGE = "https://ftp.cpc.ncep.noaa.gov/NMME/archive/"
+    shapes = {
+        "relative hrefs": (
+            """<td><a href="images/prob_ensemble_prate_us_season1.png">season 1</a>"""
+            """<a href="images/th.prob_ensemble_prate_us_season1.png"><img></a></td>""",
+            """<a href="2026080800/">September 2026 to March 2027</a>"""),
+        "single-quoted attributes": (
+            """<td><a href='https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/"""
+            """prob_ensemble_prate_us_season1.png'>season 1</a></td>""",
+            """<a href='https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026080800'>"""
+            """September 2026 to March 2027</a>"""),
+        "unquoted attributes": (
+            """<td><a href=https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/"""
+            """prob_ensemble_prate_us_season1.png>season 1</a></td>""",
+            """<a href=https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026080800>"""
+            """September 2026 to March 2027</a>"""),
+        "labels wrapped in nested tags": (
+            """<td><a href="images/prob_ensemble_prate_us_season1.png">"""
+            """<font face="Arial"><b>season 1</b></font></a></td>""",
+            """<a href="https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026080800">"""
+            """<font face="Arial" size="2">September 2026 to March 2027</font></a>"""),
+    }
+    for shape, (prate_body, archive_body) in shapes.items():
+        files3 = dict(files)
+        files3[PRATE_PAGE] = ("<html><body><table>" + prate_body + "</table></body></html>"
+                              ).encode()
+        files3[ARCHIVE_PAGE] = ("<html><body><table>" + archive_body
+                                + "</table></body></html>").encode()
+        # The probe must fetch the directory URL exactly as NOAA's listing links
+        # it - this project publishes NOAA's own link, not a normalised guess -
+        # so the fixture serves both the slashed and the unslashed form.
+        for run_url in ("https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026080800",
+                        "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026080800/"):
+            files3[run_url] = b"<html><a href='a.nc'>a.nc</a></html>"
+
+        def fake_fetch3(url, timeout=120, **kw):
+            return _Res(url, files3.get(url), 200 if url in files3 else 404)
+
+        tmp_assets3 = Path(tempfile.mkdtemp(prefix="mg_assets3_"))
+        tmp_data3 = Path(tempfile.mkdtemp(prefix="mg_data3_"))
+        out3, _m3 = mg.build(assetsdir=tmp_assets3, datadir=tmp_data3, fetch=fake_fetch3)
+        seen = out3["pages"]["seasonal_prcp"].get("image_urls") or []
+        prate_imgs = [u for u in seen if "/images/th." not in u
+                      and u.endswith("prob_ensemble_prate_us_season1.png")]
+        check(f"{shape}: a relative or differently quoted map link is still recognised",
+              len(prate_imgs) == 1
+              and prate_imgs[0] == ("https://www.cpc.ncep.noaa.gov/products/NMME/prob/"
+                                    "images/prob_ensemble_prate_us_season1.png"),
+              f"image_urls={seen}")
+        check(f"{shape}: only the full map is archived, never its thumbnail",
+              not [i for i in out3["images"] if "/images/th." in (i.get("url") or "")],
+              f"urls={[i.get('url') for i in out3['images']]}")
+        check(f"{shape}: the map was actually archived and hashed",
+              any(i.get("variable_key") == "prate" and i.get("season_index") == 1
+                  and i.get("ok") is True and i.get("sha256") and i.get("local_path")
+                  for i in out3["images"]),
+              f"images={[(i.get('variable_key'), i.get('season_index'), i.get('ok')) for i in out3['images']]}")
+        runs3 = out3["pages"]["archive"].get("archived_runs") or []
+        check(f"{shape}: an archive run directory is recognised and its label kept",
+              len(runs3) == 1 and runs3[0]["run_id"] == "2026080800"
+              and runs3[0]["coverage_label"] == "September 2026 to March 2027",
+              f"runs={runs3}")
+        check(f"{shape}: the newest archived run is probed from the listing",
+              any(p["key"] == "nmme_archive_latest" and p.get("ok") is True
+                  and (p.get("url") or "").rstrip("/").endswith("2026080800")
+                  for p in out3["probes"]),
+              f"probes={[(p['key'], p.get('ok'), p.get('url')) for p in out3['probes']]}")
+        shutil.rmtree(tmp_assets3, ignore_errors=True)
+        shutil.rmtree(tmp_data3, ignore_errors=True)
+
+    # ---- a page that yields nothing must be diagnosable from the data -------
+    files4 = dict(files)
+    files4["https://ftp.cpc.ncep.noaa.gov/NMME/archive/"] = (
+        b"<html><body><p> NOAA has moved this index. </p></body></html>")
+
+    def fake_fetch4(url, timeout=120, **kw):
+        return _Res(url, files4.get(url), 200 if url in files4 else 404)
+
+    tmp_assets4 = Path(tempfile.mkdtemp(prefix="mg_assets4_"))
+    tmp_data4 = Path(tempfile.mkdtemp(prefix="mg_data4_"))
+    out4, _m4 = mg.build(assetsdir=tmp_assets4, datadir=tmp_data4, fetch=fake_fetch4)
+    arch4 = out4["pages"]["archive"]
+    check("a page that parses to nothing keeps a bounded markup excerpt for diagnosis",
+          arch4.get("n_archived_runs_listed") == 0 and bool(arch4.get("markup_excerpt"))
+          and len(arch4["markup_excerpt"]) <= 700,
+          f"excerpt={str(arch4.get('markup_excerpt'))[:80]}")
+    check("a page that parses to nothing says so as an irregularity, not as silence",
+          any(i["area"] == "model_guidance" and "no run directory was recognised" in i["message"]
+              for i in out4["irregularities"]),
+          f"irregularities={[i['message'][:60] for i in out4['irregularities']][:3]}")
+    shutil.rmtree(tmp_assets4, ignore_errors=True)
+    shutil.rmtree(tmp_data4, ignore_errors=True)
+
     # ---- the failure the first live CI run found ---------------------------
     # On 19 Sep 2026 the nightly run published a raw-archive probe with
     # ok=false and *no* error field, because the archive page had listed no run

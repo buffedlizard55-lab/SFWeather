@@ -40,6 +40,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from urllib.parse import urljoin
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -104,9 +105,16 @@ PROBES = [
               "coverage label; the netCDF/GRIB inside is not decoded.")},
 ]
 
-IMAGE_RE = re.compile(
-    r'href="([^"]*?/images/(?:th\.)?prob_ensemble_(prate|tmp2m)_us_season(\d+)\.png)"',
-    re.I)
+# Matched against a *resolved* URL, never against raw markup: NOAA's pages mix
+# absolute and relative links and both quote styles, and a pattern that assumes
+# one of them silently finds nothing.  That is not hypothetical - the first live
+# run of this tier archived zero maps because the pattern required an absolute
+# href in double quotes.
+IMAGE_URL_RE = re.compile(
+    r"/images/(?:th\.)?prob_ensemble_(prate|tmp2m)_us_season(\d+)\.png$", re.I)
+# An anchor's href, in double quotes, single quotes, or no quotes at all.
+HREF_RE = re.compile(r"""(?:href|src)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))""", re.I)
+ANCHOR_RE = re.compile(r"<a\b([^>]*)>(.*?)</a>", re.I | re.S)
 # NOAA writes the coverage as a range ("For: October 2026 - April 2027") and
 # sometimes as a single month.  A non-greedy "anything up to a year" pattern
 # captured only the first half of the range, so the two forms are matched
@@ -114,9 +122,10 @@ IMAGE_RE = re.compile(
 COVERAGE_RANGE_RE = re.compile(
     r"For:\s*([A-Z][a-z]+\.?\s+\d{4}\s*[-\u2013\u2014]\s*[A-Z][a-z]+\.?\s+\d{4})")
 COVERAGE_MONTH_RE = re.compile(r"For:\s*([A-Z][a-z]+\.?\s+\d{4})")
-ARCHIVE_ROW_RE = re.compile(
-    r'href="(https://ftp\.cpc\.ncep\.noaa\.gov/NMME/archive/(\d{10}))"[^>]*>\s*'
-    r'([^<]{5,80})\s*<', re.I)
+# Matched against a resolved URL as well.  The old form also required the label
+# to sit between ">" and "<" with no tag in between, so a listing that wraps its
+# text in <font> (as CPC pages often do) matched nothing at all.
+ARCHIVE_RUN_RE = re.compile(r"/NMME/archive/(\d{10})/?$", re.I)
 
 
 def log(msg=""):
@@ -143,6 +152,68 @@ def html_text_only(html):
 
 def collapse(text):
     return re.sub(r"\s+", " ", text or "").strip()
+
+
+def _attr_url(match):
+    """The first quoted (or bare) value of an href/src attribute, or None."""
+    for group in match.groups()[1:] if match.lastindex and match.lastindex > 1 else match.groups():
+        if group:
+            return group.strip()
+    return None
+
+
+def extract_links(markup, base_url):
+    """Every href/src on a page, resolved against the page's own URL.
+
+    Relative links, single-quoted attributes and unquoted attributes all yield
+    the same absolute URL here, so a pattern can be matched against the result
+    instead of against markup whose quoting style this project does not control.
+    """
+    out = []
+    for m in HREF_RE.finditer(markup or ""):
+        raw = next((g for g in m.groups() if g), None)
+        if not raw:
+            continue
+        raw = raw.strip()
+        if not raw or raw.startswith(("#", "javascript:", "mailto:")):
+            continue
+        out.append(urljoin(base_url, raw))
+    return out
+
+
+def extract_anchors(markup, base_url):
+    """``(absolute_url, label)`` for every anchor, in document order.
+
+    The label is the anchor's text with any nested tags stripped and whitespace
+    collapsed, because CPC wraps its coverage labels in markup of their own
+    choosing.  Order matters: the archive listing is newest first, and this
+    project publishes the newest run rather than guessing which is newest.
+    """
+    out = []
+    for attrs, inner in ANCHOR_RE.findall(markup or ""):
+        hm = re.search(r"""href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))""", attrs, re.I)
+        if not hm:
+            continue
+        raw = next((g for g in hm.groups() if g), None)
+        if not raw or not raw.strip():
+            continue
+        label = collapse(html_text_only(inner))
+        out.append((urljoin(base_url, raw.strip()), label))
+    return out
+
+
+def markup_excerpt(markup, limit=700):
+    """A bounded slice of raw markup, kept only when extraction found nothing.
+
+    Without it, "the page fetched fine but this project understood nothing on
+    it" is undiagnosable from the committed data - which is exactly what
+    happened on the first live run, when the pages were 200 OK and the parsed
+    lists were empty.
+    """
+    text = (markup or "").strip()
+    i = text.lower().find("<a")
+    start = i if i >= 0 else 0
+    return collapse(text[start:start + limit])
 
 
 def key_sentences(plain, limit=8):
@@ -215,14 +286,44 @@ def build(assetsdir=Path("assets/model_guidance"), datadir=Path("data"),
                          "inferred from the season numbers in the image filenames.",
                          {"url": page["url"]})
             if page["key"] in ("seasonal_prcp", "seasonal_temp"):
-                found = IMAGE_RE.findall(res.text())
-                entry["image_urls"] = sorted({u for u, _v, _n in found})
+                markup = res.text()
+                links = extract_links(markup, page["url"])
+                entry["image_urls"] = sorted({u for u in links if IMAGE_URL_RE.search(u)})
+                entry["n_links_seen"] = len(links)
+                if not entry["image_urls"]:
+                    # The page answered; this project understood nothing on it.
+                    # Say so, and keep enough raw markup to diagnose it from the
+                    # committed dataset instead of guessing.
+                    entry["markup_excerpt"] = markup_excerpt(markup)
+                    note("warning",
+                         f"The {page['label']} page was retrieved "
+                         f"({res.size} bytes) but no NMME probability map was "
+                         f"recognised on it, so no map is archived this run. The "
+                         f"markup excerpt in data/model_guidance.json shows what the "
+                         f"page actually contains.",
+                         {"url": page["url"], "links_seen": len(links)})
             if page["key"] == "archive":
-                rows = ARCHIVE_ROW_RE.findall(res.text())
-                entry["archived_runs"] = [
-                    {"url": u, "run_id": rid, "coverage_label": collapse(label)}
-                    for u, rid, label in rows[:14]]
-                entry["n_archived_runs_listed"] = len(rows)
+                markup = res.text()
+                anchors = extract_anchors(markup, page["url"])
+                runs = []
+                for url_found, label in anchors:
+                    m = ARCHIVE_RUN_RE.search(url_found)
+                    if not m:
+                        continue
+                    rid = m.group(1)
+                    runs.append({"url": url_found, "run_id": rid,
+                                 "coverage_label": label or rid})
+                entry["archived_runs"] = runs[:14]
+                entry["n_archived_runs_listed"] = len(runs)
+                entry["n_links_seen"] = len(anchors)
+                if not runs:
+                    entry["markup_excerpt"] = markup_excerpt(markup)
+                    note("warning",
+                         f"The NMME archive index was retrieved ({res.size} bytes) "
+                         f"but no run directory was recognised on it, so the newest "
+                         f"archived run is not published this run. The markup excerpt "
+                         f"in data/model_guidance.json shows what the page contains.",
+                         {"url": page["url"], "anchors_seen": len(anchors)})
         else:
             entry["error"] = res.error or f"HTTP {res.status}"
             note("warning",
@@ -289,7 +390,9 @@ def build(assetsdir=Path("assets/model_guidance"), datadir=Path("data"),
                     reason = ("the archive page was retrieved but listed no run "
                               "directories on this pass, so there was nothing to "
                               "probe - if NOAA changed the layout of that page, "
-                              "ARCHIVE_ROW_RE needs updating")
+                              "the archive-listing parser needs updating, and the "
+                              "markup excerpt published with the archive page shows "
+                              "what it now contains")
                 else:
                     reason = (f"the archive page could not be retrieved "
                               f"({arch.get('error') or 'HTTP ' + str(arch.get('http_status'))}), "
