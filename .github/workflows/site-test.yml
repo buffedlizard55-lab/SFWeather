@@ -30,13 +30,24 @@ on:
 permissions:
   contents: read
 
+# Runners are pinned to ubuntu-24.04 on purpose.  GitHub announced that the
+# ubuntu-latest label migrates from Ubuntu 24.04 to Ubuntu 26.04 gradually
+# between 19 October and 19 November 2026
+# (https://github.blog/changelog/2026-09-17-ubuntu-26-generally-available-and-latest-migration).
+# This project's nightly data refresh runs unattended through that window, so
+# the image must not change underneath it mid-season; the move to 26.04 is a
+# deliberate, verified migration for a later session.  The action majors below
+# are the lowest that declare `using: node24` in their own action.yml
+# (checkout@v5, setup-node@v5, setup-python@v6, upload-artifact@v6), read from
+# the tag rather than release notes: the Node 20 runtime is deprecated on
+# GitHub-hosted runners and the runners already force Node 24 with a warning.
 jobs:
   smoke:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
       - name: Install test-only dependencies from the lockfile
@@ -49,11 +60,11 @@ jobs:
         run: python3 pipeline/verify_sources.py
   parsers:
     # Offline: standard library only, no network, no third-party packages.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       - name: Parse and derive unit tests

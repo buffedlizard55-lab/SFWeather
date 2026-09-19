@@ -1,5 +1,99 @@
 # Next session — handoff
 
+## 1. State at the end of session 11 (19 Sep 2026 — stale-PR audit; falsify time bomb #2; printable executive summary; CI migration hardening)
+
+**Ledger:** **71 checks live**, 19 claims — all pass, 0 warnings (session 10's
+70 plus `executive-summary-traceable`). Verified in the sandbox after every
+change; the next full proof is the CI run this push triggers.
+
+**Tests:** `tests/test_parsers.py` **426/426** · `tests/falsify_guards.py`
+**65 cases** · `tests/falsify_smoke.py` **27 cases** · `npm test` (jsdom
+smoke, guards 1–30) passes.
+
+**What session 11 changed:**
+
+1. **PR #15 audit & closure.** Session 7's PR had been left open while
+   sessions 8–10 merged. Audited line by line: merging would have deleted
+   34,911 lines (8 sessions of verified work); the three headline features
+   (AFD scan, Census naming, per-field basis) are verifiably in main already.
+   Closed with the audit attached. Two of its never-merged commits describe
+   gaps that remain live (individual Census geography fields silently dropped
+   by `kvTable`; no `failed-fetches-explained` ledger check) — carried below
+   as follow-ups, deliberately not rebuilt in the same session that closed
+   the PR, so each gets its own tests.
+2. **Bug 71 — falsify time bomb #2.** The "README quotes a horizon date"
+   case hard-coded 2026-09-29, which became a real CPC 8–14 day end date on
+   19 Sep, silently turning the mutation into a no-op pass. The case now
+   computes a date provably absent from the ledger's own vocabulary; the
+   README-figure case asserts its mutation target exists before replacing.
+   See `docs/VERIFICATION.md` session 11.
+3. **Printable executive summary.** `pipeline/executive_summary.py` generates
+   `data/executive_summary.md`/`.json` from the committed datasets on every
+   run (new workflow step, `EXEC_SUMMARY_EXIT=0` in the publish gate); every
+   figure and link is copied from the datasets, thresholds derived from the
+   dataset's own key names; ledger check + 7 offline assertions + 2
+   falsification cases. The dashboard callout and README link it.
+4. **CI migration hardening.** Runners pinned `ubuntu-24.04` (ubuntu-latest
+   migrates to Ubuntu 26.04 between 19 Oct and 19 Nov 2026 per GitHub's
+   2026-09-17 changelog); actions bumped to the lowest node24 majors, read
+   from each action.yml at the tag (checkout@v5, setup-node@v5,
+   setup-python@v6, upload-artifact@v6).
+5. **Live re-verification (~20:40 UTC).** NWS forecast PoPs (13 periods),
+   ONI `JJA 2026 +1.80`, ENSO Advisory status + 8 Oct next-issuance date, and
+   all three caveat quotes in fxus05 re-checked against the live official
+   pages: exact matches, table in `docs/VERIFICATION.md` session 11.
+6. **CPC archive probe (bounded).** `llarc.php` is alive and validating input
+   ("Bad month entry" responses), per-month GIF outlooks live at
+   `products/archives/long_lead/gifs/YYYY/YYYYMMmonth.gif` back to 1997
+   (graphics, not sampleable), `data/YYYY/` tree exists (live dir 403). The
+   form's parameter names are still unknown → back-test stays
+   `pending-backfill`.
+
+**Watch items for the next session (unchanged, now nearer):**
+
+* **8 October 2026** — next ENSO Diagnostic Discussion. Confirm the nightly
+  run picks it up; the diagnostic_status/synopsis should change only if CPC
+  changes them.
+* **Mid-late October 2026** — next long-lead outlook + prognostic discussion.
+  NOAA's own words (quoted on the site): probabilities "may be increased
+  further". After that issuance the caveat card's `not_found` list will grow
+  as CPC rewrites sentences — designed behaviour, not a bug
+  (`docs/LIMITATIONS.md` §19).
+* **19 Oct – 19 Nov 2026** — the ubuntu-latest migration window. This repo is
+  pinned to ubuntu-24.04, so nothing should change; if a nightly run shows
+  OS-related irregularities anyway, that is the first place to look. The
+  deliberate migration to ubuntu-26.04 is an open item below.
+
+## Priorities for session 12 (as of 19 Sep 2026, end of session 11)
+
+1. **CPC issuance watches (8 Oct + mid-late Oct)** — low effort, time-critical,
+   nothing to code unless a pattern breaks (see watch items above).
+2. **Multi-ZIP support.** The pipeline is parameterised by coordinate; what
+   remains is (a) a ZIP→centroid manifest derived from the same Census
+   Gazetteer fetch the pipeline already performs (one fetch, all SF ZIPs),
+   (b) running the per-point tiers for each selected ZIP in the nightly job,
+   (c) a front-end picker. Opened in session 8, still open.
+3. **Wind successor stitching (GHCNh/SSODv2).** The nightly probes keep
+   recording coverage; stitching moves every published 1991–2020 wind
+   statistic, so it stays a maintainer decision.
+4. **CPC back-test archive.** Next attempt: inspect the raw HTML of
+   `llarc.ind.php` from a real browser (the markdown render strips the form
+   field names) or POST `llarc.php` with candidate parameter names; the GIF
+   archive is mapped but not sampleable by `lib_shape`.
+5. **The two PR-15 follow-ups**: explicit "not returned" rows for individual
+   Census geography fields (latent bug-49 path in `kvTable` callers), and a
+   `failed-fetches-explained` ledger check (every failed, non-expected-absent
+   fetch must carry an explanation that renders).
+6. **Surface the ENSO strength probabilities.** The archived discussion
+   already carries CPC's ">90% chance of a very strong event" and "75% chance
+   of a historic event (+2.5 °C or more)" sentences in
+   `data/enso.json::diagnostic_key_sentences`; promoting them into the outlook
+   strip needs a pattern + falsification tests like the caveat quotes.
+7. **Deliberate ubuntu-26.04 migration** after the window opens: test both
+   workflows on `ubuntu-26.04`, then unpin.
+
+---
+
 ## 1. State at the end of session 10 (19 Sep 2026 — review of merged main; bug 70; outlook caveats, verbatim)
 
 **Ledger:** **70 checks live**, 19 claims — all pass, 0 warnings (session 9's 69

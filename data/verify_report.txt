@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-19T19:42:17Z
+generated_utc: 2026-09-19T20:44:40Z
 
-checks: 70 passed, 0 failed, 0 warning(s)  (of 70)
+checks: 71 passed, 0 failed, 0 warning(s)  (of 71)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         189 recorded fetches (187 unique URLs)
@@ -103,6 +103,8 @@ checks: 70 passed, 0 failed, 0 warning(s)  (of 70)
         all README table figures matched a published value
 [PASS] docs-current-dates-traceable: Any date in the documentation that could be read as the current NWS forecast horizon is a date this run actually published
         no documentation date near 2026-09-19 contradicts the published window ['2026-08-20', '2026-09-17', '2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-27', '2026-09-29', '2026-10-03', '2026-10-16']
+[PASS] executive-summary-traceable: The printable executive summary is machine-generated from the datasets and carries no invented figures or links
+        stamp 2026-09-19T19:36:55Z present, all 6 driver titles and all 19 links trace to the datasets
 [PASS] wind-rain-hourly-arithmetic: The hour-by-hour wind+rain figures equal the arithmetic over the per-season values, over exactly the seasons published as used
         30 season(s) used, 5 excluded and named; mean days with a simultaneous hour 7.9
 [PASS] wind-rain-hourly-traceable: The hourly wind+rain statistic names the station and the fetched ISD archive it was computed from

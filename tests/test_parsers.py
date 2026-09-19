@@ -2812,6 +2812,88 @@ check("a missing manifest directory fails rather than passing silently",
       _code == 1 and "no provenance manifest" in _out, _out[-200:])
 
 
+# --------------------------------------------------------------------------- #
+# executive_summary.py: the printable summary is machine-generated, so prose
+# can never drift from the dataset (the bug-40 lesson).  These tests pin the
+# three properties that make hand edits impossible to publish: same generation
+# stamp, same cost-driver titles, and not one figure or link that the source
+# datasets do not already contain.
+# --------------------------------------------------------------------------- #
+
+import re as _re_es
+import shutil as _shutil_es
+import subprocess as _subprocess_es
+import tempfile as _tempfile_es
+
+import executive_summary  # noqa: E402
+
+_es_md, es_structured = executive_summary.build_markdown()
+_es_landlord = json.loads(
+    pathlib.Path(ROOT, "data", "landlord.json").read_text(encoding="utf-8"))
+
+_es_driver_titles = [d.get("driver") for d in
+                     sorted(((_es_landlord.get("executive_summary") or {})
+                             .get("cost_drivers") or []),
+                            key=lambda x: x.get("rank") or 0)]
+check("the executive summary publishes every cost driver, in rank order",
+      _es_driver_titles and
+      all(t in _es_md for t in _es_driver_titles) and
+      _es_md.index(_es_driver_titles[0]) < _es_md.index(_es_driver_titles[-1]),
+      f"{len(_es_driver_titles)} drivers; missing: "
+      f"{[t for t in _es_driver_titles if t not in _es_md][:3]}")
+
+_es_stamp = _es_landlord.get("generated_utc") or ""
+check("the executive summary carries the dataset's own generation stamp",
+      bool(_es_stamp) and _es_stamp in _es_md,
+      f"stamp={_es_stamp!r}")
+
+_es_sources = "".join(
+    pathlib.Path(ROOT, "data", n).read_text(encoding="utf-8")
+    for n in ("landlord.json", "run.json", "calendar.json", "cpc.json",
+              "nws.json") if pathlib.Path(ROOT, "data", n).exists())
+_es_urls = sorted(set(_re_es.findall(r"https?://[^\s)\]>\"']+", _es_md)))
+_es_invented = [u for u in _es_urls if u not in _es_sources]
+check("every link in the executive summary appears in a source dataset",
+      bool(_es_urls) and not _es_invented,
+      f"{len(_es_urls)} links; invented: {_es_invented[:4]}")
+
+_es_numbers = sorted(set(_re_es.findall(r"\d+(?:\.\d+)?", _es_md)))
+_es_invented_numbers = [n for n in _es_numbers if n not in _es_sources]
+check("every figure in the executive summary appears in a source dataset",
+      bool(_es_numbers) and not _es_invented_numbers,
+      f"{len(_es_numbers)} numeric tokens; invented: {_es_invented_numbers[:8]}")
+
+check("the structured mirror carries the same drivers as the markdown",
+      [d.get("driver") for d in (es_structured.get("cost_drivers") or [])]
+      == [d.get("driver") for d in
+          ((_es_landlord.get("executive_summary") or {}).get("cost_drivers") or [])],
+      "driver lists compared")
+
+# The generator must fail loudly rather than publish a half-built document.
+with _tempfile_es.TemporaryDirectory() as _es_empty:
+    _env_es = dict(os.environ, SFWEATHER_DATA=_es_empty)
+    _proc_es = _subprocess_es.run(
+        [sys.executable, os.path.join(ROOT, "pipeline", "executive_summary.py")],
+        env=_env_es, capture_output=True, text=True, timeout=120)
+    check("the executive summary generator refuses to build without its inputs",
+          _proc_es.returncode == 1 and "landlord.json" in (_proc_es.stderr + _proc_es.stdout),
+          f"exit={_proc_es.returncode} out={(_proc_es.stderr + _proc_es.stdout)[-200:]}")
+
+# And against real data it must write both artifacts into the data directory.
+with _tempfile_es.TemporaryDirectory() as _es_copy:
+    for _f in pathlib.Path(ROOT, "data").glob("*.json"):
+        _shutil_es.copy2(_f, os.path.join(_es_copy, _f.name))
+    _env_es = dict(os.environ, SFWEATHER_DATA=_es_copy)
+    _proc_es = _subprocess_es.run(
+        [sys.executable, os.path.join(ROOT, "pipeline", "executive_summary.py")],
+        env=_env_es, capture_output=True, text=True, timeout=120)
+    check("the executive summary generator writes markdown and JSON mirrors",
+          _proc_es.returncode == 0
+          and os.path.exists(os.path.join(_es_copy, "executive_summary.md"))
+          and os.path.exists(os.path.join(_es_copy, "executive_summary.json")),
+          f"exit={_proc_es.returncode} out={(_proc_es.stderr + _proc_es.stdout)[-200:]}")
+
+
 passed = sum(1 for _n, ok, _d in RESULTS if ok)
 failed = [(n, d) for n, ok, d in RESULTS if not ok]
 print("\n%d/%d checks passed" % (passed, len(RESULTS)))

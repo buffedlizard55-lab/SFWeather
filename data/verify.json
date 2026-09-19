@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-19T19:42:17Z",
+  "generated_utc": "2026-09-19T20:44:40Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,8 +9,8 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 70,
-    "passed": 70,
+    "total": 71,
+    "passed": 71,
     "failed": 0,
     "warnings": 0,
     "failed_checks": [],
@@ -753,6 +753,18 @@
           "2026-10-03",
           "2026-10-16"
         ]
+      }
+    },
+    {
+      "id": "executive-summary-traceable",
+      "title": "The printable executive summary is machine-generated from the datasets and carries no invented figures or links",
+      "status": "pass",
+      "detail": "stamp 2026-09-19T19:36:55Z present, all 6 driver titles and all 19 links trace to the datasets",
+      "evidence": {
+        "stamp": "2026-09-19T19:36:55Z",
+        "missing_titles": [],
+        "invented_urls": [],
+        "url_count": 19
       }
     },
     {
