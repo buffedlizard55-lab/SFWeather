@@ -188,6 +188,49 @@ Sunset" as a municipal unit; it covers the ZCTA centroid and names the geography
 the Census reports. If the geocoder is unreachable on a run, no name is printed —
 the card says the geography was not retrieved and the irregularity is recorded.
 
+### 17. Model guidance is archived, not interpreted
+The NMME tier gives a reader NOAA's own ensemble maps and NOAA's own explanation of
+what the contours mean. It deliberately stops there:
+
+* **No value is read out of an image.** Transcribing "41 % above" from a pixel would
+  be a number this project cannot trace to a fetched field, so it does not exist here.
+* **No GRIB2 or netCDF is decoded.** Decoding the raw archive would need a
+  third-party library this project does not take (the pipeline is standard library
+  only, so any reviewer can run it), and a decoded field re-gridded to one ZIP code
+  would be a *new forecast* — one that could not be checked against a published
+  official product, which is the standard everything else on the site meets. The
+  archive's location, its newest run and CPC's own coverage label are recorded
+  instead, with `decoded: false` on every probe.
+* **No ensemble is converted into a probability for 94122.** NMME grids are
+  continental; the polygons CPC publishes for the official outlook are already
+  sampled point-in-polygon, with their geometry published. Doing the same to raw
+  model output would produce a number with no official product to compare it to.
+* **Skill is linked, not summarised.** NOAA publishes RPSS maps and real-time
+  verification for these ensembles; the site links them next to the maps rather than
+  restating a skill score in this project's own words.
+
+If a future session wants model numbers on the page, the honest route is to quote a
+value NOAA itself publishes in text or a machine-readable field — not to read one
+off a picture.
+
+### 18. The product feed is a re-presentation, not a new source
+`data/feed.json` makes no network request: every row is assembled from a dataset
+that already came from a recorded fetch. So the feed can be no more current, and no
+more complete, than the datasets behind it — and it inherits their limits:
+
+* A row's date is the publisher's date. Where NOAA printed a date with no clock time
+  (CPC issue dates), the row is **date-only** and says so; where NOAA printed
+  neither, the row is listed **undated**. Nothing is given a timestamp it did not
+  carry, which means the ordering of same-date rows is not meaningful.
+* Some rows link a human-facing page (`forecast.weather.gov/MapClick.php`, an alert
+  object's `@id`) that this project did not fetch. Each is labelled
+  `provenance_verified: false` with the `evidence_url` that *was* fetched, so a
+  reader can follow it without the site implying it was verified.
+* The feed covers only what the pipeline publishes. A NOAA product this project does
+  not retrieve — a different office's discussion, a marine forecast, a river
+  statement — simply is not in it, and absence from the feed is not evidence that
+  NOAA published nothing.
+
 ---
 
 ## Recommended next work, in priority order

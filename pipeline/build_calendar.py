@@ -268,30 +268,76 @@ def season_months(token):
     return None
 
 
+def parse_season_year(year_field):
+    """Split a CPC year field into ``(start_year, end_year_or_None)``.
+
+    CPC writes the year of a seasonal outlook two ways: ``2026`` for a season
+    inside one calendar year, and ``2026-2027`` (sometimes ``2026/2027``) for a
+    season that crosses New Year - which is exactly what the rainy-season
+    outlooks ``NDJ`` and ``DJF`` do.  A parser that only understood the first
+    form returned no months at all for the second, so those outlooks were
+    sampled, printed in the season table and then attached to *no day*: opening
+    15 December showed the OND outlook but not the DJF one covering it.
+
+    Returns ``(None, None)`` for anything malformed, including a two-year label
+    whose years are not consecutive - a misread label must yield nothing rather
+    than a wrong set of months.
+    """
+    if year_field is None:
+        return None, None
+    s = str(year_field).strip()
+    if not s:
+        return None, None
+    m = re.fullmatch(r"(\d{4})(?:\s*[-/]\s*(\d{4}))?", s)
+    if not m:
+        return None, None
+    y1 = int(m.group(1))
+    if m.group(2) is None:
+        return y1, None
+    y2 = int(m.group(2))
+    if y2 != y1 + 1:
+        return None, None
+    return y1, y2
+
+
 def parse_season_key(valid_season, stem):
     """Turn a CPC 'Valid_Seas' string into the (year, month) pairs it covers.
 
-    CPC writes 3-month seasons in upper case (``OND 2026``) and single months
-    in mixed case (``Sep 2026``); the shapefile stem repeats the same
-    convention (``lead2_OND_prcp`` vs ``lead14_Sep_prcp``).
+    CPC writes 3-month seasons in upper case (``OND 2026``, and ``NDJ
+    2026-2027`` when the season crosses New Year) and single months in mixed
+    case (``Sep 2026``); the shapefile stem repeats the same convention
+    (``lead2_OND_prcp`` vs ``lead14_Sep_prcp``).
+
+    A two-year label is accepted only for a season that actually crosses New
+    Year, and a season that crosses New Year keeps its historical single-year
+    reading (``NDJ 2026`` = Nov 2026 - Jan 2027).  A contradiction between the
+    label and the season means the label was misread, so nothing is returned
+    rather than a plausible-looking wrong set of months.
     """
     if not valid_season:
         return None, None
-    parts = valid_season.split()
+    parts = str(valid_season).split()
     if len(parts) < 2:
         return None, None
-    token, year_s = parts[0], parts[1]
-    try:
-        year = int(year_s)
-    except ValueError:
+    token = parts[0]
+    year, year2 = parse_season_year(" ".join(parts[1:]))
+    if year is None:
         return None, None
 
     if token.isupper():
         triple = season_months(token)
         if triple:
             start = triple[0]
-            return [(year + (1 if m < start else 0), m) for m in triple], "season"
-    # mixed-case (or word) single month, e.g. "Sep"
+            crosses = any(m < start for m in triple)
+            pairs = [(year + (1 if m < start else 0), m) for m in triple]
+            # A declared end year must agree with what the season shape implies.
+            if year2 is not None and year2 != year + (1 if crosses else 0):
+                return None, None
+            return pairs, "season"
+        return None, None
+    # mixed-case (or word) single month, e.g. "Sep" - never spans two years
+    if year2 is not None:
+        return None, None
     if token.upper()[:3] in MONTH_ABBR:
         return [(year, MONTH_ABBR[token.upper()[:3]])], "month"
     return None, None

@@ -188,6 +188,50 @@ formula, per calendar date, and is labelled as a derivation everywhere it appear
 (the day dialog states the station and the method). Where the file is unavailable,
 the field is left empty — the pipeline never estimates a missing number.
 
+## 5. NOAA CPC NMME &mdash; model guidance, **not an official forecast**
+
+Retrieved by `pipeline/model_guidance.py` into `data/model_guidance.json`, with its
+own manifest (`data/model_guidance_provenance.json`) and its own site section.
+
+| What | Where | How it is used |
+| --- | --- | --- |
+| NMME probability forecast index | <https://www.cpc.ncep.noaa.gov/products/NMME/probindex.shtml> | The page states the period the maps cover ("For: &hellip;"). That string is quoted verbatim; this project never derives a month range from a filename. |
+| How to read the maps | <https://www.cpc.ncep.noaa.gov/products/NMME/NMME_PROB_descr.html> | Definition sentences (ensemble size and weighting, terciles, the &gt;38 % / &lt;33 % contour rule, hindcast-derived tercile limits) are copied verbatim and re-checked as substrings of the fetched text on every run. **The page is CP1252**, so it is decoded with the publisher's own encoding; decoding it as UTF-8-with-replacement would turn its typographic quotes into U+FFFD and break the substring check. |
+| Seasonal probability maps (precipitation rate, 2 m temperature) | <https://www.cpc.ncep.noaa.gov/products/NMME/prob/usPROBprate.S.html>, <https://www.cpc.ncep.noaa.gov/products/NMME/prob/usPROBtmp2m.S.html> | The full-size PNGs are downloaded to `assets/model_guidance/` and stored with their byte count and SHA-256, so the picture a reader sees cannot change afterwards. Thumbnails are skipped. **No value is read out of an image.** |
+| Skill (RPSS) and real-time verification | <https://www.cpc.ncep.noaa.gov/products/NMME/prob/rpss.probindex.html>, <https://www.cpc.ncep.noaa.gov/products/NMME/verif/index.html> | Linked next to the maps so they are not read as more skilful than NOAA's own verification says they are. |
+| Raw real-time archive | <https://ftp.cpc.ncep.noaa.gov/NMME/archive/> | Monthly run directories back to 2019, each labelled by CPC with the period it covers. The newest directory is recorded with NOAA's own label. **The GRIB2/netCDF inside is not decoded** (see LIMITATIONS §17). |
+| CFSv2 production output (NOMADS) | <https://nomads.ncep.noaa.gov/pub/data/nccf/com/cfs/prod/> | Probed for availability only. If it does not answer, the location is reported as not reachable and is not published as a working link. |
+
+All six hosts are on the vetted allow-list. The tier carries a warning that renders
+before any content and again on every item, and `model-guidance-isolation` fails the
+build if a model-guidance field ever reaches `calendar.json` or `landlord.json`.
+
+## 6. The official-product feed &mdash; derived, no new sources
+
+`data/feed.json` (built by `pipeline/build_feed.py`) makes **no network request at
+all**. It is a chronological re-presentation of the datasets above: NWS forecast
+issuances and periods, NWS alerts, the Area Forecast Discussion quotations, CPC
+outlook issue dates and archived shapefiles/maps, the CPC back-test, the ISD
+successor search, the storm-watch digest and every recorded fetch with its status
+and SHA-256.
+
+Two distinctions keep it honest:
+
+* **`url` vs `evidence_url`.** `url` is the link the reader gets; `evidence_url` is
+  the URL whose recorded fetch justifies the row's content. They differ for NWS's
+  human-facing pages (`forecast.weather.gov/MapClick.php`, an alert object's
+  `@id`), which are linked for convenience but were never fetched themselves. Each
+  row publishes `link_verified` and `provenance_verified`; a row with neither is
+  labelled a pointer for manual review and raises a warning.
+* **Dates the publisher did not give are not invented.** A CPC issue date printed as
+  `18 Sep 2026` becomes a **date with no clock time** (`time_known: false`, the
+  publisher's own wording kept beside it); a product with no issue date is listed
+  undated; a timestamp that will not parse is dropped with a warning rather than
+  guessed at.
+
+Model-guidance rows carry `official: false` and the tier's warning into the same
+list, so the difference is visible where a reader might otherwise blur it.
+
 ## Explicitly excluded
 
 | Provider | Why |

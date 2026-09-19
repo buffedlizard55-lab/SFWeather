@@ -23,6 +23,7 @@ do not fail the build.
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import json
 import re
 import statistics
@@ -36,6 +37,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # would otherwise shadow the module - the same trap already hit
 # build_calendar.py.
 import climo as climo_lib  # noqa: E402
+import lib_provenance as provlib  # noqa: E402
+import model_guidance as mg_lib  # noqa: E402
 from build_digest import POP_THRESHOLD_PCT  # noqa: E402
 # The Rain-related event-type set and the damage parser are used by the
 # storm-event recount below; importing them keeps one definition in the project
@@ -2201,6 +2204,428 @@ def main() -> int:
                        f"GHCNh probe ok={(ghcnh_probe or {}).get('station_list_ok')}")
                       if not sp_problems else "; ".join(sp_problems[:6])),
                      evidence={"problems": sp_problems[:10]})
+
+    # ============================== 13. the auxiliary tiers, line by line =====
+    # Everything below covers datasets a separate script publishes.  Each is held
+    # to the rules the nightly pipeline is held to: quoted words must be the
+    # publisher's words, coverage must be complete or explicitly absent, links
+    # must be vetted hosts, and a tier that is not an official forecast must stay
+    # out of the scoreboard.
+
+    aux_entries = provlib.load_entries(DATA)
+    aux_manifests = [p.name for p in provlib.manifest_paths(DATA)]
+    aux_only = [e for e in aux_entries
+                if e.get("manifest") and e["manifest"] != provlib.PRIMARY]
+
+    # ---- 13a. CPC coverage is complete, month by month and day by day --------
+    # The bug this check exists for: a season that crosses New Year ("NDJ
+    # 2026-2027") was once parsed as a single calendar year, so records stopped
+    # being attached to the days they actually covered and whole months were
+    # silently under-covered.  Under-coverage is invisible on the page - the day
+    # simply shows fewer outlooks - so it is recounted here from the master list.
+    cpc_master = [r for r in ((cal.get("cpc") or {}).get("records") or [])
+                  if isinstance(r, dict)]
+    cal_days = [d for d in (cal.get("days") or []) if isinstance(d, dict) and d.get("date")]
+    season_months = sorted({d["date"][:7] for d in cal_days})
+
+    def _cpc_key(r):
+        return (r.get("url"), r.get("stem"))
+
+    no_coverage = [r for r in cpc_master
+                   if not (r.get("covers") or (r.get("start_date") and r.get("end_date")))]
+    bad_months = [r for r in cpc_master
+                  if any(not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", str(m))
+                         for m in (r.get("covers") or []))]
+    half_range = [r for r in cpc_master
+                  if bool(r.get("start_date")) != bool(r.get("end_date"))]
+    ledger.check("cpc-record-coverage-declared",
+                 "Every CPC record declares its coverage exactly one way: month keys, or a "
+                 "start and end date",
+                 bool(cpc_master) and not (no_coverage or bad_months or half_range),
+                 (f"{len(cpc_master)} records: "
+                  f"{sum(1 for r in cpc_master if r.get('covers'))} month-covered, "
+                  f"{sum(1 for r in cpc_master if r.get('start_date'))} date-ranged")
+                 if not (no_coverage or bad_months or half_range) else
+                 f"{len(no_coverage)} record(s) with no coverage at all "
+                 f"{[r.get('stem') for r in no_coverage][:4]}; "
+                 f"{len(bad_months)} with a malformed month key; "
+                 f"{len(half_range)} with only one of start/end date",
+                 evidence={"no_coverage": [_cpc_key(r) for r in no_coverage][:6],
+                           "bad_months": [_cpc_key(r) for r in bad_months][:6]})
+
+    month_set = {m: {_cpc_key(r) for r in cpc_master if m in (r.get("covers") or [])}
+                 for m in season_months}
+    coverage_problems, uncovered_days = [], []
+    for day in cal_days:
+        date, month = day["date"], day["date"][:7]
+        expected = set(month_set.get(month) or ())
+        expected |= {_cpc_key(r) for r in cpc_master
+                     if r.get("start_date") and r.get("end_date")
+                     and r["start_date"] <= date <= r["end_date"]}
+        attached = {_cpc_key(x) for x in (day.get("cpc") or []) if isinstance(x, dict)}
+        if attached != expected:
+            coverage_problems.append(
+                {"date": date, "missing": sorted(expected - attached)[:4],
+                 "unexpected": sorted(attached - expected)[:4]})
+        for rec in (day.get("cpc") or []):
+            if not isinstance(rec, dict):
+                continue
+            inside_month = month in (rec.get("covers") or [])
+            inside_range = bool(rec.get("start_date") and rec.get("end_date")
+                                and rec["start_date"] <= date <= rec["end_date"])
+            if not (inside_month or inside_range):
+                uncovered_days.append({"date": date, "stem": rec.get("stem"),
+                                       "covers": rec.get("covers"),
+                                       "start_date": rec.get("start_date"),
+                                       "end_date": rec.get("end_date")})
+    months_with_no_outlook = [m for m in season_months if not month_set.get(m)]
+    ledger.check("cpc-season-covers-complete",
+                 "Every day of the season carries exactly the CPC records that cover it - no "
+                 "month is silently under-covered, and no record is attached to a day it does "
+                 "not cover",
+                 not coverage_problems and not uncovered_days and not months_with_no_outlook,
+                 (f"{len(cal_days)} days x {len(cpc_master)} records checked; per-month "
+                  f"attachment counts "
+                  f"{ {m: sum(len(d.get('cpc') or []) for d in cal_days if d['date'][:7] == m) for m in season_months} }")
+                 if not (coverage_problems or uncovered_days or months_with_no_outlook) else
+                 f"{len(coverage_problems)} day(s) with the wrong set attached, "
+                 f"{len(uncovered_days)} attachment(s) outside their coverage, "
+                 f"month(s) with no outlook at all: {months_with_no_outlook}",
+                 evidence={"problems": coverage_problems[:6],
+                           "uncovered": uncovered_days[:6],
+                           "month_set_sizes": {m: len(v) for m, v in month_set.items()}})
+
+    # A record whose coverage lies entirely outside the season must not be
+    # attached anywhere, and a seasonal record must reach every day it covers.
+    outside_attached = [
+        {"stem": r.get("stem"), "covers": r.get("covers")}
+        for r in cpc_master
+        if r.get("covers") and not (set(r["covers"]) & set(season_months))
+        and any(_cpc_key(r) in {_cpc_key(x) for x in (d.get("cpc") or [])
+                               if isinstance(x, dict)} for d in cal_days)]
+    per_record_days = {
+        _cpc_key(r): sum(1 for d in cal_days
+                         if any(_cpc_key(x) == _cpc_key(r)
+                                for x in (d.get("cpc") or []) if isinstance(x, dict)))
+        for r in cpc_master if r.get("covers")}
+    short = {k[1]: {"attached_to_days": v,
+                    "days_it_covers": sum(len([d for d in cal_days if m == d["date"][:7]])
+                                          for m in (next(r for r in cpc_master
+                                                        if _cpc_key(r) == k).get("covers") or []))}
+             for k, v in per_record_days.items()}
+    thin = {k: v for k, v in short.items() if v["attached_to_days"] != v["days_it_covers"]}
+    ledger.check("cpc-record-reach",
+                 "Each month/season CPC record reaches every day it covers, and records that "
+                 "cover nothing in this season are attached to no day",
+                 not outside_attached and not thin,
+                 (f"{len(per_record_days)} month/season records each attached to all the days "
+                  f"they cover; {sum(1 for r in cpc_master if r.get('start_date'))} short-range "
+                  f"records attached only inside their date range")
+                 if not (outside_attached or thin) else
+                 f"{len(outside_attached)} out-of-season record(s) attached; "
+                 f"{len(thin)} record(s) attached to fewer days than they cover",
+                 evidence={"outside": outside_attached[:5], "thin": dict(list(thin.items())[:5])})
+
+    # ---- 13b. auxiliary manifests are vetted and evidenced -------------------
+    bad_hosts, thin_rows, anonymous = [], [], []
+    for entry in aux_only:
+        url = entry.get("url") or ""
+        host = host_of(url)
+        if host not in OFFICIAL_HOSTS:
+            bad_hosts.append((entry.get("manifest"), host, url))
+        if entry.get("ok") and not (isinstance(entry.get("http_status"), int)
+                                    and 200 <= entry["http_status"] < 300
+                                    and isinstance(entry.get("bytes"), int)
+                                    and entry["bytes"] > 0 and entry.get("sha256")):
+            thin_rows.append((entry.get("manifest"), url))
+    for path in provlib.manifest_paths(DATA):
+        if path.name == provlib.PRIMARY:
+            continue
+        try:
+            obj = json.loads(path.read_text())
+        except Exception:  # noqa: BLE001
+            anonymous.append((path.name, "not valid JSON"))
+            continue
+        if obj.get("area") != path.name[: -len(provlib.SUFFIX)]:
+            anonymous.append((path.name, f"area says {obj.get('area')!r}"))
+        if not obj.get("note"):
+            anonymous.append((path.name, "no note describing what the script fetched"))
+    ledger.check("auxiliary-manifests-vetted",
+                 "Every fetch recorded by an auxiliary script is on a vetted official HTTPS "
+                 "host and carries status, byte count and SHA-256, and every auxiliary "
+                 "manifest names its area and purpose",
+                 not (bad_hosts or thin_rows or anonymous),
+                 (f"{len(aux_manifests)} manifest file(s): "
+                  f"{', '.join(aux_manifests)}; {len(aux_only)} auxiliary fetch record(s)")
+                 if not (bad_hosts or thin_rows or anonymous) else
+                 f"{len(bad_hosts)} non-vetted host(s); {len(thin_rows)} successful row(s) "
+                 f"without evidence; {len(anonymous)} manifest(s) mislabelled",
+                 evidence={"bad_hosts": bad_hosts[:6], "thin_rows": thin_rows[:6],
+                           "manifests": anonymous[:6]})
+
+    # The nightly counts published in run.json must describe the primary manifest
+    # alone, and a fetch must not be recorded twice (once by the pipeline, once by
+    # an auxiliary script), which would double-count it in the totals above.
+    primary_rows = [e for e in aux_entries if e.get("manifest") == provlib.PRIMARY]
+
+    def _row_id(e):
+        return (e.get("url"), e.get("retrieved_utc"), e.get("sha256"))
+
+    primary_ids = {_row_id(e) for e in primary_rows}
+    double_recorded = sorted({_row_id(e)[0] for e in aux_only if _row_id(e) in primary_ids})
+    published_counts = run.get("counts") or {}
+    counts_describe_primary = (published_counts.get("manifest_entries") == len(primary_rows)
+                               or not published_counts)
+    separation_problems = []
+    if double_recorded:
+        separation_problems.append(
+            f"{len(double_recorded)} fetch(es) recorded in both the nightly manifest and an "
+            f"auxiliary one: {double_recorded[:3]}")
+    if not counts_describe_primary:
+        separation_problems.append(
+            f"run.json publishes {published_counts.get('manifest_entries')} manifest rows but "
+            f"data/provenance.json holds {len(primary_rows)} - the published total no longer "
+            f"describes the nightly manifest alone")
+    ledger.check("auxiliary-manifests-separate",
+                 "Auxiliary scripts keep their fetches in their own manifest: nothing is "
+                 "double-recorded, and run.json's published total still recounts from "
+                 "data/provenance.json alone",
+                 not separation_problems,
+                 (f"{len(primary_rows)} nightly row(s) and {len(aux_only)} auxiliary row(s) "
+                  f"across {len(aux_manifests)} manifest file(s), no overlap")
+                 if not separation_problems else "; ".join(separation_problems),
+                 evidence={"problems": separation_problems[:4],
+                           "primary": len(primary_rows), "aux": len(aux_only),
+                           "manifest_files": aux_manifests})
+
+    # ---- 13c. model guidance stays a separate, loudly-labelled tier ----------
+    mg_data = load("model_guidance.json")
+    if not mg_data:
+        ledger.check("model-guidance-isolation",
+                     "Model guidance, if published, is flagged as not an official forecast "
+                     "and kept out of the scoreboard",
+                     True,
+                     "data/model_guidance.json is not published by this run; the site must "
+                     "then show the model-guidance section as not yet built, and no model "
+                     "value can have reached the scoreboard",
+                     severity="warning")
+    else:
+        warn_text = (mg_data.get("warning") or "")
+        isolation_problems = []
+        if mg_data.get("merged_into_scoreboard") is not False:
+            isolation_problems.append("merged_into_scoreboard is not false")
+        if mg_data.get("not_an_official_forecast") is not True:
+            isolation_problems.append("not_an_official_forecast is not true")
+        if "NOT AN OFFICIAL FORECAST" not in warn_text.upper():
+            isolation_problems.append("the warning does not say it is not an official forecast")
+        if "scoreboard" not in warn_text.lower():
+            isolation_problems.append("the warning does not say the values are not in the scoreboard")
+        if mg_data.get("tier") != "model-guidance":
+            isolation_problems.append(f"tier is {mg_data.get('tier')!r}")
+        # Nothing in the day-by-day data may *be* model guidance.  A raw token
+        # scan is the wrong test for that: CPC's own prognostic discussion says
+        # the official outlook was made using NMME and CFSv2, and this project
+        # quotes that discussion verbatim, so the word appears legitimately
+        # inside a quoted official document.  What must never appear is a model
+        # field or a model value of this project's own making - so the walk below
+        # distinguishes a mention inside publisher text from a mention anywhere
+        # else, and separately rejects any model-shaped key on a day cell.
+        QUOTED_TEXT_KEYS = {"text", "sentence", "discussion", "language", "statement",
+                            "quote", "quotes", "excerpt", "plain_text", "narrative",
+                            "verbatim_text", "product_text"}
+
+        def model_mentions(node, path=()):
+            if isinstance(node, dict):
+                for k, v in node.items():
+                    yield from model_mentions(v, path + (str(k),))
+            elif isinstance(node, list):
+                for i, v in enumerate(node):
+                    yield from model_mentions(v, path + (f"[{i}]",))
+            elif isinstance(node, str):
+                if re.search(r"\bNMME\b|model[- _]guidance", node, re.I):
+                    yield path, node
+
+        unquoted_mentions = []
+        for dataset_name, dataset in (("calendar.json", cal), ("landlord.json", landlord)):
+            for path, text in model_mentions(dataset):
+                last = (path[-1] if path else "").lower()
+                if last in QUOTED_TEXT_KEYS or last.endswith(("_text", "_quote", "_sentence")):
+                    continue
+                unquoted_mentions.append({"dataset": dataset_name,
+                                          "path": " > ".join(path)[-90:],
+                                          "text": text[:90]})
+        if unquoted_mentions:
+            isolation_problems.append(
+                f"{len(unquoted_mentions)} model-guidance mention(s) outside a quoted official "
+                f"document: {unquoted_mentions[0]['dataset']} "
+                f"{unquoted_mentions[0]['path']}")
+        day_keys = {k for d in cal_days for k in d}
+        model_day_keys = sorted(k for k in day_keys
+                                if re.search(r"model|nmme|guidance|ensemble", k, re.I))
+        if model_day_keys:
+            isolation_problems.append(f"day cells carry model fields: {model_day_keys}")
+        model_top_keys = sorted(k for k in list(cal) + list(landlord or {})
+                                if re.search(r"model|nmme", k, re.I))
+        if model_top_keys:
+            isolation_problems.append(f"a dataset carries a model-guidance block: {model_top_keys}")
+        per_item = [i for i in (mg_data.get("images") or []) + list((mg_data.get("pages") or {}).values())
+                    if isinstance(i, dict) and not i.get("warning")]
+        if per_item:
+            isolation_problems.append(f"{len(per_item)} guidance item(s) carry no warning of their own")
+        ledger.check("model-guidance-isolation",
+                     "Model guidance is flagged as not an official forecast, on the file and on "
+                     "every item, and no model value reaches the scoreboard or the landlord summary",
+                     not isolation_problems,
+                     (f"{len(mg_data.get('images') or [])} archived image(s), "
+                      f"{len(mg_data.get('pages') or {})} page(s); the scoreboard and the "
+                      f"landlord summary contain no model-guidance field")
+                     if not isolation_problems else "; ".join(isolation_problems[:6]),
+                     evidence={"problems": isolation_problems[:8],
+                               "unquoted_mentions": unquoted_mentions[:5],
+                               "counts": mg_data.get("counts")})
+
+        # ---- 13d. quoted NOAA wording is NOAA's wording ----------------------
+        quote_problems = []
+        pages = mg_data.get("pages") or {}
+        desc = pages.get("description") or {}
+        sentences = desc.get("verbatim_sentences") or []
+        source_text = mg_lib.collapse(desc.get("plain_text") or "")
+        for sent in sentences:
+            if mg_lib.collapse(sent) not in source_text:
+                quote_problems.append(f"not a substring of the fetched page: {sent[:80]!r}")
+        if sentences and not source_text:
+            quote_problems.append("quotes published without the page text that evidences them")
+        coverage = mg_data.get("coverage_verbatim")
+        index_text = mg_lib.collapse((pages.get("prob_index") or {}).get("plain_text") or "")
+        if coverage and coverage not in index_text:
+            quote_problems.append(f"coverage string {coverage!r} is not in the fetched index page")
+        ledger.check("model-guidance-quotes-verbatim",
+                     "The NMME wording published on the site is copied from NOAA's fetched "
+                     "description and index pages, character for character",
+                     not quote_problems and bool(sentences),
+                     (f"{len(sentences)} definition sentence(s) verified against the fetched "
+                      f"page text; coverage string verified")
+                     if not quote_problems and sentences else
+                     (f"{len(quote_problems)} quote(s) could not be verified: "
+                      f"{quote_problems[:3]}" if quote_problems
+                      else "no definition sentences were extracted"),
+                     severity="warning" if not sentences else "error",
+                     evidence={"problems": quote_problems[:5], "n_sentences": len(sentences)})
+
+        # a guidance link that was never fetched is a broken promise on the page;
+        # an archived image that is not on disk, or whose bytes are not the bytes
+        # that were hashed, is worse - it would be a picture nobody can check
+        mg_items = ([pg for pg in pages.values() if isinstance(pg, dict)]
+                    + [i for i in (mg_data.get("images") or []) if isinstance(i, dict)]
+                    + [pr for pr in (mg_data.get("probes") or []) if isinstance(pr, dict)])
+        published = [i for i in mg_items
+                     if i.get("ok") and str(i.get("url") or "").startswith("http")]
+        undisclosed = [i for i in mg_items if i.get("ok") is False and not i.get("error")]
+        unevidenced = sorted({i["url"] for i in published
+                              if host_of(i["url"]) in OFFICIAL_HOSTS
+                              and not any(e.get("url") == i["url"] and e.get("ok")
+                                          for e in aux_entries)})
+        bad_local = []
+        for item in mg_items:
+            local = item.get("local_path")
+            if not local:
+                continue
+            path = ROOT / local
+            if not path.exists():
+                bad_local.append(f"{local}: file is missing")
+                continue
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            if item.get("sha256") and digest != item["sha256"]:
+                bad_local.append(f"{local}: bytes hash {digest[:12]} != recorded "
+                                 f"{str(item['sha256'])[:12]}")
+        link_problems = []
+        if unevidenced:
+            link_problems.append(f"{len(unevidenced)} published guidance URL(s) with no "
+                                 f"successful fetch: {unevidenced[:3]}")
+        if undisclosed:
+            link_problems.append(f"{len(undisclosed)} guidance item(s) that failed to fetch "
+                                 f"publish no error, so a reader cannot tell they are missing")
+        if bad_local:
+            link_problems.append(f"{len(bad_local)} archived guidance image(s) cannot be "
+                                 f"checked: {bad_local[:2]}")
+        ledger.check("model-guidance-links-fetched",
+                     "Every model-guidance link published on the site was actually fetched with "
+                     "status, size and SHA-256 recorded; a fetch that failed says so; and every "
+                     "archived guidance image on the site is the image that was hashed",
+                     not link_problems,
+                     f"{len(published)} published guidance URL(s) all present in an auxiliary "
+                     f"manifest; {sum(1 for i in mg_items if i.get('local_path'))} archived "
+                     f"image(s) match their recorded hash"
+                     if not link_problems else "; ".join(link_problems[:4]),
+                     evidence={"problems": link_problems[:5], "unevidenced": unevidenced[:8],
+                               "bad_local": bad_local[:5]})
+
+    # ---- 13g. the feed: derived, dated and traceable -------------------------
+    feed_data = load("feed.json")
+    if not feed_data:
+        ledger.check("feed-traceable",
+                     "The official-product feed, if published, is derived and traceable",
+                     True,
+                     "data/feed.json is not published by this run",
+                     severity="warning")
+    else:
+        f_entries = feed_data.get("entries") or []
+        f_undated = feed_data.get("undated_entries") or []
+        fcounts = feed_data.get("counts") or {}
+        feed_problems = []
+        if fcounts.get("entries") != len(f_entries):
+            feed_problems.append(f"counts.entries {fcounts.get('entries')} vs {len(f_entries)} rows")
+        if (fcounts.get("official") or 0) + (fcounts.get("not_official") or 0) != len(f_entries):
+            feed_problems.append("official + not_official does not equal the number of entries")
+        stamps = [e.get("timestamp_utc") for e in f_entries if e.get("timestamp_utc")]
+        if stamps != sorted(stamps, reverse=True):
+            feed_problems.append("entries are not sorted newest first")
+        for item in f_entries:
+            ts, date = item.get("timestamp_utc"), item.get("date_utc")
+            if ts and (not date or str(ts)[:10] != date):
+                feed_problems.append(f"{item.get('kind')}: date_utc {date} != timestamp {ts}")
+            if not ts and item.get("time_known"):
+                feed_problems.append(f"{item.get('kind')}: time_known with no timestamp")
+            url = item.get("url")
+            if isinstance(url, str) and url.startswith("http"):
+                if host_of(url) not in OFFICIAL_HOSTS:
+                    feed_problems.append(f"non-vetted host in a feed link: {host_of(url)}")
+            elif url and not str(url).startswith(("assets/", "data/")):
+                feed_problems.append(f"unrecognised link form: {url!r}")
+            if item.get("kind", "").startswith("model-guidance") and item.get("official"):
+                feed_problems.append("a model-guidance entry is marked official")
+        for item in f_undated:
+            if item.get("timestamp_utc"):
+                feed_problems.append(f"an undated entry carries a timestamp: {item.get('kind')}")
+        kinds = fcounts.get("kinds") or {}
+        for kind, n in kinds.items():
+            actual = sum(1 for e in f_entries if e.get("kind") == kind)
+            if actual != n:
+                feed_problems.append(f"counts.kinds[{kind}] {n} vs {actual} rows")
+        ledger.check("feed-traceable",
+                     "The official-product feed is internally consistent, sorted, dated only "
+                     "where the publisher gave a date, links only vetted hosts, and never marks "
+                     "model guidance as official",
+                     not feed_problems,
+                     (f"{len(f_entries)} entries (+{len(f_undated)} undated) across "
+                      f"{fcounts.get('distinct_dates')} dates; "
+                      f"{fcounts.get('provenance_verified')} verified against a recorded fetch")
+                     if not feed_problems else "; ".join(feed_problems[:6]),
+                     evidence={"problems": feed_problems[:8], "counts": fcounts})
+
+        unverified = [e for e in f_entries + f_undated if e.get("provenance_verified") is False]
+        ledger.check("feed-provenance",
+                     "Every feed entry whose content comes from a fetch points at a URL that "
+                     "was fetched successfully; entries that do not are labelled, not trusted",
+                     not unverified or all(e.get("provenance_note") for e in unverified),
+                     (f"{fcounts.get('provenance_verified')} of {len(f_entries)} entries trace "
+                      f"to a recorded fetch; {len(unverified)} labelled as pointers only")
+                     if not unverified or all(e.get("provenance_note") for e in unverified) else
+                     f"{len(unverified)} entry/entries cite a URL with no recorded fetch and "
+                     f"are not labelled as such",
+                     severity="warning",
+                     evidence={"unverified": [{"kind": e.get("kind"), "url": e.get("url")}
+                                              for e in unverified][:6]})
 
     # ------------------------------------------------------------- write out
     summary = ledger.summary()

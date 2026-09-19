@@ -237,6 +237,63 @@ Commercial providers require paid key, license redistribution, and their numbers
 
 If you want a second opinion from AccuWeather, you must read it directly — this project cannot vouch for it.
 
+## Checking any single day yourself (the deep links)
+
+Open any day on the scoreboard and the dialog offers **"Verify each number
+yourself"** — one link per headline field, each naming the exact official element
+that figure was aggregated from. Nothing is averaged away for you; the hint beside
+each link says what to look for:
+
+* **High and low temperature, rain amount** — the GHCN-Daily row for that station
+  (a wide CSV, one row per `DATE`): read `TMAX`/`TMIN`/`PRCP` on the row for that
+  date. Where the day's figure comes from the 1991–2020 normals instead of an
+  observation, the link points at the normals file and the hint says which rows to
+  read.
+* **Humidity** — the hourly-normals file, with the hint that relative humidity here
+  is **derived** (Magnus formula) from the official temperature and dew-point
+  normals, not measured.
+* **Wind and gusts** — the GSOD / hourly ISD file holding that day's rows. Use your
+  browser's find for the date.
+* **Inside the 7-day forecast horizon** — the NWS hourly forecast and gridpoint
+  series, naming the `startTime` values that fell in that local day and the
+  `validTime` interval behind the gust or rain amount, so you can read the
+  forecaster's own numbers for it.
+
+Two practical notes: these links are offered for your review, they are not the
+evidence for the figure — the evidence is the recorded fetch of the file the number
+was computed from, with its HTTP status, byte count and SHA-256 in the *Sources*
+section. And NOAA publishes the GSOD and hourly ISD annual files **after the year
+ends**, so a link into the current year may 404 until it exists; that is recorded as
+an expected absence, not a failure. NCEI has also retired the GSOD/hourly-ISD
+products for the wind station (2025-08-29), which the site states plainly and the
+pipeline re-investigates every run by searching NCEI's station history for a
+successor identifier.
+
+## Reading the model-guidance section (and why it is kept apart)
+
+The site has a section showing NOAA's NMME ensemble probability maps for the coming
+seasons. Read it as **background**, never as a forecast for your property:
+
+* It is NOAA's own experimental ensemble product. It is not an official NWS
+  forecast, it is not for 94122 specifically (the maps are continental), and the
+  section says so before the maps and again on each one.
+* The maps show where NOAA's contours put the odds of a season being **Above /
+  Below / Neutral** its own 1982–2010 terciles — not inches of rain, not wind
+  speeds, not dates. NOAA's own definition sentences are quoted verbatim next to
+  them (including the rule that a contour appears when one class exceeds 38 % of the
+  79 equally weighted ensemble members and the opposite class is below 33 %).
+* Nothing in that section is merged into the day-by-day scoreboard, and a ledger
+  check fails the nightly build if it ever is. If a model ever disagrees with the
+  official outlook, the official outlook is what the scoreboard shows.
+* NOAA also publishes skill maps (RPSS) and real-time verification for these
+  ensembles; the site links them so you can judge for yourself how much weight they
+  deserve.
+
+For maintenance planning, use the CPC outlook probabilities (official, sampled
+point-in-polygon for your centroid) and the climatology/Storm-Events history. Use
+the model maps only to notice whether the seasonal signal is unusually strong or
+unusually weak.
+
 ## Limitations
 
 See `docs/LIMITATIONS.md` for full list. Key ones:

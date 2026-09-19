@@ -1,10 +1,10 @@
 {
-  "generated_utc": "2026-09-18T23:33:49Z",
+  "generated_utc": "2026-09-19T04:24:37Z",
   "counts": {
-    "total": 5,
+    "total": 7,
     "errors": 0,
-    "warnings": 2,
-    "info": 3
+    "warnings": 3,
+    "info": 4
   },
   "irregularities": [
     {
@@ -83,17 +83,42 @@
           {
             "area": "wind",
             "last_date": "2025-08-27",
-            "age_days": 387,
+            "age_days": 388,
             "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
           },
           {
             "area": "isd_hourly",
             "last_date": "2025-08-27",
-            "age_days": 387,
+            "age_days": 388,
             "url": "https://www.ncei.noaa.gov/data/global-hourly/access/"
           }
         ]
       }
+    },
+    {
+      "severity": "warning",
+      "area": "feed",
+      "message": "3 feed entries cite a URL with no successful fetch in any provenance manifest. They are marked provenance_verified=false rather than dropped, so a reader can still follow them, but no figure on the site may depend on them.",
+      "evidence": {
+        "urls": [
+          "https://api.weather.gov/products/2f894049-4561-49f5-8f84-48f92f351edf",
+          "https://api.weather.gov/products/eafb83e6-b2a4-4f01-bba0-8dcc8c397487",
+          "https://www.cpc.ncep.noaa.gov/products/archives/long_lead/llarc.ind.php"
+        ]
+      },
+      "source": "feed"
+    },
+    {
+      "severity": "info",
+      "area": "feed",
+      "message": "16 feed entries link a publisher's human-facing page that was not itself fetched (the underlying product was). Each is labelled link_kind=human-page or api-object-id and verified through its evidence_url.",
+      "evidence": {
+        "distinct_links": [
+          "https://forecast.weather.gov/MapClick.php?lat=37.760459&lon=-122.483894&unit=0&lg=english&FcstType=text&TextType=1",
+          "https://www.weather.gov/mtr"
+        ]
+      },
+      "source": "feed"
     }
   ]
 }

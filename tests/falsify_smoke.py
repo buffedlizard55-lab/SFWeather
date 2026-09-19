@@ -207,6 +207,175 @@ def patch_json(repo, rel, fn):
     p.write_text(json.dumps(data))
 
 
+# ==========================================================================
+# Cases for the render guards added with the model-guidance tier, the official
+# product feed, the archive-status card and the per-day deep links.
+# ==========================================================================
+
+MG_INDEX = "https://www.cpc.ncep.noaa.gov/products/NMME/probindex.shtml"
+MG_DESCR = "https://www.cpc.ncep.noaa.gov/products/NMME/NMME_PROB_descr.html"
+DESCR_TEXT = ("NMME ensemble contains 79 members, all weighted equally. A/B/N "
+              "[Above/Below/Neutral] are terciles.")
+DESCR_SENTENCES = ["NMME ensemble contains 79 members, all weighted equally.",
+                   "A/B/N [Above/Below/Neutral] are terciles."]
+
+
+def patch_text(repo, relpath, old, new, required=True):
+    p = repo / relpath
+    text = p.read_text()
+    if old not in text:
+        if required:
+            raise AssertionError(f"fixture expected to find in {relpath}: {old[:60]!r}")
+        return repo
+    p.write_text(text.replace(old, new, 1))
+    return repo
+
+
+def write_data(repo, name, obj):
+    (repo / "data" / name).write_text(json.dumps(obj, indent=2))
+    return repo
+
+
+def mg_fixture(mutate=None):
+    mg = {
+        "generated_utc": "2026-09-18T21:00:00Z",
+        "tier": "model-guidance",
+        "not_an_official_forecast": True,
+        "merged_into_scoreboard": False,
+        "warning": ("MODEL GUIDANCE - NOT AN OFFICIAL FORECAST. Raw multi-model ensemble "
+                    "products. Nothing here is merged into the day-by-day scoreboard."),
+        "isolation_rule": "enforced by the model-guidance-isolation ledger check",
+        "coverage_verbatim": "October 2026 - April 2027",
+        "pages": {
+            "prob_index": {"key": "prob_index", "label": "NMME probability forecasts",
+                           "url": MG_INDEX, "ok": True, "http_status": 200, "bytes": 9000,
+                           "sha256": "1" * 64, "retrieved_utc": "2026-09-18T21:00:00Z",
+                           "plain_text": "For: October 2026 - April 2027",
+                           "why": "states the period the maps cover",
+                           "warning": "Model guidance, not an official forecast."},
+            "description": {"key": "description", "label": "Description", "url": MG_DESCR,
+                            "ok": True, "http_status": 200, "bytes": 8000, "sha256": "2" * 64,
+                            "retrieved_utc": "2026-09-18T21:00:01Z",
+                            "plain_text": DESCR_TEXT,
+                            "verbatim_sentences": list(DESCR_SENTENCES),
+                            "why": "defines the contours",
+                            "warning": "Model guidance, not an official forecast."},
+        },
+        "images": [{"variable": "precipitation rate", "variable_key": "prate",
+                    "season_index": 1, "url": MG_INDEX, "ok": True, "http_status": 200,
+                    "bytes": 4321, "sha256": "3" * 64,
+                    "local_path": "assets/model_guidance/nmme_prate_us_season1.png",
+                    "season_mapping_note": "the month range is printed inside the image",
+                    "warning": "Model guidance, not an official forecast."}],
+        "probes": [],
+        "counts": {"pages_requested": 2, "pages_retrieved": 2, "images_archived": 1,
+                   "verbatim_sentences": 2, "probes_ok": 0},
+        "what_this_tier_does_not_do": ["It does not convert an ensemble into a probability "
+                                       "for one ZIP code."],
+        "irregularities": [],
+    }
+    if mutate:
+        mutate(mg)
+    return mg
+
+
+@case("model guidance published: warning first, quotes verbatim, images labelled",
+      expect_fail=False)
+def _mg_ok(repo):
+    write_data(repo, "model_guidance.json", mg_fixture())
+    return repo
+
+
+@case("a model-guidance image rendered without its own warning",
+      expect_msg="no warning of its own")
+def _mg_no_item_warning(repo):
+    def mutate(mg):
+        mg["images"][0]["warning"] = ""
+    write_data(repo, "model_guidance.json", mg_fixture(mutate))
+    return repo
+
+
+@case("NOAA's coverage string dropped from the model-guidance card",
+      expect_msg="coverage string is not rendered verbatim")
+def _mg_no_coverage(repo):
+    patch_text(repo, "assets/js/app.js",
+               "if (mg.coverage_verbatim) {", "if (false && mg.coverage_verbatim) {")
+    write_data(repo, "model_guidance.json", mg_fixture())
+    return repo
+
+
+@case("an NMME definition sentence paraphrased by the renderer",
+      expect_msg="not rendered verbatim")
+def _mg_paraphrase(repo):
+    patch_text(repo, "assets/js/app.js",
+               "el('span', { class: 'verbatim', text: '\\u201c' + t + '\\u201d' })]))",
+               "el('span', { class: 'verbatim', text: t.replace(/79/, 'eighty') })]))")
+    write_data(repo, "model_guidance.json", mg_fixture())
+    return repo
+
+
+@case("the model-guidance tier mentioned inside the scoreboard grid",
+      expect_msg="scoreboard grid mentions the model-guidance tier")
+def _mg_leak(repo):
+    # The renderer clears the grid, so the leak has to come from the renderer
+    # itself - which is exactly how a real regression would happen.
+    patch_text(repo, "assets/js/app.js",
+               "    grid.innerHTML = '';",
+               "    grid.innerHTML = 'NMME guidance below';")
+    write_data(repo, "model_guidance.json", mg_fixture())
+    return repo
+
+
+@case("the model-guidance host element removed from the page",
+      expect_msg="section rendered empty: #model-guidance-body")
+def _mg_missing_host(repo):
+    patch_text(repo, "index.html", '<div id="model-guidance-body"></div>', "")
+    return repo
+
+
+@case("the feed stops reporting its own entry count",
+      expect_msg="does not report its own entry count")
+def _feed_count(repo):
+    patch_text(repo, "assets/js/app.js",
+               "(c.entries || 0) + ' entries, ' +",
+               "((c.entries || 0) + 1) + ' entries, ' +")
+    return repo
+
+
+@case("the feed rendered oldest first", expect_msg="not rendered newest first")
+def _feed_order(repo):
+    patch_text(repo, "assets/js/app.js",
+               "const all = (feed.entries || []).concat(feed.undated_entries || []);",
+               "const all = (feed.entries || []).slice().reverse()"
+               ".concat(feed.undated_entries || []);")
+    return repo
+
+
+@case("the feed hides that a publisher gave a date with no time",
+      expect_msg="no clock time was published")
+def _feed_date_only(repo):
+    patch_text(repo, "assets/js/app.js", "if (dateOnly || undated) {", "if (false) {")
+    return repo
+
+
+@case("a feed row rendered without its official/not-official pill",
+      expect_msg="no official/not-official pill")
+def _feed_pill(repo):
+    patch_text(repo, "assets/js/app.js",
+               "    officialPill(e.official !== false),",
+               "    el('span', { text: '' }),")
+    return repo
+
+
+# The archive-status and per-day deep-link falsification cases that used to live
+# here were retired with the modules they covered: main resolved the GSOD/ISD
+# stop as an NCEI retirement with its own successor probes, and publishes
+# per-field deep links guarded by tests/smoke.js guard 26 and the ledger's
+# deep-links-traceable check.  Re-adding cases for code that no longer exists
+# would only produce false confidence.
+
+
+
 def run_smoke(repo):
     proc = subprocess.run(["node", "tests/smoke.js", str(repo)],
                           capture_output=True, text=True, cwd=str(REPO),

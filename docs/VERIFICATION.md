@@ -568,3 +568,101 @@ the site's static prose.
 Standings after Pass 2: `tests/test_parsers.py` **377 assertions** (+17),
 `tests/falsify_guards.py` **33 cases** (+10), ledger still **59/59**.
 
+
+---
+
+## Session 9 — 18 September 2026 (pass 9): model guidance, official-product feed, and the merge with pass 8
+
+This pass was developed in parallel with pass 8 (PR #17) from the same base commit
+`c648b68`, so the two met as a merge rather than as a sequence. What follows records
+both what this pass built and how the collision was resolved, because a merge that
+silently deletes another session's verification work is itself a defect.
+
+### What this pass added
+
+Two tiers that pass 8 deliberately left unbuilt, plus one bug fix that pass 8's own
+committed data proves was live:
+
+* **Model guidance** (`pipeline/model_guidance.py`, 25 offline self-checks): NOAA's
+  NMME seasonal probability maps archived locally with their SHA-256, NOAA's own
+  definition sentences quoted verbatim, the coverage period read from NOAA's index
+  page rather than derived from a filename, and the raw archive / NOMADS locations
+  recorded with `decoded: false`. Its own manifest, its own site section, a warning
+  that renders before any content and again on every item.
+* **The official-product feed** (`pipeline/build_feed.py`, 36 offline self-checks):
+  one chronological list of what NOAA published and what this project fetched,
+  distinguishing `url` from `evidence_url`, never inventing a clock time a publisher
+  did not give, and carrying model-guidance rows into the same list labelled
+  `NOT OFFICIAL`. No network access at all.
+* **`pipeline/lib_provenance.py`**: the auxiliary-manifest convention and an
+  idempotent quality-report merge (findings tagged by `source`, counts recomputed
+  from the entries).
+
+### Bugs found in this pass
+
+| # | Bug | Evidence | Fix |
+| --- | --- | --- | --- |
+| 65 | **The two rainy-season CPC outlooks were attached to no day at all.** `parse_season_key` did `int("2026-2027")` on a cross-New-Year label, hit `ValueError` and returned `(None, None)`, so `NDJ 2026-2027` and `DJF 2026-2027` were sampled, printed in the season table, and attached to nothing | Pass 8's own committed `data/calendar.json`: records labelled `NDJ 2026-2027` / `DJF 2026-2027` exist, yet 2026-12-15 carried only `lead1_OND_prcp` / `lead1_OND_temp`. Per-month attachment counts were Oct 4, Nov 2, **Dec 1, Jan 1** | `parse_season_year` accepts `YYYY-YYYY` / `YYYY/YYYY` for consecutive years only; a declared end year must agree with the season's shape (`OND 2026-2027` is rejected, `NDJ 2026` keeps its historical Nov-Jan reading); a single month never spans two years. After the fix, 2026-12-15 carries DJF + NDJ + OND and per-month counts are Oct 4, Nov 3, Dec 3, Jan 3. Ledger: `cpc-record-coverage-declared`, `cpc-season-covers-complete`, `cpc-record-reach` |
+| 66 | Six renderer strings in `assets/js/app.js` contained double escapes (`\\u2014`, `\\u00b0`, `\\u2265`) that print a literal `\u2014` on the page instead of an em dash, a degree sign or `≥` | `grep -c '\\\\u' assets/js/app.js` → 6 on the merged tree (the same class of defect this pass had already fixed 13 of on its own branch) | Replaced with the real characters; `node --check` and `npm test` re-run |
+| 67 | A ledger check written on this pass's branch (`auxiliary-manifests-separate`) was tautological — it compared a manifest to itself, so it could never fail | Read of the check's source before the merge | Rewritten against the real schemas: every fetch recorded in exactly one manifest, and `run.json`'s totals re-derived from the nightly manifest alone |
+
+### What the first live CI run of these tiers found (bug 68)
+
+The nightly workflow ran on this branch at `3941ac6` before the merge, with real
+network access — the first time the new tiers had ever touched NOAA's live servers.
+Every step exited 0 (`PIPELINE`, `CALENDAR`, `LANDLORD`, `CPC_BACKTEST`,
+`NCEI_PROBE`, `MODEL_GUIDANCE`, `AFD_HISTORY`, `FEED`, `VERIFY`) and the ledger
+then failed the run, so the gate correctly refused to publish:
+
+> `[FAIL] model-guidance-links-fetched` — *1 guidance item(s) that failed to fetch
+> publish no error, so a reader cannot tell they are missing*
+
+| # | Bug | Root cause | Fix |
+| --- | --- | --- | --- |
+| 68 | A model-guidance probe that could not run was published with `ok: false` and **no `error` field** | The raw-archive probe resolves its URL from the newest run directory listed on CPC's archive page. When that page lists no runs, the code appended `{ok: false, skipped: "..."}` and moved on — a `skipped` note is not an error, and the ledger requires every failed item to say why | The probe now publishes the cause and distinguishes the two: *"the archive page was retrieved but listed no run directories … if NOAA changed the layout of that page, `ARCHIVE_ROW_RE` needs updating"* versus *"the archive page could not be retrieved (HTTP …)"*. It also raises a `model_guidance` irregularity, so the failure surfaces in *Data quality* and not only in the ledger. Six new self-checks reproduce both paths (31/31) |
+
+This is the guard working as designed rather than a false alarm: a silent
+`ok: false` is exactly how a missing dataset starts looking like an empty one, and
+the check that stopped the publish was written before the tier had ever run live.
+The run's diagnostics were committed by the workflow as
+`chore(data): refresh NOT published`, and are merged here for the record; the
+regenerated diagnostics in this tree describe the merged code instead.
+
+### How the collision with pass 8 was resolved
+
+Pass 8 merged first, so it is the baseline. The rule applied was: **where both
+passes built the same feature, main's implementation wins; where a pass built
+something the other explicitly left unbuilt, it is kept; and every surviving guard
+is re-run rather than assumed.**
+
+| Feature | Pass 8 (kept) | This pass | Resolution |
+| --- | --- | --- | --- |
+| CPC back-test | `cpc_backtest.py` (488 lines) + `data/cpc_backtest.json` + `merge_run_manifests` + ledger/tests | A different 844-line implementation + 30 self-checks | **Main's kept.** This pass's module, self-test and `lib_cpc.py` were deleted rather than allowed to shadow merged work; the back-test is covered by `tests/test_parsers.py`, which imports the module directly |
+| Stale wind archive | NCEI retirement (2025-08-29) + `isd_history.json` successor search + nightly `ghcnh_probe.json` + `successor-probe-present` | `ncei_archive_probe.py`: classification from per-year control comparison + service alerts | **Main's kept** — a retirement notice from NCEI is better evidence than an inference from control stations, and two published verdicts about one archive would invite confusion. Module and self-test deleted; `docs/METHODS.md` §24 records the reasoning |
+| AFD history | `data/afd_history.json` written by `build_calendar.py` (append-only, deduped, capped) + `afd-history-consistent` | `afd_history.py` writing the same filename with a different schema | **Main's kept**; module and self-test deleted, and the feed was adapted to read main's list schema |
+| Deep links | Per-field `deep_links` on all 123 days + `deep-links-traceable` + smoke guard 26 | Per-day link list with `fetched_by_this_run` + an Access Data Service shape probe | **Main's kept** (per-field links name the exact element a figure came from, which is more useful than one link per day); this pass's builder, probe and two ledger checks deleted |
+| Model guidance | Explicitly unbuilt, with `model-guidance-separated` guarding against a silent merge | The full tier | **This pass's kept** — it is what pass 8 left open. Both guards now run: main's inspects scoreboard days, this pass's also audits the guidance file itself and scans for leaks outside quoted official text |
+| Product feed | Not built | The full tier | **This pass's kept** |
+| Provenance convention | Merge back into `provenance.json` | Separate `data/<area>_provenance.json` | **Both kept**, deliberately: the merge-back exists so back-test rows appear in the manifest the run's totals describe, and the separate manifest exists so the guidance tier reads as its own thing. `verify_sources.py` scans every manifest, and both conventions satisfy `auxiliary-manifests-vetted` / `-separate` (`docs/METHODS.md` §26) |
+
+Retiring this pass's duplicates also retired their guards: 6 render-falsification
+cases and 9 ledger-falsification cases were removed with the code they covered, and
+the removal is recorded in `tests/falsify_smoke.py` rather than left as a silent
+shrinkage.
+
+### Standings after the merge
+
+* `pipeline/verify_claims.py`: **67 checks pass, 0 fail, 0 warnings**, 19 recorded
+  claims (pass 8's 59 + 8 ported: 3 CPC coverage, 2 auxiliary manifests,
+  1 model-guidance isolation, 2 feed). Two further model-guidance checks
+  (`-quotes-verbatim`, `-links-fetched`) run only when `model_guidance.json` exists,
+  i.e. on a live CI run.
+* `tests/test_parsers.py`: **409 assertions** (pass 8's 310 + 99 ported).
+* `tests/falsify_guards.py`: **56 cases** behave (33 + 23 ported).
+* `tests/falsify_smoke.py`: **23 cases** behave.
+* `pipeline/verify_sources.py`: exit 0 scanning every manifest.
+* Module self-tests in CI: `model_guidance` 25, `build_feed` 36 — **61 offline checks**.
+* `npm test`: passes, now including smoke guards 28 (model-guidance tier) and 29
+  (feed).
+* `data/feed.json` rebuilt against pass 8's live data: **202 entries** (+3 undated),
+  202 official / 0 not-official, 198 provenance-verified / 2 labelled pointers only.

@@ -30,6 +30,8 @@
       <a href="#sources">Sources</a>
       <a href="#nws-verification">NWS verification</a>
       <a href="#cpc-backtest">CPC back-test</a>
+      <a href="#model-guidance">Model guidance</a>
+      <a href="#feed">Product feed</a>
       <a href="#verify">Verification</a>
       <a href="#quality">Data quality</a>
       <a href="#limits">Limits</a>
@@ -400,6 +402,47 @@
     </section>
 
     <!-- ============================ verification ===================== -->
+    <!-- ============ model guidance: separate tier, loudly labelled ==== -->
+    <section id="model-guidance" class="section">
+      <h2>Model guidance — NMME ensemble maps <span class="pill pill-fail">NOT AN OFFICIAL FORECAST</span></h2>
+      <div class="card">
+        <p class="fine">This tier exists because the raw multi-model ensemble is worth looking at —
+          and because it must never be confused with a forecast. The National Weather Service
+          forecast and CPC&#8217;s official seasonal outlook are the products the rest of this site
+          is built from; the North American Multi-Model Ensemble behind them is experimental model
+          output that no forecaster has signed off on for this ZIP code. Nothing in this section is
+          converted into a probability, an amount or a wind speed, and nothing here is merged into
+          the <a href="#calendar">day-by-day scoreboard</a> — a rule the verification ledger
+          enforces (<code>model-guidance-isolation</code>), not a promise. The maps below are local
+          copies of NOAA&#8217;s own images; the wording that explains what their contours mean is
+          copied verbatim from NOAA&#8217;s description page and re-checked against the fetched text
+          on every run. Sources:
+          <a href="https://www.cpc.ncep.noaa.gov/products/NMME/" target="_blank" rel="noopener">CPC NMME</a> ·
+          <a href="https://www.cpc.ncep.noaa.gov/products/NMME/probindex.shtml" target="_blank" rel="noopener">NMME probability forecasts</a> ·
+          <a href="https://www.cpc.ncep.noaa.gov/products/NMME/NMME_PROB_descr.html" target="_blank" rel="noopener">how to read them</a> ·
+          <a href="https://ftp.cpc.ncep.noaa.gov/NMME/archive/" target="_blank" rel="noopener">real-time forecast archive</a>.</p>
+        <div id="model-guidance-body"></div>
+      </div>
+    </section>
+
+    <!-- ==================== official product feed ==================== -->
+    <section id="feed" class="section">
+      <h2>Official product feed — what NOAA published, and when</h2>
+      <div class="card">
+        <p class="fine">One timeline, newest first, of every official product behind this page:
+          NWS forecast issuances and periods, NWS alerts, the Area Forecast Discussion, CPC
+          outlook issue dates, the archived CPC shapefiles and maps, and each recorded fetch
+          with its status and SHA-256. The feed is <em>derived</em>: every row is assembled from
+          a dataset that came from a recorded fetch, and any row whose link was not itself
+          fetched says so. Model-guidance rows appear here too, labelled
+          <span class="pill pill-fail">NOT OFFICIAL</span>, so the difference is visible in the
+          same list rather than implied. Source: <code>data/feed.json</code>, built by
+          <code>pipeline/build_feed.py</code> from the manifests listed
+          <a href="#sources">above</a>.</p>
+        <div id="feed-body"></div>
+      </div>
+    </section>
+
     <section id="verify" class="section">
       <h2>Verification — every number checked against its source</h2>
       <div class="card">

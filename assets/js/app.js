@@ -2106,7 +2106,7 @@ function renderNwsVerification() {
     host.append(el('p', { class: 'fine', text:
       `Status: ${n} forecast-vs-observation pair(s) scored so far. ` +
       (n === 0
-        ? 'The first scored pairs appear once observed days accumulate past the current NWS horizon \\u2014 every run archives a snapshot, and observations are matched automatically as GHCN-Daily updates.'
+        ? 'The first scored pairs appear once observed days accumulate past the current NWS horizon — every run archives a snapshot, and observations are matched automatically as GHCN-Daily updates.'
         : 'Running error and POP calibration statistics are below.') }));
 
     if (n === 0) {
@@ -2124,8 +2124,8 @@ function renderNwsVerification() {
     const mae = v.overall_high_mae_f;
     const pge = v.pop_ge_50_rain_pct;
     const plt = v.pop_lt_50_rain_pct;
-    rows.push(['High-temp MAE (all lead days)', mae == null ? DASH : `${mae} \\u00b0F`]);
-    rows.push(['Rain frequency when POP \\u2265 50%', pge == null ? DASH : `${pge}%`]);
+    rows.push(['High-temp MAE (all lead days)', mae == null ? DASH : `${mae} °F`]);
+    rows.push(['Rain frequency when POP ≥ 50%', pge == null ? DASH : `${pge}%`]);
     rows.push(['Rain frequency when POP < 50%', plt == null ? DASH : `${plt}%`]);
     host.append(el('table', { class: 'kv' }, rows.map(([k, v]) =>
       el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
@@ -2134,8 +2134,8 @@ function renderNwsVerification() {
     if (byLead.length) {
       host.append(el('h4', { text: 'By lead time (days from issuance to target)' }));
       host.append(table(
-        [{ label: 'Lead (days)' }, { label: 'n' }, { label: 'High MAE (\\u00b0F)' }, { label: 'Low MAE (\\u00b0F)' },
-         { label: '% rain when POP\\u226550' }, { label: '% rain when POP<50' }],
+        [{ label: 'Lead (days)' }, { label: 'n' }, { label: 'High MAE (°F)' }, { label: 'Low MAE (°F)' },
+         { label: '% rain when POP≥50' }, { label: '% rain when POP<50' }],
         byLead.map(r => [r.lead_days, r.sample_size ?? 0,
           r.high_mae_f ?? DASH, r.low_mae_f ?? DASH,
           r.pop_ge_50_pct_rain == null ? DASH : r.pop_ge_50_pct_rain + '%',
@@ -2418,6 +2418,280 @@ function wireExports() {
 
 /* ------------------------------------------------------------------ boot */
 
+function notYetBuilt(title, file, script, extra) {
+  return el('div', { class: 'callout callout-info' }, [
+    el('h3', { text: 'Not yet built \u2014 ' + title }),
+    el('p', { class: 'fine', text:
+      'This run did not publish ' + file + ', so this section is empty. It is not ' +
+      'showing zero: it is showing that the dataset is absent. ' + script +
+      ' produces it, and the nightly workflow runs that script.' }),
+    extra ? el('p', { class: 'fine', text: extra }) : null
+  ]);
+}
+
+/** A pill that says whether something is an official product or model output. */
+function officialPill(official) {
+  return el('span', {
+    class: 'pill ' + (official ? 'pill-ok' : 'pill-fail'),
+    text: official ? 'OFFICIAL' : 'NOT OFFICIAL'
+  });
+}
+
+/** A pill for whether a cited link stands on a recorded fetch. */
+function provenancePill(state) {
+  if (state === true) return el('span', { class: 'pill pill-ok', text: 'fetch recorded' });
+  if (state === false) return el('span', { class: 'pill pill-warn', text: 'no fetch recorded' });
+  return el('span', { class: 'pill', text: 'local copy' });
+}
+
+/* ------------------------------------- model guidance: a separate, warned tier */
+
+/** Render the model-guidance tier.
+ *
+ * Two rules are built into this renderer rather than left to the reader:
+ * the warning is the first thing appended, before any content, and it is
+ * repeated on every item; and nothing here is allowed to touch the scoreboard -
+ * the data file states that and pipeline/verify_claims.py checks it
+ * (model-guidance-isolation).
+ */
+function renderModelGuidance() {
+  const host = $('#model-guidance-body');
+  if (!host) return Promise.resolve();
+  return fetch('data/model_guidance.json').then(r => r.ok ? r.json() : null).then(mg => {
+    if (!mg) {
+      host.append(notYetBuilt('model guidance', 'data/model_guidance.json',
+        'pipeline/model_guidance.py',
+        'The NMME probability maps and their definitions live on ' +
+        'www.cpc.ncep.noaa.gov/products/NMME/ and are archived locally when the ' +
+        'script runs.'));
+      return;
+    }
+    host.append(el('div', { class: 'callout callout-warn mg-warning' }, [
+      el('h3', { text: 'MODEL GUIDANCE \u2014 NOT AN OFFICIAL FORECAST' }),
+      el('p', { class: 'fine', text: mg.warning || '' }),
+      el('p', { class: 'fine', text: mg.isolation_rule || '' })
+    ]));
+
+    const c = mg.counts || {};
+    host.append(el('p', { class: 'fine', text:
+      'Retrieved ' + (mg.generated_utc || DASH) + ' \u00b7 ' +
+      (c.pages_retrieved || 0) + '/' + (c.pages_requested || 0) + ' pages \u00b7 ' +
+      (c.images_archived || 0) + ' map image(s) archived locally \u00b7 ' +
+      (c.verbatim_sentences || 0) + ' definition sentence(s) quoted verbatim.' }));
+
+    if (mg.coverage_verbatim) {
+      host.append(el('p', {}, [
+        el('strong', { text: 'Period NOAA states these maps cover: ' }),
+        el('span', { class: 'verbatim', text: '\u201c' + mg.coverage_verbatim + '\u201d' }),
+        el('span', { class: 'fine', text: ' \u2014 quoted from NOAA\u2019s own index page. ' +
+          'No month range in this section is derived by this project from a filename.' })
+      ]));
+    }
+
+    const descr = (mg.pages || {}).description || {};
+    const sentences = descr.verbatim_sentences || [];
+    if (sentences.length) {
+      host.append(el('h3', { text: 'What the maps mean \u2014 NOAA\u2019s own words' }));
+      host.append(el('p', { class: 'fine', text:
+        'Copied verbatim from ' }));
+      const list = el('ul', { class: 'verbatim-list' }, sentences.map(t =>
+        el('li', {}, [el('span', { class: 'verbatim', text: '\u201c' + t + '\u201d' })])));
+      host.append(list);
+      host.append(el('p', { class: 'fine' }, [
+        document.createTextNode('Source: '),
+        link(descr.url, 'NMME probability forecast description'),
+        document.createTextNode(' \u00b7 retrieved ' + (descr.retrieved_utc || DASH) +
+          ' \u00b7 ' + (descr.bytes || 0) + ' bytes \u00b7 SHA-256 ' +
+          String(descr.sha256 || DASH).slice(0, 16) + '\u2026 \u00b7 every sentence above is ' +
+          're-checked against the fetched text by the verification ledger.')
+      ]));
+    }
+
+    const imgs = mg.images || [];
+    if (imgs.length) {
+      host.append(el('h3', { text: 'Archived NMME probability maps' }));
+      host.append(el('p', { class: 'fine', text:
+        'Local copies of NOAA\u2019s own images, so the picture cannot change under the ' +
+        'reader. Nothing is read out of them: no probability is transcribed, estimated ' +
+        'or republished here. Each image is labelled with the variable NOAA names.' }));
+      const grid = el('div', { class: 'mg-grid' });
+      imgs.forEach(im => {
+        grid.append(el('figure', { class: 'mg-figure' }, [
+          im.local_path ? el('img', { src: im.local_path, loading: 'lazy',
+            alt: 'NMME ' + (im.variable || '') + ' probability map, season ' +
+                 (im.season_index == null ? DASH : im.season_index) }) : null,
+          el('figcaption', { class: 'fine' }, [
+            el('strong', { text: (im.variable || 'Variable not stated') +
+              ' \u00b7 season ' + (im.season_index == null ? DASH : im.season_index) }),
+            el('div', { text: im.season_mapping_note || '' }),
+            el('div', { class: 'mg-warn', text: im.warning || '' }),
+            el('div', {}, [link(im.url, 'NOAA page for this image'),
+              document.createTextNode(' \u00b7 ' + (im.bytes || 0) + ' bytes \u00b7 SHA-256 ' +
+                String(im.sha256 || DASH).slice(0, 16) + '\u2026')]),
+            im.local_path ? el('div', { class: 'src-url', text: 'local copy: ' + im.local_path }) : null
+          ])
+        ]));
+      });
+      host.append(grid);
+    }
+
+    const pageRows = Object.values(mg.pages || {}).map(pg => [
+      pg.label || pg.key || DASH,
+      officialPill(true),
+      pg.ok ? 'HTTP ' + pg.http_status : 'not retrieved',
+      pg.ok ? (pg.bytes || 0).toLocaleString() + ' bytes' : (pg.error || DASH),
+      pg.url ? linkShort(pg.url) : DASH,
+      pg.why || ''
+    ]);
+    host.append(el('h3', { text: 'Pages retrieved' }));
+    host.append(table([{ label: 'NOAA page' }, { label: 'Tier' }, { label: 'Status' },
+      { label: 'Size / error' }, { label: 'URL' }, { label: 'Why it is here' }], pageRows));
+
+    const probes = mg.probes || [];
+    if (probes.length) {
+      host.append(el('h3', { text: 'Raw model output: located, never decoded' }));
+      host.append(table([{ label: 'Location' }, { label: 'Status' }, { label: 'Decoded?' },
+        { label: 'URL' }, { label: 'Note' }], probes.map(pr => [
+        pr.label || pr.key || DASH,
+        pr.ok ? 'HTTP ' + pr.http_status : ('not reachable (' + (pr.error || pr.http_status || '?') + ')'),
+        pr.decoded === false ? 'no \u2014 nothing read out of it' : String(pr.decoded),
+        pr.url ? linkShort(pr.url) : (pr.skipped || DASH),
+        pr.note || pr.decoding_note || ''
+      ])));
+      host.append(el('p', { class: 'fine', text:
+        'A location that did not answer is reported as not reachable and is not published ' +
+        'as a working link.' }));
+    }
+
+    const dont = mg.what_this_tier_does_not_do || [];
+    if (dont.length) {
+      host.append(el('h3', { text: 'What this tier deliberately does not do' }));
+      host.append(el('ul', { class: 'limits' }, dont.map(t => el('li', { text: t }))));
+    }
+  }).catch(err => {
+    host.append(el('p', { class: 'fine', text: 'Could not read model_guidance.json: ' + err.message }));
+  });
+}
+
+/* ------------------------------------------------ the official product feed */
+
+const FEED_PAGE_SIZE = 60;
+const feedState = { filter: '', kind: 'all', shown: FEED_PAGE_SIZE };
+
+function feedKindLabel(k) {
+  const m = {
+    'nws-forecast': 'NWS forecast issued', 'nws-period': 'NWS forecast period',
+    'nws-hourly': 'NWS hourly forecast', 'nws-alerts': 'NWS alerts', 'nws-alert': 'NWS alert',
+    'afd': 'NWS discussion', 'afd-quote': 'NWS discussion quote',
+    'cpc-outlook': 'CPC outlook', 'cpc-shapefile': 'CPC shapefile', 'cpc-map': 'CPC map',
+    'cpc-discussion': 'CPC discussion', 'forecast-snapshot': 'archived snapshot',
+    'ncei-archive': 'NCEI archive probe', 'official-fetch': 'recorded fetch',
+    'model-guidance': 'MODEL GUIDANCE', 'model-guidance-image': 'MODEL GUIDANCE image'
+  };
+  return m[k] || k;
+}
+
+function renderFeedRows(feed) {
+  const host = $('#feed-rows');
+  if (!host) return;
+  host.textContent = '';
+  const all = (feed.entries || []).concat(feed.undated_entries || []);
+  const rows = all.filter(e => {
+    if (feedState.kind !== 'all' && e.kind !== feedState.kind) return false;
+    if (!feedState.filter) return true;
+    const hay = [e.title, e.detail, e.kind, e.url, e.date_utc].join(' ').toLowerCase();
+    return hay.indexOf(feedState.filter.toLowerCase()) >= 0;
+  });
+  const shown = rows.slice(0, feedState.shown);
+  host.append(table([
+    { label: 'Published / retrieved (UTC)' }, { label: 'What it is' }, { label: 'Item' },
+    { label: 'Tier' }, { label: 'Traceable to a recorded fetch?' }, { label: 'Link' }
+  ], shown.map(e => [
+    e.timestamp_utc ? e.timestamp_utc.replace('T', ' ').replace('Z', '')
+      : (e.date_utc ? e.date_utc + ' (date only, no time published)' : 'undated by the publisher'),
+    feedKindLabel(e.kind),
+    el('span', {}, [el('strong', { text: e.title || DASH }),
+      e.detail ? el('div', { class: 'fine', text: e.detail }) : null,
+      e.provenance_note ? el('div', { class: 'fine src-url', text: e.provenance_note }) : null,
+      e.source_file ? el('div', { class: 'fine src-url', text: 'from ' + e.source_file }) : null]),
+    officialPill(e.official !== false),
+    provenancePill(e.provenance_verified),
+    e.url ? linkShort(e.url, 48) : DASH
+  ]), { empty: 'No feed entries match that filter.' }));
+  const ctl = $('#feed-more');
+  if (ctl) {
+    ctl.textContent = '';
+    ctl.append(el('span', { class: 'fine', text: 'Showing ' + shown.length + ' of ' +
+      rows.length + ' matching entries (' + all.length + ' in the feed).' }));
+    if (rows.length > shown.length) {
+      ctl.append(el('button', { class: 'btn btn-sm', type: 'button', onclick: () => {
+        feedState.shown += FEED_PAGE_SIZE;
+        renderFeedRows(state.data.feed);
+      }, text: 'Show 60 more' }));
+    }
+  }
+}
+
+function renderFeed() {
+  const host = $('#feed-body');
+  if (!host) return Promise.resolve();
+  return fetch('data/feed.json').then(r => r.ok ? r.json() : null).then(feed => {
+    if (!feed) {
+      host.append(notYetBuilt('the official-product feed', 'data/feed.json',
+        'pipeline/build_feed.py'));
+      return;
+    }
+    state.data.feed = feed;
+    const c = feed.counts || {};
+    host.append(el('p', { class: 'fine', text: feed.warning || '' }));
+    const dateOnly = (feed.entries || []).filter(e => e.date_utc && !e.timestamp_utc).length;
+    const undated = (feed.undated_entries || []).length;
+    host.append(el('p', { class: 'fine', text:
+      'Built ' + (feed.generated_utc || DASH) + ' \u00b7 ' + (c.entries || 0) + ' entries, ' +
+      'newest first \u00b7 ' + (c.official || 0) + ' official, ' + (c.not_official || 0) +
+      ' model-guidance \u00b7 ' + (c.provenance_verified || 0) +
+      ' trace to a recorded fetch, ' + (c.provenance_unverified || 0) +
+      ' are labelled as pointers only \u00b7 window ' + (feed.earliest_utc || DASH) +
+      ' \u2192 ' + (feed.latest_utc || DASH) + '.' }));
+    /* Dates the publisher did not give are reported in the header, not buried in
+     * a row that may be below the fold: a date-only entry means NOAA printed a
+     * date with no clock time, and an undated entry means it printed neither. */
+    if (dateOnly || undated) {
+      host.append(el('p', { class: 'fine', text:
+        dateOnly + ' entry/entries carry a date but no time (the publisher printed a date ' +
+        'only, so no clock time is invented here), and ' + undated +
+        ' are undated by the publisher and listed at the end.' }));
+    }
+    if ((feed.sources_missing || []).length) {
+      host.append(el('p', { class: 'fine', text: 'Datasets not present when this feed was ' +
+        'built (so it covers fewer sources than a complete run): ' +
+        feed.sources_missing.join(', ') + '.' }));
+    }
+    const kinds = Object.keys(c.kinds || {}).sort();
+    const controls = el('div', { class: 'filter-bar' }, [
+      el('input', { type: 'search', id: 'feed-filter', placeholder: 'Filter the feed\u2026',
+        'aria-label': 'Filter the feed', oninput: ev => {
+          feedState.filter = ev.target.value; feedState.shown = FEED_PAGE_SIZE;
+          renderFeedRows(feed);
+        } }),
+      el('select', { id: 'feed-kind', 'aria-label': 'Filter by product type',
+        onchange: ev => {
+          feedState.kind = ev.target.value; feedState.shown = FEED_PAGE_SIZE;
+          renderFeedRows(feed);
+        } }, [el('option', { value: 'all', text: 'all product types' })].concat(
+          kinds.map(k => el('option', { value: k, text: feedKindLabel(k) + ' (' + c.kinds[k] + ')' }))))
+    ]);
+    host.append(controls);
+    host.append(el('div', { id: 'feed-rows' }));
+    host.append(el('div', { id: 'feed-more', class: 'feed-more' }));
+    renderFeedRows(feed);
+  }).catch(err => {
+    host.append(el('p', { class: 'fine', text: 'Could not read feed.json: ' + err.message }));
+  });
+}
+
+/* ------------------------------------------ why the wind archive stops where it does */
+
 async function boot() {
   if (state.booted) return;
   state.booted = true;
@@ -2450,6 +2724,8 @@ async function boot() {
     renderSources(prov);
     renderNwsVerification();
     renderCpcBacktest();
+    renderModelGuidance();
+    renderFeed();
     renderVerify(verify, prov);
     renderPublishedNormals(calendar);
     renderQuality(quality, run);

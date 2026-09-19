@@ -1,0 +1,403 @@
+{
+  "generated_utc": "2026-09-19T04:24:54Z",
+  "tier": "model-guidance",
+  "not_an_official_forecast": true,
+  "merged_into_scoreboard": false,
+  "warning": "MODEL GUIDANCE - NOT AN OFFICIAL FORECAST. These are raw multi-model ensemble products (NMME, and CFSv2 where listed). They are not the National Weather Service forecast, they are not CPC's official seasonal outlook, and no value from this section is used anywhere else on this site or merged into the day-by-day scoreboard. Treat it as background on what the models say, and read the official outlook - which is a verified NWS product - in the CPC section above.",
+  "isolation_rule": "No value in this file may appear in data/calendar.json, data/landlord.json or any day cell. pipeline/verify_claims.py checks that (model-guidance-isolation) and fails the run if a model value ever reaches the scoreboard.",
+  "coverage_verbatim": "October 2026 - April 2027",
+  "pages": {
+    "prob_index": {
+      "key": "prob_index",
+      "label": "NMME probability forecasts (index)",
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/probindex.shtml",
+      "why": "carries NOAA's own statement of the period the model maps cover",
+      "http_status": 200,
+      "ok": true,
+      "bytes": 1972,
+      "sha256": "addb38b92d993b83b83413ade5e2e6073712452f56b5036f80c91f24d4b3328f",
+      "retrieved_utc": "2026-09-19T04:24:37Z",
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "text_encoding": "utf-8",
+      "characters_removed": 0,
+      "plain_text_excerpt": "Probability forecasts NMME Probability Forecasts of Monthly Climate Anomalies For: October 2026 - April 2027 For: December 2012 to June 2013 ---> NMME Forecasts of Monthly Climate Anomalies Home Monthly Forecast Maps Seasonal Forecast Maps Precipitation Rate Precipitation Rate Precipitation Rate for North America Precipitation Rate for North America 2m Temperature 2m Temperature 2m Temperature for North America 2m Temperature for North America Sea Surface Temperature Sea Surface Temperature 200-hPa Geopotential Height 200-hPa Geopotential Height PAC calibrated forecasts Description of the probability forecasts Ranked Probability Skill Score (RPSS) maps",
+      "plain_text": "Probability forecasts NMME Probability Forecasts of Monthly Climate Anomalies For: October 2026 - April 2027 For: December 2012 to June 2013 ---> NMME Forecasts of Monthly Climate Anomalies Home Monthly Forecast Maps Seasonal Forecast Maps Precipitation Rate Precipitation Rate Precipitation Rate for North America Precipitation Rate for North America 2m Temperature 2m Temperature 2m Temperature for North America 2m Temperature for North America Sea Surface Temperature Sea Surface Temperature 200-hPa Geopotential Height 200-hPa Geopotential Height PAC calibrated forecasts Description of the probability forecasts Ranked Probability Skill Score (RPSS) maps",
+      "coverage_form": "range",
+      "coverage_verbatim": "October 2026 - April 2027"
+    },
+    "description": {
+      "key": "description",
+      "label": "Description of the NMME probability forecasts",
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/NMME_PROB_descr.html",
+      "why": "defines what the contours mean, so the maps cannot be misread",
+      "http_status": 200,
+      "ok": true,
+      "bytes": 4233,
+      "sha256": "41a69d9ce9422e23a3ff35428c240e8e04dccbff390cdddf4c186f79ce5ff648",
+      "retrieved_utc": "2026-09-19T04:24:38Z",
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "text_encoding": "cp1252",
+      "characters_removed": 0,
+      "plain_text_excerpt": "NMME ensemble contains 79 members, all weighted equally. A/B/N [Above/Below/Neutral] are terciles . * A and B contours show when one class has >38% of ensemble members, and the opposite class is below 33%. * In the case that A is >38% and N is >33%, A will be shown. This is the same for B. * N contours show when >38% of ensemble members fall in the \u201cNeutral\u201d tercile , and both A and B are below 33%. * White areas show where no one class is dominant: either all terciles are under 38%, or both A and B are over 38%. The tercile limits were determined separately for each model using the NMME hindcasts (1982-2010 ). For tmp2m and sst , the mean and standard deviation were found for each model and terciles set as mean +/- 0.43sd. For precipitation, thresholds were determined by ranking all hindcasts and taking the 66 th and 33 rd percentiles. Then, the number of ensemble members in each model that fell into the separate categories (relative to their own distributions) were tallied up.",
+      "plain_text": "NMME ensemble contains 79 members, all weighted equally. A/B/N [Above/Below/Neutral] are terciles . * A and B contours show when one class has >38% of ensemble members, and the opposite class is below 33%. * In the case that A is >38% and N is >33%, A will be shown. This is the same for B. * N contours show when >38% of ensemble members fall in the \u201cNeutral\u201d tercile , and both A and B are below 33%. * White areas show where no one class is dominant: either all terciles are under 38%, or both A and B are over 38%. The tercile limits were determined separately for each model using the NMME hindcasts (1982-2010 ). For tmp2m and sst , the mean and standard deviation were found for each model and terciles set as mean +/- 0.43sd. For precipitation, thresholds were determined by ranking all hindcasts and taking the 66 th and 33 rd percentiles. Then, the number of ensemble members in each model that fell into the separate categories (relative to their own distributions) were tallied up.",
+      "verbatim_sentences": [
+        "NMME ensemble contains 79 members, all weighted equally.",
+        "A/B/N [Above/Below/Neutral] are terciles .",
+        "* A and B contours show when one class has >38% of ensemble members, and the opposite class is below 33%.",
+        "* N contours show when >38% of ensemble members fall in the \u201cNeutral\u201d tercile , and both A and B are below 33%.",
+        "* White areas show where no one class is dominant: either all terciles are under 38%, or both A and B are over 38%.",
+        "The tercile limits were determined separately for each model using the NMME hindcasts (1982-2010 ).",
+        "For precipitation, thresholds were determined by ranking all hindcasts and taking the 66 th and 33 rd percentiles."
+      ]
+    },
+    "seasonal_prcp": {
+      "key": "seasonal_prcp",
+      "label": "NMME seasonal precipitation-rate probability (North America)",
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/prob/usPROBprate.S.html",
+      "why": "the seasonal precipitation probability maps themselves",
+      "http_status": 200,
+      "ok": true,
+      "bytes": 1531,
+      "sha256": "cab7367eaf1469e6dcdf87179b8da417ed85e4755881b838cba18eb47d97aa08",
+      "retrieved_utc": "2026-09-19T04:24:38Z",
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "text_encoding": "utf-8",
+      "characters_removed": 0,
+      "plain_text_excerpt": "prob prate_us forecast prob prate_us forecast season 1 season 4 season 2 season 5 season 3",
+      "image_urls": [
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_prate_us_season1.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_prate_us_season2.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_prate_us_season3.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_prate_us_season4.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_prate_us_season5.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/th.prob_ensemble_prate_us_season1.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/th.prob_ensemble_prate_us_season2.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/th.prob_ensemble_prate_us_season3.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/th.prob_ensemble_prate_us_season4.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/th.prob_ensemble_prate_us_season5.png"
+      ],
+      "n_links_seen": 16
+    },
+    "seasonal_temp": {
+      "key": "seasonal_temp",
+      "label": "NMME seasonal 2m-temperature probability (North America)",
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/prob/usPROBtmp2m.S.html",
+      "why": "the seasonal temperature probability maps themselves",
+      "http_status": 200,
+      "ok": true,
+      "bytes": 1533,
+      "sha256": "03c65f557ba408b3af1add65716d43e8440ebd5262e16c501b0fae1f128b7562",
+      "retrieved_utc": "2026-09-19T04:24:38Z",
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "text_encoding": "utf-8",
+      "characters_removed": 0,
+      "plain_text_excerpt": "prob tmp2m_us forecast prob tmp2m_us forecast season 1 season 4 season 2 season 5 season 3",
+      "image_urls": [
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_tmp2m_us_season1.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_tmp2m_us_season2.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_tmp2m_us_season3.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_tmp2m_us_season4.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_tmp2m_us_season5.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/th.prob_ensemble_tmp2m_us_season1.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/th.prob_ensemble_tmp2m_us_season2.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/th.prob_ensemble_tmp2m_us_season3.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/th.prob_ensemble_tmp2m_us_season4.png",
+        "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/th.prob_ensemble_tmp2m_us_season5.png"
+      ],
+      "n_links_seen": 16
+    },
+    "skill": {
+      "key": "skill",
+      "label": "NMME Ranked Probability Skill Score maps",
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/prob/rpss.probindex.html",
+      "why": "how much skill the ensemble has actually had - published next to the maps so they are not read as better than they are",
+      "http_status": 200,
+      "ok": true,
+      "bytes": 1260,
+      "sha256": "903830e5da4ce514ad45c05a4f2ce081fe105ce08bc0c25f59fab632e644248c",
+      "retrieved_utc": "2026-09-19T04:24:38Z",
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "text_encoding": "utf-8",
+      "characters_removed": 0,
+      "plain_text_excerpt": "Probability forecast RPSS NMME Probability Forecasts of Monthly Climate Anomalies Ranked Probability Skill Score Monthly Forecast Maps Seasonal Forecast Maps Precipitation Rate Precipitation Rate Precipitation Rate for North America Precipitation Rate for North America 2m Temperature 2m Temperature 2m Temperature for North America 2m Temperature for North America Sea Surface Temperature Sea Surface Temperature"
+    },
+    "verification": {
+      "key": "verification",
+      "label": "NMME real-time verification (preliminary)",
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/verif/index.html",
+      "why": "NOAA's own running verification of these model forecasts",
+      "http_status": 200,
+      "ok": true,
+      "bytes": 1027,
+      "sha256": "8a885722d40128c8ed1c9bf7c8ae499f0dfbccbac6f47ca316f3a1e521d07984",
+      "retrieved_utc": "2026-09-19T04:24:39Z",
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "text_encoding": "utf-8",
+      "characters_removed": 0,
+      "plain_text_excerpt": "NMME forecasts NMME Forecasts of Monthly Climate Anomalies Preliminary forecast verification NMME Forecasts of Monthly Climate Anomalies Home Seasonal real-time verification page One-month real-time verification page"
+    },
+    "archive": {
+      "key": "archive",
+      "label": "NMME real-time forecast archive",
+      "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/",
+      "why": "the raw archived model runs; recorded, not decoded",
+      "http_status": 200,
+      "ok": true,
+      "bytes": 32319,
+      "sha256": "0c9b8096d5dcdb2e8fed46706e7420f6b477a7ee46ca80912ed676e2ed8104bc",
+      "retrieved_utc": "2026-09-19T04:24:39Z",
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "text_encoding": "utf-8",
+      "characters_removed": 0,
+      "plain_text_excerpt": "NMME Forecasts Archive NMME Forecasts of Monthly Climate Anomalies Archive NMME Forecasts of Monthly Climate Anomalies Home Archived forecasts September 2026 to March 2027 August 2026 to February 2027 July 2026 to January 2027 June 2026 to December 2026 May 2026 to November 2026 April 2026 to October 2026 March 2026 to September 2026 February 2026 to August 2026 January 2026 to July 2026 December 2025 to June 2026 November 2025 to May 2026 October 2025 to April 2026 September 2025 to March 2026 August 2025 to February 2026 July 2025 to January 2026 June 2025 to December 2025 May 2025 to November 2025 April 2025 to October 2025 March 2025 to September 2025 February 2025 to August 2025 January 2025 to July 2025 December 2024 to June 2025 November 2024 to May 2025 October 2024 to April 2025 September 2024 to March 2025 August 2024 to February 2025 July 2024 to January 2025 June 2024 to December 2024 May 2024 to November 2024 April 2024 to October 2024 March 2024 to September 2024 February 2024 to August 2024 January 2024 to July 2024 December 2023 to June 2024 November 2023 to May 2024 October 2023 to April 2024 September 2023 to March 2024 August 2023 to February 2024 July 2023 to January 2024 June 2023 to December 2023 May 2023 to November 2023 April 2023 to October 2023 March 2023 to September 2023 February 2023 to August 2023 January 2023 to July 2023 December 2022 to June 2023 November 2022 to May 2023 October 2022 to April 2023 September 2022 to March 2023 August 2022 to F",
+      "archived_runs": [
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026080800",
+          "run_id": "2026080800",
+          "coverage_label": "September 2026 to March 2027"
+        },
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026070800",
+          "run_id": "2026070800",
+          "coverage_label": "August 2026 to February 2027"
+        },
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026060800",
+          "run_id": "2026060800",
+          "coverage_label": "July 2026 to January 2027"
+        },
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026050800",
+          "run_id": "2026050800",
+          "coverage_label": "June 2026 to December 2026"
+        },
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026040800",
+          "run_id": "2026040800",
+          "coverage_label": "May 2026 to November 2026"
+        },
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026030800",
+          "run_id": "2026030800",
+          "coverage_label": "April 2026 to October 2026"
+        },
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026020800",
+          "run_id": "2026020800",
+          "coverage_label": "March 2026 to September 2026"
+        },
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026010800",
+          "run_id": "2026010800",
+          "coverage_label": "February 2026 to August 2026"
+        },
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2025120800",
+          "run_id": "2025120800",
+          "coverage_label": "January 2026 to July 2026"
+        },
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2025110800",
+          "run_id": "2025110800",
+          "coverage_label": "December 2025 to June 2026"
+        },
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2025100800",
+          "run_id": "2025100800",
+          "coverage_label": "November 2025 to May 2026"
+        },
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2025090800",
+          "run_id": "2025090800",
+          "coverage_label": "October 2025 to April 2026"
+        },
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2025080800",
+          "run_id": "2025080800",
+          "coverage_label": "September 2025 to March 2026"
+        },
+        {
+          "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2025070800",
+          "run_id": "2025070800",
+          "coverage_label": "August 2025 to February 2026"
+        }
+      ],
+      "n_archived_runs_listed": 181,
+      "n_links_seen": 182
+    }
+  },
+  "images": [
+    {
+      "variable": "precipitation rate",
+      "variable_key": "prate",
+      "season_index": 1,
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_prate_us_season1.png",
+      "http_status": 200,
+      "ok": true,
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "season_mapping_note": "The month range each 'season N' image covers is printed inside the image by NOAA. This project does not re-derive it from the filename, so no month range is asserted here.",
+      "local_path": "assets/model_guidance/nmme_prate_us_season1.png",
+      "bytes": 31998,
+      "sha256": "fab7fa299872f1f256a7ad49ab962742d8e4b61d3d2d3412ab7d98dd2d062606"
+    },
+    {
+      "variable": "precipitation rate",
+      "variable_key": "prate",
+      "season_index": 2,
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_prate_us_season2.png",
+      "http_status": 200,
+      "ok": true,
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "season_mapping_note": "The month range each 'season N' image covers is printed inside the image by NOAA. This project does not re-derive it from the filename, so no month range is asserted here.",
+      "local_path": "assets/model_guidance/nmme_prate_us_season2.png",
+      "bytes": 31341,
+      "sha256": "5b3f3e43109276a5b5ebe12b2653e33c4ad85286b5424f21b95f784c685584b1"
+    },
+    {
+      "variable": "precipitation rate",
+      "variable_key": "prate",
+      "season_index": 3,
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_prate_us_season3.png",
+      "http_status": 200,
+      "ok": true,
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "season_mapping_note": "The month range each 'season N' image covers is printed inside the image by NOAA. This project does not re-derive it from the filename, so no month range is asserted here.",
+      "local_path": "assets/model_guidance/nmme_prate_us_season3.png",
+      "bytes": 31535,
+      "sha256": "f2c8b356786560a5b1c2db9a6fc51eb1af74f772a30c3c45f55d0b2e8ff5a478"
+    },
+    {
+      "variable": "precipitation rate",
+      "variable_key": "prate",
+      "season_index": 4,
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_prate_us_season4.png",
+      "http_status": 200,
+      "ok": true,
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "season_mapping_note": "The month range each 'season N' image covers is printed inside the image by NOAA. This project does not re-derive it from the filename, so no month range is asserted here.",
+      "local_path": "assets/model_guidance/nmme_prate_us_season4.png",
+      "bytes": 31610,
+      "sha256": "2eeb0a5f03b62aa7975bc0bfbe41719ae8716004042a2fa74ebb44be7cb9fb4c"
+    },
+    {
+      "variable": "precipitation rate",
+      "variable_key": "prate",
+      "season_index": 5,
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_prate_us_season5.png",
+      "http_status": 200,
+      "ok": true,
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "season_mapping_note": "The month range each 'season N' image covers is printed inside the image by NOAA. This project does not re-derive it from the filename, so no month range is asserted here.",
+      "local_path": "assets/model_guidance/nmme_prate_us_season5.png",
+      "bytes": 31623,
+      "sha256": "69a167de9252d9100515f900e557412fccb1b26c196e1ac3951b5fea8d785487"
+    },
+    {
+      "variable": "2m temperature",
+      "variable_key": "tmp2m",
+      "season_index": 1,
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_tmp2m_us_season1.png",
+      "http_status": 200,
+      "ok": true,
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "season_mapping_note": "The month range each 'season N' image covers is printed inside the image by NOAA. This project does not re-derive it from the filename, so no month range is asserted here.",
+      "local_path": "assets/model_guidance/nmme_tmp2m_us_season1.png",
+      "bytes": 30357,
+      "sha256": "0bdc74148b5481800e3db3f6b0e50733d1ca18927e39a1b82302e9e214ab5cd9"
+    },
+    {
+      "variable": "2m temperature",
+      "variable_key": "tmp2m",
+      "season_index": 2,
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_tmp2m_us_season2.png",
+      "http_status": 200,
+      "ok": true,
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "season_mapping_note": "The month range each 'season N' image covers is printed inside the image by NOAA. This project does not re-derive it from the filename, so no month range is asserted here.",
+      "local_path": "assets/model_guidance/nmme_tmp2m_us_season2.png",
+      "bytes": 30641,
+      "sha256": "09f0dbf3467238592c59efbaf5dfe027040d9458f42cac187c5cd9ed87023a6f"
+    },
+    {
+      "variable": "2m temperature",
+      "variable_key": "tmp2m",
+      "season_index": 3,
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_tmp2m_us_season3.png",
+      "http_status": 200,
+      "ok": true,
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "season_mapping_note": "The month range each 'season N' image covers is printed inside the image by NOAA. This project does not re-derive it from the filename, so no month range is asserted here.",
+      "local_path": "assets/model_guidance/nmme_tmp2m_us_season3.png",
+      "bytes": 31651,
+      "sha256": "83af0773082826c59968a483eab19d0c42d3d8b467ba8c2d7ae7a8099cfba3d9"
+    },
+    {
+      "variable": "2m temperature",
+      "variable_key": "tmp2m",
+      "season_index": 4,
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_tmp2m_us_season4.png",
+      "http_status": 200,
+      "ok": true,
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "season_mapping_note": "The month range each 'season N' image covers is printed inside the image by NOAA. This project does not re-derive it from the filename, so no month range is asserted here.",
+      "local_path": "assets/model_guidance/nmme_tmp2m_us_season4.png",
+      "bytes": 31974,
+      "sha256": "0a44b13c08a35179e8da55addc03ebdfea25df212957f3b8ec908f273fb8318a"
+    },
+    {
+      "variable": "2m temperature",
+      "variable_key": "tmp2m",
+      "season_index": 5,
+      "url": "https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/prob_ensemble_tmp2m_us_season5.png",
+      "http_status": 200,
+      "ok": true,
+      "warning": "Model guidance, not an official forecast. Not merged into the scoreboard.",
+      "season_mapping_note": "The month range each 'season N' image covers is printed inside the image by NOAA. This project does not re-derive it from the filename, so no month range is asserted here.",
+      "local_path": "assets/model_guidance/nmme_tmp2m_us_season5.png",
+      "bytes": 31556,
+      "sha256": "f08983b4dd06e39ba40b3368a37d5ca845f003d93da5ae48fd701b6a04effbbe"
+    }
+  ],
+  "probes": [
+    {
+      "key": "nomads_cfs_prod",
+      "label": "NOMADS CFSv2 production directory",
+      "url": "https://nomads.ncep.noaa.gov/pub/data/nccf/com/cfs/prod/",
+      "note": "CFSv2 GRIB2 output. Probed for availability only: this project takes no GRIB2 decoder, so nothing is read out of these files.",
+      "http_status": 200,
+      "ok": true,
+      "bytes": 3258,
+      "sha256": "8666eef272214cf4458f3618e454ebfc36f209f6145a252eb40b48811739da40",
+      "retrieved_utc": "2026-09-19T04:24:43Z",
+      "decoded": false,
+      "decoding_note": "Nothing was read out of this location. Availability is recorded so the reader knows the raw model output is public, and so the reason this tier publishes no model numbers is on the record."
+    },
+    {
+      "key": "nmme_archive_latest",
+      "label": "Latest NMME archived run directory",
+      "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026080800",
+      "note": "The newest archived real-time NMME run. Recorded with NOAA's own coverage label; the netCDF/GRIB inside is not decoded.",
+      "http_status": 200,
+      "ok": true,
+      "bytes": 3173,
+      "sha256": "f659cd67740b33fd248fa626aa8caa0aef2d56a34dda15e600735cf73f1e1710",
+      "retrieved_utc": "2026-09-19T04:24:54Z",
+      "decoded": false,
+      "decoding_note": "Nothing was read out of this location. Availability is recorded so the reader knows the raw model output is public, and so the reason this tier publishes no model numbers is on the record."
+    }
+  ],
+  "counts": {
+    "pages_requested": 7,
+    "pages_retrieved": 7,
+    "images_archived": 10,
+    "verbatim_sentences": 7,
+    "probes_ok": 2
+  },
+  "what_this_tier_does_not_do": [
+    "It does not convert a model ensemble into a probability for one ZIP code.",
+    "It does not read a value out of an image or a GRIB2/netCDF file.",
+    "It does not blend model output with the official CPC outlook.",
+    "It does not publish a month range for a 'season N' image that NOAA did not state in text."
+  ],
+  "irregularities": []
+}

@@ -77,5 +77,84 @@
         "gust_max_mph": 17.3
       }
     ]
+  },
+  {
+    "issuance_date": "2026-09-19",
+    "generated_utc": "2026-09-19T04:14:04+00:00",
+    "forecast_updated": "2026-09-18T20:26:33+00:00",
+    "days": [
+      {
+        "target_date": "2026-09-18",
+        "high_f": 60,
+        "low_f": 59,
+        "pop_pct": 1,
+        "qpf_in": 0.0,
+        "wind_max_mph": 12.0,
+        "gust_max_mph": 19.6
+      },
+      {
+        "target_date": "2026-09-19",
+        "high_f": 65,
+        "low_f": 58,
+        "pop_pct": 1,
+        "qpf_in": 0.0,
+        "wind_max_mph": 14.0,
+        "gust_max_mph": 18.4
+      },
+      {
+        "target_date": "2026-09-20",
+        "high_f": 61,
+        "low_f": 58,
+        "pop_pct": 2,
+        "qpf_in": 0.0,
+        "wind_max_mph": 12.0,
+        "gust_max_mph": 16.1
+      },
+      {
+        "target_date": "2026-09-21",
+        "high_f": 62,
+        "low_f": 58,
+        "pop_pct": 1,
+        "qpf_in": 0.0,
+        "wind_max_mph": 12.0,
+        "gust_max_mph": 15.0
+      },
+      {
+        "target_date": "2026-09-22",
+        "high_f": 65,
+        "low_f": 59,
+        "pop_pct": 0,
+        "qpf_in": 0.0,
+        "wind_max_mph": 10.0,
+        "gust_max_mph": 15.0
+      },
+      {
+        "target_date": "2026-09-23",
+        "high_f": 71,
+        "low_f": 58,
+        "pop_pct": 0,
+        "qpf_in": 0.0,
+        "wind_max_mph": 9.0,
+        "gust_max_mph": 13.8
+      },
+      {
+        "target_date": "2026-09-24",
+        "high_f": 71,
+        "low_f": 60,
+        "pop_pct": 0,
+        "qpf_in": 0.0,
+        "wind_max_mph": 10.0,
+        "gust_max_mph": 13.8
+      },
+      {
+        "target_date": "2026-09-25",
+        "high_f": 62,
+        "low_f": 60,
+        "pop_pct": 0,
+        "qpf_in": 0.0,
+        "wind_max_mph": 7.0,
+        "gust_max_mph": 17.3
+      }
+    ]
   }
 ]

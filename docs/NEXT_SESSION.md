@@ -2,14 +2,23 @@
 
 ## 1. State at the end of this session (18 Sep 2026 — Pass 1: CPC back-test pipeline, GSOD/ISD retirement, deep links, AFD history, digest)
 
-**Ledger:** 59 checks (new: `cpc-backtest-sampling-method`, `deep-links-traceable`,
-`afd-history-consistent`, `digest-rss-traceable`, `model-guidance-separated`,
-`successor-probe-present`), 19 claims — all pass.
+**Ledger:** 67 checks, 19 claims — all pass, 0 warnings. Pass 8's 59 plus 8 ported
+from the parallel pass 9 (`cpc-record-coverage-declared`, `cpc-season-covers-complete`,
+`cpc-record-reach`, `auxiliary-manifests-vetted`, `auxiliary-manifests-separate`,
+`model-guidance-isolation`, `feed-traceable`, `feed-provenance`). Two more
+(`model-guidance-quotes-verbatim`, `model-guidance-links-fetched`) run only when
+`data/model_guidance.json` exists, i.e. after a live CI run.
 
-**Tests:** `tests/test_parsers.py` 377/377 · `tests/falsify_guards.py` 33 cases ·
-`npm test` (jsdom smoke, +4 guards: digest, AFD history, day-dialog deep links,
-back-test/file consistency) passes · `pipeline/verify_sources.py` passes ·
-`pipeline/verify_claims.py` passes.
+**Tests:** `tests/test_parsers.py` 409/409 · `tests/falsify_guards.py` 56 cases ·
+`tests/falsify_smoke.py` 23 cases · `npm test` (jsdom smoke, guards 1–29) passes ·
+`pipeline/verify_sources.py` passes (every manifest) · `pipeline/verify_claims.py`
+passes · module self-tests: `model_guidance` 25, `build_feed` 36.
+
+**Pass 9 (parallel session, merged as PR #18):** the model-guidance tier and the
+official-product feed were built (pass 8 had left model guidance open), and one
+live bug was found in the merged tree — cross-New-Year CPC season labels were
+attached to no day at all. See `docs/VERIFICATION.md` Session 9, including the
+table recording which implementation won each collision and why.
 
 **Pass 2 (same session, bug/edge-case review of the diff above):** 10 further
 defects found and fixed, all with regression tests — a wrong helper name that
@@ -128,12 +137,52 @@ privacy story (static files, no addresses, no tracking). **Email deliberately
 not offered**: it would require storing addresses and running a sender, which
 this static project cannot do honestly.
 
-### 6. Model guidance (only with heavy caveats)
+### 6. Model guidance — DONE 18 Sep 2026, as a separate warned tier
 
-CFSv2/NMME on NOMADS would give a genuine model view of Oct–Jan, but it needs
-GRIB2 decoding, large storage, and is **not an official forecast**. If built
-it must be a separate tier or page with prominent warnings — never merged into
-the scoreboard.
+`pipeline/model_guidance.py` (+25 offline self-checks, its own workflow step and
+its own manifest `data/model_guidance_provenance.json`) archives NOAA's NMME
+seasonal probability maps locally with their SHA-256, quotes NOAA's definition
+sentences verbatim (the description page is **CP1252** — decode it with the
+publisher's encoding or the substring checks break), prints the coverage period
+NOAA states on its index page rather than deriving one from a filename, and
+records the raw archive / NOMADS locations with `decoded: false`.
+
+What it deliberately does **not** do: read a value out of an image, decode
+GRIB2/netCDF, convert an ensemble into a probability for 94122, or restate a skill
+score (NOAA's RPSS and verification pages are linked instead). Isolation is
+enforced twice — pass 8's `model-guidance-separated` inspects the scoreboard days,
+pass 9's `model-guidance-isolation` also audits the guidance file and scans
+`calendar.json` / `landlord.json` for model-guidance mentions outside quoted
+official text. **Open:** the tier has never run live, so the first CI run should be
+watched (see §2.7).
+
+### 7. Watch the next live CI run of the two new tiers
+
+The first live run happened on 19 Sep 2026 at `3941ac6`: every step exited 0 and
+the ledger then **failed the publish** on `model-guidance-links-fetched`, because a
+raw-archive probe that could not run published `ok: false` with no `error`. That is
+fixed (bug 68 in `docs/VERIFICATION.md`) and covered by six new self-checks, but the
+run did not publish, so `data/model_guidance.json` and its archived PNGs are still
+unseen. On the next nightly run, check that:
+
+* `MODEL_GUIDANCE_EXIT=0` and `FEED_EXIT=0` appear in `data/run_diagnostics.txt`
+  (the publish gate now requires all nine exit codes);
+* `assets/model_guidance/*.png` were archived and their hashes match
+  `data/model_guidance.json` (the ledger re-hashes them);
+* the two dormant checks `model-guidance-quotes-verbatim` and
+  `model-guidance-links-fetched` appear in `data/verify.json` and pass — if a
+  NOAA page moved, they fail rather than silently dropping;
+* `data/feed.json` gains the model-guidance rows labelled `NOT OFFICIAL`, and the
+  feed's `provenance_unverified` count stays small and explained;
+* if the raw-archive probe is skipped again, the reason it publishes tells you
+  whether NOAA was unreachable or whether `ARCHIVE_ROW_RE` no longer matches their
+  page — the second needs a code fix, the first needs nothing.
+
+### 8. Still open from earlier passes
+
+Back-filling the CPC archive (§2.1), stitching a successor wind identifier if one
+appears (§2.2 — a documented maintainer decision, because it would move every
+published 1991–2020 wind statistic), and multi-ZIP support (§2.5).
 
 ---
 
@@ -169,6 +218,24 @@ outage.
 * Commercial providers (AccuWeather and similar) stay excluded; the exclusion is
   documented. Any new host must be vetted and added to `ALLOWED_HOSTS` in
   `pipeline/verify_sources.py` deliberately — not with a wildcard suffix.
+* **Decode with the publisher's encoding.** Some NOAA/CPC pages are CP1252, not
+  UTF-8 (`NMME_PROB_descr.html` is). `lib_fetch.decode_text` tries the publisher's
+  encoding first and counts any character it still cannot represent; decoding such a
+  page as UTF-8-with-replacement turns its typographic quotes into U+FFFD and breaks
+  every verbatim-substring check that depends on them.
+* **Model guidance never merges into the scoreboard.** It is a separate tier with a
+  warning that renders before its content and again on every item, its own dataset
+  and its own manifest. Nothing is read out of an image and no GRIB2/netCDF is
+  decoded. Two ledger checks enforce the separation from different angles.
+* **A date the publisher did not give is never invented.** Date-only means
+  `time_known: false` with the publisher's own wording beside it; no date at all
+  means the entry is listed undated. A timestamp that will not parse is dropped with
+  a warning, not guessed at.
+* **Two provenance conventions coexist on purpose** (`docs/METHODS.md` §26): a step
+  whose rows must appear in the run's published totals merges back into
+  `provenance.json`; a tier meant to be read on its own writes
+  `data/<area>_provenance.json`. Either way a fetch is recorded exactly once and
+  `verify_sources.py` scans every manifest.
 
 ---
 
@@ -181,11 +248,15 @@ python3 pipeline/build_calendar.py
 python3 pipeline/cpc_backtest.py
 python3 pipeline/landlord_summary.py
 python3 pipeline/build_digest.py
+python3 pipeline/model_guidance.py     # NMME tier (needs network; separate manifest)
+python3 pipeline/build_feed.py         # derived feed — run last, it reads the rest
+python3 pipeline/verify_sources.py     # host gate, every manifest
 python3 pipeline/verify_claims.py
 python3 tests/test_parsers.py
 python3 tests/falsify_guards.py
 npm install && npm test
 python3 tests/falsify_smoke.py
+for m in model_guidance build_feed; do python3 pipeline/$m.py --selftest; done
 python3 -m http.server 8000   # http://localhost:8000
 ```
 
