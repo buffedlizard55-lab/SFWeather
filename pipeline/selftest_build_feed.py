@@ -37,6 +37,8 @@ MAP_URL = "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610temp.new
 HOURLY_URL = NWS_URL + "/hourly"
 AFD_PRODUCT_URL = "https://api.weather.gov/products/2f89"
 AFD_HIST_URL = "https://api.weather.gov/products/aaa"
+CPC_ARCHIVE_URL = "https://www.cpc.ncep.noaa.gov/products/archives/long_lead/llarc.ind.php"
+ISD_HISTORY_URL = "https://www.ncei.noaa.gov/pub/data/ISD/history/isd-history.csv"
 CPC_INDEX_URLS = [f"https://www.cpc.ncep.noaa.gov/products/predictions/{k}/"
                   for k in ("610day", "30day", "90day", "longlead")]
 
@@ -46,7 +48,7 @@ ORPHAN_URL = "https://www.weather.gov/some-page-this-project-never-fetched"
 #: every URL the fixture data cites as having been fetched, as the real manifests do
 FETCHED = [NWS_URL, HOURLY_URL, SHP_URL, DISC_URL, ALERTS_URL, MG_INDEX_URL,
            MG_IMAGE_URL, NCEI_URL, MAP_URL, AFD_PRODUCT_URL, AFD_HIST_URL,
-           *CPC_INDEX_URLS]
+           CPC_ARCHIVE_URL, ISD_HISTORY_URL, *CPC_INDEX_URLS]
 
 
 def manifest_entry(url, note="test fetch", status=200, ok=True, bytes_=1234,
@@ -130,12 +132,20 @@ def fixture(datadir: Path):
          "forecast_updated": "2026-09-18T18:27:04+00:00",
          "days": [{"target_date": "2026-09-18", "high_f": 64},
                   {"target_date": "2026-09-19", "high_f": 65}]}]))
-    (datadir / "afd_history.json").write_text(json.dumps({
-        "warning": "prose", "products": [
-            {"id": "aaa", "issuance_utc": "2026-09-18T10:23:00+00:00",
-             "url": AFD_HIST_URL,
-             "quotes": [{"text": "A weak front will bring periods of rain Thursday night into Friday.",
-                         "keywords": ["rain", "storm"]}]}]}))
+    # data/afd_history.json is an append-only *list* of discussions, each with
+    # the sentences its scan matched grouped by category (the shape
+    # pipeline/build_calendar.py writes).
+    (datadir / "afd_history.json").write_text(json.dumps([
+        {"product_id": "aaa", "issuance_time": "2026-09-18T10:23:00+00:00",
+         "source_url": AFD_HIST_URL, "text_sha256": "f" * 64, "text_chars": 5423,
+         "sentences_scanned": 22,
+         "categories": [
+             {"id": "prolonged_rain", "label": "Prolonged / multi-day rain",
+              "sentence_count": 1,
+              "sentences": [{"sentence": "A weak front will bring periods of rain "
+                                        "Thursday night into Friday.",
+                             "section": "SHORT TERM",
+                             "matched_patterns": ["rain", "storm"]}]}]}]))
     (datadir / "model_guidance.json").write_text(json.dumps({
         "warning": "MODEL GUIDANCE - NOT AN OFFICIAL FORECAST.",
         "coverage_verbatim": "October 2026 - April 2027",
@@ -146,10 +156,23 @@ def fixture(datadir: Path):
                     "local_path": "assets/model_guidance/nmme_prate_us_season1.png",
                     "sha256": "e" * 64, "retrieved_utc": "2026-09-18T21:00:05Z",
                     "warning": "Model guidance, not an official forecast."}]}))
-    (datadir / "ncei_archive_probe.json").write_text(json.dumps({
-        "generated_utc": "2026-09-18T21:10:00Z", "verdict": "archive-wide-lag",
-        "gsod_last_date": "2025-08-27", "subject_url": ORPHAN_URL,
-        "gsod_urls": [NCEI_URL]}))
+    # Datasets the nightly pipeline publishes alongside the feed.  The digest
+    # carries ORPHAN_URL - a link this project never fetched - so the feed's
+    # "marked unverified, never silently trusted" path is exercised.
+    (datadir / "cpc_backtest.json").write_text(json.dumps({
+        "generated_utc": "2026-09-18T21:10:00Z", "status": "scored", "reason": None,
+        "archive_index": CPC_ARCHIVE_URL, "station_url": NCEI_URL,
+        "rows": [{"season": "OND 2024", "hit": True}, {"season": "NDJ 2024-2025", "hit": None}],
+        "summary": {"hit_rate_pct": 100.0}}))
+    (datadir / "isd_history.json").write_text(json.dumps({
+        "generated_utc": "2026-09-18T21:11:00Z", "url": ISD_HISTORY_URL,
+        "candidates": [{"usaf_wban": "72494023234"}], "note": "1 same-airport row"}))
+    (datadir / "ghcnh_probe.json").write_text(json.dumps({
+        "generated_utc": "2026-09-18T21:12:00Z", "ok": True, "url": NCEI_URL,
+        "note": "GHCN-Hourly has no 2026 file yet"}))
+    (datadir / "digest.json").write_text(json.dumps({
+        "generated_utc": "2026-09-18T21:13:00Z", "source_url": ORPHAN_URL,
+        "days": [{"date": "2026-10-01"}]}))
     (datadir / "quality_report.json").write_text(json.dumps(
         {"generated_utc": "2026-09-18T20:42:23Z", "counts": {}, "irregularities": [
             {"severity": "info", "area": "nws", "message": "kept"}]}))
@@ -347,7 +370,8 @@ def run():
           f"{rep2['counts']}")
     check("the feed file does not carry a second provenance manifest of its own",
           not (tmp / "feed_provenance.json").exists()
-          and all(e.get("sha256") in (None, "a" * 64, "b" * 64, "c" * 64, "d" * 64, "e" * 64)
+          and all(e.get("sha256") in (None, "a" * 64, "b" * 64, "c" * 64, "d" * 64,
+                                      "e" * 64, "f" * 64)
                   for e in entries),
           "no network access in this module")
 

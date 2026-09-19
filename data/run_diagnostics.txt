@@ -1,10 +1,12 @@
 runner: Linux runnervmlun5p 6.17.0-1022-azure #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
 python: Python 3.11.16
-date:   Fri Sep 18 20:39:27 UTC 2026
-sha:    b760fd51a9f0bb6318b8728b45d97fb7110dd31c
+date:   Fri Sep 18 23:23:27 UTC 2026
+sha:    257dfe3e33dcdc7af8e51e75814b97683679eeea
 ref:    refs/heads/main
 PIPELINE_EXIT=0
 CALENDAR_EXIT=0
+CPC_BACKTEST_EXIT=0
 LANDLORD_EXIT=0
+DIGEST_EXIT=0
 VERIFY_EXIT=0
 CLAIMS_EXIT=0

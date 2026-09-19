@@ -239,33 +239,35 @@ If you want a second opinion from AccuWeather, you must read it directly — thi
 
 ## Checking any single day yourself (the deep links)
 
-Every day card on the site carries the official URLs that hold **that one date's**
-rows, so you never have to take this project's word for a number:
+Open any day on the scoreboard and the dialog offers **"Verify each number
+yourself"** — one link per headline field, each naming the exact official element
+that figure was aggregated from. Nothing is averaged away for you; the hint beside
+each link says what to look for:
 
-* **Rain and temperature for that date** — one station-day from NOAA's Access Data
-  Service (`dataset=daily-summaries`, station `USW00023272`, `startDate` = `endDate`
-  = that day, `units=standard`, `format=csv`). Opens as a small CSV in your browser.
-* **Wind for that date** — the annual GSOD file
-  (`global-summary-of-the-day/access/<year>/72494023234.csv`) and the hourly ISD file
-  (`global-hourly/access/<year>/72494023234.csv`) for the year the day falls in.
-  These are large files; use your browser's find for the date (GSOD rows start
-  `2026-12-15`, ISD rows carry the timestamp `2026-12-15T…Z`).
-* **Inside the 7-day forecast horizon** — the NWS product that day's numbers came
-  from, so you can read the forecaster's own words for it.
+* **High and low temperature, rain amount** — the GHCN-Daily row for that station
+  (a wide CSV, one row per `DATE`): read `TMAX`/`TMIN`/`PRCP` on the row for that
+  date. Where the day's figure comes from the 1991–2020 normals instead of an
+  observation, the link points at the normals file and the hint says which rows to
+  read.
+* **Humidity** — the hourly-normals file, with the hint that relative humidity here
+  is **derived** (Magnus formula) from the official temperature and dew-point
+  normals, not measured.
+* **Wind and gusts** — the GSOD / hourly ISD file holding that day's rows. Use your
+  browser's find for the date.
+* **Inside the 7-day forecast horizon** — the NWS hourly forecast and gridpoint
+  series, naming the `startTime` values that fell in that local day and the
+  `validTime` interval behind the gust or rain amount, so you can read the
+  forecaster's own numbers for it.
 
-Each link is labelled honestly: **fetched this run** means this project recorded a
-successful request for that exact URL (with byte count and SHA-256); **link only**
-means the link is offered for your review but was not fetched. For the 123 days of
-this season almost every link is *link only* — the days are in the future or the
-archive for them is not published yet, and inventing a fetch record would be worse
-than saying so. What *is* fetched every run is one such request for a date the
-station file actually holds, recorded in `data/ghcn_probe.json`, so the URL shape
-itself is tested rather than assumed.
-
-Two practical notes: NOAA publishes the GSOD and hourly ISD annual files **after
-the year ends**, so a link into the current year may 404 until it exists; and a CSV
-of one station-day with no rows means the station reported nothing that day, not
-that the link is broken.
+Two practical notes: these links are offered for your review, they are not the
+evidence for the figure — the evidence is the recorded fetch of the file the number
+was computed from, with its HTTP status, byte count and SHA-256 in the *Sources*
+section. And NOAA publishes the GSOD and hourly ISD annual files **after the year
+ends**, so a link into the current year may 404 until it exists; that is recorded as
+an expected absence, not a failure. NCEI has also retired the GSOD/hourly-ISD
+products for the wind station (2025-08-29), which the site states plainly and the
+pipeline re-investigates every run by searching NCEI's station history for a
+successor identifier.
 
 ## Reading the model-guidance section (and why it is kept apart)
 

@@ -504,85 +504,143 @@ catches. That boundary is written in the harness so it is not rediscovered.
 
 ---
 
-## Session 9 — 18 September 2026 (pass 9): model guidance, official-product feed, archive probe, per-day deep links
+## Session 8 — 18 September 2026 (pass 8): CPC back-test pipeline, GSOD/ISD retirement, deep links, AFD history, digest
 
-Scope: three deliberately separated tiers plus one archive investigation, each with
-its own pipeline module, its own provenance manifest, its own site section, and its
-own ledger and falsification guards. Nothing in this pass changed a published
-day-by-day number: the only change to `data/calendar.json` was a `year_month` key
-added to each month's roll-up so a season crossing New Year can be counted
-mechanically.
+This pass implemented five of the six open items from `docs/NEXT_SESSION.md` §2
+(the sixth, CFSv2/NMME model guidance, stays explicitly unbuilt per its own
+heavy-caveat rule — and a new ledger check, `model-guidance-separated`, now
+fails the run if model guidance ever leaks into the scoreboard tiers). Six new
+ledger checks cover the new artefacts (see standings).
 
 ### Bugs found in this pass (and fixed)
 
-| # | Bug | Evidence | Fix |
+| # | What was wrong | Root cause | Fix |
 | --- | --- | --- | --- |
-| 40 | **The two rainy-season CPC outlooks were attached to no day at all.** `OND 2026` and `NDJ 2026-2027` were fetched, parsed and printed in the season table, but `parse_season_year` returned `None` for a cross-New-Year label, so no day carried the DJF/NDJ outlook. A reader opening 15 December saw only the 3-month outlook, not the seasonal one covering it | Recounted coverage against the committed `cpc.json`: 38 records, 123 days, 0 days carrying a season record | `parse_season_year`/`parse_season_key` accept `YYYY-YYYY` (and `YYYY/YYYY`) for seasons that actually cross New Year, reject non-consecutive years and reject a year-pair on a single-calendar-year season; monthly roll-up walks months from `SEASON_START`; ledger checks `cpc-record-coverage-declared`, `cpc-season-covers-complete`, `cpc-record-reach` |
-| 41 | **13 renderer strings in `assets/js/app.js` contained `\\u2019`, `\\u00d7`, `\\u2264`** — a double escape that renders a literal `\u2019` on the page instead of an apostrophe | `grep -c '\\\\u' assets/js/app.js` → 13, before and after the session's edits | Replaced with real characters; `node --check` and `npm test` re-run |
-| 42 | The tautological ledger check `auxiliary-manifests-separate` compared a manifest to itself (always true) and its sibling only checked that auxiliary manifests *were not* the nightly one, so a second script could silently append to `provenance.json` and desynchronise `run.json`'s published totals | Read of the checks' source | Both rewritten against the real schemas: every fetch recorded in exactly one manifest, and `run.json`'s totals re-derived from `provenance.json` alone |
-| 43 | `model-guidance-links-fetched` and the archive-probe ledger check were written against an imagined schema (`{ok, url}` maps, `verdict.stale_areas`) that the modules never emitted — they would have passed on any data or failed on the real thing | Dry run of both checks against the modules' actual output | Rewritten against the emitted objects (every `url`/`href`/`source_url`/`api` field traced to evidence; verdict classification, gap/slack arithmetic, control dates, host vetting, manifest completeness) |
-| 44 | `model-guidance-isolation` was a token scan over two JSON files | — | Rewritten as a structural walk with `QUOTED_TEXT_KEYS`, so NOAA's own words (CPC's discussion says the official outlook used NMME and CFSv2) are not mistaken for contamination while a real leak still fails the run. Falsified by mutating a fixture before being kept |
-| 45 | Four falsification cases in `tests/falsify_smoke.py` were BAD — the harness did not detect mutations it should have | Harness output | Static text injected into `#calendar-grid` is wiped by `grid.innerHTML = ''`, so the mutation now patches the renderer; the feed-count mutation changes the number rather than the surrounding text; `expect_msg` matches the guard's message verbatim; a hidden element keeps its `textContent`, so the pill is replaced with an empty span. **29/29 behave** |
+| 52 | `data/afd_history.json` recorded every category with a null key, and the last-mention table could never resolve | `afd_language_scan()` names the field `id`, but `update_afd_history()`, `afd_last_mention()`, the calendar builder and the ledger check all read `key` | All four read `id` with a `key` fallback; the bad history file was deleted and rebuilt; a regression test pins a scan using `id` and a legacy entry using `key` |
+| 53 | The CPC back-test card expected `summary` to be an array of rows; the writer produces `{status, rows, summary}` | Card and writer were written against different imagined schemas and never run together | The renderer was rewritten for the real schema (hit-rate + by-category table + per-row table, pending-backfill callout with attempt table); smoke guard 27 pins card/file consistency |
+| 54 | The digest renderer read `it.url` / `it.summary` / `nws_alert` | Item schema is `link` / `description` / `nws-alert` (RSS vocabulary) | Renderer corrected to the real keys before first render |
 
-### Independent source re-checks performed for this feature
+### Decisions with evidence
 
-| Claim | Source checked | Verdict |
-| --- | --- | --- |
-| What period the NMME probability maps cover | <https://www.cpc.ncep.noaa.gov/products/NMME/probindex.shtml> | The page itself states it ("For: October 2026 – April 2027"); the module quotes that string and never derives a range from a `season N` filename |
-| What the map contours mean | <https://www.cpc.ncep.noaa.gov/products/NMME/NMME_PROB_descr.html> | Definition sentences captured verbatim; page is **CP1252**, decoded with the publisher's encoding (UTF-8-with-replacement would have turned its typographic quotes into U+FFFD and broken the substring check) |
-| That raw NMME output exists and is labelled by CPC | <https://ftp.cpc.ncep.noaa.gov/NMME/archive/> | Monthly run directories back to ≥2019, each labelled with the period it covers; newest recorded with NOAA's label, `decoded: false` |
-| The Access Data Service URL shape used for per-day links | <https://www.ncei.noaa.gov/support/access-data-service-api-user-documentation> | Parameters `dataset`/`stations`/`startDate`/`endDate`/`dataTypes`/`units`/`format` as documented; one such request is fetched per run and recorded in `ghcn_probe.json` |
-| Why the wind archive stops where it does | `isd-history.csv`, per-year GSOD control comparison, <https://www.ncei.noaa.gov/alerts> | Classified from evidence (station-specific gap / archive-wide lag / not determinable) with measured gap, slack and year compared; NCEI's own active data-access delay notice cited as corroboration |
-| Whether current wind exists in another official product | GHCN-Daily SFO (`USW00023234`) header and rows | Wind elements probed by name (AWND, WDF2, WDF5, WSF2, WSF5, WDMV, TSUN) with last dates; reported as a *different product*, never mixed into GSOD-based statistics |
-| What the NWS products API returns for AFD history | <https://api.weather.gov/products/types/AFD/locations/MTR>, <https://api.weather.gov/products/{id}> | `@graph[]` with `id`/`issuanceTime`; full text at the product URL. The listing is only what NWS currently publishes, so the history is a window, stated as such |
-
-### What the falsification harnesses established
-
-Every new guard was falsified before it was kept. `tests/falsify_guards.py` now runs
-**65 cases** (ledger checks and module logic mutated one at a time; each mutation
-must be caught by the intended check and by nothing else), and
-`tests/falsify_smoke.py` runs **29** (rendered DOM mutated in a jsdom harness; the
-smoke guard must fail loudly). Mutations exercised in this pass include: a season
-record attached to a day outside its coverage; a cross-year label given a single
-year; a model-guidance mention planted inside `calendar.json` outside a quotation;
-a definition sentence paraphrased; an archived PNG altered so its SHA-256 no longer
-matches; a feed row marked official with no evidence; a date-only timestamp given a
-clock time; a deep link pointed at an unvetted host or the wrong station/date; an
-archive verdict reclassified without changing its gap; an auxiliary manifest
-double-recording a fetch.
+| Decision | Evidence |
+| --- | --- |
+| GSOD/ISD stop at 2025-08-27 because NCEI **retired** both archives on 2025-08-29 — not a station-ID change, not a lag | HadISD final release `v342_202508p`; GSODR retirement docs; NOAA community notice that SSOD replaces GSOD and GHCNh replaces ISD. Coverage notes now say "retired"; each run probes GHCNh/SSODv2 |
+| IRI Data Library **rejected** as a CPC archive source | Serves HTTP only (project requires HTTPS); a Columbia academic mirror, not an official NOAA operational product; its `SOURCES/.NOAA/.NCEP/.CPC/` tree holds monitoring datasets, not outlook polygons. Documented in `docs/DATA_SOURCES.md` §3, kept off `ALLOWED_HOSTS` |
+| Email digest **not offered** | Requires storing addresses and running a sender; a static site cannot do either honestly. RSS + JSON only, opt-in, no tracking |
 
 ### Standings after this pass
 
-* `pipeline/verify_claims.py`: **64 checks pass, 0 fail, 1 warning** on the
-  committed dataset; **19 recorded claims**. Section 13 adds 14 checks:
-  `cpc-record-coverage-declared`, `cpc-season-covers-complete`, `cpc-record-reach`,
-  `auxiliary-manifests-vetted`, `auxiliary-manifests-separate`,
-  `model-guidance-isolation`, `model-guidance-quotes-verbatim`,
-  `model-guidance-links-fetched`, `afd-quotes-verbatim`,
-  `ncei-archive-probe-consistent`, `feed-traceable`, `feed-provenance`,
-  `day-deep-links-vetted` (369 links) and `day-deep-link-shape-verified`
-  (warning — resolves on the first CI run that populates
-  `ghcn_probe.json.data_service_probe`).
-* `tests/test_parsers.py`: **369 assertions** (+33), stdlib only, offline — season
-  parsing, monthly roll-up invariants against the committed `calendar.json`, and a
-  `verify_sources.py` fixture runner including temporary auxiliary manifests.
-* Module self-tests (run in CI's parsers job): `selftest_cpc_backtest` 30,
-  `selftest_ncei_probe` 25, `selftest_model_guidance` 25, `selftest_afd_history` 27,
-  `selftest_build_feed` 36 — **143 offline checks**.
-* `tests/smoke.js`: guards 24–27 added (feed header counts, model-guidance warning
-  and isolation, archive-probe verdict rendering, deep-link labelling in the day
-  dialog); `npm test` passes on the committed data, with the not-yet-built paths
-  exercised because `model_guidance.json`, `ncei_archive_probe.json`,
-  `cpc_backtest.json` and `afd_history.json` are produced only by a live run.
-* `pipeline/verify_sources.py`: exit 0 on the committed dataset, now scanning
-  **every** manifest (`provenance.json` plus `cpc_backtest`, `ncei_archive_probe`,
-  `model_guidance`, `afd_history`) for host vetting, HTTPS-only URLs and evidence
-  rules.
-* `data/feed.json` was built offline from the committed datasets: **187 entries**,
-  186 official / 0 not-official, 186 provenance-verified / 1 undated (the CPC
-  90-day outlook, which the publisher does not date), window
-  2026-09-15T14:58:57Z → 2026-09-18T20:42:55Z.
-* Known and honest: per-day deep links report `fetched_by_this_run: false` for all
-  123 days, because the probe fetches a past date the station file holds while the
-  season is in the future. That is the correct outcome; the guard is on the URL
-  *shape* plus every link's host, station and date.
+* `pipeline/verify_claims.py`: **59 checks** (53 at the start of the pass, +6:
+  `cpc-backtest-sampling-method`, `deep-links-traceable`, `afd-history-consistent`,
+  `digest-rss-traceable`, `model-guidance-separated`, `successor-probe-present`),
+  19 claims.
+* `tests/test_parsers.py`: **360 assertions** (+24: CPC scoring incl. EC-unscored,
+  AFD history append/dedupe/cap, digest triggers + RSS well-formedness/escaping,
+  deep-link key sets + official-host rule).
+* `tests/smoke.js`: guards **24**–**27** added (digest card vs `digest.json`;
+  AFD last-mention rendering; day-dialog deep links on official hosts;
+  back-test card vs `cpc_backtest.json`).
+* New workflow steps: `cpc_backtest.py` (after the calendar build) and
+  `build_digest.py` (after the landlord summary), both before the claim ledger
+  so their outputs are verified before publication.
+
+### Pass 2 (same session): bug/edge-case review of the Pass 1 diff
+
+| # | What was wrong | Root cause | Fix |
+| --- | --- | --- | --- |
+| 55 | `main.fetch_isd_history()` called `climo.search_isd_history_for_station`, which does not exist — the nightly run would have crashed with `AttributeError` | The fetch path needs the network, so it never executed locally | Call `climo.search_isd_history`; new tests execute both fetch functions end to end with a stubbed transport |
+| 56 | The successor search reported a still-open buoy (operating since 2020) as KSFO's successor id | A "still open" fallback ignored BEGIN dates | Successor must BEGIN after the stop; the fallback is gone, with a comment recording why |
+| 57 | The back-test's fetches (GHCN re-fetch + archive attempts) and sampling warnings died with its process: scored rows would have had no recorded fetch and the run counts would no longer recount | `cpc_backtest.py` runs after `main.py` wrote the run files, in a fresh process with an empty manifest | `merge_run_manifests()` folds the step's manifest + irregularities back into `provenance.json`, `run.json`, `quality_report.json` and `summary.txt`, on both exit paths; tested against a miniature run directory |
+| 58 | The ledger hard-coded the 50% POP threshold the builder publishes as a constant | Copy-paste of the value instead of the import | The ledger imports `POP_THRESHOLD_PCT` from `build_digest` |
+| 59 | JFM outlooks were scored against the *following* year's observed rain | A fixed "Jan/Feb/Mar belong to year+1" rule, wrong for a season that starts in January | Months at/after the season's first month belong to the named year; year-boundary tests pin OND/NDJ/JFM |
+| 60 | NWS days' human-forecast deep link was silently dropped from the day dialog | The dialog's link list had no `human` row | Row added (NWS days show 7 links, climatology days 7) |
+| 61 | Stripping one day's deep links still passed `deep-links-traceable` | The legacy-dataset leniency tested `days[0]` only | Leniency now requires *no* day to carry links; 10 new falsification cases pin all six new checks (33 total) |
+| 62 | If a mid-pipeline step crashed, the commit step read the *stale* `verify.json` (usually a pass) and published unverified data | The gate checked the verdict but not whether every step ran | The gate additionally requires all seven `*_EXIT=0` lines in `run_diagnostics.txt`; verified against full and crashed runs |
+| 63 | The GHCNh probe fetched `ghcnh-station-list.txt` (404) and searched only the first 200 KB, where no US id can appear | Unverified URL guess; a truncation that assumed alphabetical irrelevance | Probed the live host: the list is `.csv` (pinned by test); the SFO check searches the full text |
+| 64 | A non-string DBF `Cat` value would have crashed the back-test on `.strip()` | Unchecked type from the shapefile row | `str(...)` coercion before stripping |
+
+Minor hardening in the same pass: removed a dead variable, validated
+`normals_period` before unpacking, made the digest refuse a non-numeric POP
+rather than guessing, required the tier-appropriate 7th deep link and a
+recorded fetch behind an ok GHCNh probe, and de-literalised the threshold in
+the site's static prose.
+
+Standings after Pass 2: `tests/test_parsers.py` **377 assertions** (+17),
+`tests/falsify_guards.py` **33 cases** (+10), ledger still **59/59**.
+
+
+---
+
+## Session 9 — 18 September 2026 (pass 9): model guidance, official-product feed, and the merge with pass 8
+
+This pass was developed in parallel with pass 8 (PR #17) from the same base commit
+`c648b68`, so the two met as a merge rather than as a sequence. What follows records
+both what this pass built and how the collision was resolved, because a merge that
+silently deletes another session's verification work is itself a defect.
+
+### What this pass added
+
+Two tiers that pass 8 deliberately left unbuilt, plus one bug fix that pass 8's own
+committed data proves was live:
+
+* **Model guidance** (`pipeline/model_guidance.py`, 25 offline self-checks): NOAA's
+  NMME seasonal probability maps archived locally with their SHA-256, NOAA's own
+  definition sentences quoted verbatim, the coverage period read from NOAA's index
+  page rather than derived from a filename, and the raw archive / NOMADS locations
+  recorded with `decoded: false`. Its own manifest, its own site section, a warning
+  that renders before any content and again on every item.
+* **The official-product feed** (`pipeline/build_feed.py`, 36 offline self-checks):
+  one chronological list of what NOAA published and what this project fetched,
+  distinguishing `url` from `evidence_url`, never inventing a clock time a publisher
+  did not give, and carrying model-guidance rows into the same list labelled
+  `NOT OFFICIAL`. No network access at all.
+* **`pipeline/lib_provenance.py`**: the auxiliary-manifest convention and an
+  idempotent quality-report merge (findings tagged by `source`, counts recomputed
+  from the entries).
+
+### Bugs found in this pass
+
+| # | Bug | Evidence | Fix |
+| --- | --- | --- | --- |
+| 65 | **The two rainy-season CPC outlooks were attached to no day at all.** `parse_season_key` did `int("2026-2027")` on a cross-New-Year label, hit `ValueError` and returned `(None, None)`, so `NDJ 2026-2027` and `DJF 2026-2027` were sampled, printed in the season table, and attached to nothing | Pass 8's own committed `data/calendar.json`: records labelled `NDJ 2026-2027` / `DJF 2026-2027` exist, yet 2026-12-15 carried only `lead1_OND_prcp` / `lead1_OND_temp`. Per-month attachment counts were Oct 4, Nov 2, **Dec 1, Jan 1** | `parse_season_year` accepts `YYYY-YYYY` / `YYYY/YYYY` for consecutive years only; a declared end year must agree with the season's shape (`OND 2026-2027` is rejected, `NDJ 2026` keeps its historical Nov-Jan reading); a single month never spans two years. After the fix, 2026-12-15 carries DJF + NDJ + OND and per-month counts are Oct 4, Nov 3, Dec 3, Jan 3. Ledger: `cpc-record-coverage-declared`, `cpc-season-covers-complete`, `cpc-record-reach` |
+| 66 | Six renderer strings in `assets/js/app.js` contained double escapes (`\\u2014`, `\\u00b0`, `\\u2265`) that print a literal `\u2014` on the page instead of an em dash, a degree sign or `≥` | `grep -c '\\\\u' assets/js/app.js` → 6 on the merged tree (the same class of defect this pass had already fixed 13 of on its own branch) | Replaced with the real characters; `node --check` and `npm test` re-run |
+| 67 | A ledger check written on this pass's branch (`auxiliary-manifests-separate`) was tautological — it compared a manifest to itself, so it could never fail | Read of the check's source before the merge | Rewritten against the real schemas: every fetch recorded in exactly one manifest, and `run.json`'s totals re-derived from the nightly manifest alone |
+
+### How the collision with pass 8 was resolved
+
+Pass 8 merged first, so it is the baseline. The rule applied was: **where both
+passes built the same feature, main's implementation wins; where a pass built
+something the other explicitly left unbuilt, it is kept; and every surviving guard
+is re-run rather than assumed.**
+
+| Feature | Pass 8 (kept) | This pass | Resolution |
+| --- | --- | --- | --- |
+| CPC back-test | `cpc_backtest.py` (488 lines) + `data/cpc_backtest.json` + `merge_run_manifests` + ledger/tests | A different 844-line implementation + 30 self-checks | **Main's kept.** This pass's module, self-test and `lib_cpc.py` were deleted rather than allowed to shadow merged work; the back-test is covered by `tests/test_parsers.py`, which imports the module directly |
+| Stale wind archive | NCEI retirement (2025-08-29) + `isd_history.json` successor search + nightly `ghcnh_probe.json` + `successor-probe-present` | `ncei_archive_probe.py`: classification from per-year control comparison + service alerts | **Main's kept** — a retirement notice from NCEI is better evidence than an inference from control stations, and two published verdicts about one archive would invite confusion. Module and self-test deleted; `docs/METHODS.md` §24 records the reasoning |
+| AFD history | `data/afd_history.json` written by `build_calendar.py` (append-only, deduped, capped) + `afd-history-consistent` | `afd_history.py` writing the same filename with a different schema | **Main's kept**; module and self-test deleted, and the feed was adapted to read main's list schema |
+| Deep links | Per-field `deep_links` on all 123 days + `deep-links-traceable` + smoke guard 26 | Per-day link list with `fetched_by_this_run` + an Access Data Service shape probe | **Main's kept** (per-field links name the exact element a figure came from, which is more useful than one link per day); this pass's builder, probe and two ledger checks deleted |
+| Model guidance | Explicitly unbuilt, with `model-guidance-separated` guarding against a silent merge | The full tier | **This pass's kept** — it is what pass 8 left open. Both guards now run: main's inspects scoreboard days, this pass's also audits the guidance file itself and scans for leaks outside quoted official text |
+| Product feed | Not built | The full tier | **This pass's kept** |
+| Provenance convention | Merge back into `provenance.json` | Separate `data/<area>_provenance.json` | **Both kept**, deliberately: the merge-back exists so back-test rows appear in the manifest the run's totals describe, and the separate manifest exists so the guidance tier reads as its own thing. `verify_sources.py` scans every manifest, and both conventions satisfy `auxiliary-manifests-vetted` / `-separate` (`docs/METHODS.md` §26) |
+
+Retiring this pass's duplicates also retired their guards: 6 render-falsification
+cases and 9 ledger-falsification cases were removed with the code they covered, and
+the removal is recorded in `tests/falsify_smoke.py` rather than left as a silent
+shrinkage.
+
+### Standings after the merge
+
+* `pipeline/verify_claims.py`: **67 checks pass, 0 fail, 0 warnings**, 19 recorded
+  claims (pass 8's 59 + 8 ported: 3 CPC coverage, 2 auxiliary manifests,
+  1 model-guidance isolation, 2 feed). Two further model-guidance checks
+  (`-quotes-verbatim`, `-links-fetched`) run only when `model_guidance.json` exists,
+  i.e. on a live CI run.
+* `tests/test_parsers.py`: **409 assertions** (pass 8's 310 + 99 ported).
+* `tests/falsify_guards.py`: **56 cases** behave (33 + 23 ported).
+* `tests/falsify_smoke.py`: **23 cases** behave.
+* `pipeline/verify_sources.py`: exit 0 scanning every manifest.
+* Module self-tests in CI: `model_guidance` 25, `build_feed` 36 — **61 offline checks**.
+* `npm test`: passes, now including smoke guards 28 (model-guidance tier) and 29
+  (feed).
+* `data/feed.json` rebuilt against pass 8's live data: **202 entries** (+3 undated),
+  202 official / 0 not-official, 198 provenance-verified / 2 labelled pointers only.

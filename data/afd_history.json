@@ -1,0 +1,110 @@
+[
+  {
+    "issuance_time": "2026-09-18T18:24:00+00:00",
+    "product_id": "2f894049-4561-49f5-8f84-48f92f351edf",
+    "source_url": "https://api.weather.gov/products/2f894049-4561-49f5-8f84-48f92f351edf",
+    "text_sha256": "a0223c659e253d6685a9f5c51825df8c29b481adc0f640601965adc2a4927bc5",
+    "text_chars": 5423,
+    "sentences_scanned": 22,
+    "categories": [
+      {
+        "id": "atmospheric_river",
+        "label": "Atmospheric river / subtropical moisture plume",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "prolonged_rain",
+        "label": "Prolonged / multi-day rain",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "heavy_rain",
+        "label": "Heavy rain / flooding",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "strong_wind",
+        "label": "Strong wind / wind hazard",
+        "sentence_count": 1,
+        "sentences": [
+          {
+            "sentence": "Still, NE winds with gusts up to 20-30 mph are possible across the interior North Bay Mountains late tonight and early Saturday morning.",
+            "section": "SHORT TERM",
+            "matched_patterns": [
+              "gusts? (?:of|to|up to|near|around) \\d"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "quoted_rainfall_amount",
+        "label": "An explicit rainfall amount in NWS's own text",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "wind_and_rain_together",
+        "label": "Wind and rain in the same sentence",
+        "sentence_count": 0,
+        "sentences": []
+      }
+    ]
+  },
+  {
+    "issuance_time": "2026-09-18T23:22:00+00:00",
+    "product_id": "eafb83e6-b2a4-4f01-bba0-8dcc8c397487",
+    "source_url": "https://api.weather.gov/products/eafb83e6-b2a4-4f01-bba0-8dcc8c397487",
+    "text_sha256": "20eebbe4e11c7c2c80e3cae12f4ab2c92dad96add7dfa5ae7c119a64dfdae036",
+    "text_chars": 5665,
+    "sentences_scanned": 23,
+    "categories": [
+      {
+        "id": "atmospheric_river",
+        "label": "Atmospheric river / subtropical moisture plume",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "prolonged_rain",
+        "label": "Prolonged / multi-day rain",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "heavy_rain",
+        "label": "Heavy rain / flooding",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "strong_wind",
+        "label": "Strong wind / wind hazard",
+        "sentence_count": 1,
+        "sentences": [
+          {
+            "sentence": "Still, NE winds with gusts up to 20-30 mph are possible across the interior North Bay Mountains late tonight and early Saturday morning.",
+            "section": "SHORT TERM",
+            "matched_patterns": [
+              "gusts? (?:of|to|up to|near|around) \\d"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "quoted_rainfall_amount",
+        "label": "An explicit rainfall amount in NWS's own text",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "wind_and_rain_together",
+        "label": "Wind and rain in the same sentence",
+        "sentence_count": 0,
+        "sentences": []
+      }
+    ]
+  }
+]

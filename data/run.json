@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T20:42:23Z",
+  "generated_utc": "2026-09-18T23:28:02Z",
   "pipeline_version": "1.0",
   "target": {
     "zip": "94122",
@@ -51,7 +51,7 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-18T20:39:29Z",
+        "retrieved_utc": "2026-09-18T23:23:29Z",
         "sha256": "b7b8df03b1365a8463fe07a95913f07e23627f52eff60daece1b6a8ea4f65fb7",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
@@ -86,7 +86,7 @@
         "last_date": "2025-08-27",
         "age_days": 387,
         "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
-        "note": "Annual files; GSOD cannot be more current than the ISD hourly file it is derived from."
+        "note": "RETIRED 2025-08-29 (NCEI); successor is SSODv2. Annual files; GSOD cannot be more current than the ISD hourly file it is derived from."
       },
       {
         "area": "isd_hourly",
@@ -94,7 +94,7 @@
         "last_date": "2025-08-27",
         "age_days": 387,
         "url": "https://www.ncei.noaa.gov/data/global-hourly/access/",
-        "note": "Annual files of hourly observations."
+        "note": "RETIRED 2025-08-29 (NCEI); successor is GHCNh. Annual files of hourly observations."
       }
     ],
     "stale_archives": [
@@ -104,10 +104,10 @@
     "recent_enough_for_current_conditions": false
   },
   "counts": {
-    "manifest_entries": 143,
-    "successful_fetches": 139,
+    "manifest_entries": 189,
+    "successful_fetches": 151,
     "failed_fetches": 0,
-    "expected_absences": 4,
-    "irregularities": 4
+    "expected_absences": 38,
+    "irregularities": 5
   }
 }

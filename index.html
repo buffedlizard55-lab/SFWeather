@@ -20,6 +20,7 @@
     </div>
     <nav class="site-nav" aria-label="Sections">
       <a href="#landlord">Landlord summary</a>
+      <a href="#digest">Storm-watch feed</a>
       <a href="#reality">Reality check</a>
       <a href="#season">Season outlook</a>
       <a href="#calendar">Day-by-day</a>
@@ -31,7 +32,6 @@
       <a href="#cpc-backtest">CPC back-test</a>
       <a href="#model-guidance">Model guidance</a>
       <a href="#feed">Product feed</a>
-      <a href="#archive-probe">Archive status</a>
       <a href="#verify">Verification</a>
       <a href="#quality">Data quality</a>
       <a href="#limits">Limits</a>
@@ -250,6 +250,19 @@
         <div id="nws-alerts"></div>
         <p class="fine">Source: <a href="https://api.weather.gov/alerts/active?zone=CAZ006" target="_blank" rel="noopener">api.weather.gov/alerts/active?zone=CAZ006</a></p>
       </div>
+      <div class="card" id="digest">
+        <h3>Storm-watch feed &mdash; alerts plus high rain-chance days, as RSS</h3>
+        <p class="fine">One entry per active NWS alert for CAZ006 and per NWS-forecast day whose
+          rain chance reaches the published threshold. Rebuilt nightly from the same official NWS feeds as the
+          cards above &mdash; never from climatology, and nothing is ever attached to a date the
+          NWS forecast does not cover. <strong>Opt-in only:</strong> subscribe with your own
+          feed reader; this project stores no address, sends no email, and collects no
+          personal data. The feed is a static file &mdash; subscription happens entirely between
+          you and your reader.</p>
+        <p class="fine">Subscribe: <a href="data/alerts.xml" rel="alternate" type="application/rss+xml">data/alerts.xml</a>
+          &middot; machine-readable: <a href="data/digest.json">data/digest.json</a></p>
+        <div id="digest-body"></div>
+      </div>
       <div class="card">
         <h3>NWS Area Forecast Discussion (verbatim)</h3>
         <p class="fine">The forecasters’ own reasoning, published by NWS San Francisco Bay
@@ -352,25 +365,6 @@
       </div>
     </section>
 
-
-    <!-- ==================== official product feed ==================== -->
-    <section id="feed" class="section">
-      <h2>Official product feed — what NOAA published, and when</h2>
-      <div class="card">
-        <p class="fine">One timeline, newest first, of every official product behind this page:
-          NWS forecast issuances and periods, NWS alerts, the Area Forecast Discussion, CPC
-          outlook issue dates, the archived CPC shapefiles and maps, and each recorded fetch
-          with its status and SHA-256. The feed is <em>derived</em>: every row is assembled from
-          a dataset that came from a recorded fetch, and any row whose link was not itself
-          fetched says so. Model-guidance rows appear here too, labelled
-          <span class="pill pill-fail">NOT OFFICIAL</span>, so the difference is visible in the
-          same list rather than implied. Source: <code>data/feed.json</code>, built by
-          <code>pipeline/build_feed.py</code> from the manifests listed
-          <a href="#sources">above</a>.</p>
-        <div id="feed-body"></div>
-      </div>
-    </section>
-
     <!-- ============================ NWS forecast verification ====== -->
     <section id="nws-verification" class="section">
       <h2>NWS forecast verification — how good the 7-day forecast has actually been at 94122</h2>
@@ -407,7 +401,7 @@
       </div>
     </section>
 
-
+    <!-- ============================ verification ===================== -->
     <!-- ============ model guidance: separate tier, loudly labelled ==== -->
     <section id="model-guidance" class="section">
       <h2>Model guidance — NMME ensemble maps <span class="pill pill-fail">NOT AN OFFICIAL FORECAST</span></h2>
@@ -431,7 +425,24 @@
       </div>
     </section>
 
-    <!-- ============================ verification ===================== -->
+    <!-- ==================== official product feed ==================== -->
+    <section id="feed" class="section">
+      <h2>Official product feed — what NOAA published, and when</h2>
+      <div class="card">
+        <p class="fine">One timeline, newest first, of every official product behind this page:
+          NWS forecast issuances and periods, NWS alerts, the Area Forecast Discussion, CPC
+          outlook issue dates, the archived CPC shapefiles and maps, and each recorded fetch
+          with its status and SHA-256. The feed is <em>derived</em>: every row is assembled from
+          a dataset that came from a recorded fetch, and any row whose link was not itself
+          fetched says so. Model-guidance rows appear here too, labelled
+          <span class="pill pill-fail">NOT OFFICIAL</span>, so the difference is visible in the
+          same list rather than implied. Source: <code>data/feed.json</code>, built by
+          <code>pipeline/build_feed.py</code> from the manifests listed
+          <a href="#sources">above</a>.</p>
+        <div id="feed-body"></div>
+      </div>
+    </section>
+
     <section id="verify" class="section">
       <h2>Verification — every number checked against its source</h2>
       <div class="card">
@@ -455,28 +466,6 @@
           GHCN-Daily. Rather than pick one, both are published here with the difference.
           Source: <a href="https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv" target="_blank" rel="noopener">NCEI 1991–2020 daily normals (USW00023272)</a>.</p>
         <div id="published-normals"></div>
-      </div>
-    </section>
-
-
-    <!-- ============ why the wind archive stops where it does ========== -->
-    <section id="archive-probe" class="section">
-      <h2>Archive status — why NCEI&#8217;s wind files stop before this month</h2>
-      <div class="card">
-        <p class="fine">The daily rain and temperature record runs to this month; NCEI&#8217;s
-          GSOD and hourly ISD files for the wind station (72494023234, SFO) stop well before it.
-          That difference matters, so it is investigated rather than merely disclosed: the probe
-          reads NCEI&#8217;s own station history for a successor identifier, compares this
-          station&#8217;s file against nearby stations year by year, checks whether current wind is
-          available from GHCN-Daily instead, and reads NCEI&#8217;s service-alerts page. It then
-          reports one of three verdicts — <em>station-specific gap</em>, <em>archive-wide lag</em>,
-          or <em>not determinable</em> — with the dates it measured. Every statistic on this site is
-          a 1991–2020 statistic, so none of them changes either way; what changes is whether the
-          stale flag is a NOAA processing lag or a station identifier this project should move to.
-          Source: <a href="https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/" target="_blank" rel="noopener">NCEI GSOD archive</a> ·
-          <a href="https://www.ncei.noaa.gov/pub/data/ISD/history/isd-history.csv" target="_blank" rel="noopener">ISD station history</a> ·
-          <a href="https://www.ncei.noaa.gov/alerts" target="_blank" rel="noopener">NCEI service alerts</a>.</p>
-        <div id="archive-probe-body"></div>
       </div>
     </section>
 
@@ -528,7 +517,7 @@
             coverage is now published per season, and three of the 30 seasons it is averaged
             over are missing 1–4 of the 123 dates.</li>
           <li><strong>NWS forecast verification loop — scoring pipeline live, page card added.</strong> The history file, scoring code and page card (<a href="#nws-verification">NWS verification</a>) all exist; the first scored pairs appear once observed days accumulate past the current NWS horizon (the card says so explicitly while the count is 0).</li>
-          <li><strong>CPC back-testing — page card added, data back-fill required.</strong> The <a href="#cpc-backtest">CPC back-test card</a> now explains exactly what blocks the hit-rate (CPC's live server only exposes the current month; historical <code>seasprcp_YYYYMM.zip</code> archives must be bulk-fetched from a vetted static source, then sampled with the same point-in-polygon code used for live outlooks). See <code>docs/NEXT_SESSION.md</code> §2.1.</li>
+          <li><strong>CPC back-testing — pipeline built, archive back-fill still open.</strong> The nightly job now attempts every historical August <code>seasprcp_YYYYMM.zip</code> issuance (1995–2020) and samples any it retrieves with the same point-in-polygon code used for live outlooks, but CPC's live server retains only recent months, so the <a href="#cpc-backtest">CPC back-test card</a> reports pending-backfill with the attempt table until per-issuance URLs inside the official Oct-1995 archive are followed. The IRI mirror was vetted and rejected as a source. See <code>docs/NEXT_SESSION.md</code> §2.1.</li>
           <li><strong>Atmospheric river awareness — done.</strong> Storm-pattern language is scanned out of the NWS Area Forecast Discussion and quoted verbatim; no date or amount is ever attached to a quotation. Remaining gap: the scan counts language, it cannot yet say how many days a discussion covers.</li>
           <li><strong>Humidity for climatology days</strong> is not an observed NOAA relative-humidity
             normal. Where available, it is a labelled per-calendar-date derivation from official NCEI

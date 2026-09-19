@@ -628,59 +628,51 @@ ledger check `feed-traceable` re-derives every count, checks the sort order, the
 date/timestamp agreement, the host of every link, and that no model-guidance row is
 marked official.
 
-## 24. Classifying a stale archive instead of merely disclosing it (pass 9)
+## 24. The retired wind archive: investigated every run, never papered over (pass 9)
 
 The GSOD and hourly ISD files for the wind station stop well before the daily
-rain/temperature record. Disclosing that is necessary but not sufficient: the two
-explanations have different consequences, so `pipeline/ncei_archive_probe.py`
-decides between them with evidence.
+rain/temperature record. NCEI retired those products for this station on
+2025-08-29, and the nightly pipeline treats that as something to keep testing
+rather than a fact to state once:
 
-1. **Successor search.** `isd-history.csv` is parsed by header name (the header
-   differs between releases: `LAT`/`LON` vs `LAT(LON)`), dates are normalised to
-   ISO, and rows for the same airport (same ICAO, same name, or within 2 mi) are
-   split into *same-airport rows* — which are successor candidates, never controls
-   — and everything else.
-2. **Control comparison.** Up to four stations within ~100 mi, excluding
-   same-airport rows and stations that also stopped. The subject's and each
-   control's GSOD file are compared **per year**, and the verdict comes from the
-   latest year in which both sides have data — comparing a complete 2024 file with
-   a partial 2025 one would have produced a meaningless gap.
-3. **Verdict.** A gap within `SAME_STOP_SLACK_DAYS` (15) is an `archive-wide-lag`;
-   a larger gap is a `station-specific-gap`; if no year had both sides readable it
-   is `not-determinable`. Each carries the measured gap, the slack allowed, the
-   year compared, the control identifiers, and whether a successor was found.
-4. **Corroboration and alternatives.** NCEI's service-alerts page is parsed for
-   active data-access delay notices, and GHCN-Daily is probed for wind elements so
-   the card can say whether current wind exists in another official product (it is
-   labelled with its own element names — AWND is a daily mean, WSF2/WSF5 the
-   fastest 2-minute and 5-second winds — and never mixed into the GSOD-based
-   statistics).
-5. **Recommendations are recommendations.** Stitching a successor identifier into
-   the wind archive would move every published 1991–2020 wind statistic, so the
-   probe recommends it and does not do it.
+* `data/isd_history.json` records the search through NCEI's own ISD station history
+  for a successor identifier, with one of three verdicts from a closed set
+  (`successor-id-found`, `station-found-no-successor`, `station-not-in-history`).
+* `data/ghcnh_probe.json` re-probes the GHCN-Hourly / SSOD replacements on every
+  run, so a successor that appears later is picked up without a code change.
+* The coverage notes on the site say the archive is retired and name the date; the
+  wind statistics stay labelled with the archive they were counted from.
+* `successor-probe-present` fails the run if the investigation stops happening, and
+  `record-coverage-published` fails it if a published `last_date` stops matching
+  the age printed next to it.
 
-The ledger (`ncei-archive-probe-consistent`) requires the verdict to be one of the
-three, to be supported by its own gap and slack, to use the dates `run.json`
-publishes, to have every URL it touched recorded in its manifest, and to have
-passed its findings to the quality report.
+An earlier draft of this pass classified the same stop with a separate probe module
+(station-specific gap / archive-wide lag / not determinable). It was retired in
+favour of the above: NCEI's own retirement notice plus a per-run successor probe
+answers the question with better evidence than inferring it from control stations,
+and two published verdicts about one archive would invite exactly the confusion
+this project exists to avoid.
 
-## 25. Per-day deep links (pass 9)
+## 25. Per-field deep links: every headline figure points at its own row (pass 9)
 
-Each day cell carries the official URLs holding that one date's rows: one
-station-day from NCEI's Access Data Service for rain and temperature, the GSOD and
-hourly ISD annual files holding that date's wind rows, and — inside the horizon —
-the NWS product the day's numbers came from. Each link states whether this run
-fetched that exact URL (`fetched_by_this_run`, read from the union of the
-provenance manifests) or is only offering it, and link-only rows carry a note
-saying what they are.
+Each day cell carries deep links for **the field the reader is looking at**, not
+one generic link per day. The day dialog renders them as *Verify each number
+yourself*:
 
-Because 123 links built from an untested URL template would be exactly the kind of
-unverified claim this project refuses, `pipeline/main.py` fetches **one** such
-request per run — for the newest date the station file actually holds, never a
-future date — and records the response (status, size, SHA-256, first lines, row
-count) in `data/ghcn_probe.json`. `day-deep-links-vetted` (error) checks every
-link's host, station and date; `day-deep-link-shape-verified` (warning) re-derives
-the probe URL with the same builder the site uses and requires a recorded response.
+* temperature and rain name the GHCN-Daily row (wide CSV, one row per `DATE`) and
+  say which columns to read, so a normals-derived figure is not mistaken for an
+  observation;
+* derived humidity names the hourly-normals file and says the value is derived by
+  the Magnus formula from temperature and dew point;
+* wind names the GSOD / hourly ISD file that holds the day's rows;
+* inside the official horizon, the NWS links name the hourly `startTime` values
+  that fell in the local day and the gridpoint `validTime` intervals behind the
+  gust and rain amount — nothing is averaged away, the hint says what to search for.
+
+`deep-links-traceable` holds every link to a vetted official host and requires each
+headline field to offer one. The links are offered for manual review; they are not
+evidence for a figure. Evidence remains the recorded fetch of the file the figure
+was actually computed from, with its status, byte count and SHA-256.
 
 ## 26. Auxiliary manifests and one quality report (pass 9)
 
@@ -702,3 +694,17 @@ a new script fetching from an unvetted host is caught on its first run. The ledg
 adds `auxiliary-manifests-vetted` (host, HTTPS, evidence, area/note labelling) and
 `auxiliary-manifests-separate` (no fetch double-recorded, and `run.json`'s
 published total still describes the nightly manifest alone).
+
+Two conventions coexist here, deliberately, and both satisfy those checks:
+
+* **Merge back** — `pipeline/cpc_backtest.py` folds its fetches and findings into
+  `provenance.json`, `run.json`, `quality_report.json` and `summary.txt`
+  (`merge_run_manifests`), because its scored rows must appear in the same manifest
+  the run's published totals describe.
+* **Separate manifest** — `pipeline/model_guidance.py` writes
+  `data/model_guidance_provenance.json`, because that tier is meant to be readable
+  as its own thing, with its own area label and note.
+
+Either way the invariants hold: a fetch is recorded in exactly one manifest, every
+manifest is held to the vetted-host and evidence rules, and the totals `run.json`
+publishes are recomputed from the entries rather than carried over.

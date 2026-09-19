@@ -367,75 +367,13 @@ def _feed_pill(repo):
     return repo
 
 
-@case("the archive-status card drops the probe's verdict",
-      expect_msg="verdict is not rendered")
-def _probe_verdict(repo):
-    run = json.loads((repo / "data" / "run.json").read_text())
-    wind = next(a for a in run["record_coverage"]["archives"] if a["area"] == "wind")
-    write_data(repo, "ncei_archive_probe.json", {
-        "generated_utc": "2026-09-18T22:00:00Z",
-        "station_id": "72494023234",
-        "last_date_published_by_the_site": wind["last_date"],
-        "verdict": {"classification": "archive-wide-lag", "statement": "fixture statement",
-                    "gap_days": 3, "slack_days_allowed": 15},
-        "recommended_actions": [{"action": "keep the stale-archive flag and re-probe nightly"}],
-        "tests": [],
-    })
-    patch_text(repo, "assets/js/app.js",
-               "el('h3', { text: 'Verdict: ' + (v.classification || 'not determined') }),",
-               "el('h3', { text: 'Verdict: not determined' }),")
-    return repo
+# The archive-status and per-day deep-link falsification cases that used to live
+# here were retired with the modules they covered: main resolved the GSOD/ISD
+# stop as an NCEI retirement with its own successor probes, and publishes
+# per-field deep links guarded by tests/smoke.js guard 26 and the ledger's
+# deep-links-traceable check.  Re-adding cases for code that no longer exists
+# would only produce false confidence.
 
-
-@case("the archive-status card drops a recommended action",
-      expect_msg="recommended action from the probe is not rendered")
-def _probe_actions(repo):
-    run = json.loads((repo / "data" / "run.json").read_text())
-    wind = next(a for a in run["record_coverage"]["archives"] if a["area"] == "wind")
-    write_data(repo, "ncei_archive_probe.json", {
-        "generated_utc": "2026-09-18T22:00:00Z",
-        "last_date_published_by_the_site": wind["last_date"],
-        "verdict": {"classification": "archive-wide-lag", "statement": "fixture"},
-        "recommended_actions": [{"action": "keep the stale-archive flag and re-probe nightly"}],
-        "tests": [],
-    })
-    patch_text(repo, "assets/js/app.js", "if (actions.length) {", "if (false) {")
-    return repo
-
-
-@case("a station-day deep link pointing at another date",
-      expect_msg="does not ask for")
-def _dl_wrong_date(repo):
-    def mutate(cal):
-        day = next(d for d in cal["days"] if d["date"] == cal["days"][0]["date"])
-        for dl in day["deep_links"]:
-            dl["url"] = dl["url"].replace(day["date"], "2026-12-25")
-    patch_calendar(repo, mutate)
-    return repo
-
-
-@case("a deep link leaving the official hosts", expect_msg="leaves the official hosts")
-def _dl_bad_host(repo):
-    def mutate(cal):
-        cal["days"][0]["deep_links"][0]["url"] = "https://accuweather.example/day"
-    patch_calendar(repo, mutate)
-    return repo
-
-
-@case("a day with no deep links at all", expect_msg="offers no deep link")
-def _dl_missing(repo):
-    patch_calendar(repo, lambda cal: cal["days"][0].__setitem__("deep_links", []))
-    return repo
-
-
-@case("deep links rendered without saying whether this run fetched them",
-      expect_msg="does not say whether this run fetched it")
-def _dl_no_pill(repo):
-    patch_text(repo, "assets/js/app.js",
-               "        el('span', { class: 'pill ' + (dl.fetched_by_this_run ? 'pill-ok' : ''),\n"
-               "          text: dl.fetched_by_this_run ? 'fetched this run' : 'link only' }),",
-               "        el('span', { class: 'pill' }),")
-    return repo
 
 
 def run_smoke(repo):

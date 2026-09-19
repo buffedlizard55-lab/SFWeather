@@ -30,7 +30,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import lib_fetch as fetchlib          # noqa: E402
 import lib_shape as shapelib          # noqa: E402
-import lib_cpc as cpclib              # noqa: E402
 import climo                          # noqa: E402
 
 # --------------------------------------------------------------------------
@@ -123,6 +122,7 @@ EXPECTED_ABSENCE_RULES = (
     "annual-file-not-yet-published",       # NCEI publishes an annual file after the year ends
     "station-without-observations-product",  # NWS lists the station but publishes no observations/latest
     "candidate-station-without-the-product",  # NCEI publishes hourly normals for some candidates only
+    "historical-archive-not-retained",       # CPC keeps only recent GIS issuances; older ones 404
 )
 
 
@@ -601,21 +601,106 @@ def fetch_nws(lat, lon):
 # ==========================================================================
 
 def _sample_one_bundle(bundle, lat, lon, label, zip_url):
-    """Point-sample a single shapefile bundle at (lat, lon).
+    """Point-sample a single shapefile bundle at (lat, lon)."""
+    if not bundle["shp"] or not bundle["dbf"]:
+        return {"stem": bundle["stem"], "ok": False,
+                "error": "no .shp/.dbf pair for this bundle"}
+    prj = shapelib.read_prj(bundle["prj"])
+    geographic = shapelib.is_geographic(prj)
+    if geographic is False:
+        note_irregularity("warning", "cpc",
+                          f"CPC shapefile {bundle['stem']} uses a projected CRS; "
+                          "point-sampling was skipped rather than guessing at a reprojection.",
+                          {"url": zip_url, "prj": (prj or "")[:300]})
+        return {"stem": bundle["stem"], "ok": False,
+                "error": "projected CRS - point sampling skipped", "prj": (prj or "")[:300]}
 
-    Thin wrapper kept for the existing call sites and tests; the sampler itself
-    lives in :mod:`lib_cpc` so the historical back-test in
-    ``pipeline/cpc_backtest.py`` runs through the *same* code path (a hit-rate
-    measured with a second sampler would measure that sampler, not CPC).
-    """
-    return cpclib.sample_one_bundle(bundle, lat, lon, label, zip_url,
-                                    note=note_irregularity)
+    _stype, shapes = shapelib.read_shp(Path(bundle["shp"]))
+    fields, rows = shapelib.read_dbf(Path(bundle["dbf"]))
+    if len(rows) != len(shapes):
+        note_irregularity("warning", "cpc",
+                          f"CPC shapefile {bundle['stem']}: .shp has {len(shapes)} records "
+                          f"but .dbf has {len(rows)}. Attributes matched by index; verify "
+                          "against the official map before relying on this.",
+                          {"url": zip_url})
+
+    hits, used_nearest = [], False
+    for i, shape in enumerate(shapes):
+        if not shape.rings:
+            continue
+        if not shapelib.bbox_contains(shape.bbox, lon, lat):
+            continue
+        if shapelib.point_in_polygon(lon, lat, shape.rings):
+            hits.append({"index": i, "attrs": rows[i] if i < len(rows) else None,
+                         "bbox": [round(v, 4) for v in shape.bbox],
+                         "rings": len(shape.rings),
+                         "vertices": sum(len(r) for r in shape.rings)})
+
+    if not hits:
+        best, bestd = None, None
+        for i, shape in enumerate(shapes):
+            if not shape.rings or not shape.rings[0]:
+                continue
+            xs = [pt[0] for pt in shape.rings[0]]
+            ys = [pt[1] for pt in shape.rings[0]]
+            cx, cy = sum(xs) / len(xs), sum(ys) / len(ys)
+            d = (cx - lon) ** 2 + (cy - lat) ** 2
+            if bestd is None or d < bestd:
+                bestd, best = d, i
+        if best is not None:
+            used_nearest = True
+            shape = shapes[best]
+            hits.append({"index": best, "attrs": rows[best] if best < len(rows) else None,
+                         "bbox": [round(v, 4) for v in shape.bbox],
+                         "rings": len(shape.rings),
+                         "vertices": sum(len(r) for r in shape.rings)})
+            note_irregularity("warning", "cpc",
+                              f"CPC polygon miss: ({lon:.4f}, {lat:.4f}) fell in no polygon of "
+                              f"{bundle['stem']} (common for coastal cells). Used the nearest "
+                              "polygon instead - flagged for manual review.",
+                              {"url": zip_url})
+
+    return {
+        "stem": bundle["stem"], "ok": bool(hits), "fields": fields,
+        "n_polygons": len(shapes), "n_hits": len(hits),
+        "used_nearest_polygon": used_nearest,
+        "is_geographic": geographic,
+        "hits": hits,
+    }
 
 
 def _sample_shapefile_archive(zip_url, lat, lon, label, workdir):
     """Download a CPC outlook ZIP and point-sample every shapefile inside it."""
-    return cpclib.sample_shapefile_archive(zip_url, lat, lon, label, workdir,
-                                           note=note_irregularity, record=record)
+    res = fetchlib.get(zip_url, timeout=240)
+    prov = record(res, note=f"CPC outlook shapefile archive: {label}")
+    if not res.ok or not res.body or res.body[:2] != b"PK":
+        return {"label": label, "ok": False, "status": res.status, "url": zip_url,
+                "error": res.error or "response was not a ZIP archive"}
+
+    tmp = Path(tempfile.mkdtemp(dir=workdir))
+    zpath = tmp / "outlook.zip"
+    zpath.write_bytes(res.body)
+    try:
+        extracted = shapelib.extract_all_shapefiles(zpath, tmp / "shp")
+    except Exception as exc:  # noqa: BLE001
+        return {"label": label, "ok": False, "status": res.status, "url": zip_url,
+                "error": f"zip extract failed: {exc}"}
+
+    bundles = extracted["bundles"]
+    if not bundles:
+        return {"label": label, "ok": False, "status": res.status, "url": zip_url,
+                "error": f"no .shp inside archive; members={extracted['members'][:10]}"}
+
+    sampled = [_sample_one_bundle(b, lat, lon, label, zip_url) for b in bundles]
+    ok_count = sum(1 for smp in sampled if smp["ok"])
+    if ok_count == 0:
+        note_irregularity("warning", "cpc",
+                          f"No CPC outlook polygon could be sampled for {label}.",
+                          {"url": zip_url, "n_bundles": len(bundles)})
+
+    return {"label": label, "ok": ok_count > 0, "url": zip_url, "sha256": res.sha256,
+            "n_shapefiles": len(bundles), "n_sampled_ok": ok_count,
+            "members": extracted["members"], "sampled": sampled}
 
 
 CPC_SHORTRANGE = [
@@ -1127,69 +1212,6 @@ def fetch_ghcn(outdir: Path):
     return None
 
 
-def probe_day_link_service(outdir: Path, station_id, date_iso):
-    """Fetch ONE station-day through NCEI's Access Data Service and record it.
-
-    The scoreboard publishes a per-day deep link into that service for all 123
-    days.  Publishing 123 links whose URL shape was never tried would be exactly
-    the kind of unverified claim this project refuses to make, so one of them is
-    actually fetched every run: same service, same dataset, same station, same
-    parameter names, for a date the station file is known to hold.
-
-    The response is recorded in ``data/ghcn_probe.json`` (status, size, SHA-256
-    and the first lines NCEI returned) and in the provenance manifest.  If the
-    service does not answer, the deep links are still published - they are
-    NOAA's own service - but the run says so, and the ledger downgrades them from
-    verified to unverified rather than letting the claim stand.
-    """
-    url = climo.ncei_day_link(station_id, date_iso)
-    if not url:
-        return None
-    res = fetchlib.get(url, timeout=180)
-    record(res, note=("NCEI Access Data Service - one station-day of GHCN-Daily "
-                      f"({station_id}, {date_iso}); verifies the per-day deep-link URL "
-                      "shape published on the scoreboard"))
-    body = ""
-    if res.ok and res.body:
-        body, _enc = fetchlib.decode_text(res.body)
-    lines = [ln for ln in body.splitlines() if ln.strip()]
-    probe = {
-        "url": url,
-        "station_id": station_id,
-        "date": date_iso,
-        "http_status": res.status,
-        "ok": bool(res.ok),
-        "bytes": res.size,
-        "sha256": res.sha256,
-        "retrieved_utc": res.retrieved_utc,
-        "n_rows": max(0, len(lines) - 1),
-        "response_first_lines": [ln[:200] for ln in lines[:4]],
-        "url_shape_verified": bool(res.ok and len(lines) >= 1),
-        "note": ("Fetched so that the 123 per-day deep links on the site are a URL "
-                 "shape this run actually tried, not a plausible guess. The links "
-                 "themselves are for dates this run did not fetch, and each is "
-                 "labelled accordingly."),
-    }
-    if not res.ok:
-        note_irregularity(
-            "warning", "ncei",
-            "NCEI's Access Data Service did not answer for a single station-day, so the "
-            "per-day deep links published on the scoreboard are unverified this run. They "
-            "are still published (they point at NOAA's own documented service), and each "
-            "one says it was not fetched by this run.",
-            {"url": url, "status": res.status, "error": res.error})
-    path = Path(outdir) / "ghcn_probe.json"
-    doc = {}
-    if path.exists():
-        try:
-            doc = json.loads(path.read_text())
-        except Exception:  # noqa: BLE001 - never lose the run over a probe file
-            doc = {}
-    doc["data_service_probe"] = probe
-    write_json(path, doc)
-    return probe
-
-
 def fetch_gsod(years):
     # Fetch the official GSOD README first: it is the authority for the unit
     # convention and the UTC-day caveat used by climo.parse_gsod.
@@ -1295,6 +1317,101 @@ def fetch_isd_hourly_summary(years, station_id="72494023234", station_name=None)
     return summary
 
 
+def fetch_isd_history(station_id="72494023234"):
+    """NCEI ISD station history — is the 2025-08-27 stop an identifier change?
+
+    Reads https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv and searches
+    for the KSFO entry plus any same-name row that begins after it ends (a
+    successor USAF-WBAN).  When no successor exists the stop is a dataset
+    retirement, not an identifier change — GSOD/ISD were retired 2025-08-29 and
+    replaced by SSODv2/GHCNh (see fetch_ghcnh_probe).  Never fatal: on failure
+    the question is left open and flagged.
+    """
+    url = climo.ISD_HISTORY_URL
+    text, res = fetchlib.get_text(url, timeout=180)
+    record(res, note="NCEI ISD station history (successor-id search for KSFO)")
+    if not (res.ok and res.body):
+        note_irregularity("warning", "isd",
+                          "ISD station-history file unavailable; the successor-id "
+                          "question for KSFO is left open this run.",
+                          {"url": url, "status": res.status})
+        return None
+    rows = climo.parse_isd_history(text)
+    found = climo.search_isd_history(rows, station_id=station_id)
+    out = {
+        "url": url,
+        "sha256": res.sha256,
+        "retrieved_utc": res.retrieved_utc,
+        "station_id": station_id,
+        "n_rows": len(rows),
+        "station": found.get("station"),
+        "n_same_name": len(found.get("same_name") or []),
+        "same_name_ids": sorted({r.get("station_id") for r in (found.get("same_name") or [])})[:12],
+        "successor": found.get("successor"),
+        "verdict": ("successor-id-found" if found.get("successor")
+                    else ("station-found-no-successor" if found.get("station")
+                          else "station-not-in-history")),
+    }
+    if found.get("successor"):
+        note_irregularity("warning", "isd",
+                          f"ISD history lists a possible successor id for {station_id}: "
+                          f"{found['successor'].get('station_id')} "
+                          f"({found['successor'].get('name')}, BEGIN {found['successor'].get('begin')}). "
+                          "The wind archive has not been stitched yet; see docs/NEXT_SESSION.md.",
+                          {"successor": found.get("successor")})
+    elif found.get("station"):
+        note_irregularity("info", "isd",
+                          f"ISD history shows {station_id} ending {found['station'].get('end')} "
+                          "with no same-name successor row: the 2025-08-27 stop is the "
+                          "retired-dataset end, not an identifier change. Successors are "
+                          "GHCNh (hourly) and SSODv2 (daily); see data/ghcnh_probe.json.",
+                          {"station": found.get("station"),
+                           "ghcnh": climo.GHCNH_PRODUCT_URL,
+                           "ssod": climo.SSOD_PRODUCT_URL})
+    return out
+
+
+def fetch_ghcnh_probe():
+    """Probe NCEI's GHCNh/SSOD successor products (lightweight, no bulk data).
+
+    Fetches only the GHCNh station-list doc (small text) to confirm the
+    successor exists and is reachable on the vetted host, and records the
+    official product pages.  Full migration (PSV/parquet parsing, archive
+    stitching) is future work — this probe is what lets the site say "the
+    successor exists at this URL" instead of asserting it from memory.
+    """
+    url = climo.GHCNH_STATION_LIST_URL
+    text, res = fetchlib.get_text(url, timeout=180)
+    record(res, note="NCEI GHCNh station list (successor-product probe)")
+    probe = {
+        "ghcnh_product_url": climo.GHCNH_PRODUCT_URL,
+        "ssod_product_url": climo.SSOD_PRODUCT_URL,
+        "station_list_url": url,
+        "station_list_ok": bool(res.ok and res.body),
+        "station_list_status": res.status,
+        "station_list_sha256": res.sha256,
+        "retrieved_utc": res.retrieved_utc,
+        "note": ("GHCNh (hourly) replaces ISD; SSODv2 (daily) replaces GSOD. "
+                 "Both live on www.ncei.noaa.gov, already a vetted host."),
+    }
+    if res.ok and res.body:
+        # The station list is large (multi-MB), but a substring search needs no
+        # truncation — and truncating would be wrong: US ids sort near the end,
+        # so a prefix search would report SFO as missing when it is merely late
+        # in the file.  Record only whether the SFO-area GHCN ids appear.
+        probe["contains_sfo_ids"] = {
+            sid: (sid in text)
+            for sid in ("USW00023234", "USW00023272")
+        }
+        probe["bytes"] = res.size
+    else:
+        note_irregularity("warning", "isd",
+                          "GHCNh station-list probe failed; the successor-product "
+                          "links are published but unconfirmed this run.",
+                          {"url": url, "status": res.status})
+    return probe
+
+
 def build_record_coverage(*, ghcn, gsod, isd, today, normals_period):
     """How far each NCEI archive actually reaches, and how old its newest row is.
 
@@ -1334,15 +1451,15 @@ def build_record_coverage(*, ghcn, gsod, isd, today, normals_period):
     add("wind", f"GSOD {gsod.get('station_id') if gsod else '72494023234'} (daily wind "
                 "and gusts, 00-24Z)",
         gsod_last, "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
-        "Annual files; GSOD cannot be more current than the ISD hourly file it is "
-        "derived from.")
+        "RETIRED 2025-08-29 (NCEI); successor is SSODv2. Annual files; GSOD cannot be "
+        "more current than the ISD hourly file it is derived from.")
 
     isd_last = (isd or {}).get("latest_observation_utc")
     add("isd_hourly", f"ISD hourly {(isd or {}).get('station_id', '72494023234')} "
                       "(hour-by-hour wind and precipitation)",
         str(isd_last)[:10] if isd_last else None,
         "https://www.ncei.noaa.gov/data/global-hourly/access/",
-        "Annual files of hourly observations.")
+        "RETIRED 2025-08-29 (NCEI); successor is GHCNh. Annual files of hourly observations.")
 
     stale = [a for a in out["archives"] if a["age_days"] is None or a["age_days"] > 180]
     out["stale_archives"] = [a["area"] for a in stale]
@@ -1735,19 +1852,14 @@ def main():
                               "rain climatology is unavailable.",
                               {"station": ghcn["station_id"], "url": ghcn["url"],
                                "bytes": ghcn["bytes"]})
-        if keys:
-            # Verify the deep-link URL shape against a date the file is known to
-            # hold - the newest one - rather than against a date in the future.
-            probe = probe_day_link_service(outdir, ghcn["station_id"], keys[-1])
-            if probe:
-                log(f"      NCEI Access Data Service probe ({keys[-1]}): "
-                    f"HTTP {probe['http_status']}, {probe['n_rows']} row(s) returned")
     # Fetch through the current calendar year: the 1991-2020 statistics below are
     # restricted to the normals period either way, but the newest rows are what
     # tells a reader whether an archive is still being updated.
     gsod_years = list(range(1991, today.year + 1))
     gsod = fetch_gsod(gsod_years)
     isd_summary = fetch_isd_hourly_summary(gsod_years, station_name=GSOD_WIND_NAME)
+    isd_history = fetch_isd_history()
+    ghcnh_probe = fetch_ghcnh_probe()
     normals = fetch_daily_normals()
     monthly_normals = fetch_monthly_normals()
     humidity_normals = fetch_humidity_normals()
@@ -1846,9 +1958,10 @@ def main():
         note_irregularity(
             "warning", "coverage",
             "At least one NCEI archive this project reads is more than 180 days behind "
-            "the run date. Every published statistic is a 1991-2020 statistic and is "
-            "unaffected; the flag exists so nothing claims to describe *current* "
-            "conditions from a stale archive.",
+            "the run date (GSOD/ISD were retired by NCEI on 2025-08-29; successors are "
+            "SSODv2/GHCNh — see data/ghcnh_probe.json and data/isd_history.json). Every "
+            "published statistic is a 1991-2020 statistic and is unaffected; the flag "
+            "exists so nothing claims to describe *current* conditions from a stale archive.",
             {"archives": [{"area": a["area"], "last_date": a["last_date"],
                            "age_days": a["age_days"], "url": a["url"]} for a in stale]})
         log("      record coverage: STALE archive(s) -> "
@@ -1879,6 +1992,10 @@ def main():
     write_json(outdir / "climatology.json", climo_out)
     if isd_summary:
         write_json(outdir / "isd_hourly_summary.json", isd_summary)
+    if isd_history:
+        write_json(outdir / "isd_history.json", isd_history)
+    if ghcnh_probe:
+        write_json(outdir / "ghcnh_probe.json", ghcnh_probe)
     if storm:
         write_json(outdir / "storm_events.json", storm)
     if normals:

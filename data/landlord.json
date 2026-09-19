@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-18T20:42:23Z",
+  "generated_utc": "2026-09-18T23:28:02Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Sunset District \u2014 Inner and Outer Sunset)",
@@ -50,7 +50,7 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-18T20:39:29Z",
+        "retrieved_utc": "2026-09-18T23:23:29Z",
         "sha256": "b7b8df03b1365a8463fe07a95913f07e23627f52eff60daece1b6a8ea4f65fb7",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
@@ -723,7 +723,7 @@
           "last_date": "2025-08-27",
           "age_days": 387,
           "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
-          "note": "Annual files; GSOD cannot be more current than the ISD hourly file it is derived from."
+          "note": "RETIRED 2025-08-29 (NCEI); successor is SSODv2. Annual files; GSOD cannot be more current than the ISD hourly file it is derived from."
         },
         {
           "area": "isd_hourly",
@@ -731,7 +731,7 @@
           "last_date": "2025-08-27",
           "age_days": 387,
           "url": "https://www.ncei.noaa.gov/data/global-hourly/access/",
-          "note": "Annual files of hourly observations."
+          "note": "RETIRED 2025-08-29 (NCEI); successor is GHCNh. Annual files of hourly observations."
         }
       ],
       "stale_archives": [
@@ -1237,7 +1237,7 @@
       },
       "daily_forecast": {
         "days_in_this_scoreboard_with_a_real_forecast": 0,
-        "official_horizon_ends": "2026-09-24"
+        "official_horizon_ends": "2026-09-25"
       },
       "enso_conditioned_record": {
         "phase": "el_nino",
@@ -1759,6 +1759,14 @@
           "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
         },
         {
+          "valid_season": "NDJ 2026-2027",
+          "variable": "prcp",
+          "category_label": "Above median",
+          "prob": 33.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+        },
+        {
           "valid_season": "OND 2026",
           "variable": "temp",
           "category_label": "Above normal",
@@ -1767,20 +1775,12 @@
           "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
         },
         {
-          "valid_season": "SON 2026",
-          "variable": "prcp",
-          "category_label": "Equal chances",
-          "prob": 33.0,
-          "issued": "2026-08-20",
-          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202608.zip"
-        },
-        {
-          "valid_season": "SON 2026",
+          "valid_season": "NDJ 2026-2027",
           "variable": "temp",
           "category_label": "Above normal",
-          "prob": 40.0,
-          "issued": "2026-08-20",
-          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202608.zip"
+          "prob": 33.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
         }
       ]
     },
@@ -1800,6 +1800,22 @@
           "variable": "prcp",
           "category_label": "Equal chances",
           "prob": 33.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+        },
+        {
+          "valid_season": "NDJ 2026-2027",
+          "variable": "prcp",
+          "category_label": "Above median",
+          "prob": 33.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+        },
+        {
+          "valid_season": "DJF 2026-2027",
+          "variable": "prcp",
+          "category_label": "Above median",
+          "prob": 40.0,
           "issued": "2026-09-17",
           "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
         },
@@ -1825,6 +1841,22 @@
       "days": 31,
       "cpc_outlooks": [
         {
+          "valid_season": "NDJ 2026-2027",
+          "variable": "prcp",
+          "category_label": "Above median",
+          "prob": 33.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+        },
+        {
+          "valid_season": "DJF 2026-2027",
+          "variable": "prcp",
+          "category_label": "Above median",
+          "prob": 40.0,
+          "issued": "2026-09-17",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+        },
+        {
           "valid_season": "JFM 2027",
           "variable": "prcp",
           "category_label": "Above median",
@@ -1833,9 +1865,9 @@
           "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
         },
         {
-          "valid_season": "JFM 2027",
+          "valid_season": "NDJ 2026-2027",
           "variable": "temp",
-          "category_label": "Equal chances",
+          "category_label": "Above normal",
           "prob": 33.0,
           "issued": "2026-09-17",
           "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seastemp_202609.zip"
@@ -1867,8 +1899,12 @@
       "abbrev": "DJF",
       "variable": "prcp",
       "valid_season": "DJF 2026-2027",
-      "kind": null,
-      "covers": null,
+      "kind": "season",
+      "covers": [
+        "2026-12",
+        "2027-01",
+        "2027-02"
+      ],
       "start_date": null,
       "end_date": null,
       "prob": 40.0,
@@ -1902,8 +1938,12 @@
       "abbrev": "DJF",
       "variable": "temp",
       "valid_season": "DJF 2026-2027",
-      "kind": null,
-      "covers": null,
+      "kind": "season",
+      "covers": [
+        "2026-12",
+        "2027-01",
+        "2027-02"
+      ],
       "start_date": null,
       "end_date": null,
       "prob": 33.0,
@@ -2016,8 +2056,12 @@
       "abbrev": "NDJ",
       "variable": "prcp",
       "valid_season": "NDJ 2026-2027",
-      "kind": null,
-      "covers": null,
+      "kind": "season",
+      "covers": [
+        "2026-11",
+        "2026-12",
+        "2027-01"
+      ],
       "start_date": null,
       "end_date": null,
       "prob": 33.0,
@@ -2052,8 +2096,12 @@
       "abbrev": "NDJ",
       "variable": "temp",
       "valid_season": "NDJ 2026-2027",
-      "kind": null,
-      "covers": null,
+      "kind": "season",
+      "covers": [
+        "2026-11",
+        "2026-12",
+        "2027-01"
+      ],
       "start_date": null,
       "end_date": null,
       "prob": 33.0,
@@ -2631,7 +2679,7 @@
     "station_id": "USW00023272",
     "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
     "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-    "retrieved_utc": "2026-09-18T20:41:50Z",
+    "retrieved_utc": "2026-09-18T23:27:21Z",
     "dates_parsed": 366,
     "columns": {
       "normal_high_f": "DLY-TMAX-NORMAL",

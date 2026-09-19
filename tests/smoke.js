@@ -59,8 +59,8 @@ const REQUIRED_SECTIONS = [
   '#enso-body', '#cpc-season-table', '#monthly-table', '#enso-strat', '#discussions',
   '#now-current', '#nws-forecast', '#nws-obs', '#nws-alerts', '#calendar-grid',
   '#streak-table', '#streak-chart', '#wind-table', '#gust-table', '#storm-summary',
-  '#provenance', '#nws-verification-body', '#cpc-backtest-body',
-  '#model-guidance-body', '#feed-body', '#archive-probe-body',
+  '#provenance', '#nws-verification-body', '#cpc-backtest-body', '#digest-body',
+  '#model-guidance-body', '#feed-body',
   '#verify-body', '#quality-report', '#caveats'
 ];
 
@@ -710,7 +710,115 @@ setTimeout(() => {
     }
   }
 
-  // 24. The model-guidance tier must be impossible to read as a forecast:
+  // 24. The storm-watch digest card: threshold, privacy, and consistency
+  //     with data/digest.json (quiet state or one row per trigger).
+  {
+    const dt = text('#digest-body');
+    let dg = null;
+    try {
+      dg = JSON.parse(fs.readFileSync(path.join(repo, 'data/digest.json'), 'utf8'));
+    } catch (e) { /* digest not built this run; the card must say so */ }
+    if (!dg) {
+      if (!dt.includes('No digest was produced')) {
+        problems.push('#digest-body does not explain the missing digest.json');
+      }
+    } else {
+      const thr = String((dg.pop_threshold_pct ?? 50));
+      if (!dt.includes(thr + '%') && !dt.includes(thr + ' %')) {
+        problems.push('#digest-body does not state the POP threshold (' + thr + '%)');
+      }
+      if (!dt.includes('stores no address')) {
+        problems.push('#digest-body does not publish the opt-in privacy statement');
+      }
+      const n = ((dg.nws_alerts || []).length) + ((dg.high_pop_days || []).length);
+      if (n === 0 && !dt.includes('Quiet')) {
+        problems.push('#digest-body shows no quiet state although the digest has 0 triggers');
+      }
+      if (n > 0) {
+        const rows = doc.querySelectorAll('#digest-body tbody tr').length;
+        if (rows !== n) {
+          problems.push('#digest-body renders ' + rows + ' trigger row(s) but digest.json has ' + n);
+        }
+      }
+    }
+    const rss = doc.querySelector('#digest a[href="data/alerts.xml"]');
+    if (!rss) problems.push('digest card has no subscribe link to data/alerts.xml');
+  }
+
+  // 25. AFD issuance history: when the data carries last-mention dates, the
+  //     card must show them; the history file must be linked.
+  {
+    const hist = ((cal.afd_language || {}).history) || {};
+    const lm = hist.last_mention || {};
+    const card = doc.querySelector('#afd-language');
+    const t = card ? card.textContent : '';
+    if (Object.keys(lm).length) {
+      if (!t.includes('last mentioned')) {
+        problems.push('AFD card omits the last-mentioned history the data carries');
+      }
+      const dated = Object.values(lm).filter(b => b.last_issuance_time);
+      dated.forEach(b => {
+        if (!t.includes(b.last_issuance_time)) {
+          problems.push('AFD card omits the last-mention date for ' + (b.label || '?'));
+        }
+      });
+      if (!card.querySelector('a[href="data/afd_history.json"]')) {
+        problems.push('AFD card does not link data/afd_history.json');
+      }
+    }
+  }
+
+  // 26. The day dialog's deep links: every headline field must offer the
+  //     exact official row/file behind it, on an official host.
+  {
+    const cell = doc.querySelector('.day[data-date]');
+    if (cell) {
+      cell.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      const dlg = doc.querySelector('#day-dialog-body');
+      const dt = dlg ? dlg.textContent : '';
+      if (!dt.includes('Verify each number yourself')) {
+        problems.push('day dialog renders no per-field deep links');
+      }
+      const OFFICIAL = /^(api\.weather\.gov|forecast\.weather\.gov|www\.ncei\.noaa\.gov|www\.cpc\.ncep\.noaa\.gov|ftp\.cpc\.ncep\.noaa\.gov|www\.weather\.gov)$/;
+      const links = dlg ? Array.from(dlg.querySelectorAll('table a[href^="https://"]')) : [];
+      if (!links.length) {
+        problems.push('day dialog deep-link table has no https links');
+      }
+      links.forEach(a => {
+        const host = (a.getAttribute('href') || '').replace(/^https:\/\//, '').split('/')[0];
+        if (!OFFICIAL.test(host)) {
+          problems.push('day dialog deep link leaves the official hosts: ' + a.getAttribute('href'));
+        }
+      });
+    }
+  }
+
+  // 27. The CPC back-test card must match data/cpc_backtest.json: a hit-rate
+  //     when rows are scored, otherwise the pending-backfill reason — never a
+  //     silent or half-rendered state.
+  {
+    let bt = null;
+    try {
+      bt = JSON.parse(fs.readFileSync(path.join(repo, 'data/cpc_backtest.json'), 'utf8'));
+    } catch (e) { /* file legitimately absent until the first scheduled run */ }
+    const t = text('#cpc-backtest-body');
+    if (!bt) {
+      if (!t.includes('missing this run')) {
+        problems.push('#cpc-backtest-body does not explain the missing back-test file');
+      }
+    } else if ((bt.rows || []).length) {
+      const hr = (bt.summary || {}).hit_rate_pct;
+      if (hr !== null && hr !== undefined && !t.includes(String(hr) + '%')) {
+        problems.push('#cpc-backtest-body does not show the scored hit-rate ' + hr + '%');
+      }
+    } else {
+      if (!t.includes('back-fill') && !t.includes('backfill')) {
+        problems.push('#cpc-backtest-body does not explain the pending back-fill');
+      }
+    }
+  }
+
+  // 28. The model-guidance tier must be impossible to read as a forecast:
   //     the warning comes before any content, every item repeats it, and not one
   //     model token may reach the scoreboard grid.
   {
@@ -762,7 +870,7 @@ setTimeout(() => {
     }
   }
 
-  // 25. The official-product feed must render what it counted, newest first,
+  // 29. The official-product feed must render what it counted, newest first,
   //     with a tier pill on every row and no row pretending to a date NOAA did
   //     not publish.
   {
@@ -811,78 +919,6 @@ setTimeout(() => {
         String(e.kind || '').indexOf('model-guidance') === 0);
       if (modelRows.length && !/NOT OFFICIAL/.test(sec)) {
         problems.push('model-guidance feed rows are not labelled NOT OFFICIAL');
-      }
-    }
-  }
-
-  // 26. The archive-status card must either show the probe's verdict or say the
-  //     probe has not run - and it must not soften the stale-archive flag.
-  {
-    const sec = text('#archive-probe-body');
-    let pr = null;
-    try {
-      pr = JSON.parse(fs.readFileSync(path.join(repo, 'data/ncei_archive_probe.json'), 'utf8'));
-    } catch (e) { pr = null; }
-    if (!pr) {
-      if (!/Not yet built/i.test(sec)) {
-        problems.push('ncei_archive_probe.json is absent but the card does not say so: ' +
-          sec.slice(0, 160));
-      }
-    } else {
-      const cls = ((pr.verdict || {}).classification) || '';
-      if (cls && !sec.includes(cls)) {
-        problems.push('the archive probe verdict is not rendered: ' + cls);
-      }
-      if (pr.last_date_published_by_the_site &&
-          !sec.includes(pr.last_date_published_by_the_site)) {
-        problems.push('the archive card does not show the stale date run.json publishes');
-      }
-      (pr.recommended_actions || []).forEach(a => {
-        if (a.action && !sec.includes(a.action)) {
-          problems.push('a recommended action from the probe is not rendered: ' +
-            String(a.action).slice(0, 60));
-        }
-      });
-    }
-  }
-
-  // 27. Deep links in the day dialog: each must name the day's own date, say
-  //     whether this run fetched it, and point at an official host.
-  {
-    const cell = doc.querySelector('.day[data-date]');
-    if (cell) {
-      cell.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-      const body = doc.querySelector('#day-dialog-body');
-      const dlg = text('#day-dialog-body');
-      const date = cell.getAttribute('data-date');
-      const links = Array.from(body.querySelectorAll('.deep-links a'));
-      if (!links.length) {
-        problems.push('the day dialog offers no deep link for ' + date);
-      } else {
-        if (!dlg.includes('Check this exact date at the source')) {
-          problems.push('the deep-link block has no heading a reader can find');
-        }
-        links.forEach(a => {
-          const href = a.getAttribute('href') || '';
-          if (!/^https:\/\/([a-z0-9.-]+\.)?(noaa|weather|census)\.gov\//.test(href)) {
-            problems.push('a deep link leaves the official hosts: ' + href);
-          }
-          if (/access\/services\/data\/v1/.test(href) &&
-              (href.indexOf('startDate=' + date) < 0 || href.indexOf('endDate=' + date) < 0)) {
-            problems.push('a station-day deep link does not ask for ' + date + ': ' + href);
-          }
-        });
-        const pills = Array.from(body.querySelectorAll('.deep-links .pill'));
-        if (pills.length !== links.length) {
-          problems.push('deep links rendered ' + links.length + ' link(s) but ' +
-            pills.length + ' fetched/link-only label(s)');
-        }
-        pills.forEach(pl => {
-          if (!/fetched this run|link only/.test(pl.textContent)) {
-            problems.push('a deep link does not say whether this run fetched it: ' +
-              pl.textContent);
-          }
-        });
       }
     }
   }

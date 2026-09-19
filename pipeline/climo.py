@@ -26,54 +26,6 @@ from collections import defaultdict
 MM_PER_INCH = 25.4
 KT_TO_MPH = 1.15078
 
-# --------------------------------------------------------------------------- #
-# Deep links into NCEI's own Access Data Service.
-#
-# A reader who is told "this is the 15 December climatology" should be able to
-# click through to the one station-day that supports it, in the same official
-# dataset, without this project sitting in between.  The URL is assembled from the
-# parameter names in NCEI's published API documentation
-# (https://www.ncei.noaa.gov/support/access-data-service-api-user-documentation):
-# dataset, stations, startDate, endDate, dataTypes, units, format.
-#
-# The exact URL shape is fetched once per run by pipeline/main.py and recorded in
-# data/ghcn_probe.json plus the provenance manifest, and the claim ledger fails
-# the run if it was not (day-deep-links-vetted).  So these links are a verified
-# URL shape rather than a plausible-looking guess, and a change in NCEI's
-# parameters breaks the build instead of quietly breaking every link on the site.
-# --------------------------------------------------------------------------- #
-
-NCEI_DATA_SERVICE = "https://www.ncei.noaa.gov/access/services/data/v1"
-GHCN_DAILY_DATASET = "daily-summaries"
-RAIN_TEMP_ELEMENTS = ("PRCP", "TMAX", "TMIN")
-GHCN_WIND_ELEMENTS = ("AWND", "WSF2", "WSF5")
-
-
-def ncei_day_link(station_id, date_iso, elements=RAIN_TEMP_ELEMENTS,
-                  dataset=GHCN_DAILY_DATASET, base=NCEI_DATA_SERVICE):
-    """One station-day from NCEI's Access Data Service, as a CSV download link."""
-    if not station_id or not date_iso:
-        return None
-    return (f"{base}?dataset={dataset}&stations={station_id}"
-            f"&startDate={date_iso}&endDate={date_iso}"
-            f"&dataTypes={','.join(elements)}&units=standard&format=csv")
-
-
-def gsod_year_link(station_id, year, base="https://www.ncei.noaa.gov/data/"
-                                        "global-summary-of-the-day/access/"):
-    """The GSOD annual file that holds one date's wind rows."""
-    if not station_id or not year:
-        return None
-    return f"{base}{int(year)}/{station_id}.csv"
-
-
-def isd_year_link(station_id, year, base="https://www.ncei.noaa.gov/data/"
-                                       "global-hourly/access/"):
-    """The hourly ISD annual file that holds one date's hour-by-hour rows."""
-    if not station_id or not year:
-        return None
-    return f"{base}{int(year)}/{station_id}.csv"
-
 # --------------------------------------------------------------------- utils
 
 def _f(x, ndigits=2):
@@ -2380,3 +2332,162 @@ def parse_census_geographies(payload):
     if not any(out[k] for k in ("county_subdivision", "county", "census_tract")):
         return None
     return out
+
+
+# ---------------------------------------------------------------------------
+# ISD station history — chasing a successor id for the retired GSOD/ISD files
+# ---------------------------------------------------------------------------
+
+ISD_HISTORY_URL = "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv"
+
+# Official successors (NCEI product pages, both on the vetted host):
+# * GHCNh replaces ISD (hourly): https://www.ncei.noaa.gov/products/global-historical-climatology-network-hourly
+# * SSODv2 replaces GSOD (daily): https://www.ncei.noaa.gov/products/global-historical-climatology-network-hourly/synoptic-summary-of-the-day
+GHCNH_PRODUCT_URL = "https://www.ncei.noaa.gov/products/global-historical-climatology-network-hourly"
+SSOD_PRODUCT_URL = ("https://www.ncei.noaa.gov/products/global-historical-climatology-network-hourly/"
+                    "synoptic-summary-of-the-day")
+GHCNH_STATION_LIST_URL = ("https://www.ncei.noaa.gov/oa/global-historical-climatology-network/"
+                          "hourly/doc/ghcnh-station-list.csv")
+
+
+def parse_isd_history(text):
+    """Parse NCEI's isd-history.csv into a list of station dicts.
+
+    Columns (as published): USAF, WBAN, STATION NAME, CTRY, FIPS, LAT, LON,
+    ELEV(M), BEGIN, END.  BEGIN/END are YYYYMMDD.  Rows that do not parse are
+    skipped — the file is large and a few malformed rows must not kill the run.
+    """
+    rows = []
+    if not text:
+        return rows
+    try:
+        reader = csv.DictReader(io.StringIO(text))
+    except Exception:
+        return rows
+    for row in reader or []:
+        try:
+            usaf = (row.get("USAF") or "").strip()
+            wban = (row.get("WBAN") or "").strip()
+            if not usaf and not wban:
+                continue
+            rows.append({
+                "usaf": usaf,
+                "wban": wban,
+                "usaf_wban": f"{usaf}-{wban}",
+                "station_id": f"{usaf}{wban}",
+                "name": (row.get("STATION NAME") or "").strip(),
+                "ctry": (row.get("CTRY") or "").strip(),
+                "lat": (row.get("LAT") or "").strip(),
+                "lon": (row.get("LON") or "").strip(),
+                "elev_m": (row.get("ELEV(M)") or "").strip(),
+                "begin": (row.get("BEGIN") or "").strip(),
+                "end": (row.get("END") or "").strip(),
+            })
+        except Exception:
+            continue
+    return rows
+
+
+def search_isd_history(rows, station_id="72494023234", name_hint="SAN FRANCISCO"):
+    """Find the KSFO entry and any same-name successor candidates.
+
+    Returns {"station": row-or-None, "same_name": [rows], "successor": row-or-None}.
+    A successor is a same-name row whose BEGIN is after the station's END and
+    whose id differs — i.e. the archive moved to a new USAF-WBAN.  When the
+    station's END is simply the retirement date with no later same-name row,
+    successor is None and the stop is a retirement, not an identifier change.
+    """
+    station = None
+    for r in rows or []:
+        if r.get("station_id") == station_id or r.get("usaf_wban") == station_id:
+            station = r
+            break
+    same_name = []
+    hint = (name_hint or "").upper()
+    for r in rows or []:
+        if hint and hint in (r.get("name") or "").upper():
+            same_name.append(r)
+    successor = None
+    if station and station.get("end"):
+        try:
+            end_n = int(station["end"][:8])
+        except (ValueError, TypeError):
+            end_n = 0
+        for r in same_name:
+            if r.get("station_id") == station.get("station_id"):
+                continue
+            try:
+                begin_n = int((r.get("begin") or "")[:8])
+            except (ValueError, TypeError):
+                continue
+            if begin_n > end_n:
+                if successor is None or begin_n < int((successor.get("begin") or "99999999")[:8]):
+                    successor = r
+    # No fallback on "still open" rows: a same-name station that was already
+    # operating before this one ended (a buoy, a downtown site) is a parallel
+    # station, not a successor id.  A successor must BEGIN after the stop —
+    # anything weaker once reported a buoy as KSFO's successor in a test.
+    return {"station": station, "same_name": same_name, "successor": successor}
+
+
+# ---------------------------------------------------------------------------
+# AFD issuance history — "the last discussion to mention X was issued on …"
+# ---------------------------------------------------------------------------
+
+AFD_HISTORY_MAX = 120
+
+
+def update_afd_history(existing, afd_product, afd_scan):
+    """Append one issuance to the AFD history (append-only, deduped).
+
+    ``afd_product``: the NWS AFD product dict (issuance_time, id, source_url,
+    text).  ``afd_scan``: the climo.afd_language_scan() result.  History entries
+    carry quotations only — no date or amount is attached to a quotation (the
+    same rule as the live scan).  Returns the updated list, newest last,
+    capped at AFD_HISTORY_MAX.
+    """
+    history = list(existing or [])
+    if not afd_product or not afd_product.get("issuance_time"):
+        return history
+    issuance = afd_product["issuance_time"]
+    for entry in history:
+        if entry.get("issuance_time") == issuance:
+            return history  # already recorded
+    cats = []
+    for c in (afd_scan or {}).get("categories", []) or []:
+        cats.append({
+            # afd_language_scan() names this "id"; accept "key" too so a future
+            # rename cannot silently blank the history.
+            "id": c.get("id") or c.get("key"),
+            "label": c.get("label"),
+            "sentence_count": c.get("sentence_count", 0),
+            "sentences": [
+                {"sentence": s.get("sentence"), "section": s.get("section"),
+                 "matched_patterns": s.get("matched_patterns")}
+                for s in (c.get("sentences") or [])
+            ],
+        })
+    import hashlib as _hashlib
+    text = afd_product.get("text") or ""
+    history.append({
+        "issuance_time": issuance,
+        "product_id": afd_product.get("id"),
+        "source_url": afd_product.get("source_url"),
+        "text_sha256": _hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        "text_chars": len(text),
+        "sentences_scanned": (afd_scan or {}).get("sentences_scanned"),
+        "categories": cats,
+    })
+    history.sort(key=lambda e: e.get("issuance_time") or "")
+    return history[-AFD_HISTORY_MAX:]
+
+
+def afd_last_mention(history, category_key):
+    """Newest issuance_time in history with sentence_count > 0 for key, or None."""
+    last = None
+    for entry in history or []:
+        for c in entry.get("categories", []) or []:
+            cid = c.get("id") or c.get("key")
+            if cid == category_key and (c.get("sentence_count") or 0) > 0:
+                last = entry.get("issuance_time")
+    return last

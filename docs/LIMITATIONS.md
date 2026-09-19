@@ -37,7 +37,9 @@ station and shows the coordinates.
 Per the [NCEI README](https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt),
 GSOD summarises 0000Z-2359Z ≈ 16:00-16:00 Pacific, while GHCN rain days are local
 days. The joint "wind + rain" statistic therefore pairs a local-day rainfall with a
-UTC-day wind figure for the same date. **Fix:** hourly ISD (below).
+UTC-day wind figure for the same date. **Fix:** the hour-by-hour statistic built
+from the frozen ISD archive (1991–Aug 2025; ISD was retired 2025-08-29, so new
+hours must come from its GHCNh successor — see next work 1).
 
 ### 4. Humidity on climatology days is a derivation, not an observation
 NOAA does not publish a relative-humidity normal. The value shown is computed from
@@ -211,36 +213,23 @@ If a future session wants model numbers on the page, the honest route is to quot
 value NOAA itself publishes in text or a machine-readable field — not to read one
 off a picture.
 
-### 18. The discussion history covers what NWS currently publishes
-`pipeline/afd_history.py` reads the NWS products API, which lists the office's
-recent issuances (typically a few weeks). There is no anonymous official archive of
-older discussions, so the history is a window, not a record: it cannot answer "when
-was the last atmospheric river mentioned in November 2024?". The window is stated
-on the page. Quotations are verbatim, stored with the product text and its SHA-256
-so the ledger can re-check them offline, and — as with the AFD card — no date,
-amount or probability is ever attached to one.
+### 18. The product feed is a re-presentation, not a new source
+`data/feed.json` makes no network request: every row is assembled from a dataset
+that already came from a recorded fetch. So the feed can be no more current, and no
+more complete, than the datasets behind it — and it inherits their limits:
 
-### 19. Per-day deep links are offered for dates this run did not fetch
-Each day cell links the official rows for that one date. For the 123 days of the
-season those URLs were **not** individually fetched (that would be 369 requests a
-night for links, not for data), so each is labelled *link only* rather than
-presented as evidence. What *is* verified every run: the URL shape — one Access
-Data Service request for a date the station file actually holds, recorded in
-`data/ghcn_probe.json` — plus every link's host, station and date
-(`day-deep-links-vetted`). Note also that NCEI publishes GSOD and hourly ISD annual
-files after the year ends, so a link into the current year may legitimately 404
-until it exists; the note on each link says so.
-
-### 20. The archive probe answers one question, and only about one station
-`pipeline/ncei_archive_probe.py` classifies why the wind archive stops where it
-does. It does not repair the archive, and its verdict is only as good as the
-comparison it can make: if no control station's file is readable for a year, the
-verdict is `not-determinable` rather than a guess. Control stations are within
-~100 mi of SFO and are not microclimate equivalents — they are used to answer "did
-the archive stop for everyone?", never to substitute wind values for 94122. If a
-successor identifier exists, the probe recommends stitching it and does not do it:
-changing the wind station would move every published 1991–2020 wind statistic, so
-that is a documented maintainer decision, not a side effect of a nightly run.
+* A row's date is the publisher's date. Where NOAA printed a date with no clock time
+  (CPC issue dates), the row is **date-only** and says so; where NOAA printed
+  neither, the row is listed **undated**. Nothing is given a timestamp it did not
+  carry, which means the ordering of same-date rows is not meaningful.
+* Some rows link a human-facing page (`forecast.weather.gov/MapClick.php`, an alert
+  object's `@id`) that this project did not fetch. Each is labelled
+  `provenance_verified: false` with the `evidence_url` that *was* fetched, so a
+  reader can follow it without the site implying it was verified.
+* The feed covers only what the pipeline publishes. A NOAA product this project does
+  not retrieve — a different office's discussion, a marine forecast, a river
+  statement — simply is not in it, and absence from the feed is not evidence that
+  NOAA published nothing.
 
 ---
 
@@ -248,21 +237,25 @@ that is a documented maintainer decision, not a side effect of a nightly run.
 
 ### High value, moderate effort
 
-1. **Hourly ISD wind → true simultaneous wind+rain.** Replaces the day-level
-   approximation in limitation 3 with hour-by-hour overlap. Source: NOAA Integrated
-   Surface Database hourly (`https://www.ncei.noaa.gov/data/global-hourly/access/{year}/{station}.csv`),
-   free, no key. Cost: 30+ files of tens of MB each, so it should be its own job
-   with its own timeout, publishing only aggregates (never the raw hours).
+1. **Hourly wind+rain — built from the frozen ISD archive; GHCNh successor
+   still open.** The hour-by-hour overlap statistic already exists
+   (`data/isd_hourly_summary.json`), but ISD was retired on 2025-08-29, so no
+   hours after Aug 2025 will ever arrive from it. Remaining work: source new
+   hours from the official successor GHCNh (PSV/Parquet bulk by year, free, no
+   key) and stitch them to the frozen 1991–2025 aggregates. Keep publishing
+   only aggregates, never raw hours.
 
 2. **NWS forecast verification loop.** Store each night's forecast for the 94122
    grid and score it against what was observed, then publish hit rates: did it rain
    when POP ≥ 50%? How far off was the forecast high? This turns the site from a
    viewer into an accountability tool, and the data is already being fetched.
 
-3. **CPC back-testing.** Accumulate each issuance (a small history file) and, once
-   the season completes, score CPC's period probabilities against the observed
-   GHCN totals for 94122. Then the site can say "when CPC tipped above-median for
-   OND here, it verified X% of the time" instead of only reporting the tip.
+3. **CPC back-testing — pipeline built, archive back-fill open.**
+   `pipeline/cpc_backtest.py` already samples historical issuances and scores
+   them against observed GHCN terciles, but the live GIS server retains only
+   recent months, so the card reports pending-backfill until per-issuance URLs
+   inside the official Oct-1995 archive are followed. (IRI was vetted and
+   rejected as a source.)
 
 4. **Atmospheric-river awareness.** ARs drive almost all high-impact California
    winter rain and are directly relevant to the "days of straight rain" question.
@@ -277,12 +270,14 @@ that is a documented maintainer decision, not a side effect of a nightly run.
    would tighten the Sunset wind estimate. Any such adjustment must be labelled an
    estimate and published with its method.
 
-6. **Per-field provenance in the day dialog.** Each row currently links to the day's
-   sources; pointing each individual number at the exact element of the exact file
-   would make the manual check even faster.
+6. **Per-field provenance in the day dialog — done 18 Sep 2026.** Each headline
+   number links at the exact official element behind it ("Verify each number
+   yourself"), enforced by ledger check `deep-links-traceable`.
 
-7. **Email/RSS digest** when a day enters the 7-day window with a high POP, or when
-   an NWS alert is issued for `CAZ006`. Requires opt-in and a privacy story.
+7. **RSS digest — done 18 Sep 2026** (`data/alerts.xml` + `data/digest.json`,
+   POP ≥ 50 or an active `CAZ006` alert, opt-in only, no tracking). Email
+   deliberately not offered: a static project cannot store addresses or run a
+   sender honestly.
 
 ### Larger undertakings
 

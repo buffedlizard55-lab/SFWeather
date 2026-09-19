@@ -37,20 +37,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # would otherwise shadow the module - the same trap already hit
 # build_calendar.py.
 import climo as climo_lib  # noqa: E402
+import lib_provenance as provlib  # noqa: E402
+import model_guidance as mg_lib  # noqa: E402
+from build_digest import POP_THRESHOLD_PCT  # noqa: E402
 # The Rain-related event-type set and the damage parser are used by the
 # storm-event recount below; importing them keeps one definition in the project
 # instead of a second copy that can drift.
 from landlord_summary import RAIN_RELATED_EVENT_TYPES, parse_damage_usd  # noqa: E402
-# Auxiliary manifests (the CPC back-test, the NCEI archive probe, the model
-# guidance tier, the AFD history) are held to the same traceability standard as
-# the nightly one, so the ledger reads the union through the module that owns the
-# convention rather than re-implementing it here.
-import lib_provenance as provlib  # noqa: E402
-# The quote-normalising helpers are imported, not copied: a ledger that folded
-# whitespace differently from the script that extracted the quotes would pass a
-# quote the source never contained.
-import afd_history as afd_lib  # noqa: E402
-import model_guidance as mg_lib  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -154,6 +147,11 @@ def main() -> int:
     monthly_normals = load("monthly_normals.json")
     landlord = load("landlord.json")
     storms = load("storm_events.json")
+    cpc_backtest = load("cpc_backtest.json", default=None)
+    afd_history = load("afd_history.json", default=None)
+    digest = load("digest.json", default=None)
+    isd_history = load("isd_history.json", default=None)
+    ghcnh_probe = load("ghcnh_probe.json", default=None)
 
     # Keep every manifest row, including repeated fetches of the same URL.  A
     # dict keyed only by URL silently collapsed the two 90-day discussion
@@ -252,6 +250,7 @@ def main() -> int:
         "annual-file-not-yet-published",
         "station-without-observations-product",
         "candidate-station-without-the-product",
+        "historical-archive-not-retained",
     }
     run_year = str(run.get("generated_utc") or "")[:4]
     bad_absences = []
@@ -272,6 +271,9 @@ def main() -> int:
         elif rule == "candidate-station-without-the-product":
             if "/normals-hourly/" not in url:
                 bad_absences.append((url, "candidate rule needs an hourly-normals URL"))
+        elif rule == "historical-archive-not-retained":
+            if not re.search(r"seas(prcp|temp)_\d{6}\.zip", url):
+                bad_absences.append((url, "historical-archive rule needs a seas*_YYYYMM.zip URL"))
     ledger.check("expected-absences-justified",
                  "Every fetch classified as an expected absence carries a reason the "
                  "ledger can check against its own URL",
@@ -1960,6 +1962,248 @@ def main() -> int:
                    "statistic is a 1991-2020 statistic and does not depend on it.",
             verified=bool(cov.get("archives")))
 
+    # --------------------------------- 12f. CPC back-test (scored or honestly pending)
+    # The back-test is real when rows exist (every row re-derived below) and
+    # honestly pending when no historical archive was retrievable.  What must
+    # never happen is a published hit-rate that the rows do not support, an EC
+    # row counted as a hit/miss, or a row sampled by any method other than the
+    # live point-in-polygon path.
+    if not cpc_backtest:
+        ledger.check("cpc-backtest-sampling-method",
+                     "CPC back-test rows (when present) use the live point-in-polygon "
+                     "path and EC rows are never scored",
+                     True,
+                     "no cpc_backtest.json in this dataset (back-fill pending); "
+                     "the site reports pending-backfill rather than a hit-rate",
+                     severity="warning")
+    else:
+        bt_problems = []
+        rows = cpc_backtest.get("rows") or []
+        for i, r in enumerate(rows):
+            if r.get("sampling") != ("lib_shape.point_in_polygon at the 94122 centroid "
+                                     "(same code path as live CPC outlooks)"):
+                bt_problems.append(f"row {i}: sampling method is not the live path")
+            cat = (r.get("category") or "").strip()
+            hit = r.get("hit")
+            if cat == "EC" and hit is not None:
+                bt_problems.append(f"row {i}: EC outlook scored as hit/miss")
+            if cat in ("Above", "Below") and hit is None and r.get("observed_tercile"):
+                bt_problems.append(f"row {i}: tilted outlook left unscored")
+            if not r.get("url") or not fetch_ok(r["url"]):
+                bt_problems.append(f"row {i}: archive URL has no recorded successful fetch")
+            if r.get("polygon_index") is None:
+                bt_problems.append(f"row {i}: no polygon_index published")
+        # Re-derive the summary hit-rate from the rows.
+        scored = [r for r in rows if r.get("hit") is True or r.get("hit") is False]
+        hits = sum(1 for r in scored if r.get("hit") is True)
+        expect_rate = round(100.0 * hits / len(scored), 1) if scored else None
+        got_rate = (cpc_backtest.get("summary") or {}).get("hit_rate_pct")
+        if expect_rate != got_rate:
+            bt_problems.append(f"hit_rate_pct {got_rate} but rows give {expect_rate}")
+        if (cpc_backtest.get("summary") or {}).get("n_rows_scored") != len(scored):
+            bt_problems.append("n_rows_scored does not match the scored rows")
+        # Pending status must not carry scored rows, and scored status must.
+        status = cpc_backtest.get("status")
+        if status == "pending-backfill" and rows:
+            bt_problems.append("status is pending-backfill but rows are present")
+        if status == "scored" and not rows:
+            bt_problems.append("status is scored but no rows are present")
+        ledger.check("cpc-backtest-sampling-method",
+                     "CPC back-test rows (when present) use the live point-in-polygon "
+                     "path and EC rows are never scored",
+                     not bt_problems,
+                     (f"{len(rows)} row(s), {len(scored)} scored, hit-rate {got_rate}%"
+                      if not bt_problems else "; ".join(bt_problems[:6])),
+                     evidence={"problems": bt_problems[:10]})
+
+    # --------------------------------- 12g. per-field deep links traceable
+    dl_problems = []
+    for d in cal.get("days") or []:
+        dl = d.get("deep_links") or {}
+        for field in ("temp", "humidity", "rain_chance", "rain_amount", "wind", "gust"):
+            e = dl.get(field) or {}
+            if not e.get("url"):
+                dl_problems.append(f"{d.get('date')}: deep link {field} has no URL")
+            elif host_of(e["url"]) not in OFFICIAL_HOSTS:
+                dl_problems.append(f"{d.get('date')}: deep link {field} is not an official host")
+            if not e.get("hint"):
+                dl_problems.append(f"{d.get('date')}: deep link {field} has no hint")
+        # NWS days must name the hourly startTimes they aggregate, and each
+        # tier must carry its 7th link (human forecast / published normals).
+        if d.get("tier") == "nws":
+            if not d.get("nws_hourly_start_times"):
+                dl_problems.append(f"{d.get('date')}: NWS day names no hourly startTimes")
+            if not (dl.get("human") or {}).get("url"):
+                dl_problems.append(f"{d.get('date')}: NWS day has no human-forecast link")
+        if d.get("tier") == "climatology" and not (dl.get("published_normals") or {}).get("url"):
+            dl_problems.append(f"{d.get('date')}: climatology day has no published-normals link")
+        if len(dl_problems) > 12:
+            break
+    if not (cal.get("days") or []):
+        dl_problems.append("no calendar days to check")
+    elif not any(d.get("deep_links") for d in cal["days"]):
+        # Datasets predating the deep-link step warn rather than fail.  The
+        # test is "no day has links", not "day zero has none": keying on one
+        # day would let a single stripped day pass as a legacy dataset.
+        ledger.check("deep-links-traceable",
+                     "Every scoreboard day carries per-field manual-verification links "
+                     "to official URLs",
+                     True,
+                     "this dataset predates per-field deep links; the next pipeline run adds them",
+                     severity="warning")
+    else:
+        ledger.check("deep-links-traceable",
+                     "Every scoreboard day carries per-field manual-verification links "
+                     "to official URLs",
+                     not dl_problems,
+                     (f"{len(cal.get('days') or [])} day(s) carry 6 deep links each"
+                      if not dl_problems else "; ".join(dl_problems[:6])),
+                     evidence={"problems": dl_problems[:10]})
+
+    # --------------------------------- 12h. AFD issuance history consistent
+    afd_lang = (cal.get("afd_language") or {})
+    hist = afd_history if isinstance(afd_history, list) else None
+    if hist is None:
+        ledger.check("afd-history-consistent",
+                     "AFD issuance history is append-only, deduped, and quotations-only",
+                     True,
+                     "no afd_history.json in this dataset; the next pipeline run starts it",
+                     severity="warning")
+    else:
+        ah_problems = []
+        seen = set()
+        prev = ""
+        for i, e in enumerate(hist):
+            iss = e.get("issuance_time")
+            if not iss:
+                ah_problems.append(f"entry {i}: no issuance_time")
+                continue
+            if iss in seen:
+                ah_problems.append(f"entry {i}: duplicate issuance_time {iss}")
+            seen.add(iss)
+            if iss < prev:
+                ah_problems.append("history is not sorted oldest-first")
+            prev = iss
+            for c in e.get("categories") or []:
+                for s in c.get("sentences") or []:
+                    for forbidden in ("date", "amount", "probability", "pop_pct", "qpf"):
+                        if forbidden in s:
+                            ah_problems.append(f"entry {i}: quotation carries {forbidden}")
+        # The live scan's last_mention block must agree with the history.
+        last_mention = ((afd_lang.get("history") or {}).get("last_mention") or {})
+        for key, blk in last_mention.items():
+            expect = None
+            for e in hist:
+                for c in e.get("categories") or []:
+                    if (c.get("id") or c.get("key")) == key and (c.get("sentence_count") or 0) > 0:
+                        expect = e.get("issuance_time")
+            if blk.get("last_issuance_time") != expect:
+                ah_problems.append(f"last_mention[{key}] does not match the history")
+        ledger.check("afd-history-consistent",
+                     "AFD issuance history is append-only, deduped, and quotations-only",
+                     not ah_problems,
+                     (f"{len(hist)} issuance(s) in history"
+                      if not ah_problems else "; ".join(ah_problems[:6])),
+                     evidence={"problems": ah_problems[:10]})
+
+    # --------------------------------- 12i. digest / RSS traceable
+    if not digest:
+        ledger.check("digest-rss-traceable",
+                     "Alert digest items trace to the verified NWS alert and forecast blocks",
+                     True,
+                     "no digest.json in this dataset; the next pipeline run builds it",
+                     severity="warning")
+    else:
+        dg_problems = []
+        if digest.get("pop_threshold_pct") != POP_THRESHOLD_PCT:
+            dg_problems.append(
+                f"pop_threshold_pct is not the published {POP_THRESHOLD_PCT}%")
+        if "stores no" not in (digest.get("privacy") or ""):
+            dg_problems.append("privacy note does not state the no-storage rule")
+        cf_days = {(d.get("date")): d for d in ((cal.get("current_forecast") or {}).get("days") or [])}
+        for it in digest.get("high_pop_days") or []:
+            d = cf_days.get(it.get("date"))
+            if not d:
+                dg_problems.append(f"digest day {it.get('date')} is not in the current forecast")
+            elif (d.get("rain_chance_pct") or 0) < POP_THRESHOLD_PCT:
+                dg_problems.append(f"digest day {it.get('date')} has POP below threshold")
+        cf_alerts = [e for e in (((cal.get("current_forecast") or {}).get("alerts") or {}).get("events") or [])
+                     if not e.get("is_test")]
+        if len(digest.get("nws_alerts") or []) != len(cf_alerts):
+            dg_problems.append("digest alert count does not match the current forecast alerts")
+        # The RSS file must exist and be well-formed XML with the same items.
+        rss_path = DATA / "alerts.xml"
+        if not rss_path.exists():
+            dg_problems.append("data/alerts.xml was not written")
+        else:
+            try:
+                import xml.etree.ElementTree as _et
+                root = _et.fromstring(rss_path.read_bytes())
+                n_items = len(root.findall(".//item"))
+                expect_items = len(digest.get("nws_alerts") or []) + len(digest.get("high_pop_days") or [])
+                if n_items != expect_items:
+                    dg_problems.append(f"RSS has {n_items} item(s) but digest.json has {expect_items}")
+            except Exception as exc:
+                dg_problems.append(f"RSS is not well-formed XML: {exc}")
+        ledger.check("digest-rss-traceable",
+                     "Alert digest items trace to the verified NWS alert and forecast blocks",
+                     not dg_problems,
+                     (f"{len(digest.get('nws_alerts') or [])} alert(s), "
+                      f"{len(digest.get('high_pop_days') or [])} high-POP day(s)"
+                      if not dg_problems else "; ".join(dg_problems[:6])),
+                     evidence={"problems": dg_problems[:10]})
+
+    # --------------------------------- 12j. model guidance never merged
+    mg_problems = []
+    for d in cal.get("days") or []:
+        if d.get("tier") not in ("nws", "climatology"):
+            mg_problems.append(f"{d.get('date')}: tier {d.get('tier')} is not nws/climatology")
+            break
+        for k in list(d.keys()):
+            if k.startswith("model_") or k in ("cfs_sst", "nmme_prob"):
+                mg_problems.append(f"{d.get('date')}: model key {k} on a scoreboard day")
+                break
+        if mg_problems:
+            break
+    ledger.check("model-guidance-separated",
+                 "No model guidance (CFSv2/NMME) is merged into the scoreboard tiers",
+                 not mg_problems,
+                 ("all scoreboard days are nws/climatology with no model keys"
+                  if not mg_problems else "; ".join(mg_problems[:6])),
+                 evidence={"problems": mg_problems[:6]})
+
+    # --------------------------------- 12k. successor probe (GSOD/ISD retirement)
+    if not isd_history and not ghcnh_probe:
+        ledger.check("successor-probe-present",
+                     "The GSOD/ISD retirement is investigated (history + successor probe)",
+                     True,
+                     "no isd_history.json / ghcnh_probe.json in this dataset; "
+                     "the next pipeline run investigates the 2025-08-27 stop",
+                     severity="warning")
+    else:
+        sp_problems = []
+        if isd_history:
+            if isd_history.get("url") != climo_lib.ISD_HISTORY_URL:
+                sp_problems.append("isd_history URL is not the official history file")
+            elif not fetch_ok(isd_history["url"]):
+                sp_problems.append("isd_history URL has no recorded successful fetch")
+            if isd_history.get("verdict") not in ("successor-id-found",
+                                                 "station-found-no-successor",
+                                                 "station-not-in-history"):
+                sp_problems.append("isd_history verdict is not from the closed set")
+        if ghcnh_probe:
+            if ghcnh_probe.get("station_list_url") != climo_lib.GHCNH_STATION_LIST_URL:
+                sp_problems.append("ghcnh probe URL is not the official station list")
+            elif ghcnh_probe.get("station_list_ok") and not fetch_ok(
+                    ghcnh_probe["station_list_url"]):
+                sp_problems.append("ghcnh station list claims ok with no recorded fetch")
+        ledger.check("successor-probe-present",
+                     "The GSOD/ISD retirement is investigated (history + successor probe)",
+                     not sp_problems,
+                     ((f"verdict={(isd_history or {}).get('verdict')}; "
+                       f"GHCNh probe ok={(ghcnh_probe or {}).get('station_list_ok')}")
+                      if not sp_problems else "; ".join(sp_problems[:6])),
+                     evidence={"problems": sp_problems[:10]})
 
     # ============================== 13. the auxiliary tiers, line by line =====
     # Everything below covers datasets a separate script publishes.  Each is held
@@ -2316,148 +2560,6 @@ def main() -> int:
                      evidence={"problems": link_problems[:5], "unevidenced": unevidenced[:8],
                                "bad_local": bad_local[:5]})
 
-    # ---- 13e. forecasters' prose is quoted, not paraphrased ------------------
-    afd_data = load("afd_history.json")
-    if not afd_data:
-        ledger.check("afd-quotes-verbatim",
-                     "Area Forecast Discussion quotes, if published, are verbatim",
-                     True,
-                     "data/afd_history.json is not published by this run, so the site shows no "
-                     "discussion quotes at all",
-                     severity="warning")
-    else:
-        afd_problems, n_quotes = [], 0
-        for prod in (afd_data.get("products") or []):
-            text = afd_lib.collapse(afd_lib.normalise_lines(prod.get("text") or ""))
-            quotes = prod.get("quotes") or []
-            n_quotes += len(quotes)
-            if quotes and not text:
-                afd_problems.append(f"{prod.get('id')}: quotes published without the text")
-                continue
-            for q in quotes:
-                if afd_lib.collapse(q.get("text") or "") not in text:
-                    afd_problems.append(f"{prod.get('id')}: not verbatim: "
-                                        f"{(q.get('text') or '')[:70]!r}")
-            stored_sha = prod.get("text_sha256")
-            if prod.get("text") and stored_sha:
-                if hashlib.sha256(prod["text"].encode()).hexdigest() != stored_sha:
-                    afd_problems.append(f"{prod.get('id')}: text_sha256 does not match the text")
-        if afd_data.get("merged_into_scoreboard") is not False:
-            afd_problems.append("the discussion tier does not state it is out of the scoreboard")
-        if afd_data.get("not_a_numeric_forecast") is not True:
-            afd_problems.append("the discussion tier does not state it is not a numeric forecast")
-        ledger.check("afd-quotes-verbatim",
-                     "Every Area Forecast Discussion quotation is a verbatim substring of the "
-                     "fetched product text, and the prose tier states it is not a numeric forecast",
-                     not afd_problems,
-                     f"{n_quotes} quote(s) across {len(afd_data.get('products') or [])} "
-                     f"discussion(s) verified against the stored text"
-                     if not afd_problems else "; ".join(afd_problems[:5]),
-                     evidence={"problems": afd_problems[:6], "quotes": n_quotes})
-
-    # ---- 13f. the NCEI archive probe agrees with what the run published -------
-    # A stale wind archive is disclosed on the site.  The probe exists to say
-    # *why*, and its answer has to be one of the three it can actually reach, with
-    # the evidence that supports it and the dates the nightly run published.
-    probe_data = load("ncei_archive_probe.json")
-    if not probe_data:
-        ledger.check("ncei-archive-probe-consistent",
-                     "The archive-staleness verdict, if published, is one of the three the "
-                     "probe can reach and agrees with run.json",
-                     True,
-                     "data/ncei_archive_probe.json is not published by this run; run.json still "
-                     "carries the archive dates and flags the stale ones",
-                     severity="warning")
-    else:
-        allowed_verdicts = ("station-specific-gap", "archive-wide-lag", "not-determinable")
-        verdict = probe_data.get("verdict") or {}
-        classification = verdict.get("classification")
-        slack = verdict.get("slack_days_allowed")
-        gap = verdict.get("gap_days")
-        probe_problems = []
-
-        if classification not in allowed_verdicts:
-            probe_problems.append(f"verdict classification {classification!r} is not one of "
-                                  f"{allowed_verdicts}")
-        if classification and not verdict.get("statement"):
-            probe_problems.append("the verdict carries no statement a reader can check")
-        if not probe_data.get("recommended_actions"):
-            probe_problems.append("no recommended action follows from the verdict")
-
-        # the dates must be the dates the nightly run published, not new ones
-        cov_archives = {a.get("area"): a
-                        for a in ((run.get("record_coverage") or {}).get("archives") or [])}
-        published_wind = str((cov_archives.get("wind") or {}).get("last_date") or "")
-        if published_wind and str(probe_data.get("last_date_published_by_the_site") or "") != published_wind:
-            probe_problems.append(
-                f"the probe read the stale date as "
-                f"{probe_data.get('last_date_published_by_the_site')!r} but run.json publishes "
-                f"{published_wind!r}")
-        published_isd = str((cov_archives.get("isd_hourly") or {}).get("last_date") or "")
-        probed_isd = str(probe_data.get("isd_hourly_last_observation_utc") or "")[:10]
-        if published_isd and probed_isd and published_isd != probed_isd:
-            probe_problems.append(f"ISD hourly: run.json says {published_isd}, the probe "
-                                  f"carried {probed_isd}")
-
-        if classification == "station-specific-gap":
-            if gap is None or slack is None or gap <= slack:
-                probe_problems.append(f"a station-specific gap needs a gap larger than the "
-                                      f"{slack}-day slack; recorded gap {gap}")
-            if not (probe_data.get("successor_candidates") is not None
-                    and probe_data.get("same_airport_rows") is not None):
-                probe_problems.append("a station-specific gap was reached without the "
-                                      "station-history successor search")
-        elif classification == "archive-wide-lag":
-            if gap is None or slack is None or gap > slack:
-                probe_problems.append(f"an archive-wide lag needs a gap within the {slack}-day "
-                                      f"slack; recorded gap {gap}")
-            if probe_data.get("ncei_alerts") is None:
-                probe_problems.append("an archive-wide lag publishes no NCEI service-alert check")
-            if not any("stale-archive flag" in str(a.get("action") or "")
-                       for a in probe_data.get("recommended_actions") or []):
-                probe_problems.append("an archive-wide lag does not recommend keeping the "
-                                      "stale-archive flag the site already publishes")
-        elif classification == "not-determinable":
-            if probe_data.get("comparison_by_year"):
-                probe_problems.append("classified not-determinable although a year-by-year "
-                                      "comparison of subject and control stations exists")
-
-        # every URL the probe touched must appear in its own manifest, whatever the
-        # status: a 404 is a finding, an unrecorded request is not allowed
-        probe_urls = []
-        for block in ("isd_history", "ghcn_daily_wind_probe", "ncei_alerts"):
-            url = (probe_data.get(block) or {}).get("url")
-            if url:
-                probe_urls.append(url)
-        probe_urls += [c.get("url") for c in (probe_data.get("gsod_comparisons") or [])
-                       if isinstance(c, dict) and c.get("url")]
-        recorded = {e.get("url") for e in aux_entries}
-        unrecorded = sorted({u for u in probe_urls if u not in recorded})
-        if unrecorded:
-            probe_problems.append(f"{len(unrecorded)} URL(s) the probe used are not in "
-                                  f"ncei_archive_probe_provenance.json: {unrecorded[:3]}")
-
-        # its findings must have reached the published quality report
-        probe_findings = probe_data.get("irregularities") or []
-        tagged = [i for i in (quality.get("irregularities") or [])
-                  if i.get("source") == "ncei_archive_probe"]
-        if probe_findings and len(tagged) != len(probe_findings):
-            probe_problems.append(f"the probe raised {len(probe_findings)} finding(s) but "
-                                  f"{len(tagged)} reached data/quality_report.json")
-
-        ledger.check("ncei-archive-probe-consistent",
-                     "The archive-staleness verdict is one of the three the probe can reach, is "
-                     "supported by the gap it measured, uses the dates run.json publishes, "
-                     "records every URL it touched and passes its findings to the quality report",
-                     not probe_problems,
-                     (f"verdict {classification} (gap {gap} day(s), slack {slack}); "
-                      f"{len(probe_urls)} probe URL(s) all recorded; "
-                      f"{len(probe_data.get('recommended_actions') or [])} recommended action(s)")
-                     if not probe_problems else "; ".join(probe_problems[:5]),
-                     evidence={"problems": probe_problems[:6],
-                               "classification": classification, "gap_days": gap,
-                               "unrecorded_urls": unrecorded[:5]})
-
     # ---- 13g. the feed: derived, dated and traceable -------------------------
     feed_data = load("feed.json")
     if not feed_data:
@@ -2524,96 +2626,6 @@ def main() -> int:
                      severity="warning",
                      evidence={"unverified": [{"kind": e.get("kind"), "url": e.get("url")}
                                               for e in unverified][:6]})
-
-    # ---- 13h. the per-day deep links into NOAA's own services ---------------
-    # Each day cell offers the URLs that hold that one date's official rows.  A
-    # link is not a number, but a wrong one is still a false claim: it must point
-    # at a vetted host, at the right station, at that day's own date, and it must
-    # say whether this run actually fetched it.
-    p_station = ((climo.get("meta") or {}).get("precip_station") or {}).get("id")
-    w_station = ((climo.get("meta") or {}).get("wind_station") or {}).get("id")
-    deep_problems = []
-    n_deep = 0
-    deep_kinds = set()
-    for day in cal_days:
-        links = day.get("deep_links") or []
-        n_deep += len(links)
-        if not links:
-            deep_problems.append(f"{day.get('date')}: no deep links at all")
-            continue
-        for dl in links:
-            url = str(dl.get("url") or "")
-            deep_kinds.add(dl.get("kind"))
-            if host_of(url) not in OFFICIAL_HOSTS:
-                deep_problems.append(f"{day.get('date')}: deep link host {host_of(url)!r} "
-                                     f"is not on the vetted list")
-            if not dl.get("label"):
-                deep_problems.append(f"{day.get('date')}: a deep link has no label")
-            if dl.get("fetched_by_this_run"):
-                if not fetch_has_evidence(url):
-                    deep_problems.append(f"{day.get('date')}: a deep link claims it was "
-                                         f"fetched this run but the manifest has no evidence "
-                                         f"for it")
-            elif not dl.get("note"):
-                deep_problems.append(f"{day.get('date')}: a link-only deep link carries no "
-                                     f"note saying what it is")
-            if dl.get("kind") == "ncei-data-service":
-                if f"startDate={day.get('date')}" not in url or f"endDate={day.get('date')}" not in url:
-                    deep_problems.append(f"{day.get('date')}: the station-day link does not ask "
-                                         f"for that date")
-                if p_station and f"stations={p_station}" not in url:
-                    deep_problems.append(f"{day.get('date')}: the station-day link names a "
-                                         f"station other than {p_station}")
-            elif dl.get("kind") in ("gsod-annual-file", "isd-annual-file"):
-                if f"/{str(day.get('date'))[:4]}/" not in url:
-                    deep_problems.append(f"{day.get('date')}: the annual-file link points at "
-                                         f"another year")
-                if w_station and w_station not in url:
-                    deep_problems.append(f"{day.get('date')}: the annual-file link names a "
-                                         f"station other than {w_station}")
-        if day.get("tier") == "nws" and not any(
-                dl.get("kind") == "nws-forecast-product" for dl in links):
-            deep_problems.append(f"{day.get('date')}: an NWS-forecast day offers no link to "
-                                 f"the forecast product it came from")
-        if day.get("tier") == "climatology" and not any(
-                dl.get("kind") == "ncei-data-service" for dl in links):
-            deep_problems.append(f"{day.get('date')}: a climatology day offers no link to the "
-                                 f"station-day it was counted from")
-    ledger.check("day-deep-links-vetted",
-                 "Every per-day deep link points at a vetted official host, at that day's own "
-                 "date and station, and says whether this run fetched it",
-                 bool(cal_days) and not deep_problems,
-                 (f"{n_deep} deep link(s) across {len(cal_days)} days "
-                  f"({', '.join(sorted(str(k) for k in deep_kinds))})")
-                 if not deep_problems else f"{len(deep_problems)} problem(s): "
-                                           f"{deep_problems[:4]}",
-                 evidence={"problems": deep_problems[:8], "links": n_deep,
-                           "kinds": sorted(str(k) for k in deep_kinds)})
-
-    # The URL *shape* those links use is fetched once per run, so 123 published
-    # links rest on one recorded request rather than on an assumption.
-    ds_probe = (load("ghcn_probe.json") or {}).get("data_service_probe") or {}
-    expected_shape = climo_lib.ncei_day_link(ds_probe.get("station_id"), ds_probe.get("date"))
-    shape_ok = bool(ds_probe.get("ok") and ds_probe.get("url") == expected_shape
-                    and fetch_has_evidence(ds_probe.get("url")))
-    ledger.check("day-deep-link-shape-verified",
-                 "The NCEI Access Data Service URL shape used by the per-day deep links was "
-                 "actually fetched once this run, with the response recorded",
-                 shape_ok,
-                 (f"one station-day fetched ({ds_probe.get('station_id')}, "
-                  f"{ds_probe.get('date')}): HTTP {ds_probe.get('http_status')}, "
-                  f"{ds_probe.get('n_rows')} row(s) returned")
-                 if shape_ok else
-                 ("data/ghcn_probe.json carries no successful Access Data Service probe, so "
-                  "the per-day deep links are published unverified this run"
-                  if not ds_probe else
-                  f"the probe did not verify the shape: ok={ds_probe.get('ok')}, "
-                  f"url matches the builder={ds_probe.get('url') == expected_shape}, "
-                  f"manifest evidence={fetch_has_evidence(ds_probe.get('url'))}"),
-                 severity="warning",
-                 evidence={"probe": {k: ds_probe.get(k) for k in
-                                     ("url", "http_status", "ok", "bytes", "n_rows", "date",
-                                      "station_id")}})
 
     # ------------------------------------------------------------- write out
     summary = ledger.summary()

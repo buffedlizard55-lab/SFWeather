@@ -57,7 +57,10 @@ SOURCES = [
     ("forecast_history.json", "this project's archived NWS forecasts"),
     ("afd_history.json", "NWS Area Forecast Discussion"),
     ("model_guidance.json", "NMME model guidance (not an official forecast)"),
-    ("ncei_archive_probe.json", "NCEI observation archive"),
+    ("cpc_backtest.json", "CPC outlook back-test"),
+    ("isd_history.json", "NCEI ISD station history"),
+    ("ghcnh_probe.json", "NCEI GHCN-Hourly successor probe"),
+    ("digest.json", "storm-watch digest"),
     ("provenance.json", "recorded fetches"),
 ]
 
@@ -358,31 +361,91 @@ def build(datadir=Path("data")):
             (entries if ts else undated).append(item)
 
     # ---- AFD history quotes ------------------------------------------------
-    afdh = data.get("afd_history.json") or {}
-    if afdh:
-        for prod in (afdh.get("products") or []):
-            if not isinstance(prod, dict):
+    # data/afd_history.json is an append-only *list* of discussions (deduped by
+    # product id, capped), each carrying the sentences its scan matched, grouped
+    # by category.  Only the publisher's own sentences are carried into the feed,
+    # verbatim, with the product URL they came from.
+    afdh = data.get("afd_history.json")
+    afd_products = afdh if isinstance(afdh, list) else (afdh or {}).get("products") or []
+    for prod in afd_products:
+        if not isinstance(prod, dict):
+            continue
+        ts = to_utc(prod.get("issuance_time") or prod.get("issuance_utc"))
+        url = prod.get("source_url") or prod.get("url")
+        for cat in (prod.get("categories") or []):
+            if not isinstance(cat, dict):
                 continue
-            for q in (prod.get("quotes") or []):
-                ts = to_utc(prod.get("issuance_utc"))
+            for q in (cat.get("sentences") or []):
+                sentence = q.get("sentence") if isinstance(q, dict) else q
+                if not sentence:
+                    continue
                 item = entry(
-                    "afd-quote", "NWS discussion quote (verbatim)", ts=ts,
-                    detail=q.get("text"), url=prod.get("url"),
+                    "afd-quote",
+                    f"NWS discussion quote (verbatim) - {cat.get('label') or cat.get('id')}",
+                    ts=ts, detail=sentence, url=url,
+                    sha256=prod.get("text_sha256"),
                     source_file="data/afd_history.json")
-                item["keywords"] = q.get("keywords")
+                item["keywords"] = (q.get("matched_patterns") if isinstance(q, dict) else None)
+                item["section"] = q.get("section") if isinstance(q, dict) else None
                 item["verbatim"] = True
                 (entries if ts else undated).append(item)
 
-    # ---- NCEI archive probe -----------------------------------------------
-    probe = data.get("ncei_archive_probe.json") or {}
-    if probe:
-        ts = to_utc(probe.get("generated_utc"))
-        entries.append(entry(
-            "ncei-archive", "NCEI observation-archive staleness probe", ts=ts,
-            detail=(f"verdict: {probe.get('verdict')}; GSOD/ISD last published "
-                    f"{probe.get('gsod_last_date') or probe.get('subject_last_date') or '?'}"),
-            url=probe.get("subject_url") or "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
-            source_file="data/ncei_archive_probe.json"))
+    # ---- CPC back-test of past outlooks ------------------------------------
+    bt = data.get("cpc_backtest.json") or {}
+    if isinstance(bt, dict) and bt:
+        ts = to_utc(bt.get("generated_utc"))
+        summ = bt.get("summary") or {}
+        rows = bt.get("rows") or []
+        scored = [r for r in rows if isinstance(r, dict) and r.get("hit") is not None]
+        detail = (f"status: {bt.get('status')}"
+                  + (f"; {bt.get('reason')}" if bt.get("reason") else "")
+                  + f"; {len(rows)} issuance-season rows, {len(scored)} scored"
+                  + (f", hit rate {summ.get('hit_rate_pct')}%"
+                     if summ.get("hit_rate_pct") is not None else ""))
+        item = entry("cpc-backtest", "CPC seasonal outlooks back-tested against the "
+                                     "official observed record", ts=ts, detail=detail,
+                     url=bt.get("archive_index") or bt.get("station_url"),
+                     source_file="data/cpc_backtest.json")
+        item["publisher"] = "this project (scored against NOAA's own archives)"
+        (entries if ts else undated).append(item)
+
+    # ---- ISD station history / GHCN-Hourly successor probe ------------------
+    isdh = data.get("isd_history.json")
+    if isinstance(isdh, dict) and isdh:
+        ts = to_utc(isdh.get("generated_utc"))
+        item = entry(
+            "isd-history", "NCEI ISD station history (successor search for the wind station)",
+            ts=ts,
+            detail=(f"{len(isdh.get('candidates') or isdh.get('rows') or [])} candidate "
+                    f"row(s) examined; {isdh.get('note') or 'see data/isd_history.json'}"),
+            url=isdh.get("url") or "https://www.ncei.noaa.gov/pub/data/ISD/history/isd-history.csv",
+            source_file="data/isd_history.json")
+        (entries if ts else undated).append(item)
+
+    ghcnh = data.get("ghcnh_probe.json")
+    if isinstance(ghcnh, dict) and ghcnh:
+        ts = to_utc(ghcnh.get("generated_utc"))
+        item = entry(
+            "ghcnh-probe", "NCEI GHCN-Hourly / SSOD successor probe for the wind station",
+            ts=ts,
+            detail=(f"ok={ghcnh.get('ok')}; "
+                    f"{ghcnh.get('note') or ghcnh.get('verdict') or 'see data/ghcnh_probe.json'}"),
+            url=ghcnh.get("url"), source_file="data/ghcnh_probe.json")
+        (entries if ts else undated).append(item)
+
+    # ---- storm-watch digest -------------------------------------------------
+    dig = data.get("digest.json")
+    if isinstance(dig, dict) and dig:
+        ts = to_utc(dig.get("generated_utc"))
+        item = entry(
+            "digest", "Storm-watch digest built from the official forecast and alerts",
+            ts=ts,
+            detail=(f"{len(dig.get('days') or dig.get('items') or [])} day(s) flagged; "
+                    f"opt-in only, no tracking"),
+            url=dig.get("source_url") or dig.get("rss_url"),
+            source_file="data/digest.json")
+        item["publisher"] = "this project (derived from NOAA/NWS products)"
+        (entries if ts else undated).append(item)
 
     # ---- model guidance (never marked official) ---------------------------
     mg = data.get("model_guidance.json") or {}

@@ -45,7 +45,7 @@ jobs:
 
       - name: Environment diagnostics
         run: |
-          mkdir -p data assets/cpc assets/model_guidance
+          mkdir -p data assets/cpc
           {
             echo "runner: $(uname -a)"
             echo "python: $(python3 --version)"
@@ -72,6 +72,14 @@ jobs:
           echo "CALENDAR_EXIT=$code" >> data/run_diagnostics.txt
           exit $code
 
+      - name: Back-test CPC seasonal outlooks against observed history
+        run: |
+          set +e
+          python3 -u pipeline/cpc_backtest.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "CPC_BACKTEST_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
+
       - name: Build landlord-focused summary
         run: |
           set +e
@@ -80,29 +88,15 @@ jobs:
           echo "LANDLORD_EXIT=$code" >> data/run_diagnostics.txt
           exit $code
 
-      # ---- auxiliary tiers -------------------------------------------------
-      # Each of these publishes its own dataset AND its own provenance manifest
-      # (data/<area>_provenance.json), so the nightly manifest - and the counts
-      # run.json publishes from it - are never touched by them.  They run before
-      # the ledger so every check below sees the complete set of datasets, and
-      # before build_feed.py so the feed can include what they produced.
-      - name: Back-test archived CPC outlooks against observed seasons
+      - name: Build the storm-watch digest (JSON + RSS)
         run: |
           set +e
-          python3 -u pipeline/cpc_backtest.py 2>&1 | tee -a pipeline_run.log
+          python3 -u pipeline/build_digest.py 2>&1 | tee -a pipeline_run.log
           code=${PIPESTATUS[0]}
-          echo "CPC_BACKTEST_EXIT=$code" >> data/run_diagnostics.txt
+          echo "DIGEST_EXIT=$code" >> data/run_diagnostics.txt
           exit $code
 
-      - name: Probe why the NCEI wind archive stops where it does
-        run: |
-          set +e
-          python3 -u pipeline/ncei_archive_probe.py 2>&1 | tee -a pipeline_run.log
-          code=${PIPESTATUS[0]}
-          echo "NCEI_PROBE_EXIT=$code" >> data/run_diagnostics.txt
-          exit $code
-
-      - name: Retrieve the model-guidance tier (NMME maps, kept out of the scoreboard)
+      - name: Retrieve NMME model guidance (separate tier, never a forecast)
         run: |
           set +e
           python3 -u pipeline/model_guidance.py 2>&1 | tee -a pipeline_run.log
@@ -110,15 +104,7 @@ jobs:
           echo "MODEL_GUIDANCE_EXIT=$code" >> data/run_diagnostics.txt
           exit $code
 
-      - name: Retrieve the NWS Area Forecast Discussion history
-        run: |
-          set +e
-          python3 -u pipeline/afd_history.py 2>&1 | tee -a pipeline_run.log
-          code=${PIPESTATUS[0]}
-          echo "AFD_HISTORY_EXIT=$code" >> data/run_diagnostics.txt
-          exit $code
-
-      - name: Build the chronological feed of official products
+      - name: Build the official-product feed (derived, no network access)
         run: |
           set +e
           python3 -u pipeline/build_feed.py 2>&1 | tee -a pipeline_run.log
@@ -172,7 +158,7 @@ jobs:
           BRANCH: ${{ github.ref_name }}
         run: |
           set -x
-          mkdir -p data assets/cpc assets/model_guidance
+          mkdir -p data assets/cpc
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -181,6 +167,11 @@ jobs:
           # (so the failure is visible and reviewable) but DO NOT commit the
           # datasets: the site then keeps the last verified numbers instead of
           # publishing ones that could not be re-derived from their source.
+          # The exit-code gate below closes the complementary hole: if a
+          # mid-pipeline step crashes, the steps after it are skipped and
+          # data/verify.json is the stale file from the last run (usually a
+          # pass) — publishing on that verdict alone would ship unverified
+          # data.  Every step must have run green in THIS run.
           VERDICT=$(python3 - <<'PY'
           import json, pathlib
           p = pathlib.Path("data/verify.json")
@@ -192,15 +183,28 @@ jobs:
           print("fail" if s.get("failed") else "pass")
           PY
           )
+          STEPS_OK=$(python3 - <<'PY'
+          import pathlib
+          p = pathlib.Path("data/run_diagnostics.txt")
+          lines = set(p.read_text().splitlines()) if p.exists() else set()
+          need = ["PIPELINE_EXIT=0", "CALENDAR_EXIT=0", "CPC_BACKTEST_EXIT=0",
+                  "LANDLORD_EXIT=0", "DIGEST_EXIT=0", "MODEL_GUIDANCE_EXIT=0",
+                  "FEED_EXIT=0", "VERIFY_EXIT=0", "CLAIMS_EXIT=0"]
+          missing = [n for n in need if n not in lines]
+          print("yes" if not missing else "no:" + ",".join(missing))
+          PY
+          )
           echo "CLAIM_LEDGER_VERDICT=$VERDICT"
+          echo "PIPELINE_STEPS_OK=$STEPS_OK"
 
-          if [ "$VERDICT" = "pass" ]; then
+          if [ "$VERDICT" = "pass" ] && [ "$STEPS_OK" = "yes" ]; then
             git add -A data assets/cpc assets/model_guidance
             MSG="data: refresh NOAA/NWS/NCEI/CPC sources [skip ci]"
           else
             git add -f data/pipeline.log data/run_diagnostics.txt data/quality_report.json \
                       data/verify.json data/verify_report.txt data/summary.txt 2>/dev/null || true
             MSG="chore(data): refresh NOT published - verification ledger did not pass [skip ci]"
+            echo "gate blocked publish: VERDICT=$VERDICT STEPS_OK=$STEPS_OK"
           fi
           git add -A pipeline_run.log || echo "no run log to add"
           git status --short | head -40

@@ -1,10 +1,10 @@
 {
-  "generated_utc": "2026-09-18T20:42:23Z",
+  "generated_utc": "2026-09-18T23:33:49Z",
   "counts": {
-    "total": 6,
+    "total": 8,
     "errors": 0,
-    "warnings": 2,
-    "info": 4
+    "warnings": 3,
+    "info": 5
   },
   "irregularities": [
     {
@@ -24,6 +24,28 @@
       "message": "No HWO products returned for office MTR.",
       "evidence": {
         "url": "https://api.weather.gov/products/types/HWO/locations/MTR"
+      }
+    },
+    {
+      "severity": "info",
+      "area": "isd",
+      "message": "ISD history shows 72494023234 ending 20250827 with no same-name successor row: the 2025-08-27 stop is the retired-dataset end, not an identifier change. Successors are GHCNh (hourly) and SSODv2 (daily); see data/ghcnh_probe.json.",
+      "evidence": {
+        "station": {
+          "usaf": "724940",
+          "wban": "23234",
+          "usaf_wban": "724940-23234",
+          "station_id": "72494023234",
+          "name": "SAN FRANCISCO INTERNATIONAL AIRPORT",
+          "ctry": "US",
+          "lat": "+37.620",
+          "lon": "-122.366",
+          "elev_m": "+0003.2",
+          "begin": "19730101",
+          "end": "20250827"
+        },
+        "ghcnh": "https://www.ncei.noaa.gov/products/global-historical-climatology-network-hourly",
+        "ssod": "https://www.ncei.noaa.gov/products/global-historical-climatology-network-hourly/synoptic-summary-of-the-day"
       }
     },
     {
@@ -55,7 +77,7 @@
     {
       "severity": "warning",
       "area": "coverage",
-      "message": "At least one NCEI archive this project reads is more than 180 days behind the run date. Every published statistic is a 1991-2020 statistic and is unaffected; the flag exists so nothing claims to describe *current* conditions from a stale archive.",
+      "message": "At least one NCEI archive this project reads is more than 180 days behind the run date (GSOD/ISD were retired by NCEI on 2025-08-29; successors are SSODv2/GHCNh \u2014 see data/ghcnh_probe.json and data/isd_history.json). Every published statistic is a 1991-2020 statistic and is unaffected; the flag exists so nothing claims to describe *current* conditions from a stale archive.",
       "evidence": {
         "archives": [
           {
@@ -79,9 +101,19 @@
       "message": "Some datasets were not present when the feed was built, so the feed covers fewer sources than a complete run would. Nothing was invented to fill the gap.",
       "evidence": {
         "missing": [
-          "data/afd_history.json",
-          "data/model_guidance.json",
-          "data/ncei_archive_probe.json"
+          "data/model_guidance.json"
+        ]
+      },
+      "source": "feed"
+    },
+    {
+      "severity": "warning",
+      "area": "feed",
+      "message": "2 feed entries cite a URL with no successful fetch in any provenance manifest. They are marked provenance_verified=false rather than dropped, so a reader can still follow them, but no figure on the site may depend on them.",
+      "evidence": {
+        "urls": [
+          "https://api.weather.gov/products/2f894049-4561-49f5-8f84-48f92f351edf",
+          "https://www.cpc.ncep.noaa.gov/products/archives/long_lead/llarc.ind.php"
         ]
       },
       "source": "feed"

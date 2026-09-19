@@ -61,6 +61,11 @@ def run_ledger(datadir, repo_root=None):
     script = (repo_root or REPO) / "pipeline" / "verify_claims.py"
     env = dict(os.environ, SFWEATHER_DATA=str(datadir),
                PYTHONPATH=str((repo_root or REPO) / "pipeline"))
+    # The digest check reads data/alerts.xml (RSS/JSON item agreement), which is
+    # not a *.json copy-loop file — stage the committed feed unless the case
+    # deleted it on purpose.
+    if not (datadir / "alerts.xml").exists() and (DATA / "alerts.xml").exists():
+        shutil.copy2(DATA / "alerts.xml", datadir / "alerts.xml")
     proc = subprocess.run([sys.executable, str(script)], env=env,
                           capture_output=True, text=True, cwd=str(repo_root or REPO))
     statuses = {}
@@ -428,23 +433,177 @@ def _h8(tmp):
     return tmp
 
 
-# ==========================================================================
-# Cases for the auxiliary tiers added in this pass: CPC coverage completeness,
-# auxiliary manifests, model guidance, AFD history, the archive probe, the feed.
-# ==========================================================================
+_LIVE_SAMPLING = ("lib_shape.point_in_polygon at the 94122 centroid "
+                  "(same code path as live CPC outlooks)")
+_ARCHIVE_URL = ("https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/"
+                "seasprcp_199508.zip")
+
+
+def _prov_with_archive(tmp, *urls):
+    prov = load("provenance.json")
+    for u in urls:
+        prov["entries"].append({"url": u, "http_status": 200, "ok": True,
+                                "bytes": 12345, "sha256": "1" * 64,
+                                "retrieved_utc": "2026-09-18T20:00:00Z",
+                                "note": "fixture: archived CPC issuance"})
+    dump(tmp / "provenance.json", prov)
+
+
+@case("a fabricated back-test with one scored row passes", "pass",
+      "cpc-backtest-sampling-method")
+def _bt_pass(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    dump(tmp / "cpc_backtest.json", {
+        "status": "scored",
+        "rows": [
+            {"category": "EC", "observed_tercile": "Near-normal", "hit": None,
+             "sampling": _LIVE_SAMPLING, "url": _ARCHIVE_URL,
+             "polygon_index": 3},
+            {"category": "Above", "observed_tercile": "Above", "hit": True,
+             "sampling": _LIVE_SAMPLING, "url": _ARCHIVE_URL,
+             "polygon_index": 3},
+        ],
+        "summary": {"hit_rate_pct": 100.0, "n_rows_scored": 1},
+    })
+    _prov_with_archive(tmp, _ARCHIVE_URL)
+    return tmp
+
+
+@case("an EC outlook counted as a hit fails the back-test guard", "fail",
+      "cpc-backtest-sampling-method")
+def _bt_ec(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    dump(tmp / "cpc_backtest.json", {
+        "status": "scored",
+        "rows": [{"category": "EC", "observed_tercile": "Near-normal",
+                  "hit": True, "sampling": _LIVE_SAMPLING,
+                  "url": _ARCHIVE_URL, "polygon_index": 3}],
+        "summary": {"hit_rate_pct": 100.0, "n_rows_scored": 1},
+    })
+    _prov_with_archive(tmp, _ARCHIVE_URL)
+    return tmp
+
+
+@case("a back-test row scored off the live sampling path fails", "fail",
+      "cpc-backtest-sampling-method")
+def _bt_path(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    dump(tmp / "cpc_backtest.json", {
+        "status": "scored",
+        "rows": [{"category": "Above", "observed_tercile": "Above",
+                  "hit": True, "sampling": "eyeballed off the GIF",
+                  "url": _ARCHIVE_URL, "polygon_index": 3}],
+        "summary": {"hit_rate_pct": 100.0, "n_rows_scored": 1},
+    })
+    _prov_with_archive(tmp, _ARCHIVE_URL)
+    return tmp
+
+
+@case("a back-test row with no recorded fetch fails", "fail",
+      "cpc-backtest-sampling-method")
+def _bt_prov(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    dump(tmp / "cpc_backtest.json", {
+        "status": "scored",
+        "rows": [{"category": "Above", "observed_tercile": "Above",
+                  "hit": True, "sampling": _LIVE_SAMPLING,
+                  "url": _ARCHIVE_URL, "polygon_index": 3}],
+        "summary": {"hit_rate_pct": 100.0, "n_rows_scored": 1},
+    })
+    # No provenance entry added: the fetch is untraceable by construction.
+    return tmp
+
+
+@case("a scoreboard day stripped of deep links fails", "fail",
+      "deep-links-traceable")
+def _dl(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    cal = load("calendar.json")
+    if not cal["days"][0].get("deep_links"):
+        raise AssertionError("fixture expected the dataset to carry deep_links")
+    cal["days"][0]["deep_links"] = {}
+    dump(tmp / "calendar.json", cal)
+    return tmp
+
+
+@case("a duplicated AFD issuance fails the history guard", "fail",
+      "afd-history-consistent")
+def _ah(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    hist = load("afd_history.json")
+    if not hist:
+        raise AssertionError("fixture expected a non-empty afd_history.json")
+    hist.append(copy.deepcopy(hist[0]))
+    dump(tmp / "afd_history.json", hist)
+    return tmp
+
+
+@case("a digest built at the wrong threshold fails", "fail",
+      "digest-rss-traceable")
+def _dg(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    dg = load("digest.json")
+    dg["pop_threshold_pct"] = 40
+    dump(tmp / "digest.json", dg)
+    return tmp
+
+
+@case("a model-guidance key on a scoreboard day fails", "fail",
+      "model-guidance-separated")
+def _mg(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    cal = load("calendar.json")
+    cal["days"][0]["model_cfs_rain_in"] = 1.23
+    dump(tmp / "calendar.json", cal)
+    return tmp
+
+
+@case("a successor probe with an invented verdict fails", "fail",
+      "successor-probe-present")
+def _sp(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    dump(tmp / "isd_history.json", {
+        "url": "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv",
+        "verdict": "the-intern-deleted-it",
+    })
+    _prov_with_archive(
+        tmp, "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv")
+    return tmp
+
+
+@case("a digest whose RSS feed is malformed fails", "fail",
+      "digest-rss-traceable")
+def _dg_rss(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    (tmp / "alerts.xml").write_text("<rss><channel><item>unclosed")
+    return tmp
+
+
 
 MG_INDEX = "https://www.cpc.ncep.noaa.gov/products/NMME/probindex.shtml"
 MG_DESCR = "https://www.cpc.ncep.noaa.gov/products/NMME/NMME_PROB_descr.html"
 MG_IMAGE = ("https://www.cpc.ncep.noaa.gov/products/NMME/prob/images/"
             "prob_ensemble_prate_us_season1.png")
+
+
 DESCR_TEXT = ("NMME ensemble contains 79 members, all weighted equally. A/B/N "
               "[Above/Below/Neutral] are terciles. The tercile limits were determined "
               "separately for each model using the NMME hindcasts (1982-2010).")
 DESCR_SENTENCES = ["NMME ensemble contains 79 members, all weighted equally.",
                    "A/B/N [Above/Below/Neutral] are terciles."]
 
-
 def copy_data(tmp):
+    """Copy the committed dataset into a scratch dir the ledger can be run on."""
     for f in DATA.glob("*.json"):
         shutil.copy2(f, tmp / f.name)
     return tmp
@@ -500,99 +659,6 @@ def mg_fixture(mutate=None, manifest=True, extra_rows=None):
 AFD_TEXT = ("Area Forecast Discussion\n.SHORT TERM...\nA weak front will bring periods of "
             "rain Thursday night into Friday, with gusty southwest winds and gusts to 40 mph.\n")
 
-
-def afd_fixture(mutate=None):
-    def build(tmp):
-        copy_data(tmp)
-        import hashlib as _h
-        data = {
-            "generated_utc": "2026-09-18T21:30:00Z",
-            "warning": ("Verbatim quotations from the NWS Area Forecast Discussion - not a "
-                        "numeric forecast and not merged into the scoreboard."),
-            "not_a_numeric_forecast": True,
-            "merged_into_scoreboard": False,
-            "products": [{"id": "aaa", "issuance_utc": "2026-09-18T10:23:00+00:00",
-                          "url": "https://api.weather.gov/products/aaa", "ok": True,
-                          "text": AFD_TEXT,
-                          "text_sha256": _h.sha256(AFD_TEXT.encode()).hexdigest(),
-                          "quotes": [{"text": "A weak front will bring periods of rain "
-                                             "Thursday night into Friday, with gusty "
-                                             "southwest winds and gusts to 40 mph.",
-                                      "keywords": ["rain", "wind", "storm"]}]}],
-            "irregularities": [],
-        }
-        if mutate:
-            mutate(data)
-        dump(tmp / "afd_history.json", data)
-        return tmp
-    return build
-
-
-def probe_fixture(classification="archive-wide-lag", mutate=None, gap=3, slack=15,
-                  irregularities=None):
-    def build(tmp):
-        copy_data(tmp)
-        run = load("run.json")
-        wind_last = next(a["last_date"] for a in run["record_coverage"]["archives"]
-                         if a["area"] == "wind")
-        isd_last = next(a["last_date"] for a in run["record_coverage"]["archives"]
-                        if a["area"] == "isd_hourly")
-        probe = {
-            "generated_utc": "2026-09-18T22:00:00Z",
-            "station_id": "72494023234",
-            "last_date_published_by_the_site": wind_last,
-            "isd_hourly_last_observation_utc": f"{isd_last}T23:59:59Z",
-            "isd_history": {"url": "https://www.ncei.noaa.gov/pub/data/ISD/history/isd-history.csv",
-                            "http_status": 200, "ok": True},
-            "same_airport_rows": [{"gsod_id": "72494099999", "end": "2026-09-01"}],
-            "successor_candidates": [],
-            "control_stations": [{"gsod_id": "72494099998"}],
-            "gsod_comparisons": [
-                {"url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/2025/72494023234.csv",
-                 "gsod_id": "72494023234", "year": 2025, "is_subject": True, "ok": True,
-                 "last_date": wind_last},
-                {"url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/2025/72494099998.csv",
-                 "gsod_id": "72494099998", "year": 2025, "is_subject": False, "ok": True,
-                 "last_date": wind_last}],
-            "comparison_by_year": [{"year": 2025, "subject_last_date": wind_last,
-                                    "control_last_date": wind_last, "gap_days": gap}],
-            "ghcn_daily_wind_probe": {"url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023234.csv",
-                                      "http_status": 200, "ok": True},
-            "ncei_alerts": {"url": "https://www.ncei.noaa.gov/alerts", "http_status": 200,
-                            "ok": True, "n_mentions": 1},
-            "verdict": {"classification": classification,
-                        "statement": f"fixture statement for {classification}",
-                        "year_compared": 2025, "subject_last_date": wind_last,
-                        "control_last_date": wind_last, "gap_days": gap,
-                        "slack_days_allowed": slack, "controls_compared": 1,
-                        "successor_found": False},
-            "recommended_actions": (
-                [{"action": "keep the stale-archive flag and re-probe nightly"}]
-                if classification == "archive-wide-lag"
-                else [{"action": "stitch the successor identifier into the wind archive",
-                       "successor_id": "72494099999"}]),
-            "irregularities": irregularities or [],
-        }
-        # the manifest is taken from the URLs the probe *would* have used before
-        # any mutation: a case that rewrites a URL must find it missing from the
-        # manifest, not silently re-recorded in it
-        manifest_urls = ([c["url"] for c in probe["gsod_comparisons"]]
-                         + [probe["isd_history"]["url"],
-                            probe["ghcn_daily_wind_probe"]["url"],
-                            probe["ncei_alerts"]["url"]])
-        if mutate:
-            mutate(probe)
-        dump(tmp / "ncei_archive_probe.json", probe)
-        dump(tmp / "ncei_archive_probe_provenance.json", {
-            "generated_utc": "2026-09-18T22:00:00Z", "area": "ncei_archive_probe",
-            "note": "fixture manifest",
-            "entries": [{"url": u, "http_status": 200, "ok": True, "bytes": 10,
-                         "sha256": "3" * 64, "retrieved_utc": "2026-09-18T22:00:00Z",
-                         "note": "fixture"} for u in manifest_urls]})
-        return tmp
-    return build
-
-
 def feed_fixture(mutate=None):
     def build(tmp):
         copy_data(tmp)
@@ -602,7 +668,6 @@ def feed_fixture(mutate=None):
         dump(tmp / "feed.json", feed)
         return tmp
     return build
-
 
 # ---------------------------------------------------------------- CPC coverage
 @case("CPC coverage as published: every day carries the records that cover it",
@@ -782,90 +847,6 @@ def _mg7(tmp):
         mg["images"][0]["local_path"] = "assets/model_guidance/does-not-exist.png"
     return mg_fixture(mutate)(tmp)
 
-
-# ------------------------------------------------------------- AFD discussion
-@case("AFD quotes verbatim against the stored product text", "pass", "afd-quotes-verbatim")
-def _afd1(tmp):
-    return afd_fixture()(tmp)
-
-
-@case("an AFD quote paraphrased", "fail", "afd-quotes-verbatim")
-def _afd2(tmp):
-    def mutate(d):
-        d["products"][0]["quotes"][0]["text"] = "A front brings rain Thursday and Friday."
-    return afd_fixture(mutate)(tmp)
-
-
-@case("an AFD quote whose stored text was altered after hashing", "fail",
-      "afd-quotes-verbatim")
-def _afd3(tmp):
-    def mutate(d):
-        d["products"][0]["text"] = d["products"][0]["text"].replace("40 mph", "60 mph")
-    return afd_fixture(mutate)(tmp)
-
-
-@case("the AFD tier presented as a numeric forecast", "fail", "afd-quotes-verbatim")
-def _afd4(tmp):
-    def mutate(d):
-        d["not_a_numeric_forecast"] = False
-        d["merged_into_scoreboard"] = True
-    return afd_fixture(mutate)(tmp)
-
-
-# ------------------------------------------------------------- archive probe
-@case("archive-wide lag verdict supported by its gap and its dates", "pass",
-      "ncei-archive-probe-consistent")
-def _pr1(tmp):
-    return probe_fixture()(tmp)
-
-
-@case("a staleness verdict that is not one the probe can reach", "fail",
-      "ncei-archive-probe-consistent")
-def _pr2(tmp):
-    return probe_fixture(classification="the-station-is-fine")(tmp)
-
-
-@case("archive-wide lag claimed although the measured gap exceeds the slack",
-      "fail", "ncei-archive-probe-consistent")
-def _pr3(tmp):
-    return probe_fixture(classification="archive-wide-lag", gap=126, slack=15)(tmp)
-
-
-@case("station-specific gap with no successor search behind it", "fail",
-      "ncei-archive-probe-consistent")
-def _pr4(tmp):
-    def mutate(p):
-        p["same_airport_rows"] = None
-        p["successor_candidates"] = None
-    return probe_fixture(classification="station-specific-gap", gap=126, mutate=mutate)(tmp)
-
-
-@case("the probe reads a different stale date than run.json publishes", "fail",
-      "ncei-archive-probe-consistent")
-def _pr5(tmp):
-    def mutate(p):
-        p["last_date_published_by_the_site"] = "2024-01-01"
-    return probe_fixture(mutate=mutate)(tmp)
-
-
-@case("the probe used a URL that is in no manifest", "fail",
-      "ncei-archive-probe-consistent")
-def _pr6(tmp):
-    def mutate(p):
-        p["ghcn_daily_wind_probe"]["url"] = (
-            "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/"
-            "access/USW00099999.csv")
-    return probe_fixture(mutate=mutate)(tmp)
-
-
-@case("probe findings that never reached the quality report", "fail",
-      "ncei-archive-probe-consistent")
-def _pr7(tmp):
-    findings = [{"severity": "warning", "area": "ncei_archive",
-                 "message": "fixture finding", "evidence": {}}]
-    return probe_fixture(irregularities=findings)(tmp)
-
-
 # ------------------------------------------------------------------ the feed
 @case("the published feed: sorted, dated, traceable", "pass", "feed-traceable")
 def _fd1(tmp):
@@ -919,105 +900,6 @@ def _fd6(tmp):
         f["counts"]["provenance_verified"] -= 1
         f["counts"]["provenance_unverified"] = f["counts"].get("provenance_unverified", 0) + 1
     return feed_fixture(mutate)(tmp)
-
-
-
-# ------------------------------------------------------- per-day deep links
-def _cal_with_deep_link_mutation(mutate):
-    def build(tmp):
-        copy_data(tmp)
-        cal = load("calendar.json")
-        day = next(d for d in cal["days"] if d["date"] == "2026-12-15")
-        if not day.get("deep_links"):
-            raise AssertionError("fixture expected deep links on 2026-12-15")
-        mutate(day)
-        dump(tmp / "calendar.json", cal)
-        return tmp
-    return build
-
-
-@case("deep links as published: vetted hosts, this day's date, labelled",
-      "pass", "day-deep-links-vetted")
-def _dl1(tmp):
-    return copy_data(tmp)
-
-
-@case("a deep link pointing at a non-vetted host", "fail", "day-deep-links-vetted")
-def _dl2(tmp):
-    def mutate(day):
-        day["deep_links"][0]["url"] = "https://accuweather.example/day/2026-12-15"
-    return _cal_with_deep_link_mutation(mutate)(tmp)
-
-
-@case("a station-day deep link asking for a different date", "fail",
-      "day-deep-links-vetted")
-def _dl3(tmp):
-    def mutate(day):
-        day["deep_links"][0]["url"] = day["deep_links"][0]["url"].replace(
-            "2026-12-15", "2026-12-16")
-    return _cal_with_deep_link_mutation(mutate)(tmp)
-
-
-@case("a deep link claiming it was fetched when no manifest row exists", "fail",
-      "day-deep-links-vetted")
-def _dl4(tmp):
-    def mutate(day):
-        day["deep_links"][0]["fetched_by_this_run"] = True
-    return _cal_with_deep_link_mutation(mutate)(tmp)
-
-
-@case("a link-only deep link with no note explaining itself", "fail",
-      "day-deep-links-vetted")
-def _dl5(tmp):
-    def mutate(day):
-        day["deep_links"][1]["note"] = ""
-    return _cal_with_deep_link_mutation(mutate)(tmp)
-
-
-@case("a climatology day with no link to the station-day it was counted from",
-      "fail", "day-deep-links-vetted")
-def _dl6(tmp):
-    def mutate(day):
-        day["deep_links"] = [d for d in day["deep_links"]
-                             if d["kind"] != "ncei-data-service"]
-    return _cal_with_deep_link_mutation(mutate)(tmp)
-
-
-@case("the deep-link URL shape fetched and recorded this run", "pass",
-      "day-deep-link-shape-verified")
-def _dl7(tmp):
-    copy_data(tmp)
-    probe = load("ghcn_probe.json")
-    url = ("https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries"
-           "&stations=USW00023272&startDate=2026-09-15&endDate=2026-09-15"
-           "&dataTypes=PRCP,TMAX,TMIN&units=standard&format=csv")
-    probe["data_service_probe"] = {"url": url, "station_id": "USW00023272",
-                                   "date": "2026-09-15", "http_status": 200, "ok": True,
-                                   "bytes": 210, "n_rows": 1, "sha256": "5" * 64}
-    dump(tmp / "ghcn_probe.json", probe)
-    prov = load("provenance.json")
-    prov["entries"].append({"url": url, "http_status": 200, "ok": True, "bytes": 210,
-                            "sha256": "5" * 64, "content_type": "text/csv",
-                            "retrieved_utc": "2026-09-18T20:41:00Z", "elapsed_s": 0.4,
-                            "note": "fixture: Access Data Service probe"})
-    dump(tmp / "provenance.json", prov)
-    run = load("run.json")
-    run["counts"]["manifest_entries"] += 1
-    run["counts"]["successful_fetches"] += 1
-    dump(tmp / "run.json", run)
-    return tmp
-
-
-@case("a deep-link probe that did not answer leaves the links unverified",
-      "warn", "day-deep-link-shape-verified")
-def _dl8(tmp):
-    copy_data(tmp)
-    probe = load("ghcn_probe.json")
-    probe["data_service_probe"] = {"url": "https://www.ncei.noaa.gov/access/services/data/v1",
-                                   "ok": False, "http_status": 500, "bytes": 0}
-    dump(tmp / "ghcn_probe.json", probe)
-    return tmp
-
 
 def main():
     failures = []

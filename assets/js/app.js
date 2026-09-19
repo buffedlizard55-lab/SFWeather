@@ -15,7 +15,8 @@ const FILES = {
   quality: 'data/quality_report.json',
   storms: 'data/storm_events.json',
   landlord: 'data/landlord.json',
-  verify: 'data/verify.json'
+  verify: 'data/verify.json',
+  digest: 'data/digest.json'
 };
 
 const state = { data: {}, month: '2026-10', dialogDay: null };
@@ -1072,6 +1073,30 @@ function renderAfdLanguage(cal) {
   box.append(el('p', { class: 'fine' }, [
     el('strong', { text: 'Verbatim rule: ' }), document.createTextNode(a.verbatim_rule || DASH)
   ]));
+
+  /* Issuance history: "the last discussion to mention X was ...".  A history
+   * of what NWS wrote -- quotations only, same as the live scan -- never a
+   * forecast and never attached to a scoreboard day. */
+  const hist = a.history || {};
+  const lm = hist.last_mention || {};
+  if (Object.keys(lm).length) {
+    box.append(el('h4', { text: 'When each pattern was last mentioned' }));
+    box.append(el('p', { class: 'fine', text:
+      `${hist.n_issuances || 0} issuance(s) on file. ` + (hist.note || '') }));
+    box.append(table(
+      [{ label: 'Pattern' }, { label: 'Last discussion mentioning it' }, { label: 'In tonight\u2019s discussion' }],
+      Object.values(lm).map(b => [
+        b.label || DASH,
+        b.last_issuance_time || 'never on file',
+        el('span', {
+          class: 'pill ' + ((b.current_sentence_count || 0) > 0 ? 'pill-warn' : 'pill-ok'),
+          text: (b.current_sentence_count || 0) > 0
+            ? `${b.current_sentence_count} sentence(s)` : 'not tonight'
+        })
+      ])));
+    box.append(el('p', { class: 'fine' }, ['Full history: ',
+      link('data/afd_history.json', 'afd_history.json')]));
+  }
 }
 
 function renderNow(nws, cal) {
@@ -1551,23 +1576,25 @@ function openDay(d) {
       'available from more than one issuance date, the most recent is shown.' }));
   }
 
-  /* Deep links: the official URL that holds this one date's rows.  Each says
-   * plainly whether this run fetched that exact URL or is only offering it, so a
-   * link is never mistaken for evidence the run does not carry. */
-  if ((d.deep_links || []).length) {
-    body.append(el('h4', { text: 'Check this exact date at the source' }));
-    body.append(el('p', { class: 'fine', text:
-      'These point into NOAA\u2019s own services and archives for this one date \u2014 no ' +
-      'summary, no arithmetic by this project. \u201clink only\u201d means this run did not ' +
-      'fetch that exact URL (the values above came from the station files listed under ' +
-      'Sources, which were fetched and hashed).' }));
-    body.append(el('ul', { class: 'deep-links' }, d.deep_links.map(dl =>
-      el('li', { class: 'fine' }, [
-        link(dl.url, dl.label),
-        el('span', { class: 'pill ' + (dl.fetched_by_this_run ? 'pill-ok' : ''),
-          text: dl.fetched_by_this_run ? 'fetched this run' : 'link only' }),
-        dl.note ? el('div', { class: 'fine src-url', text: dl.note }) : null
-      ]))));
+  /* Per-field deep links: the exact official row/file behind each headline
+   * number, so a reader can re-derive it without hunting through this
+   * project's code.  The claim ledger fails the run if a tier's day lacks
+   * the expected deep-link keys. */
+  const dl = d.deep_links || {};
+  const dlRows = [
+    ['High / low', 'temp'], ['Humidity', 'humidity'], ['Chance of rain', 'rain_chance'],
+    ['Rain amount', 'rain_amount'], ['Max wind', 'wind'], ['Max gust', 'gust'],
+    ['NOAA\u2019s published normals', 'published_normals'],
+    ['Human-readable forecast', 'human']
+  ].filter(([, k]) => dl[k] && dl[k].url);
+  if (dlRows.length) {
+    body.append(el('h4', { text: 'Verify each number yourself' }));
+    body.append(table([{ label: 'Field' }, { label: 'Official row / file' }, { label: 'How to read it' }],
+      dlRows.map(([label, k]) => [
+        label,
+        link(dl[k].url, dl[k].label || dl[k].url),
+        el('span', { class: 'fine', text: dl[k].hint || '' })
+      ])));
   }
 
   body.append(el('h4', { text: 'Sources for this day' }));
@@ -2079,7 +2106,7 @@ function renderNwsVerification() {
     host.append(el('p', { class: 'fine', text:
       `Status: ${n} forecast-vs-observation pair(s) scored so far. ` +
       (n === 0
-        ? 'The first scored pairs appear once observed days accumulate past the current NWS horizon \u2014 every run archives a snapshot, and observations are matched automatically as GHCN-Daily updates.'
+        ? 'The first scored pairs appear once observed days accumulate past the current NWS horizon — every run archives a snapshot, and observations are matched automatically as GHCN-Daily updates.'
         : 'Running error and POP calibration statistics are below.') }));
 
     if (n === 0) {
@@ -2097,8 +2124,8 @@ function renderNwsVerification() {
     const mae = v.overall_high_mae_f;
     const pge = v.pop_ge_50_rain_pct;
     const plt = v.pop_lt_50_rain_pct;
-    rows.push(['High-temp MAE (all lead days)', mae == null ? DASH : `${mae} \u00b0F`]);
-    rows.push(['Rain frequency when POP \u2265 50%', pge == null ? DASH : `${pge}%`]);
+    rows.push(['High-temp MAE (all lead days)', mae == null ? DASH : `${mae} °F`]);
+    rows.push(['Rain frequency when POP ≥ 50%', pge == null ? DASH : `${pge}%`]);
     rows.push(['Rain frequency when POP < 50%', plt == null ? DASH : `${plt}%`]);
     host.append(el('table', { class: 'kv' }, rows.map(([k, v]) =>
       el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
@@ -2107,8 +2134,8 @@ function renderNwsVerification() {
     if (byLead.length) {
       host.append(el('h4', { text: 'By lead time (days from issuance to target)' }));
       host.append(table(
-        [{ label: 'Lead (days)' }, { label: 'n' }, { label: 'High MAE (\u00b0F)' }, { label: 'Low MAE (\u00b0F)' },
-         { label: '% rain when POP\u226550' }, { label: '% rain when POP<50' }],
+        [{ label: 'Lead (days)' }, { label: 'n' }, { label: 'High MAE (°F)' }, { label: 'Low MAE (°F)' },
+         { label: '% rain when POP≥50' }, { label: '% rain when POP<50' }],
         byLead.map(r => [r.lead_days, r.sample_size ?? 0,
           r.high_mae_f ?? DASH, r.low_mae_f ?? DASH,
           r.pop_ge_50_pct_rain == null ? DASH : r.pop_ge_50_pct_rain + '%',
@@ -2127,51 +2154,270 @@ function renderCpcBacktest() {
   return fetch('data/cpc_backtest.json').then(r => r.ok ? r.json() : null).then(bt => {
     if (!bt) {
       host.append(el('div', { class: 'callout callout-info' }, [
-        el('h3', { text: 'Not yet built \u2014 data-source limitation, flagged' }),
+        el('h3', { text: 'Back-test file missing this run' }),
         el('p', { class: 'fine', text:
-          'CPC\u2019s live GIS server at ftp.cpc.ncep.noaa.gov only hosts the current month\u2019s ' +
-          'issuance of seasprcp_YYYYMM.zip / seastemp_YYYYMM.zip. To back-test, the pipeline ' +
-          'must fetch every past issuance (mid-month, third-Thursday, 0.5-month lead going back ' +
-          'to 1995) from CPC\u2019s static archive or from the IRI Data Library, sample each at ' +
-          '37.7605N / -122.4839W, and compare the above/below/EC category with the observed ' +
-          'Oct\u2013Jan (and OND/NDJ/DJF/JFM) precipitation total from GHCN-Daily at USW00023272.' }),
-        el('p', { class: 'fine', text:
-          'Until those archived issuances are downloaded and stored under data/cpc_archive/, ' +
-          'this card honestly reports \u201cpending back-fill\u201d rather than guessing a ' +
-          'hit-rate. The sampling + comparison code path is the same code used for the live ' +
-          'CPC section (pipeline/lib_shape.py point-in-polygon against CPC polygons), so ' +
-          'plugging in the archive files is a data-fetch task, not a new-method task.' }),
-        el('p', { class: 'fine', text: 'Required next: bulk-fetch historical seasprcp issuances from CPC/IRI and add them to the provenance allow-list (verify_sources.py already allows ftp.cpc.ncep.noaa.gov, but IRI lives on iridl.ldeo.columbia.edu and must be vetted separately).' })
+          'pipeline/cpc_backtest.py writes data/cpc_backtest.json on every scheduled run. ' +
+          'Until it has, no hit-rate is published here.' })
       ]));
       return;
     }
-    const rows = bt.summary || [];
-    if (!rows.length) {
-      host.append(el('p', { class: 'empty', text: 'Back-test file present but contains no scored seasons yet.' }));
+    /* Pending-backfill is the honest normal state: the live GIS server keeps
+     * only recent months, so historical seasprcp_YYYYMM.zip files usually 404.
+     * The file says so itself (status + reason), with links to the official
+     * Oct-1995 archive and to CPC's own verifications for manual review. */
+    if (bt.status === 'pending-backfill' || !(bt.rows || []).length) {
+      host.append(el('div', { class: 'callout callout-info' }, [
+        el('h3', { text: 'Pending back-fill -- no hit-rate yet, flagged' }),
+        el('p', { class: 'fine', text: bt.reason || 'No historical archive was retrievable this run.' }),
+        el('p', { class: 'fine', text:
+          'Method, ready and waiting: sample each historical August seasprcp issuance at the ' +
+          '94122 centroid with the same point-in-polygon code as the live outlooks, and score ' +
+          'the sampled Above/Below/EC category against the observed GHCN-Daily OND/NDJ/DJF/JFM ' +
+          'total. EC outlooks are unscored, never counted as hits or misses.' }),
+        el('p', { class: 'fine', text:
+          'The IRI Data Library was considered as an archive source and rejected: it is a ' +
+          'Columbia academic mirror, not an official NOAA operational product, it serves HTTP ' +
+          '(this project requires HTTPS), and its CPC tree holds monitoring datasets, not the ' +
+          'outlook polygons. The official CPC archive is the only accepted source.' })
+      ]));
+      const links = [];
+      if (bt.archive_index) links.push(link(bt.archive_index, 'official CPC long-lead archive (Oct 1995 on)'));
+      if (bt.verifications) links.push(link(bt.verifications, 'CPC\u2019s own seasonal verifications (CONUS-wide)'));
+      if (links.length) host.append(el('p', { class: 'fine' }, ['For manual review: ',
+        ...links.flatMap((l, i) => i ? [' \u00b7 ', l] : [l])]));
+      const att = bt.issuances_attempted || [];
+      if (att.length) {
+        host.append(el('p', { class: 'fine', text:
+          `${att.length} historical issuance(s) attempted this run, ` +
+          `${bt.n_archives_retrieved || 0} retrieved.` }));
+        host.append(table(
+          [{ label: 'Issuance' }, { label: 'Result' }],
+          att.slice(-12).map(a => [a.issuance_ym || DASH,
+            a.ok ? 'retrieved' : `not retained (${a.status || a.error || 'fetch failed'})`])));
+      }
       return;
     }
+    const s = bt.summary || {};
     host.append(el('p', { class: 'fine', text: bt.note || '' }));
+    host.append(el('p', { class: 'fine' }, [
+      el('strong', { text: 'Hit-rate over scored (non-EC) rows: ' }),
+      document.createTextNode(s.hit_rate_pct == null ? DASH : `${s.hit_rate_pct}% ` +
+        `(${s.hits} of ${s.n_rows_scored} rows; ${s.n_rows_unscored_ec} EC row(s) unscored)`)
+    ]));
+    if (s.by_category && Object.keys(s.by_category).length) {
+      host.append(table(
+        [{ label: 'CPC category' }, { label: 'Scored', num: true }, { label: 'Hits', num: true },
+         { label: 'Hit-rate', num: true }],
+        Object.entries(s.by_category).map(([cat, b]) => [cat, b.scored, b.hits,
+          b.hit_rate_pct == null ? DASH : b.hit_rate_pct + '%'])));
+    }
     host.append(table(
-      [{ label: 'Season' }, { label: 'CPC issued tilt' }, { label: 'CPC probability' },
-       { label: 'Observed tercile at 94122' }, { label: 'Hit?' }],
-      rows.map(r => [r.season, r.tilt || DASH,
+      [{ label: 'Season' }, { label: 'CPC category' }, { label: 'CPC probability' },
+       { label: 'Observed total' }, { label: 'Observed tercile' }, { label: 'Hit?' }],
+      (bt.rows || []).map(r => [r.season || DASH, r.category_label || r.category || DASH,
         r.probability == null ? DASH : r.probability + '%',
+        r.observed_total_in == null ? DASH : Number(r.observed_total_in).toFixed(2) + ' in',
         r.observed_tercile || DASH,
         el('span', { class: 'pill pill-' + (r.hit ? 'ok' : r.hit === false ? 'fail' : 'warn'),
-          text: r.hit == null ? 'n/a' : (r.hit ? 'hit' : 'miss') })])));
+          text: r.hit == null ? 'unscored' : (r.hit ? 'hit' : 'miss') })])));
+    host.append(el('p', { class: 'fine', text: bt.method || '' }));
   }).catch(err => {
     host.append(el('p', { class: 'fine', text: 'Could not read cpc_backtest.json: ' + err.message }));
   });
 }
 
-/* --------------------------------------------------------------- shared */
+function renderDigest(digest) {
+  const host = $('#digest-body');
+  if (!host) return;
+  if (!digest) {
+    host.append(el('p', { class: 'empty', text:
+      'No digest was produced in this run (pipeline/build_digest.py writes data/digest.json + data/alerts.xml).' }));
+    return;
+  }
+  const c = digest.counts || {};
+  host.append(el('p', { class: 'fine', text:
+    `Built ${digest.generated_utc || DASH} \u00b7 ${c.nws_alerts || 0} active alert(s) ` +
+    `\u00b7 ${c.high_pop_days || 0} NWS-forecast day(s) at or above the ${digest.pop_threshold_pct || 50}% rain-chance threshold.` }));
+  const items = [...(digest.nws_alerts || []), ...(digest.high_pop_days || [])];
+  if (!items.length) {
+    host.append(el('div', { class: 'callout callout-ok' }, [
+      el('p', { text: 'Quiet: no active NWS alerts for CAZ006 and no NWS-forecast day reaches the rain-chance threshold.' })
+    ]));
+  } else {
+    host.append(table(
+      [{ label: 'Type' }, { label: 'Entry' }, { label: 'Source' }],
+      items.map(it => [
+        it.kind === 'nws-alert' ? 'NWS alert' : 'High rain chance',
+        el('span', {}, [
+          el('strong', { text: it.title || DASH }),
+          it.description ? el('div', { class: 'fine', text: it.description }) : null
+        ].filter(Boolean)),
+        it.link ? linkShort(it.link, 40) : DASH
+      ])));
+  }
+  host.append(el('p', { class: 'fine', text: digest.privacy || '' }));
+}
 
-/** A card for a dataset this run did not publish.
- *
- * The site never renders a placeholder that looks like data: it says which file
- * is missing, which script produces it, and that the section is therefore empty
- * rather than zero.  A missing file is a build fact, not a value.
- */
+/* ------------------------------------------------------------ verification */
+
+function renderVerify(verify, prov) {
+  const box = $('#verify-body');
+  if (!box) return;
+  if (!verify) {
+    box.append(el('p', { class: 'empty', text:
+      'No verification ledger was produced in this run (pipeline/verify_claims.py writes ' +
+      'data/verify.json).' }));
+    return;
+  }
+  const s = verify.summary || {};
+  const banner = el('div', { class: 'callout ' + (s.failed ? 'callout-error' : 'callout-ok') }, [
+    el('h3', { text: `${s.passed || 0} of ${s.total || 0} automated checks passed` }),
+    el('p', { class: 'fine', text:
+      `${s.warnings || 0} warning(s), ${s.failed || 0} failure(s). A failure stops the nightly ` +
+      'build, so a number that cannot be re-derived from its source never reaches this page.' }),
+    (s.failed ? el('p', { class: 'fine', text: 'Failed: ' + (s.failed_checks || []).join(', ') }) : null),
+    ((s.warning_checks || []).length
+      ? el('p', { class: 'fine', text: 'Warnings: ' + s.warning_checks.join(', ') }) : null)
+  ].filter(Boolean));
+  box.append(banner);
+  (verify.how_to_read || []).forEach(t => box.append(el('p', { class: 'fine', text: t })));
+
+  box.append(el('h4', { text: 'Automated checks' }));
+  box.append(table(
+    [{ label: 'Check' }, { label: 'Status' }, { label: 'What it proves' }, { label: 'Detail' }],
+    (verify.checks || []).map(c => [
+      el('code', { text: c.id }),
+      el('span', { class: 'pill pill-' + (c.status === 'pass' ? 'ok' : (c.status === 'warn' ? 'warn' : 'fail')),
+        text: c.status }),
+      el('span', { class: 'fine', text: c.title }),
+      el('span', { class: 'fine', text: c.detail || '' })
+    ])));
+
+  box.append(el('h4', { text: 'Claim ledger — every headline number and its source' }));
+  box.append(table(
+    [{ label: 'Claim' }, { label: 'Value' }, { label: 'Official source' },
+     { label: 'Retrieved / SHA-256' }, { label: 'Method' }],
+    (verify.claims || []).map(c => {
+      const src = c.source || {};
+      // A claim value can be a scalar or a record.  Two rules apply either way:
+      // a machine ENSO token is rendered as its label, and a unit is only
+      // appended to a scalar - appending "deg C" after a record of mixed fields
+      // ("season: JJA 2026 · oni_c: 1.8 · phase: … · strength: strong deg C")
+      // reads as though the last field carried the unit, which it does not.
+      const isRecord = typeof c.value === 'object' && c.value !== null;
+      const fmtVal = (k, val) => {
+        if (/_phase$|^phase$/.test(k) && typeof val === 'string') return phaseLabel(val);
+        if (/^strength$/.test(k) && typeof val === 'string') {
+          return { very_strong: 'very strong', strong: 'strong', moderate: 'moderate',
+                   weak: 'weak', neutral: 'neutral' }[val] || String(val).replace(/_/g, ' ');
+        }
+        return val;
+      };
+      const v = isRecord
+        ? Object.entries(c.value).map(([k, val]) => `${k}: ${fmtVal(k, val)}`).join(' \u00b7 ')
+        : String(fmtVal('', c.value));
+      return [
+        el('div', {}, [el('strong', { text: c.id }), el('br'),
+          el('span', { class: 'fine', text: c.statement || '' })]),
+        el('span', {}, [document.createTextNode(v),
+          (!isRecord && c.unit) ? document.createTextNode(' ' + c.unit) : null].filter(Boolean)),
+        el('div', {}, [link(src.url, src.label || src.url),
+          src.host ? el('div', { class: 'fine', text: src.host }) : null].filter(Boolean)),
+        el('div', { class: 'fine' }, [
+          document.createTextNode((src.retrieved_utc || DASH) + ' \u00b7 HTTP ' + (src.http_status || DASH) +
+            ' \u00b7 ' + (src.bytes ? Number(src.bytes).toLocaleString() + ' bytes' : DASH)),
+          src.sha256 ? el('div', { class: 'src-url', text: 'sha256 ' + src.sha256 }) : null
+        ].filter(Boolean)),
+        el('span', { class: 'fine', text: c.method || DASH })
+      ];
+    })));
+
+  const irr = (verify.open_irregularities || []);
+  if (irr.length) {
+    box.append(el('h4', { text: 'Irregularities still open (from the fetch run)' }));
+    box.append(table([{ label: 'Severity' }, { label: 'Area' }, { label: 'Message' }],
+      irr.map(i => [el('span', { class: 'pill pill-' +
+        (i.severity === 'error' ? 'fail' : (i.severity === 'warning' ? 'warn' : 'ok')), text: i.severity }),
+        i.area, el('span', { class: 'fine', text: i.message })])));
+  }
+  box.append(el('p', { class: 'fine' }, [
+    'Raw ledgers: ', link('data/verify.json', 'data/verify.json'), ' \u00b7 ',
+    link('data/verify_report.txt', 'data/verify_report.txt'), ' \u00b7 ',
+    link('data/provenance.json', `data/provenance.json (${(prov.entries || []).length} recorded fetches)`),
+    document.createTextNode(' \u00b7 generated ' + (verify.generated_utc || DASH))
+  ]));
+}
+
+/* ------------------------------------------------------------------- export */
+
+const CSV_FIELDS = [
+  ['date', 'Date'], ['weekday', 'Weekday'], ['tier', 'Tier'],
+  ['high_f', 'High_F'], ['low_f', 'Low_F'], ['humidity_pct', 'Humidity_pct'],
+  ['rain_chance_pct', 'Rain_chance_pct'], ['rain_amount_in', 'Rain_amount_in'],
+  ['wind_max_mph', 'Wind_max_mph'], ['gust_max_mph', 'Gust_max_mph'],
+  ['hours_covered', 'Hours_from_NWS_grid']
+];
+
+function csvCell(v) {
+  if (v === null || v === undefined) return '';
+  const t = String(v);
+  return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+}
+
+function exportCalendarCSV() {
+  const cal = state.data.calendar;
+  if (!cal || !cal.days) return;
+  const lines = [];
+  lines.push('# SFWeather - San Francisco 94122 rainy-season scoreboard');
+  lines.push('# Generated ' + cal.generated_utc + ' from official NOAA/NWS/NCEI/CPC sources');
+  lines.push('# tier=nws means the row is the official NWS forecast; ' +
+    'tier=climatology means it is the 1991-2020 observed record for that date, NOT a forecast');
+  lines.push('# humidity on climatology rows is derived from NCEI hourly temperature and ' +
+    'dew-point normals (Magnus formula); blank means not available');
+  lines.push(CSV_FIELDS.map(f => f[1]).join(','));
+  cal.days.forEach(d => lines.push(CSV_FIELDS.map(f => csvCell(d[f[0]])).join(',')));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = el('a', { href: url, download: 'sfweather-94122-oct2026-jan2027.csv' });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+function exportCurrentCSV() {
+  const cal = state.data.calendar || {};
+  const cf = cal.current_forecast || {};
+  const days = cf.days || [];
+  if (!days.length) return;
+  const fields = [['date', 'Date'], ['weekday', 'Weekday'], ['high_f', 'High_F'], ['low_f', 'Low_F'],
+    ['humidity_pct', 'Humidity_pct'], ['rain_chance_pct', 'Rain_chance_pct'],
+    ['rain_amount_in', 'Rain_amount_in'], ['wind_max_mph', 'Wind_max_mph'],
+    ['gust_max_mph', 'Gust_max_mph']];
+  const lines = ['# SFWeather - current official NWS forecast for 94122 (real forecast, not climatology)',
+    '# Issued ' + (cf.forecast_updated || '') + '; horizon ' + cf.first_day + ' to ' + cf.last_day,
+    fields.map(f => f[1]).join(',')];
+  days.forEach(d => lines.push(fields.map(f => csvCell(d[f[0]])).join(',')));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = el('a', { href: url, download: 'sfweather-94122-current-nws-forecast.csv' });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+function wireExports() {
+  const csv = $('#export-csv');
+  if (csv) csv.addEventListener('click', exportCalendarCSV);
+  const cur = $('#export-current');
+  if (cur) cur.addEventListener('click', exportCurrentCSV);
+  const pr = $('#print-page');
+  if (pr) pr.addEventListener('click', () => window.print());
+}
+
+/* ------------------------------------------------------------------ boot */
+
 function notYetBuilt(title, file, script, extra) {
   return el('div', { class: 'callout callout-info' }, [
     el('h3', { text: 'Not yet built \u2014 ' + title }),
@@ -2446,290 +2692,19 @@ function renderFeed() {
 
 /* ------------------------------------------ why the wind archive stops where it does */
 
-function renderArchiveProbe() {
-  const host = $('#archive-probe-body');
-  if (!host) return Promise.resolve();
-  return fetch('data/ncei_archive_probe.json').then(r => r.ok ? r.json() : null).then(pr => {
-    if (!pr) {
-      host.append(notYetBuilt('the archive-staleness probe', 'data/ncei_archive_probe.json',
-        'pipeline/ncei_archive_probe.py',
-        'The stale wind archive is still disclosed under Data quality; this card adds the ' +
-        'evidence for why it is stale.'));
-      return;
-    }
-    const v = pr.verdict || {};
-    const tone = v.classification === 'station-specific-gap' ? 'callout-warn'
-      : v.classification === 'archive-wide-lag' ? 'callout-info' : 'callout-warn';
-    host.append(el('div', { class: 'callout ' + tone }, [
-      el('h3', { text: 'Verdict: ' + (v.classification || 'not determined') }),
-      el('p', { class: 'fine', text: v.statement || '' })
-    ]));
-    host.append(kvTable([
-      ['Station probed', (pr.station_id || DASH) + (pr.station_name ? ' \u00b7 ' + pr.station_name : '')],
-      ['Last date the site publishes for the wind archive', pr.last_date_published_by_the_site || DASH],
-      ['Last observation parsed from the hourly archive', pr.isd_hourly_last_observation_utc || DASH],
-      ['Year compared', v.year_compared == null ? DASH : v.year_compared],
-      ['Subject station\u2019s last date in that year', v.subject_last_date || DASH],
-      ['Control stations\u2019 last date in that year', v.control_last_date || DASH],
-      ['Gap', v.gap_days == null ? DASH : v.gap_days + ' day(s)'],
-      ['Slack allowed before calling it station-specific',
-        v.slack_days_allowed == null ? DASH : v.slack_days_allowed + ' day(s)'],
-      ['Control stations compared', v.controls_compared == null ? DASH : v.controls_compared],
-      ['Successor identifier found', v.successor_found === undefined ? DASH : (v.successor_found ? 'yes' : 'no')],
-      ['Probed at', pr.generated_utc || DASH]
-    ]));
-
-    const cmp = pr.comparison_by_year || [];
-    if (cmp.length) {
-      host.append(el('h3', { text: 'Year-by-year comparison against nearby stations' }));
-      host.append(table([{ label: 'Year' }, { label: 'This station\u2019s file ends' },
-        { label: 'Control stations end' }, { label: 'Gap (days)', num: true },
-        { label: 'Controls', num: true }, { label: 'Reading' }],
-        cmp.map(y => [y.year, y.subject_last_date || DASH, y.control_last_date || DASH,
-          y.gap_days == null ? DASH : y.gap_days, y.n_controls == null ? DASH : y.n_controls,
-          y.gap_days == null ? 'not comparable'
-            : (y.gap_days <= (v.slack_days_allowed || 0)
-              ? 'both stop at about the same point' : 'this station stops first')])));
-    }
-
-    const succ = pr.successor_candidates || [];
-    host.append(el('h3', { text: 'Successor identifiers for the same airport' }));
-    if (succ.length) {
-      host.append(table([{ label: 'GSOD id' }, { label: 'Name' }, { label: 'Begin' },
-        { label: 'End' }, { label: 'Distance (mi)', num: true }],
-        succ.map(r => [r.gsod_id || DASH, r.name || DASH, r.begin || DASH, r.end || DASH,
-          r.distance_mi_from_subject == null ? DASH : Number(r.distance_mi_from_subject).toFixed(1)])));
-    } else {
-      host.append(el('p', { class: 'empty', text:
-        'No station-history row for this airport ends after the stale date, so there is no ' +
-        'successor identifier to switch to.' }));
-    }
-
-    const ghcn = pr.ghcn_daily_wind_probe || {};
-    host.append(el('h3', { text: 'Is current wind available from another official product?' }));
-    if (ghcn.ok) {
-      host.append(kvTable([
-        ['GHCN-Daily station', ghcn.station_id || DASH],
-        ['Wind elements present in the file header', (ghcn.wind_elements_present || []).join(', ') || 'none'],
-        ['Most current wind date in that file', ghcn.most_current_wind_date || DASH],
-        ['Last date by element', Object.keys(ghcn.last_date_by_element || {}).length
-          ? Object.entries(ghcn.last_date_by_element).map(([k, d]) => k + ': ' + d).join(' \u00b7 ')
-          : DASH],
-        ['URL', ghcn.url ? linkShort(ghcn.url) : DASH]
-      ]));
-    } else {
-      host.append(el('p', { class: 'empty', text: 'The GHCN-Daily wind probe did not retrieve ' +
-        'a file on this run (' + (ghcn.error || ('HTTP ' + ghcn.http_status)) + ').' }));
-    }
-
-    const alerts = pr.ncei_alerts || {};
-    if (alerts.url) {
-      host.append(el('h3', { text: 'NCEI service alerts at the time of the probe' }));
-      host.append(kvTable([
-        ['Alerts page', linkShort(alerts.url)],
-        ['Data-access delay mentions found', alerts.n_mentions == null ? DASH : alerts.n_mentions],
-        ['Active notices', (alerts.active || []).length
-          ? (alerts.active || []).map(a => (a.title || 'notice') + ' (' + (a.severity || '?') +
-              ', ' + (a.dates || a.start || '?') + ')').join(' \u00b7 ')
-          : 'none parsed']
-      ]));
-    }
-
-    const actions = pr.recommended_actions || [];
-    if (actions.length) {
-      host.append(el('h3', { text: 'What follows from this' }));
-      host.append(el('ul', { class: 'limits' }, actions.map(a => el('li', {}, [
-        el('strong', { text: a.action || '' }),
-        a.successor_id ? el('span', { text: ' \u00b7 successor ' + a.successor_id }) : null,
-        a.most_current_wind_date ? el('span', { text: ' \u00b7 current to ' + a.most_current_wind_date }) : null,
-        a.note ? el('div', { class: 'fine', text: a.note }) : null
-      ]))));
-    }
-
-    const tests = pr.tests || [];
-    if (tests.length) {
-      host.append(el('h3', { text: 'Tests this probe ran' }));
-      host.append(table([{ label: 'Test' }, { label: 'Ran?' }, { label: 'Result' }],
-        tests.map(t => [t.name, t.ran ? 'yes' : 'no', t.result || DASH])));
-    }
-    host.append(el('p', { class: 'fine src-url', text: pr.provenance_note || '' }));
-  }).catch(err => {
-    host.append(el('p', { class: 'fine', text: 'Could not read ncei_archive_probe.json: ' + err.message }));
-  });
-}
-
-/* ------------------------------------------------------------ verification */
-
-function renderVerify(verify, prov) {
-  const box = $('#verify-body');
-  if (!box) return;
-  if (!verify) {
-    box.append(el('p', { class: 'empty', text:
-      'No verification ledger was produced in this run (pipeline/verify_claims.py writes ' +
-      'data/verify.json).' }));
-    return;
-  }
-  const s = verify.summary || {};
-  const banner = el('div', { class: 'callout ' + (s.failed ? 'callout-error' : 'callout-ok') }, [
-    el('h3', { text: `${s.passed || 0} of ${s.total || 0} automated checks passed` }),
-    el('p', { class: 'fine', text:
-      `${s.warnings || 0} warning(s), ${s.failed || 0} failure(s). A failure stops the nightly ` +
-      'build, so a number that cannot be re-derived from its source never reaches this page.' }),
-    (s.failed ? el('p', { class: 'fine', text: 'Failed: ' + (s.failed_checks || []).join(', ') }) : null),
-    ((s.warning_checks || []).length
-      ? el('p', { class: 'fine', text: 'Warnings: ' + s.warning_checks.join(', ') }) : null)
-  ].filter(Boolean));
-  box.append(banner);
-  (verify.how_to_read || []).forEach(t => box.append(el('p', { class: 'fine', text: t })));
-
-  box.append(el('h4', { text: 'Automated checks' }));
-  box.append(table(
-    [{ label: 'Check' }, { label: 'Status' }, { label: 'What it proves' }, { label: 'Detail' }],
-    (verify.checks || []).map(c => [
-      el('code', { text: c.id }),
-      el('span', { class: 'pill pill-' + (c.status === 'pass' ? 'ok' : (c.status === 'warn' ? 'warn' : 'fail')),
-        text: c.status }),
-      el('span', { class: 'fine', text: c.title }),
-      el('span', { class: 'fine', text: c.detail || '' })
-    ])));
-
-  box.append(el('h4', { text: 'Claim ledger — every headline number and its source' }));
-  box.append(table(
-    [{ label: 'Claim' }, { label: 'Value' }, { label: 'Official source' },
-     { label: 'Retrieved / SHA-256' }, { label: 'Method' }],
-    (verify.claims || []).map(c => {
-      const src = c.source || {};
-      // A claim value can be a scalar or a record.  Two rules apply either way:
-      // a machine ENSO token is rendered as its label, and a unit is only
-      // appended to a scalar - appending "deg C" after a record of mixed fields
-      // ("season: JJA 2026 · oni_c: 1.8 · phase: … · strength: strong deg C")
-      // reads as though the last field carried the unit, which it does not.
-      const isRecord = typeof c.value === 'object' && c.value !== null;
-      const fmtVal = (k, val) => {
-        if (/_phase$|^phase$/.test(k) && typeof val === 'string') return phaseLabel(val);
-        if (/^strength$/.test(k) && typeof val === 'string') {
-          return { very_strong: 'very strong', strong: 'strong', moderate: 'moderate',
-                   weak: 'weak', neutral: 'neutral' }[val] || String(val).replace(/_/g, ' ');
-        }
-        return val;
-      };
-      const v = isRecord
-        ? Object.entries(c.value).map(([k, val]) => `${k}: ${fmtVal(k, val)}`).join(' \u00b7 ')
-        : String(fmtVal('', c.value));
-      return [
-        el('div', {}, [el('strong', { text: c.id }), el('br'),
-          el('span', { class: 'fine', text: c.statement || '' })]),
-        el('span', {}, [document.createTextNode(v),
-          (!isRecord && c.unit) ? document.createTextNode(' ' + c.unit) : null].filter(Boolean)),
-        el('div', {}, [link(src.url, src.label || src.url),
-          src.host ? el('div', { class: 'fine', text: src.host }) : null].filter(Boolean)),
-        el('div', { class: 'fine' }, [
-          document.createTextNode((src.retrieved_utc || DASH) + ' \u00b7 HTTP ' + (src.http_status || DASH) +
-            ' \u00b7 ' + (src.bytes ? Number(src.bytes).toLocaleString() + ' bytes' : DASH)),
-          src.sha256 ? el('div', { class: 'src-url', text: 'sha256 ' + src.sha256 }) : null
-        ].filter(Boolean)),
-        el('span', { class: 'fine', text: c.method || DASH })
-      ];
-    })));
-
-  const irr = (verify.open_irregularities || []);
-  if (irr.length) {
-    box.append(el('h4', { text: 'Irregularities still open (from the fetch run)' }));
-    box.append(table([{ label: 'Severity' }, { label: 'Area' }, { label: 'Message' }],
-      irr.map(i => [el('span', { class: 'pill pill-' +
-        (i.severity === 'error' ? 'fail' : (i.severity === 'warning' ? 'warn' : 'ok')), text: i.severity }),
-        i.area, el('span', { class: 'fine', text: i.message })])));
-  }
-  box.append(el('p', { class: 'fine' }, [
-    'Raw ledgers: ', link('data/verify.json', 'data/verify.json'), ' \u00b7 ',
-    link('data/verify_report.txt', 'data/verify_report.txt'), ' \u00b7 ',
-    link('data/provenance.json', `data/provenance.json (${(prov.entries || []).length} recorded fetches)`),
-    document.createTextNode(' \u00b7 generated ' + (verify.generated_utc || DASH))
-  ]));
-}
-
-/* ------------------------------------------------------------------- export */
-
-const CSV_FIELDS = [
-  ['date', 'Date'], ['weekday', 'Weekday'], ['tier', 'Tier'],
-  ['high_f', 'High_F'], ['low_f', 'Low_F'], ['humidity_pct', 'Humidity_pct'],
-  ['rain_chance_pct', 'Rain_chance_pct'], ['rain_amount_in', 'Rain_amount_in'],
-  ['wind_max_mph', 'Wind_max_mph'], ['gust_max_mph', 'Gust_max_mph'],
-  ['hours_covered', 'Hours_from_NWS_grid']
-];
-
-function csvCell(v) {
-  if (v === null || v === undefined) return '';
-  const t = String(v);
-  return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
-}
-
-function exportCalendarCSV() {
-  const cal = state.data.calendar;
-  if (!cal || !cal.days) return;
-  const lines = [];
-  lines.push('# SFWeather - San Francisco 94122 rainy-season scoreboard');
-  lines.push('# Generated ' + cal.generated_utc + ' from official NOAA/NWS/NCEI/CPC sources');
-  lines.push('# tier=nws means the row is the official NWS forecast; ' +
-    'tier=climatology means it is the 1991-2020 observed record for that date, NOT a forecast');
-  lines.push('# humidity on climatology rows is derived from NCEI hourly temperature and ' +
-    'dew-point normals (Magnus formula); blank means not available');
-  lines.push(CSV_FIELDS.map(f => f[1]).join(','));
-  cal.days.forEach(d => lines.push(CSV_FIELDS.map(f => csvCell(d[f[0]])).join(',')));
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = el('a', { href: url, download: 'sfweather-94122-oct2026-jan2027.csv' });
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 4000);
-}
-
-function exportCurrentCSV() {
-  const cal = state.data.calendar || {};
-  const cf = cal.current_forecast || {};
-  const days = cf.days || [];
-  if (!days.length) return;
-  const fields = [['date', 'Date'], ['weekday', 'Weekday'], ['high_f', 'High_F'], ['low_f', 'Low_F'],
-    ['humidity_pct', 'Humidity_pct'], ['rain_chance_pct', 'Rain_chance_pct'],
-    ['rain_amount_in', 'Rain_amount_in'], ['wind_max_mph', 'Wind_max_mph'],
-    ['gust_max_mph', 'Gust_max_mph']];
-  const lines = ['# SFWeather - current official NWS forecast for 94122 (real forecast, not climatology)',
-    '# Issued ' + (cf.forecast_updated || '') + '; horizon ' + cf.first_day + ' to ' + cf.last_day,
-    fields.map(f => f[1]).join(',')];
-  days.forEach(d => lines.push(fields.map(f => csvCell(d[f[0]])).join(',')));
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = el('a', { href: url, download: 'sfweather-94122-current-nws-forecast.csv' });
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 4000);
-}
-
-function wireExports() {
-  const csv = $('#export-csv');
-  if (csv) csv.addEventListener('click', exportCalendarCSV);
-  const cur = $('#export-current');
-  if (cur) cur.addEventListener('click', exportCurrentCSV);
-  const pr = $('#print-page');
-  if (pr) pr.addEventListener('click', () => window.print());
-}
-
-/* ------------------------------------------------------------------ boot */
-
 async function boot() {
   if (state.booted) return;
   state.booted = true;
   try {
-    const [run, calendar, nws, prov, quality, storms, landlord, verify] = await Promise.all([
+    const [run, calendar, nws, prov, quality, storms, landlord, verify, digest] = await Promise.all([
       loadJSON('run'), loadJSON('calendar'), loadJSON('nws'),
       loadJSON('provenance'), loadJSON('quality'),
       loadJSON('storms').catch(() => null),
       loadJSON('landlord').catch(() => null),
-      loadJSON('verify').catch(() => null)
+      loadJSON('verify').catch(() => null),
+      loadJSON('digest').catch(() => null)
     ]);
-    Object.assign(state.data, { run, calendar, nws, prov, quality, storms, landlord, verify });
+    Object.assign(state.data, { run, calendar, nws, prov, quality, storms, landlord, verify, digest });
 
     const idx = MONTHS.findIndex(m => (calendar.days || []).some(d => d.date.startsWith(m.key) && d.tier === 'nws'));
     state.month = idx >= 0 ? MONTHS[idx].key : MONTHS[0].key;
@@ -2741,6 +2716,7 @@ async function boot() {
     renderSeason(calendar);
     renderNow(nws, calendar);
     renderAfdLanguage(calendar);
+    renderDigest(digest);
     renderCalendar(calendar);
     renderDuration(calendar);
     renderWind(calendar, landlord);
@@ -2749,7 +2725,6 @@ async function boot() {
     renderNwsVerification();
     renderCpcBacktest();
     renderModelGuidance();
-    renderArchiveProbe();
     renderFeed();
     renderVerify(verify, prov);
     renderPublishedNormals(calendar);
