@@ -343,6 +343,38 @@ function renderBottomLine(ll) {
               'These are probabilities for whole periods, never for a day.' })
     ]));
   }
+  // What the outlook's own authors wrote to qualify it.  Quotations only:
+  // CPC's forecasters, verbatim, with the link to read the whole discussion.
+  // A discussion that no longer contains a watched-for sentence is reported
+  // as not found - it is never paraphrased or held over from a previous run.
+  const cav = outlook.prognostic_caveats;
+  if (cav && cav.available) {
+    const quotes = (cav.quotes || []).map(q => [
+      el('blockquote', { class: 'off-quote', text: '\u201c' + q.text + '\u201d' }),
+      el('div', { class: 'off-quote-label', text: q.label || q.key || '' })
+    ]);
+    cells.push(el('div', { class: 'off-cell' }, [
+      el('div', { class: 'off-label', text: 'What the outlook\u2019s own authors caution' }),
+      ...[].concat(...quotes),
+      (cav.issued_line
+        ? el('div', { class: 'off-sub', text: 'Discussion issued ' + cav.issued_line })
+        : null),
+      (cav.not_found && cav.not_found.length
+        ? el('div', { class: 'off-sub',
+            text: 'Watched for but not stated in this discussion: ' + cav.not_found.join(', ') + '.' })
+        : null),
+      el('div', { class: 'off-sub' }, [
+        document.createTextNode('Verbatim quotations, located by pattern in the fetched text \u2014 no number or date attached by this project \u00b7 '),
+        link(cav.source_url, 'Read CPC\u2019s prognostic discussion')
+      ])
+    ]));
+  } else if (cav && !cav.available) {
+    cells.push(el('div', { class: 'off-cell' }, [
+      el('div', { class: 'off-label', text: 'What the outlook\u2019s own authors caution' }),
+      el('div', { class: 'off-sub', text: cav.reason || 'The archived discussion could not be read this run.' }),
+      el('div', { class: 'off-sub' }, [link(cav.source_url, 'Read CPC\u2019s prognostic discussion')])
+    ]));
+  }
   // The one legitimate bridge between "the official outlook says X" and "that
   // costs Y": the same 30 seasons, split by the ENSO phase NOAA published for
   // them.  It is a conditional average of what happened, and the cell says so

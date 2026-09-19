@@ -367,6 +367,68 @@ def _feed_pill(repo):
     return repo
 
 
+# ==========================================================================
+# Cases for render guard 30: the prognostic-discussion caveat card.
+# ==========================================================================
+
+@case("a CPC caveat sentence in the dataset but not rendered",
+      expect_msg="is in the dataset but not rendered")
+def _cav1(repo):
+    # The renderer must publish every caveat the dataset carries.  Making the
+    # renderer drop one (slicing the list it maps over) while the dataset
+    # still lists it is the render defect guard 30 exists to catch.  Editing
+    # the dataset's sentence instead is NOT a render defect - the card must
+    # faithfully render whatever the dataset publishes, and non-verbatim text
+    # is the ledger's job (see falsify_guards.py, case "a prognostic caveat
+    # quote edited (no longer verbatim)").
+    patch_text(repo, "assets/js/app.js",
+               "const quotes = (cav.quotes || []).map(q => [",
+               "const quotes = (cav.quotes || []).slice(0, 2).map(q => [")
+    return repo
+
+
+@case("the caveats card rendered without the no-number-attached marker",
+      expect_msg="no number or date attached")
+def _cav2(repo):
+    patch_text(repo, "assets/js/app.js",
+               "document.createTextNode('Verbatim quotations, located by pattern in the "
+               "fetched text \\u2014 no number or date attached by this project \\u00b7 '),",
+               "document.createTextNode('From the discussion \\u00b7 '),")
+    return repo
+
+
+@case("the caveats card rendered without its source link",
+      expect_msg="does not link the prognostic discussion")
+def _cav3(repo):
+    patch_text(repo, "assets/js/app.js",
+               "link(cav.source_url, 'Read CPC\\u2019s prognostic discussion')",
+               "document.createTextNode('CPC prognostic discussion')")
+    return repo
+
+
+@case("an unavailable caveats card that renders without its stated reason",
+      expect_msg="does not state its reason")
+def _cav4(repo):
+    # Make the dataset honestly unavailable (reason stated), then break the
+    # renderer's disclosure of that reason - the reader would see a card that
+    # explains nothing about why no caveat is quoted.
+    def fn(ll):
+        cav = ll["executive_summary"]["official_outlook"]["prognostic_caveats"]
+        cav.clear()
+        cav.update({
+            "available": False,
+            "reason": "The archived 90-day Prognostic Discussion is absent or "
+                      "empty in this run, so no caveat can be quoted.",
+            "source_url": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
+            "quotes": [],
+        })
+    patch_json(repo, "data/landlord.json", fn)
+    patch_text(repo, "assets/js/app.js",
+               "el('div', { class: 'off-sub', text: cav.reason || 'The archived discussion could not be read this run.' }),",
+               "el('div', { class: 'off-sub', text: '' }),")
+    return repo
+
+
 # The archive-status and per-day deep-link falsification cases that used to live
 # here were retired with the modules they covered: main resolved the GSOD/ISD
 # stop as an NCEI retirement with its own successor probes, and publishes

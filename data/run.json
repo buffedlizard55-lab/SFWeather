@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-19T11:58:44Z",
+  "generated_utc": "2026-09-19T19:14:24Z",
   "pipeline_version": "1.0",
   "target": {
     "zip": "94122",
@@ -51,7 +51,7 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-19T11:56:46Z",
+        "retrieved_utc": "2026-09-19T19:10:21Z",
         "sha256": "b7b8df03b1365a8463fe07a95913f07e23627f52eff60daece1b6a8ea4f65fb7",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
@@ -75,8 +75,8 @@
       {
         "area": "rain_temp",
         "label": "GHCN-Daily USW00023272 (rain, daily high/low)",
-        "last_date": "2026-09-15",
-        "age_days": 4,
+        "last_date": "2026-09-16",
+        "age_days": 3,
         "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
         "note": "Daily summaries, so this is the most current of the three archives."
       },

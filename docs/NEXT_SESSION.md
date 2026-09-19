@@ -1,19 +1,52 @@
 # Next session — handoff
 
-## 1. State at the end of this session (18 Sep 2026 — Pass 1: CPC back-test pipeline, GSOD/ISD retirement, deep links, AFD history, digest)
+## 1. State at the end of session 10 (19 Sep 2026 — review of merged main; bug 70; outlook caveats, verbatim)
 
-**Ledger:** 67 checks offline / **69 live**, 19 claims — all pass, 0 warnings.
-Pass 8's 59 plus 8 ported from the parallel pass 9 (`cpc-record-coverage-declared`,
-`cpc-season-covers-complete`, `cpc-record-reach`, `auxiliary-manifests-vetted`,
-`auxiliary-manifests-separate`, `model-guidance-isolation`, `feed-traceable`,
-`feed-provenance`). The two that need a live CI run
-(`model-guidance-quotes-verbatim`, `model-guidance-links-fetched`) have now run
-live and pass.
+**Ledger:** **70 checks live**, 19 claims — all pass, 0 warnings (session 9's 69
+plus `prognostic-caveats-verbatim`). Verified twice on 19 Sep: once offline
+against the committed dataset, once on the live CI pipeline run that followed
+the session's push (run 35462855471, all nine step exits 0, data published).
 
-**Tests:** `tests/test_parsers.py` 409/409 · `tests/falsify_guards.py` 56 cases ·
-`tests/falsify_smoke.py` 23 cases · `npm test` (jsdom smoke, guards 1–29) passes ·
-`pipeline/verify_sources.py` passes (every manifest) · `pipeline/verify_claims.py`
-passes · module self-tests: `model_guidance` 53, `build_feed` 36.
+**Tests:** `tests/test_parsers.py` **419/419** · `tests/falsify_guards.py`
+**63 cases** · `tests/falsify_smoke.py` **27 cases** · `npm test` (jsdom smoke,
+guards 1–30) passes · `pipeline/verify_sources.py` passes (every manifest) ·
+module self-tests: `model_guidance` 53, `build_feed` 36. All of these also ran
+green on CI for the session's commit.
+
+**What session 10 changed:**
+
+1. **Bug 70 — a time bomb in the offline suite.** Re-running the suite on the
+   merged main found `tests/test_parsers.py` failing 1/409: the gust
+   cross-check hard-coded "18 Sep = 18 mph, 19 Sep = 20 mph" from the NWS text
+   forecast as it stood on 18 Sep. The nightly refresh moved the window past
+   that date, so the next PR would have failed CI for no reason. The check is
+   now dynamic — it reads the periods the run actually fetched (see
+   `docs/VERIFICATION.md` session 10 for the asymmetric bounds and why).
+2. **The outlook's own caveats, verbatim.** Hand-verification of the live CPC
+   products (ENSO discussion, ONI file, fxus05 prognostic discussion) showed
+   the site published the El Niño tilt without NOAA's own stated caveats —
+   the negative PDO that "may dampen the typical impacts of a strong El Niño"
+   and the "probabilities may be increased further… mid-late October" note.
+   The outlook strip now quotes those sentences verbatim (pattern-located in
+   the archived, hashed discussion), with ledger check 70, render guard 30,
+   10 offline assertions and 11 falsification cases behind it. See
+   `docs/VERIFICATION.md` session 10 and `docs/LIMITATIONS.md` §19.
+3. Independent live verification this session (sandbox-side, not CI): ENSO
+   Diagnostic Discussion page and `oni.ascii.txt` fetched and compared
+   line-by-line against `data/enso.json` — ONI JJA 2026 = +1.80 °C, Advisory
+   status, both verbatim quotes: **exact match, no hallucination**. The fxus05
+   discussion's precipitation section matches the sampled outlook tilts
+   (OND wet signal starts at the southern half of California, so EC at the
+   94122 point is correct; DJF/JFM "reaching a maximum of 50-60 percent near
+   the coast").
+
+**Watch item for the next session:** the next CPC long-lead issuance is due
+**mid-late October 2026** (CPC's own words, quoted on the site). NOAA says the
+DJF/JFM probabilities "may be increased further". After that issuance the
+caveat card's `not_found` list will grow (the patterns watch for sentences CPC
+rewrites monthly) — that is designed behaviour, not a bug; see
+`docs/LIMITATIONS.md` §19. The ENSO Diagnostic Discussion is next issued
+**8 October 2026**.
 
 **Pass 9 (parallel session, MERGED to main as PR #18 → `2d62c3d`):** the
 model-guidance tier and the official-product feed were built (pass 8 had left model
@@ -86,6 +119,28 @@ Pass 2 table (bugs 55–64). All suites re-green after the fixes.
 ---
 
 ## 2. Open work — next session priority order
+
+### Priorities for session 11 (as of 19 Sep 2026, end of session 10)
+
+1. **Mid-October CPC issuance watch (low effort, time-sensitive).** The next
+   long-lead outlook + prognostic discussion lands **mid-late October** and
+   the ENSO discussion on **8 October**. After each: confirm the nightly run
+   picked them up, check the caveat card's `not_found` behaviour (expect the
+   PDO sentences to be rewritten — the card must drop them, not hold them
+   over), and see whether the DJF/JFM precipitation probabilities rose as
+   NOAA hinted. Nothing to code unless a pattern breaks.
+2. **Wind successor stitching (GHCNh)** — see §2.2 below. The pipeline probes
+   the successor every night; stitching is a maintainer decision because it
+   moves every published 1991–2020 wind statistic.
+3. **CPC archive back-fill** — see §2.1. The per-issuance URLs inside the
+   official Oct-1995 archive index still need to be located; until then the
+   back-test card honestly reports `pending-backfill`.
+4. **Multi-ZIP support** — front-end work; the pipeline is already
+   parameterised by coordinate.
+5. **Ubuntu-latest migration warning**: CI annotations say the
+   `ubuntu-latest` label migrates to Ubuntu 26 on **19 October 2026**, and
+   actions now warn about Node 20 deprecation. Not breaking today; worth
+   pinning or updating `actions/checkout@v4`/`setup-python@v5` when convenient.
 
 ### 1. Back-fill the CPC archive to run the back-test for real — pipeline done, archive fetch still open
 

@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-19T11:58:44Z",
+  "generated_utc": "2026-09-19T19:14:24Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Sunset District \u2014 Inner and Outer Sunset)",
@@ -50,7 +50,7 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-19T11:56:46Z",
+        "retrieved_utc": "2026-09-19T19:10:21Z",
         "sha256": "b7b8df03b1365a8463fe07a95913f07e23627f52eff60daece1b6a8ea4f65fb7",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
@@ -712,8 +712,8 @@
         {
           "area": "rain_temp",
           "label": "GHCN-Daily USW00023272 (rain, daily high/low)",
-          "last_date": "2026-09-15",
-          "age_days": 4,
+          "last_date": "2026-09-16",
+          "age_days": 3,
           "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
           "note": "Daily summaries, so this is the most current of the three archives."
         },
@@ -1238,6 +1238,37 @@
       "daily_forecast": {
         "days_in_this_scoreboard_with_a_real_forecast": 0,
         "official_horizon_ends": "2026-09-25"
+      },
+      "prognostic_caveats": {
+        "available": true,
+        "issued_line": "830 AM EDT Thu Sep 17 2026",
+        "quotes": [
+          {
+            "key": "pdo_state",
+            "label": "The state of the Pacific Decadal Oscillation, in NOAA's own words",
+            "text": "The first factor is the presence of a fairly strong, negatively phased Pacific Decadal Oscillation (PDO), with the August PDO index value of -1.11 ."
+          },
+          {
+            "key": "pdo_dampening",
+            "label": "NOAA's forecasters stating, in their own words, that this El Ni\u00f1o may not behave like the classic strong ones",
+            "text": "This time, however, the PDO phase is negative and may dampen the typical impacts of a strong El Ni\u00f1o in certain areas."
+          },
+          {
+            "key": "next_issuance_may_revise",
+            "label": "NOAA's forecasters saying the probabilities themselves may move at the next issuance",
+            "text": "These probabilities may be increased further in the next set of seasonal outlooks, to be released in mid-late October, pending reassessment of the latest model forecasts."
+          }
+        ],
+        "not_found": [],
+        "patterns_watched_for": [
+          "pdo_state",
+          "pdo_dampening",
+          "next_issuance_may_revise"
+        ],
+        "source_url": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
+        "discussion_sha256": "c6307e499e46cf2c0047f87de6a3169ed484923b62755f5e4350d786589ea781",
+        "discussion_characters": 16942,
+        "how_to_read": "Sentences copied verbatim from the long-lead Prognostic Discussion CPC issued with the seasonal outlook, located by pattern in the text the pipeline fetched and hashed. They are NOAA's forecasters qualifying their own outlook; no number or date has been attached by this project. When a later discussion no longer contains a sentence, it stops appearing here and is listed under not_found."
       },
       "enso_conditioned_record": {
         "phase": "el_nino",
@@ -2679,7 +2710,7 @@
     "station_id": "USW00023272",
     "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
     "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-    "retrieved_utc": "2026-09-19T11:58:14Z",
+    "retrieved_utc": "2026-09-19T19:13:43Z",
     "dates_parsed": 366,
     "columns": {
       "normal_high_f": "DLY-TMAX-NORMAL",

@@ -621,13 +621,71 @@ if os.path.exists(_cal_path):
           bool(_cf) and not _nogust, str(_nogust))
     check("every current-forecast day now carries a rain amount",
           bool(_cf) and not _noqpf, str(_noqpf))
-    # NWS's own text forecast for this run says "gusts as high as 18 mph" for
-    # Friday 18 Sep and "gusts as high as 20 mph" for Saturday 19 Sep.
+    # NWS's own text forecast states public gust values per 12-hour period
+    # ("... with gusts as high as 18 mph").  The dates are NOT hard-coded
+    # here: every period this run actually fetched is read, and each stated
+    # gust is compared against the calendar days that period covers.  (An
+    # earlier revision pinned "18 Sep = 18 mph, 19 Sep = 20 mph"; the forecast
+    # window moved past 18 Sep the next day and the check began to fail
+    # against live data - a time bomb, replaced by this dynamic version.)
+    #
+    # The bounds are deliberately asymmetric.  Lower bound (per period): the
+    # text is generated from the same grid the calendar reads, so a correct
+    # derivation must show every gust NWS told the public about (within 2 mph
+    # of rounding) in at least one of the local days the period spans.  Upper
+    # bound (window maxima only, +8 mph): the text OMITS the gust phrase when
+    # the gust is not far above the sustained wind, so an omitted neighbouring
+    # period can legitimately exceed a stated one - while a unit bug (km/h vs
+    # mph is ~1.6x) or a doubled value blows far past that margin.
+    import datetime as _dtg  # noqa: E402
+    import re as _reg  # noqa: E402
+    _GUST_TEXT_RE = _reg.compile(r"gusts?\s+(?:as high as|up to)\s+(\d+)\s*mph")
+    _nws_path = os.path.join(ROOT, "data", "nws.json")
+    _stated = []   # (stated mph, [local dates the period covers])
+    if os.path.exists(_nws_path):
+        with io.open(_nws_path, encoding="utf-8") as _fh:
+            _nws = json.load(_fh)
+        for _p in ((_nws.get("forecast_daily") or {}).get("periods") or []):
+            _m = _GUST_TEXT_RE.search(_p.get("detailed_forecast") or "")
+            if not _m or not _p.get("start_time") or not _p.get("end_time"):
+                continue
+            try:
+                _s = _dtg.datetime.fromisoformat(_p["start_time"])
+                _e = _dtg.datetime.fromisoformat(_p["end_time"])
+            except ValueError:
+                continue
+            _dates, _cur = set(), _s
+            while _cur < _e:
+                _dates.add(_cur.date().isoformat())
+                _cur += _dtg.timedelta(hours=1)
+            _stated.append((float(_m.group(1)), sorted(_dates)))
     _by = {d["date"]: d for d in _cf}
-    for _iso, _expect in (("2026-09-18", 18.0), ("2026-09-19", 20.0)):
-        _got = (_by.get(_iso) or {}).get("gust_max_mph")
-        check("derived gust for %s matches NWS's stated %.0f mph within 2 mph" % (_iso, _expect),
-              _got is not None and abs(_got - _expect) <= 2.0, str(_got))
+    _derived = {d["date"]: d.get("gust_max_mph") for d in _cf
+                if d.get("gust_max_mph") is not None}
+    _bad, _checked = [], 0
+    for _gust, _dates in _stated:
+        _have = [_d for _d in _dates if _d in _derived]
+        if not _have:
+            continue    # window edge: the calendar covers no hour of this period
+        _checked += 1
+        _best = max(_derived[_d] for _d in _have)
+        if _best < _gust - 2.0:
+            _bad.append({"stated_mph": _gust, "covers": _dates,
+                         "best_derived_mph": _best})
+    check("every gust NWS's text forecast states appears in the derived grid "
+          "(%d period(s) stated a gust, %d checked against the calendar)"
+          % (len(_stated), _checked),
+          not _bad,
+          "stated=%s checked=%d bad=%s"
+          % ([(g, ds) for g, ds in _stated], _checked, _bad[:3]))
+    _usable = [g for g, ds in _stated if any(d in _derived for d in ds)]
+    if _usable and _derived:
+        _gmax, _dmax = max(_usable), max(_derived.values())
+        check("derived window gust max (%.1f mph) consistent with the text "
+              "forecast max (%.0f mph)" % (_dmax, _gmax),
+              _gmax - 2.0 <= _dmax <= _gmax + 8.0,
+              "derived %.1f vs stated %.0f (stated periods: %s)"
+              % (_dmax, _gmax, _usable))
     # Tiering must be untouched: no climatology day may claim a forecast basis.
     # This used to assert "no climatology day has a gust_basis at all", which
     # stopped being true when every published value gained a per-field basis.
@@ -665,7 +723,135 @@ else:
 section("landlord maintenance cost drivers")
 
 from landlord_summary import (build_cost_drivers, expected_event_days,  # noqa: E402
-                              phase_label, fmt_oni_c, parse_damage_usd)
+                              phase_label, fmt_oni_c, parse_damage_usd,
+                              prognostic_caveats)
+
+# --------------------------------------------------------------------------- #
+# Prognostic-discussion caveat extraction (landlord_summary.prognostic_caveats)
+#
+# The outlook strip quotes CPC's own forecasters qualifying their seasonal
+# outlook.  The extractor must: locate sentences by pattern in the archived
+# discussion text, publish them verbatim, refuse non-printable text, report
+# watched-for-but-absent patterns, and degrade to an honest "unavailable"
+# block when the archive itself is missing.
+# --------------------------------------------------------------------------- #
+
+section("prognostic discussion caveats")
+
+_SYNTH_DISCUSSION = (
+    "Climate Prediction Center - Seasonal Outlook\n"
+    "830 AM EDT Thu Sep 17 2026\n"
+    "PROGNOSTIC DISCUSSION OF OUTLOOKS - OND 2026 TO OND 2027\n"
+    "There are two factors that make the current situation unique. The first "
+    "factor is the presence of a fairly strong, negatively phased Pacific "
+    "Decadal Oscillation (PDO), with the August PDO index value of -1.11 . "
+    "This time, however, the PDO phase is negative and may dampen the typical "
+    "impacts of a strong El Ni\u00f1o in certain areas.\n"
+    "Probabilities favoring wetter-than-normal conditions increase across "
+    "California, reaching a maximum of 50-60 percent near the coast during "
+    "DJF, JFM, and FMA. These probabilities may be increased further in the "
+    "next set of seasonal outlooks, to be released in mid-late October, "
+    "pending reassessment of the latest model forecasts.")
+
+_r = prognostic_caveats({"discussions": [
+    {"label": "90-Day (3-month) Outlook Discussion", "ok": True, "text": _SYNTH_DISCUSSION,
+     "url": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
+     "sha256": "1" * 64, "characters": len(_SYNTH_DISCUSSION)}]})
+check("caveats: all three watched-for sentences extracted",
+      len(_r.get("quotes") or []) == 3 and not _r.get("not_found"),
+      str([q.get("key") for q in (_r.get("quotes") or [])]) + str(_r.get("not_found")))
+check("caveats: the extracted PDO sentence is verbatim",
+      any(q["text"] == ("The first factor is the presence of a fairly strong, "
+                        "negatively phased Pacific Decadal Oscillation (PDO), "
+                        "with the August PDO index value of -1.11 .")
+          for q in _r["quotes"]),
+      str(_r["quotes"][0]["text"]))
+check("caveats: the issuance line is copied, not parsed",
+      _r.get("issued_line") == "830 AM EDT Thu Sep 17 2026", str(_r.get("issued_line")))
+check("caveats: source url follows the archived discussion",
+      _r.get("source_url") == "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html"
+      and _r.get("discussion_sha256") == "1" * 64,
+      str(_r.get("source_url")))
+
+# A rewritten discussion that no longer contains the caveats must publish an
+# empty quote list and name what it watched for - never hold a quote over.
+_r2 = prognostic_caveats({"discussions": [
+    {"label": "90-Day (3-month) Outlook Discussion", "ok": True,
+     "text": "830 AM EDT Fri Oct 16 2026\nThe outlook this month is based on "
+             "trends alone.", "url": "https://x", "sha256": "2" * 64, "characters": 60}]})
+check("caveats: a rewritten discussion publishes nothing and says so",
+      _r2.get("available") is True and (_r2.get("quotes") or []) == []
+      and sorted(_r2.get("not_found") or []) ==
+          ["next_issuance_may_revise", "pdo_dampening", "pdo_state"],
+      str(_r2))
+
+# A sentence matched but carrying publisher-side broken bytes is refused.
+_MOJIBAKE = _SYNTH_DISCUSSION.replace(
+    "The first factor is the presence of a fairly strong, negatively phased "
+    "Pacific Decadal Oscillation (PDO), with the August PDO index value of "
+    "-1.11 .",
+    "The first factor is the presence of a fairly strong, negatively phased "
+    "Pacific Decadal Oscillation (PDO), with the \u0080\u009c August PDO index "
+    "value of -1.11 .")
+_r3 = prognostic_caveats({"discussions": [
+    {"label": "90-Day (3-month) Outlook Discussion", "ok": True, "text": _MOJIBAKE,
+     "url": "https://x", "sha256": "3" * 64, "characters": len(_MOJIBAKE)}]})
+check("caveats: a matched sentence with control characters is refused",
+      _r3.get("available") is True
+      and "pdo_state" not in [q["key"] for q in (_r3.get("quotes") or [])]
+      and any("pdo_state" in nf for nf in (_r3.get("not_found") or [])),
+      str(_r3.get("not_found")))
+
+# The same refusal must apply to a Unicode replacement character, which is
+# what a broken decode leaves behind on some publisher pages.
+_RMBK = _SYNTH_DISCUSSION.replace(
+    "The first factor is the presence of a fairly strong, negatively phased "
+    "Pacific Decadal Oscillation (PDO), with the August PDO index value of "
+    "-1.11 .",
+    "The first factor is the presence of a fairly strong, negatively phased "
+    "Pacific Decadal Oscillation (PDO), with the \ufffd August PDO index "
+    "value of -1.11 .")
+_r3b = prognostic_caveats({"discussions": [
+    {"label": "90-Day (3-month) Outlook Discussion", "ok": True, "text": _RMBK,
+     "url": "https://x", "sha256": "4" * 64, "characters": len(_RMBK)}]})
+check("caveats: a matched sentence with a replacement character is refused",
+      _r3b.get("available") is True
+      and "pdo_state" not in [q["key"] for q in (_r3b.get("quotes") or [])]
+      and any("pdo_state" in nf for nf in (_r3b.get("not_found") or [])),
+      str(_r3b.get("not_found")))
+
+# Missing archive: honest unavailability, no quotes, a reason, no crash.
+_r4 = prognostic_caveats({"discussions": []})
+check("caveats: no archived discussion degrades to an honest unavailable block",
+      _r4.get("available") is False and not _r4.get("quotes")
+      and bool((_r4.get("reason") or "").strip()),
+      str(_r4))
+_r5 = prognostic_caveats({})
+check("caveats: no cpc file at all degrades the same way",
+      _r5.get("available") is False and not _r5.get("quotes"), str(_r5))
+
+# The committed dataset must carry the block the site renders, and the ledger
+# verifies each quote against the archived text (see falsify_guards.py for the
+# mutations of that rule).  Here: the block exists and its quotes are the
+# extractor's own output, so a hand-edit of landlord.json cannot hide behind
+# a regeneration that never ran.
+try:
+    with io.open(os.path.join(ROOT, "data", "landlord.json"), encoding="utf-8") as _fh:
+        _ll_cav = (((json.load(_fh).get("executive_summary") or {})
+                    .get("official_outlook") or {}).get("prognostic_caveats"))
+    _ll_cpc = json.load(io.open(os.path.join(ROOT, "data", "cpc.json"), encoding="utf-8"))
+    _expect_cav = prognostic_caveats(_ll_cpc)
+    _same = ((_ll_cav or {}).get("available") == _expect_cav.get("available")
+             and sorted((q or {}).get("text") for q in (_ll_cav or {}).get("quotes") or [])
+             == sorted(q.get("text") for q in _expect_cav.get("quotes") or []))
+    check("caveats: the committed landlord.json block equals a fresh extraction",
+          bool(_ll_cav) and _same,
+          "committed=%s fresh=%s" % (
+              [q.get("key") for q in ((_ll_cav or {}).get("quotes") or [])],
+              [q.get("key") for q in (_expect_cav.get("quotes") or [])]))
+except Exception as _e:  # noqa: BLE001
+    check("caveats: the committed landlord.json block equals a fresh extraction",
+          False, "raised: %s" % _e)
 
 # expected_event_days: linearity of expectation, both record shapes.
 _syn_days = [

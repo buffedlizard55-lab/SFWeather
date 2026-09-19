@@ -150,6 +150,7 @@ def main() -> int:
     cpc_backtest = load("cpc_backtest.json", default=None)
     afd_history = load("afd_history.json", default=None)
     digest = load("digest.json", default=None)
+    cpc = load("cpc.json")
     isd_history = load("isd_history.json", default=None)
     ghcnh_probe = load("ghcnh_probe.json", default=None)
 
@@ -2105,6 +2106,75 @@ def main() -> int:
                      (f"{len(hist)} issuance(s) in history"
                       if not ah_problems else "; ".join(ah_problems[:6])),
                      evidence={"problems": ah_problems[:10]})
+
+    # ------------------- 12l. prognostic-discussion caveats are verbatim ----
+    # The outlook strip quotes CPC's own forecasters qualifying their seasonal
+    # outlook (e.g. the negative-PDO caveat).  Rules enforced: quotations
+    # only, each a whitespace-collapsed substring of the fetched discussion
+    # text; the archived discussion must trace to a recorded fetch; a quote
+    # key must be one the extractor declares; and the block's availability
+    # claim must agree with the archived discussion's presence.
+    p_cav = (((landlord.get("executive_summary") or {}).get("official_outlook")
+              or {}).get("prognostic_caveats"))
+    p_disc = next((d for d in (cpc.get("discussions") or [])
+                   if "90-Day" in (d.get("label") or "")
+                   or "90day" in (d.get("url") or "")), None)
+    p_text = climo_lib.collapse_ws((p_disc or {}).get("text") or "")
+    if p_cav is None:
+        ledger.check("prognostic-caveats-verbatim",
+                     "CPC prognostic-discussion caveats are present, verbatim, "
+                     "and source-traced",
+                     False, "landlord.json has no prognostic_caveats block",
+                     evidence={})
+    else:
+        p_bad = []
+        if p_cav.get("available"):
+            if not p_text:
+                p_bad.append("block says available but the archived 90-day "
+                             "discussion text is missing or empty")
+            if not p_disc or not p_disc.get("sha256"):
+                p_bad.append("no hashed archive of the discussion to verify against")
+        else:
+            if p_cav.get("quotes"):
+                p_bad.append("an unavailable block still carries quotes")
+            if not (p_cav.get("reason") or "").strip():
+                p_bad.append("an unavailable block states no reason")
+        for q in p_cav.get("quotes") or []:
+            t = climo_lib.collapse_ws(q.get("text") or "")
+            k = q.get("key") or "?"
+            if not t:
+                p_bad.append(f"{k}: empty quote")
+                continue
+            if not p_text:
+                p_bad.append(f"{k}: no discussion text to verify against")
+            elif t not in p_text:
+                p_bad.append(f"{k}: not a substring of the fetched discussion")
+            if any(ord(ch) < 32 or ord(ch) in (127, 0xFFFD) for ch in t):
+                p_bad.append(f"{k}: contains control or replacement characters")
+        known = set(p_cav.get("patterns_watched_for") or [])
+        if p_cav.get("available") and not known:
+            p_bad.append("patterns_watched_for is empty - the quote-key contract is missing")
+        for q in p_cav.get("quotes") or []:
+            if q.get("key") not in known:
+                p_bad.append(f"{q.get('key') or '?'}: quote key not in patterns_watched_for")
+        disc_url = ((p_disc or {}).get("url")
+                    or "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html")
+        src_ok = (p_cav.get("source_url") == disc_url
+                  and (fetch_has_evidence(disc_url) if p_text else True))
+        if not p_text and p_cav.get("available") is not True:
+            src_ok = True  # nothing quoted; the source rule is satisfied vacuously
+        ledger.check(
+            "prognostic-caveats-verbatim",
+            "CPC prognostic-discussion caveats are present, verbatim, and source-traced",
+            not p_bad and src_ok,
+            (f"{len(p_cav.get('quotes') or [])} quoted sentence(s) all verbatim in the "
+             f"archived 90-day discussion ({len(p_text)} collapsed characters)"
+             if not p_bad and src_ok else "; ".join(p_bad[:6])
+             + ("" if src_ok else "; source URL not traced to a recorded fetch")),
+            evidence={"problems": p_bad[:10], "source_traced": src_ok,
+                      "quotes": len(p_cav.get("quotes") or []),
+                      "not_found": p_cav.get("not_found"),
+                      "issued_line": p_cav.get("issued_line")})
 
     # --------------------------------- 12i. digest / RSS traceable
     if not digest:
