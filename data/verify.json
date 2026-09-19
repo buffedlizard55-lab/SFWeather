@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-19T01:36:58Z",
+  "generated_utc": "2026-09-19T01:48:20Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,8 +9,8 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 67,
-    "passed": 67,
+    "total": 69,
+    "passed": 69,
     "failed": 0,
     "warnings": 0,
     "failed_checks": [],
@@ -120,14 +120,14 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-18T23:25:43Z"
+        "retrieved_utc": "2026-09-19T01:40:54Z"
       }
     },
     {
       "id": "nws-daily-aggregation",
       "title": "The published daily high and max wind are the max of the NWS hourly grid",
       "status": "pass",
-      "detail": "2026-09-18: high 64 vs hourly max 64; wind 15.0 vs hourly max 15.0",
+      "detail": "2026-09-18: high 62 vs hourly max 62; wind 14.0 vs hourly max 14.0",
       "evidence": null
     },
     {
@@ -734,7 +734,7 @@
       "id": "docs-current-dates-traceable",
       "title": "Any date in the documentation that could be read as the current NWS forecast horizon is a date this run actually published",
       "status": "pass",
-      "detail": "no documentation date near 2026-09-18 contradicts the published window ['2026-08-20', '2026-09-17', '2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-28', '2026-10-02', '2026-10-03', '2026-10-16']",
+      "detail": "no documentation date near 2026-09-19 contradicts the published window ['2026-08-20', '2026-09-17', '2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-28', '2026-10-02', '2026-10-03', '2026-10-16']",
       "evidence": {
         "stale": [],
         "window_dates": [
@@ -849,7 +849,7 @@
             "area": "rain_temp",
             "label": "GHCN-Daily USW00023272 (rain, daily high/low)",
             "last_date": "2026-09-15",
-            "age_days": 3,
+            "age_days": 4,
             "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
             "note": "Daily summaries, so this is the most current of the three archives."
           },
@@ -857,7 +857,7 @@
             "area": "wind",
             "label": "GSOD 72494023234 (daily wind and gusts, 00-24Z)",
             "last_date": "2025-08-27",
-            "age_days": 387,
+            "age_days": 388,
             "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
             "note": "RETIRED 2025-08-29 (NCEI); successor is SSODv2. Annual files; GSOD cannot be more current than the ISD hourly file it is derived from."
           },
@@ -865,7 +865,7 @@
             "area": "isd_hourly",
             "label": "ISD hourly 72494023234 (hour-by-hour wind and precipitation)",
             "last_date": "2025-08-27",
-            "age_days": 387,
+            "age_days": 388,
             "url": "https://www.ncei.noaa.gov/data/global-hourly/access/",
             "note": "RETIRED 2025-08-29 (NCEI); successor is GHCNh. Annual files of hourly observations."
           }
@@ -966,7 +966,7 @@
       "id": "auxiliary-manifests-vetted",
       "title": "Every fetch recorded by an auxiliary script is on a vetted official HTTPS host and carries status, byte count and SHA-256, and every auxiliary manifest names its area and purpose",
       "status": "pass",
-      "detail": "1 manifest file(s): provenance.json; 0 auxiliary fetch record(s)",
+      "detail": "2 manifest file(s): provenance.json, model_guidance_provenance.json; 8 auxiliary fetch record(s)",
       "evidence": {
         "bad_hosts": [],
         "thin_rows": [],
@@ -977,32 +977,64 @@
       "id": "auxiliary-manifests-separate",
       "title": "Auxiliary scripts keep their fetches in their own manifest: nothing is double-recorded, and run.json's published total still recounts from data/provenance.json alone",
       "status": "pass",
-      "detail": "189 nightly row(s) and 0 auxiliary row(s) across 1 manifest file(s), no overlap",
+      "detail": "189 nightly row(s) and 8 auxiliary row(s) across 2 manifest file(s), no overlap",
       "evidence": {
         "problems": [],
         "primary": 189,
-        "aux": 0,
+        "aux": 8,
         "manifest_files": [
-          "provenance.json"
+          "provenance.json",
+          "model_guidance_provenance.json"
         ]
       }
     },
     {
       "id": "model-guidance-isolation",
-      "title": "Model guidance, if published, is flagged as not an official forecast and kept out of the scoreboard",
+      "title": "Model guidance is flagged as not an official forecast, on the file and on every item, and no model value reaches the scoreboard or the landlord summary",
       "status": "pass",
-      "detail": "data/model_guidance.json is not published by this run; the site must then show the model-guidance section as not yet built, and no model value can have reached the scoreboard",
-      "evidence": null
+      "detail": "0 archived image(s), 7 page(s); the scoreboard and the landlord summary contain no model-guidance field",
+      "evidence": {
+        "problems": [],
+        "unquoted_mentions": [],
+        "counts": {
+          "pages_requested": 7,
+          "pages_retrieved": 7,
+          "images_archived": 0,
+          "verbatim_sentences": 7,
+          "probes_ok": 1
+        }
+      }
+    },
+    {
+      "id": "model-guidance-quotes-verbatim",
+      "title": "The NMME wording published on the site is copied from NOAA's fetched description and index pages, character for character",
+      "status": "pass",
+      "detail": "7 definition sentence(s) verified against the fetched page text; coverage string verified",
+      "evidence": {
+        "problems": [],
+        "n_sentences": 7
+      }
+    },
+    {
+      "id": "model-guidance-links-fetched",
+      "title": "Every model-guidance link published on the site was actually fetched with status, size and SHA-256 recorded; a fetch that failed says so; and every archived guidance image on the site is the image that was hashed",
+      "status": "pass",
+      "detail": "8 published guidance URL(s) all present in an auxiliary manifest; 0 archived image(s) match their recorded hash",
+      "evidence": {
+        "problems": [],
+        "unevidenced": [],
+        "bad_local": []
+      }
     },
     {
       "id": "feed-traceable",
       "title": "The official-product feed is internally consistent, sorted, dated only where the publisher gave a date, links only vetted hosts, and never marks model guidance as official",
       "status": "pass",
-      "detail": "202 entries (+3 undated) across 9 dates; 198 verified against a recorded fetch",
+      "detail": "212 entries (+3 undated) across 9 dates; 207 verified against a recorded fetch",
       "evidence": {
         "problems": [],
         "counts": {
-          "entries": 202,
+          "entries": 212,
           "undated_entries": 3,
           "kinds": {
             "afd": 1,
@@ -1013,16 +1045,17 @@
             "cpc-outlook": 3,
             "cpc-shapefile": 12,
             "digest": 1,
-            "forecast-snapshot": 1,
+            "forecast-snapshot": 2,
+            "model-guidance": 1,
             "nws-alerts": 1,
             "nws-forecast": 2,
             "nws-hourly": 1,
             "nws-period": 14,
-            "official-fetch": 151
+            "official-fetch": 159
           },
-          "official": 202,
-          "not_official": 0,
-          "provenance_verified": 198,
+          "official": 211,
+          "not_official": 1,
+          "provenance_verified": 207,
           "provenance_unverified": 2,
           "links_that_are_convenience_pages": 16,
           "distinct_dates": 9,
@@ -1034,7 +1067,7 @@
       "id": "feed-provenance",
       "title": "Every feed entry whose content comes from a fetch points at a URL that was fetched successfully; entries that do not are labelled, not trusted",
       "status": "pass",
-      "detail": "198 of 202 entries trace to a recorded fetch; 2 labelled as pointers only",
+      "detail": "207 of 212 entries trace to a recorded fetch; 2 labelled as pointers only",
       "evidence": {
         "unverified": [
           {
@@ -1066,7 +1099,7 @@
         "http_status": 200,
         "bytes": 1013803,
         "sha256": "7b85c04a131672f58b38a950eb82855d5fd4054f0bd9bc3f69aa28897a714e3d",
-        "retrieved_utc": "2026-09-18T23:23:28Z",
+        "retrieved_utc": "2026-09-19T01:39:16Z",
         "host": "www2.census.gov"
       },
       "verified": true,
@@ -1093,7 +1126,7 @@
         "http_status": 200,
         "bytes": 23000,
         "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-        "retrieved_utc": "2026-09-18T23:25:43Z",
+        "retrieved_utc": "2026-09-19T01:40:54Z",
         "host": "www.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1120,9 +1153,9 @@
         "label": "NWS hourly gridded forecast",
         "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
         "http_status": 200,
-        "bytes": 162485,
-        "sha256": "493011dc1d2ea712796f253c101d9483f7daa6f818885126eeeb60eaaa08e967",
-        "retrieved_utc": "2026-09-18T23:23:29Z",
+        "bytes": 162489,
+        "sha256": "546753e8cc717b6d813935340e400726bc7faae9f5c8ff502ffd92e0e9a5abd6",
+        "retrieved_utc": "2026-09-19T01:39:17Z",
         "host": "api.weather.gov"
       },
       "verified": true
@@ -1164,7 +1197,7 @@
         "http_status": 200,
         "bytes": 6423708,
         "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
-        "retrieved_utc": "2026-09-18T23:27:32Z",
+        "retrieved_utc": "2026-09-19T01:42:20Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true
@@ -1181,7 +1214,7 @@
         "http_status": 200,
         "bytes": 7488416,
         "sha256": "d8c136ab1aa91450cffbd608be270be0df6c699a744985529d1fed9923aa5084",
-        "retrieved_utc": "2026-09-18T23:28:04Z",
+        "retrieved_utc": "2026-09-19T01:42:45Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1206,7 +1239,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T23:27:22Z",
+        "retrieved_utc": "2026-09-19T01:42:09Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1231,7 +1264,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T23:27:22Z",
+        "retrieved_utc": "2026-09-19T01:42:09Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1256,7 +1289,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T23:27:22Z",
+        "retrieved_utc": "2026-09-19T01:42:09Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1281,7 +1314,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-09-18T23:27:22Z",
+        "retrieved_utc": "2026-09-19T01:42:09Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1312,7 +1345,7 @@
         "http_status": 200,
         "bytes": 462174,
         "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-        "retrieved_utc": "2026-09-18T23:27:21Z",
+        "retrieved_utc": "2026-09-19T01:42:09Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1340,7 +1373,7 @@
         "http_status": 200,
         "bytes": 3607956,
         "sha256": "6e1955b1e38868c38685acd83a0ef92df9bcc52a3acaec11a583e759c46414dc",
-        "retrieved_utc": "2026-09-18T23:25:34Z",
+        "retrieved_utc": "2026-09-19T01:40:48Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1378,7 +1411,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T23:24:16Z",
+        "retrieved_utc": "2026-09-19T01:39:48Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1416,7 +1449,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T23:24:16Z",
+        "retrieved_utc": "2026-09-19T01:39:48Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1454,7 +1487,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T23:24:16Z",
+        "retrieved_utc": "2026-09-19T01:39:48Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1492,7 +1525,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-09-18T23:24:16Z",
+        "retrieved_utc": "2026-09-19T01:39:48Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1530,7 +1563,7 @@
         "http_status": 200,
         "bytes": 3621792,
         "sha256": "6119ef340649ba4ba21072ef910e1579b7ed01251708cb81531082ab6627ab2f",
-        "retrieved_utc": "2026-09-18T23:25:36Z",
+        "retrieved_utc": "2026-09-19T01:40:49Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1581,7 +1614,7 @@
         "http_status": 200,
         "bytes": 4903856,
         "sha256": "1221e6eb7256be93b1a3f82d1a0695e5d85c5398bbe87cfd9664855936278c54",
-        "retrieved_utc": "2026-09-18T23:27:08Z",
+        "retrieved_utc": "2026-09-19T01:41:58Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true
@@ -1664,28 +1697,27 @@
           {
             "area": "wind",
             "last_date": "2025-08-27",
-            "age_days": 387,
+            "age_days": 388,
             "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
           },
           {
             "area": "isd_hourly",
             "last_date": "2025-08-27",
-            "age_days": 387,
+            "age_days": 388,
             "url": "https://www.ncei.noaa.gov/data/global-hourly/access/"
           }
         ]
       }
     },
     {
-      "severity": "info",
-      "area": "feed",
-      "message": "Some datasets were not present when the feed was built, so the feed covers fewer sources than a complete run would. Nothing was invented to fill the gap.",
+      "severity": "warning",
+      "area": "model_guidance",
+      "message": "The raw model archive was not probed: the archive page was retrieved but listed no run directories on this pass, so there was nothing to probe - if NOAA changed the layout of that page, ARCHIVE_ROW_RE needs updating",
       "evidence": {
-        "missing": [
-          "data/model_guidance.json"
-        ]
+        "archive_url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/",
+        "runs_listed": 0
       },
-      "source": "feed"
+      "source": "model_guidance"
     },
     {
       "severity": "warning",

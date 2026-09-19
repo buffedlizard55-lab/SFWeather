@@ -25,29 +25,12 @@
   },
   "forecast_daily": {
     "updated": "2026-09-18T20:26:33+00:00",
-    "generated_at": "2026-09-18T23:23:29+00:00",
+    "generated_at": "2026-09-19T01:39:17+00:00",
     "valid_times": "2026-09-18T14:00:00+00:00/P7DT11H",
     "elevation_m": 45.1104,
     "periods": [
       {
         "number": 1,
-        "name": "This Afternoon",
-        "start_time": "2026-09-18T16:00:00-07:00",
-        "end_time": "2026-09-18T18:00:00-07:00",
-        "is_daytime": true,
-        "temperature_f": 65,
-        "temperature_unit": "F",
-        "wind_speed": "15 mph",
-        "wind_direction": "W",
-        "icon": "https://api.weather.gov/icons/land/day/sct?size=medium",
-        "short_forecast": "Mostly Sunny",
-        "detailed_forecast": "Mostly sunny. High near 65, with temperatures falling to around 63 in the afternoon. West wind around 15 mph, with gusts as high as 20 mph.",
-        "pop_pct": 0,
-        "dewpoint_f": null,
-        "relative_humidity_pct": null
-      },
-      {
-        "number": 2,
         "name": "Tonight",
         "start_time": "2026-09-18T18:00:00-07:00",
         "end_time": "2026-09-19T06:00:00-07:00",
@@ -64,7 +47,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 3,
+        "number": 2,
         "name": "Saturday",
         "start_time": "2026-09-19T06:00:00-07:00",
         "end_time": "2026-09-19T18:00:00-07:00",
@@ -81,7 +64,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 4,
+        "number": 3,
         "name": "Saturday Night",
         "start_time": "2026-09-19T18:00:00-07:00",
         "end_time": "2026-09-20T06:00:00-07:00",
@@ -98,7 +81,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 5,
+        "number": 4,
         "name": "Sunday",
         "start_time": "2026-09-20T06:00:00-07:00",
         "end_time": "2026-09-20T18:00:00-07:00",
@@ -115,7 +98,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 6,
+        "number": 5,
         "name": "Sunday Night",
         "start_time": "2026-09-20T18:00:00-07:00",
         "end_time": "2026-09-21T06:00:00-07:00",
@@ -126,13 +109,13 @@
         "wind_direction": "W",
         "icon": "https://api.weather.gov/icons/land/night/ovc?size=medium",
         "short_forecast": "Cloudy",
-        "detailed_forecast": "Cloudy, with a low around 58.",
+        "detailed_forecast": "Cloudy, with a low around 58. West wind 8 to 12 mph.",
         "pop_pct": 2,
         "dewpoint_f": null,
         "relative_humidity_pct": null
       },
       {
-        "number": 7,
+        "number": 6,
         "name": "Monday",
         "start_time": "2026-09-21T06:00:00-07:00",
         "end_time": "2026-09-21T18:00:00-07:00",
@@ -149,7 +132,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 8,
+        "number": 7,
         "name": "Monday Night",
         "start_time": "2026-09-21T18:00:00-07:00",
         "end_time": "2026-09-22T06:00:00-07:00",
@@ -166,7 +149,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 9,
+        "number": 8,
         "name": "Tuesday",
         "start_time": "2026-09-22T06:00:00-07:00",
         "end_time": "2026-09-22T18:00:00-07:00",
@@ -183,7 +166,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 10,
+        "number": 9,
         "name": "Tuesday Night",
         "start_time": "2026-09-22T18:00:00-07:00",
         "end_time": "2026-09-23T06:00:00-07:00",
@@ -200,7 +183,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 11,
+        "number": 10,
         "name": "Wednesday",
         "start_time": "2026-09-23T06:00:00-07:00",
         "end_time": "2026-09-23T18:00:00-07:00",
@@ -217,7 +200,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 12,
+        "number": 11,
         "name": "Wednesday Night",
         "start_time": "2026-09-23T18:00:00-07:00",
         "end_time": "2026-09-24T06:00:00-07:00",
@@ -234,7 +217,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 13,
+        "number": 12,
         "name": "Thursday",
         "start_time": "2026-09-24T06:00:00-07:00",
         "end_time": "2026-09-24T18:00:00-07:00",
@@ -251,7 +234,7 @@
         "relative_humidity_pct": null
       },
       {
-        "number": 14,
+        "number": 13,
         "name": "Thursday Night",
         "start_time": "2026-09-24T18:00:00-07:00",
         "end_time": "2026-09-25T06:00:00-07:00",
@@ -266,6 +249,23 @@
         "pop_pct": 0,
         "dewpoint_f": null,
         "relative_humidity_pct": null
+      },
+      {
+        "number": 14,
+        "name": "Friday",
+        "start_time": "2026-09-25T06:00:00-07:00",
+        "end_time": "2026-09-25T18:00:00-07:00",
+        "is_daytime": true,
+        "temperature_f": 69,
+        "temperature_unit": "F",
+        "wind_speed": "7 to 12 mph",
+        "wind_direction": "W",
+        "icon": "https://api.weather.gov/icons/land/day/bkn?size=medium",
+        "short_forecast": "Partly Sunny",
+        "detailed_forecast": "Partly sunny, with a high near 69.",
+        "pop_pct": 0,
+        "dewpoint_f": null,
+        "relative_humidity_pct": null
       }
     ],
     "source_url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast",
@@ -273,35 +273,9 @@
   },
   "forecast_hourly": {
     "updated": "2026-09-18T20:26:33+00:00",
-    "generated_at": "2026-09-18T23:23:29+00:00",
+    "generated_at": "2026-09-19T01:39:17+00:00",
     "elevation_m": 45.1104,
     "periods": [
-      {
-        "start_time": "2026-09-18T16:00:00-07:00",
-        "end_time": "2026-09-18T17:00:00-07:00",
-        "temperature_f": 64,
-        "dewpoint_f": 15.555555555555555,
-        "rh_pct": 88,
-        "wind_speed": "14 mph",
-        "wind_gust": null,
-        "wind_direction": "W",
-        "pop_pct": 0,
-        "qpf_mm": null,
-        "short_forecast": "Mostly Sunny"
-      },
-      {
-        "start_time": "2026-09-18T17:00:00-07:00",
-        "end_time": "2026-09-18T18:00:00-07:00",
-        "temperature_f": 63,
-        "dewpoint_f": 15.555555555555555,
-        "rh_pct": 90,
-        "wind_speed": "15 mph",
-        "wind_gust": null,
-        "wind_direction": "W",
-        "pop_pct": 0,
-        "qpf_mm": null,
-        "short_forecast": "Mostly Sunny"
-      },
       {
         "start_time": "2026-09-18T18:00:00-07:00",
         "end_time": "2026-09-18T19:00:00-07:00",
@@ -2297,6 +2271,32 @@
         "temperature_f": 61,
         "dewpoint_f": 13.88888888888889,
         "rh_pct": 87,
+        "wind_speed": "7 mph",
+        "wind_gust": null,
+        "wind_direction": "W",
+        "pop_pct": 0,
+        "qpf_mm": null,
+        "short_forecast": "Mostly Cloudy"
+      },
+      {
+        "start_time": "2026-09-25T04:00:00-07:00",
+        "end_time": "2026-09-25T05:00:00-07:00",
+        "temperature_f": 60,
+        "dewpoint_f": 13.88888888888889,
+        "rh_pct": 88,
+        "wind_speed": "7 mph",
+        "wind_gust": null,
+        "wind_direction": "W",
+        "pop_pct": 0,
+        "qpf_mm": null,
+        "short_forecast": "Mostly Cloudy"
+      },
+      {
+        "start_time": "2026-09-25T05:00:00-07:00",
+        "end_time": "2026-09-25T06:00:00-07:00",
+        "temperature_f": 60,
+        "dewpoint_f": 13.88888888888889,
+        "rh_pct": 88,
         "wind_speed": "7 mph",
         "wind_gust": null,
         "wind_direction": "W",
@@ -4889,10 +4889,10 @@
       "elevation_m": 45.72,
       "distance_m": 5900.9262123232,
       "observation": {
-        "timestamp": "2026-09-18T22:43:00+00:00",
-        "temperature_c": 17.68,
-        "dewpoint_c": 12.78,
-        "relative_humidity_pct": 73.00092311617,
+        "timestamp": "2026-09-19T00:43:00+00:00",
+        "temperature_c": 16.38,
+        "dewpoint_c": 12.92,
+        "relative_humidity_pct": 79.994940132646,
         "wind_speed_kmh": null,
         "wind_gust_kmh": null,
         "wind_direction_deg": null,
@@ -4909,14 +4909,14 @@
       "elevation_m": 62.419992,
       "distance_m": 17818.193337506,
       "observation": {
-        "timestamp": "2026-09-18T22:45:00+00:00",
+        "timestamp": "2026-09-19T01:15:00+00:00",
         "temperature_c": null,
         "dewpoint_c": null,
         "relative_humidity_pct": null,
         "wind_speed_kmh": null,
         "wind_gust_kmh": null,
         "wind_direction_deg": null,
-        "barometric_pressure_pa": 101610,
+        "barometric_pressure_pa": 101510,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
         "text_description": ""
@@ -4929,17 +4929,17 @@
       "elevation_m": 3.048,
       "distance_m": 19117.58413345,
       "observation": {
-        "timestamp": "2026-09-18T23:05:00+00:00",
-        "temperature_c": 19,
+        "timestamp": "2026-09-19T01:20:00+00:00",
+        "temperature_c": 16,
         "dewpoint_c": 13,
-        "relative_humidity_pct": 68.176241889352,
+        "relative_humidity_pct": 82.385951628273,
         "wind_speed_kmh": null,
         "wind_gust_kmh": null,
         "wind_direction_deg": null,
-        "barometric_pressure_pa": 101828.7,
+        "barometric_pressure_pa": 101760.98,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
-        "text_description": "Haze"
+        "text_description": "Clear"
       },
       "observation_url": "https://api.weather.gov/stations/KSFO/observations/latest"
     },
@@ -4949,13 +4949,13 @@
       "elevation_m": 712.9272,
       "distance_m": 20512.547709146,
       "observation": {
-        "timestamp": "2026-09-18T22:36:00+00:00",
+        "timestamp": "2026-09-19T00:36:00+00:00",
         "temperature_c": null,
-        "dewpoint_c": 10.22,
+        "dewpoint_c": 7.34,
         "relative_humidity_pct": null,
-        "wind_speed_kmh": 14.472,
-        "wind_gust_kmh": null,
-        "wind_direction_deg": 322,
+        "wind_speed_kmh": 17.712,
+        "wind_gust_kmh": 30.564,
+        "wind_direction_deg": 314,
         "barometric_pressure_pa": null,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
@@ -4977,14 +4977,14 @@
       "elevation_m": 29.410152,
       "distance_m": 22798.124785519,
       "observation": {
-        "timestamp": "2026-09-18T22:56:00+00:00",
-        "temperature_c": null,
-        "dewpoint_c": null,
-        "relative_humidity_pct": null,
-        "wind_speed_kmh": null,
-        "wind_gust_kmh": 1.62,
-        "wind_direction_deg": null,
-        "barometric_pressure_pa": null,
+        "timestamp": "2026-09-19T01:20:00+00:00",
+        "temperature_c": 20,
+        "dewpoint_c": 14.88,
+        "relative_humidity_pct": 72.377591665481,
+        "wind_speed_kmh": 0,
+        "wind_gust_kmh": 0,
+        "wind_direction_deg": 205,
+        "barometric_pressure_pa": 101690,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
         "text_description": ""
@@ -4997,7 +4997,7 @@
     "count": 0,
     "test_count": 0,
     "count_including_tests": 0,
-    "updated": "2026-09-18T23:23:12+00:00",
+    "updated": "2026-09-19T01:35:26+00:00",
     "events": [],
     "source_url": "https://api.weather.gov/alerts/active?zone=CAZ006",
     "human_url": "https://www.weather.gov/mtr"
