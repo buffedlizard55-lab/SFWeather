@@ -30,16 +30,22 @@ concurrency:
   group: update-noaa-data-${{ github.ref }}
   cancel-in-progress: true
 
+# Runner pinned to ubuntu-24.04 and actions bumped to their node24 majors for
+# the same reason documented in site-test.yml: the ubuntu-latest label migrates
+# to Ubuntu 26.04 between 19 October and 19 November 2026 and this workflow
+# runs unattended nightly through that window.  setup-python@v6 still accepts
+# the python-version input used here; upload-artifact@v6 still accepts
+# name/path/retention-days.
 jobs:
   fetch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -86,6 +92,14 @@ jobs:
           python3 -u pipeline/landlord_summary.py 2>&1 | tee -a pipeline_run.log
           code=${PIPESTATUS[0]}
           echo "LANDLORD_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
+
+      - name: Build the printable executive summary (machine-generated, drift-proof)
+        run: |
+          set +e
+          python3 -u pipeline/executive_summary.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "EXEC_SUMMARY_EXIT=$code" >> data/run_diagnostics.txt
           exit $code
 
       - name: Build the storm-watch digest (JSON + RSS)
@@ -146,7 +160,7 @@ jobs:
 
       - name: Upload the run log for inspection
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: pipeline-run-log
           path: pipeline_run.log
@@ -188,7 +202,8 @@ jobs:
           p = pathlib.Path("data/run_diagnostics.txt")
           lines = set(p.read_text().splitlines()) if p.exists() else set()
           need = ["PIPELINE_EXIT=0", "CALENDAR_EXIT=0", "CPC_BACKTEST_EXIT=0",
-                  "LANDLORD_EXIT=0", "DIGEST_EXIT=0", "MODEL_GUIDANCE_EXIT=0",
+                  "LANDLORD_EXIT=0", "EXEC_SUMMARY_EXIT=0", "DIGEST_EXIT=0",
+                  "MODEL_GUIDANCE_EXIT=0",
                   "FEED_EXIT=0", "VERIFY_EXIT=0", "CLAIMS_EXIT=0"]
           missing = [n for n in need if n not in lines]
           print("yes" if not missing else "no:" + ",".join(missing))

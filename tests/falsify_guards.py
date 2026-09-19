@@ -279,6 +279,12 @@ def _repo_copy_with(mutate_readme=None, mutate_data=None):
         (repo / "data").mkdir(parents=True, exist_ok=True)
         for f in DATA.glob("*.json"):
             shutil.copy2(f, repo / "data" / f.name)
+        # The executive-summary ledger check reads the generated document from
+        # the data dir; copy it so repo-based cases exercise the real check
+        # instead of its missing-file warning branch.
+        _es = DATA / "executive_summary.md"
+        if _es.exists():
+            shutil.copy2(_es, repo / "data" / _es.name)
         if mutate_readme:
             mutate_readme(repo / "README.md")
         if mutate_data:
@@ -291,15 +297,73 @@ def _repo_copy_with(mutate_readme=None, mutate_data=None):
 def _d(tmp):
     def mutate(path):
         s = path.read_text()
+        if "mean **12.79 in**" not in s:
+            # A replace() that silently finds nothing turns this case into a
+            # no-op pass; fail loudly instead (same class of time bomb as the
+            # horizon-date case below: the figure follows the dataset).
+            raise AssertionError("mutation target 'mean **12.79 in**' not found in README")
         path.write_text(s.replace("mean **12.79 in**", "mean **99.99 in**", 1))
     return _repo_copy_with(mutate_readme=mutate)(tmp)
 
 
 @case("README quotes a horizon date this run never published", "warn", "docs-current-dates-traceable")
 def _d2(tmp):
+    # The fake date is computed, not hard-coded.  The ledger's vocabulary of
+    # traceable dates advances with every nightly refresh (the CPC 8-14 day
+    # period rolls forward one day), so a literal date eventually collides with
+    # a real published date and this mutation silently becomes a no-op.  That
+    # happened on 19 Sep 2026: 2026-09-29 became the real end date of the
+    # current 8-14 day outlook, and this case flipped from warn to pass while
+    # the CI that had been green predated the refresh.  Rebuild the same
+    # vocabulary the ledger builds (run date, NWS window, forecast days, CPC
+    # issuance/valid dates) and pick a date inside the ledger's +/-30-day band
+    # that is provably absent from it; raise if there is none, because a
+    # mutation test that cannot mutate is worse than none.
+    import datetime as _dt
+    run = load("run.json")
+    cal = load("calendar.json")
+    landlord = load("landlord.json")
+    gen = (run.get("generated_utc") or "")[:10]
+    if not gen[:4].isdigit():
+        raise AssertionError("fixture expected a run.json with generated_utc")
+    run_date = _dt.datetime.strptime(gen, "%Y-%m-%d").date()
+    vocab = {run_date.isoformat()}
+    win = cal.get("nws_window") or {}
+    for key in ("first_day", "last_day", "forecast_updated"):
+        v = str(win.get(key) or "")[:10]
+        if len(v) == 10:
+            vocab.add(v)
+    for day in ((cal.get("current_forecast") or {}).get("days") or []):
+        vocab.add(str(day.get("date"))[:10])
+
+    def _add_cpc(rows):
+        for r in rows or []:
+            if not isinstance(r, dict):
+                continue
+            for key in ("issued", "fcst_date", "start_date", "end_date"):
+                v = str(r.get(key) or "")
+                if len(v) == 10 and v[4] == "-":
+                    vocab.add(v)
+                elif len(v) == 8 and v.isdigit():
+                    vocab.add(f"{v[:4]}-{v[4:6]}-{v[6:]}")
+
+    _add_cpc(landlord.get("cpc_outlooks_relevant") or [])
+    _add_cpc(((cal.get("cpc") or {}).get("records") or []))
+    fake = None
+    for k in range(2, 31):
+        cand = (run_date + _dt.timedelta(days=k)).isoformat()
+        if cand not in vocab:
+            fake = cand
+            break
+    if fake is None:
+        raise AssertionError("no date free within the 30-day band to falsify with")
+
     def mutate(path):
         s = path.read_text()
-        path.write_text(s + "\n\nThe NWS horizon currently ends 2026-09-29.\n")
+        text = s + f"\n\nThe NWS horizon currently ends {fake}.\n"
+        if fake not in text:
+            raise AssertionError("mutation did not land: fake date absent")
+        path.write_text(text)
     return _repo_copy_with(mutate_readme=mutate)(tmp)
 
 
@@ -998,6 +1062,32 @@ def _pc7(tmp):
         cav["quotes"][0]["text"] = "decoded with replacement \ufffd somewhere."
     _patch_caveats(tmp, fn)
     return tmp
+
+
+@case("an invented link slipped into the executive summary", "fail",
+      "executive-summary-traceable")
+def _es1(tmp):
+    repo = _repo_copy_with()(tmp)
+    p = repo / "data" / "executive_summary.md"
+    if not p.exists():
+        raise AssertionError("fixture expected a committed executive_summary.md")
+    p.write_text(p.read_text() +
+                 "\n- bonus link: [https://example.com/invented](https://example.com/invented)\n")
+    return repo
+
+
+@case("the executive summary generation stamp hand-edited", "fail",
+      "executive-summary-traceable")
+def _es2(tmp):
+    repo = _repo_copy_with()(tmp)
+    p = repo / "data" / "executive_summary.md"
+    s = p.read_text()
+    ll = load("landlord.json")
+    stamp = ll.get("generated_utc") or ""
+    if not stamp or stamp not in s:
+        raise AssertionError("fixture expected the landlord stamp inside the summary")
+    p.write_text(s.replace(stamp, stamp[:-1] + ("0" if stamp[-1] != "0" else "1"), 1))
+    return repo
 
 
 def main():

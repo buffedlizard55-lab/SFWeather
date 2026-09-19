@@ -1762,6 +1762,56 @@ def main() -> int:
         severity="warning",
         evidence={"stale": stale_dates[:10], "window_dates": sorted(window_dates)})
 
+    # ------------------------------------ 12c-bis. the executive summary document
+    # data/executive_summary.md is machine-generated from landlord.json on every
+    # pipeline run (pipeline/executive_summary.py).  The check pins that
+    # contract: the document must carry the same generation stamp and the same
+    # cost-driver titles as the dataset, and every URL it prints must appear
+    # verbatim in one of the datasets it was built from.  A hand edit cannot
+    # satisfy those three conditions, which is the point: the bug-40 lesson was
+    # that numbers retyped into prose drift from the dataset within weeks.
+    es_md_path = DATA / "executive_summary.md"
+    if not es_md_path.exists():
+        ledger.check(
+            "executive-summary-traceable",
+            "The printable executive summary is machine-generated from the "
+            "datasets and carries no invented figures or links",
+            True,
+            "executive_summary.md is not present in this checkout; the nightly "
+            "pipeline step that generates it has not run yet",
+            severity="warning")
+    else:
+        es_md = es_md_path.read_text(encoding="utf-8")
+        es_drivers = (((landlord.get("executive_summary") or {})
+                       .get("cost_drivers")) or [])
+        es_stamp = landlord.get("generated_utc") or run.get("generated_utc") or ""
+        missing_titles = [d.get("driver") for d in es_drivers
+                          if str(d.get("driver") or "") not in es_md]
+        stamp_ok = bool(es_stamp) and str(es_stamp) in es_md
+        dataset_text = "".join(
+            json.dumps(load(n), default=str)
+            for n in ("landlord.json", "run.json", "calendar.json",
+                      "cpc.json", "nws.json"))
+        md_urls = sorted(set(_re_docs.findall(r"https?://[^\s)\]>\"']+", es_md)))
+        invented_urls = [u for u in md_urls if u not in dataset_text]
+        es_ok = stamp_ok and not missing_titles and not invented_urls
+        ledger.check(
+            "executive-summary-traceable",
+            "The printable executive summary is machine-generated from the "
+            "datasets and carries no invented figures or links",
+            es_ok,
+            ("generation stamp missing" if not stamp_ok else "") +
+            (f"; {len(missing_titles)} cost-driver title(s) missing: {missing_titles[:4]}"
+             if missing_titles else "") +
+            (f"; {len(invented_urls)} URL(s) appear in no source dataset: {invented_urls[:4]}"
+             if invented_urls else "") or
+            f"stamp {es_stamp} present, all {len(es_drivers)} driver titles and "
+            f"all {len(md_urls)} links trace to the datasets",
+            severity="error",
+            evidence={"stamp": es_stamp, "missing_titles": missing_titles[:10],
+                      "invented_urls": invented_urls[:10],
+                      "url_count": len(md_urls)})
+
     # ------------------------------------ 12d. hour-by-hour wind+rain statistics
     # The landlord's key question is whether rain and wind happen *at the same
     # time*.  The published hour-by-hour figure must be the arithmetic over the

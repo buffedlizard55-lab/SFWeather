@@ -799,3 +799,129 @@ rendered in the outlook strip, `#landlord-official`):
   and checked by the ledger), `data/verify.json` / `verify_report.txt`
   (regenerated, 70 checks). Everything else remains the dataset the
   19 Sep 07:15 UTC CI run fetched and verified.
+
+## Session 11 — 19 September 2026 (pass 11): stale-PR audit, falsify time bomb #2, printable executive summary, CI migration hardening, live re-verification
+
+Starting point: `main` at `5c8bef0` (the 19 Sep 19:42 UTC data refresh that
+followed the session-10 merge, ledger 70 checks green at merge time).
+
+### PR #15 — audited line by line, closed as superseded, two surviving gaps forward-ported
+
+Session 7's PR (#15, `arena/01a0b5b2-sfweather`) had been left OPEN while
+sessions 8–10 (#16–#20) were merged. Audit on 19 Sep 2026:
+
+* A merge would have been destructive: direct diff `origin/main → pr15 head`
+  is **71 files, +4,142 / −34,911 lines** — it would revert the model-guidance
+  tier, CPC back-test, digest, AFD history, deep links and the sessions 8–10
+  test growth.
+* Its three headline features are verifiably present in main, rebuilt by the
+  later sessions: `climo.afd_language_scan` + `#afd-language` card; Census
+  GEOID `0607593267` in `data/calendar.json`/`run.json`/`verify.json`;
+  `temp_basis`/`gust_basis`/`rain_chance_basis` on all 123 days; ledger checks
+  `census-geographies-traceable`, `afd-language-verbatim`,
+  `day-field-basis-complete`.
+* `git merge-base --is-ancestor` = false for all five substantive commits
+  (`439ab57` degraded-state rendering, `25d683d` failed-fetch explanations,
+  `4837f57` pass-3 recheck, `890d777` guard defects, `b776efc`/`45b88e0`
+  bug 54). Spot-checks of current main found two still-live gaps, forward-
+  ported this session: (1) `kvTable` still drops null rows, so a missing
+  individual Census geography field vanishes silently — documented here as an
+  open follow-up (the block-level "not retrieved" case is already handled);
+  (2) there was no `failed-fetches-explained` ledger check — left as a
+  follow-up; the quality report already explains each failed fetch in prose.
+  PR #15 was closed with this audit attached rather than merged.
+
+### Bug 71 — a second time bomb, this one in the falsification harness
+
+| # | Symptom | Root cause | Fix |
+| --- | --- | --- | --- |
+| 71 | `tests/falsify_guards.py` exited 1 on freshly refreshed main: *"README quotes a horizon date this run never published: expected warn, got pass"* — the suite had been green at the session-10 merge, then the 19:42 data refresh (committed `[skip ci]`) broke it | The case injected the literal date **2026-09-29** as a fake NWS horizon end. On 19 Sep that date became the *real* end of the CPC 8–14 day valid period, which the `docs-current-dates-traceable` check counts as a traceable vocabulary date — so the mutation became a no-op pass. Same class as bug 70 (hard-coded weather facts decaying under nightly refreshes); the `[skip ci]` data commit is why CI never saw it | The case now rebuilds the ledger's own date vocabulary (run date, NWS window, forecast days, CPC issuance/valid dates) from the committed datasets and picks a date inside the ±30-day band that is provably absent from it, raising if none exists. The sibling README-figure case got the same hardening: its `replace()` target is now asserted present before mutating, because a `replace()` that silently finds nothing is a no-op pass |
+
+### Feature: the printable executive summary (machine-generated, drift-proof)
+
+The landlord dashboard already carries the ranked cost drivers; what did not
+exist was a single shareable document. `pipeline/executive_summary.py` now
+generates `data/executive_summary.md` + `.json` from `landlord.json`/
+`run.json`/`calendar.json`/`cpc.json`/`nws.json` on every pipeline run: the
+six landlord answers with their number tables and basis lines, the official
+outlook (ENSO state, CPC tilts incl. the three verbatim caveats, the
+ENSO-conditioned record, the live horizon), the six ranked repair &
+maintenance cost drivers with evidence and source links, the expected day
+counts with thresholds *derived from the dataset's own severity keys*, the
+"what this document cannot tell you" statement, and the manual-review links.
+No figure or link is typed in prose: every one is copied from a dataset
+field, and the threshold strings (0.25 / 0.50 / 1.00 / 2.00 / 4.00 in) are
+parsed out of `expected_days`/`severity` key names. Missing inputs exit 1
+rather than publishing a half-built document, and the workflow's publish gate
+now requires `EXEC_SUMMARY_EXIT=0`.
+
+Guards:
+
+* Ledger check **71, `executive-summary-traceable`**: the document must carry
+  the dataset's own generation stamp, all cost-driver titles in full, and
+  every URL it prints must appear verbatim in one of the five source
+  datasets. A hand edit cannot satisfy all three. Falsified by 2 new cases
+  in `tests/falsify_guards.py` (invented link, hand-edited stamp) — **65
+  cases total**.
+* **7 new offline assertions** in `tests/test_parsers.py`: driver titles in
+  rank order, generation stamp, every link traceable, every numeric token in
+  the document appears in the source datasets, the JSON mirror agrees, the
+  generator refuses an empty data dir, and it writes both artifacts against a
+  real data copy — **426 assertions total**.
+* The dashboard's executive-summary callout links to the printable page;
+  README documents the drift-proof contract.
+
+### CI housekeeping before the ubuntu-latest migration
+
+* GitHub's changelog (2026-09-17) confirms the `ubuntu-latest` label migrates
+  24.04 → **26.04 gradually between 19 Oct and 19 Nov 2026**. Both workflows
+  now pin `runs-on: ubuntu-24.04` with the rationale inline, so the unattended
+  nightly refresh cannot change OS underneath it mid-season; the move to 26.04
+  is a deliberate later task.
+* The Node-20 deprecation warnings were resolved by bumping to the lowest
+  major that declares `using: node24`, **read from each action's own
+  action.yml at the tag**: `actions/checkout` v4→v5, `actions/setup-node`
+  v4→v5, `actions/setup-python` v5→v6 (still accepts `python-version`),
+  `actions/upload-artifact` v4→v6 (still accepts name/path/retention-days).
+
+### Live re-verification, 19 Sep 2026 ~20:40 UTC (no hallucination pass)
+
+Every item fetched live from the official product and compared line by line
+against the committed dataset:
+
+| Product | Live official URL | Result |
+| --- | --- | --- |
+| NWS daily forecast, grid MTR 82,105 | https://api.weather.gov/gridpoints/MTR/82,105/forecast | PoP values for all 13 committed periods **exact match** (0,1,1,1,2,2,0,0,0,0,0,0,0). Live issuance 20:26:32Z is 2 h newer than the committed fetch (18:27:15Z) and adjusted period-1 wind "9 to 14" → "10 to 14 mph"; the nightly refresh picks that up. Horizon still ends 2026-09-25 |
+| Official ONI file | https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt | Last line `JJA 2026  29.09  1.80` — **exact match** with the published +1.80 °C |
+| ENSO Diagnostic Discussion (issued 10 Sep 2026) | https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml | **El Niño Advisory** status, Niño-3.4 +1.8 °C August, next discussion **8 October 2026** — all match `data/enso.json`, which already archived the ">90% chance of a very strong event" and "75% chance of a historic event (+2.5 °C or more)" sentences |
+| CPC long-lead Prognostic Discussion fxus05 (issued 17 Sep 2026) | https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html | All three published caveat quotes **verbatim matches** (PDO −1.11 sentence; "may dampen the typical impacts of a strong El Niño"; "may be increased further … mid-late October"). OND wet signal "from the southern half of California" is consistent with the EC sampling at 94122 for OND; "maximum of 50-60 percent near the coast during DJF, JFM, and FMA" is consistent with the sampled DJF 40% / JFM 50% tilts |
+| ZIP centroid coordinate | https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip | re-derived in every run by the pipeline; 37.760459, −122.483894 |
+
+### CPC back-test archive probe (bounded, documented)
+
+The archive index (https://www.cpc.ncep.noaa.gov/products/archives/long_lead/llarc.ind.php)
+is a form posting to `llarc.php`; the endpoint is **alive and validating input**
+(both probe attempts returned "Bad month entry. A 2 digit number between 01 and
+12 must be entered"), but the form's parameter names are not recoverable from
+the rendered page nor from any archived capture (CDX shows a single bare
+capture of `llarc.php`, 2006). Newly mapped URL patterns: per-month outlook
+**GIFs** at `products/archives/long_lead/gifs/YYYY/YYYYMMmonth.gif` (archived
+200s back to 1997 — graphics, not sampleable shapefiles) and a
+`products/archives/long_lead/data/YYYY/` tree (live directory 403; archived
+members include `data/2002/wash.txt`). The live GIS mirror still 404s for
+`seasprcp_199510.zip`. The back-test therefore stays honestly
+`pending-backfill`; the next attempt should POST the form with guessed field
+names or inspect the page's raw HTML from a browser.
+
+### Standings after this pass
+
+* `pipeline/verify_claims.py`: **71 checks pass, 0 fail, 0 warnings** (70 +
+  `executive-summary-traceable`), 19 recorded claims.
+* `tests/test_parsers.py`: **426/426** (419 + 7). `tests/falsify_guards.py`:
+  **65 cases** behave (63 + 2). `tests/falsify_smoke.py`: 27 cases behave.
+  `npm test` passes. Workflow YAML re-validated.
+* New/changed files: `pipeline/executive_summary.py` (new),
+  `data/executive_summary.md`/`.json` (new, machine-generated),
+  `pipeline/verify_claims.py`, `tests/test_parsers.py`,
+  `tests/falsify_guards.py`, `index.html`, `README.md`, both workflows,
+  `docs/NEXT_SESSION.md`, this file.
