@@ -1,9 +1,9 @@
 {
-  "generated_utc": "2026-09-19T01:48:18Z",
+  "generated_utc": "2026-09-19T04:24:37Z",
   "counts": {
-    "total": 8,
+    "total": 7,
     "errors": 0,
-    "warnings": 4,
+    "warnings": 3,
     "info": 4
   },
   "irregularities": [
@@ -97,21 +97,12 @@
     },
     {
       "severity": "warning",
-      "area": "model_guidance",
-      "message": "The raw model archive was not probed: the archive page was retrieved but listed no run directories on this pass, so there was nothing to probe - if NOAA changed the layout of that page, ARCHIVE_ROW_RE needs updating",
-      "evidence": {
-        "archive_url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/",
-        "runs_listed": 0
-      },
-      "source": "model_guidance"
-    },
-    {
-      "severity": "warning",
       "area": "feed",
-      "message": "2 feed entries cite a URL with no successful fetch in any provenance manifest. They are marked provenance_verified=false rather than dropped, so a reader can still follow them, but no figure on the site may depend on them.",
+      "message": "3 feed entries cite a URL with no successful fetch in any provenance manifest. They are marked provenance_verified=false rather than dropped, so a reader can still follow them, but no figure on the site may depend on them.",
       "evidence": {
         "urls": [
           "https://api.weather.gov/products/2f894049-4561-49f5-8f84-48f92f351edf",
+          "https://api.weather.gov/products/eafb83e6-b2a4-4f01-bba0-8dcc8c397487",
           "https://www.cpc.ncep.noaa.gov/products/archives/long_lead/llarc.ind.php"
         ]
       },
