@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -66,9 +67,50 @@ def _c1(repo):
 # claim ledger's job - see tests/falsify_guards.py, case "a quoted AFD sentence
 # edited (no longer verbatim)", which fails exactly this mutation.  Kept here so
 # the boundary between the two harnesses is written down rather than assumed.
+# Bug 72, render side: _c2 and _c3 looped for the first non-empty category and
+# mutated nothing on a dry discussion, so _c3 "failed" without testing the
+# guard and _c2 passed vacuously.  seed_afd_sentence() publishes one verbatim
+# sentence from the fetched discussion archived in the same fixture first, so
+# both cases exercise the renderer against the shape a stormy night produces.
+def _first_prose_sentence(afd_text):
+    collapsed = re.sub(r"\s+", " ", afd_text or "").strip()
+    for frag in re.split(r"(?<=[.!?])\s+", collapsed):
+        s = frag.strip()
+        if len(s) < 60:
+            continue
+        if s.startswith("Issued at"):
+            continue
+        if "..." in s or "&&" in s or "FXUS" in s or "AFDMTR" in s:
+            continue
+        if not re.match(r"[A-Z]", s):
+            continue
+        if s.count(".") > 3:
+            continue
+        return s
+    raise AssertionError("fixture AFD text carries no seedable prose sentence")
+
+
+def seed_afd_sentence(repo):
+    cal_p = repo / "data" / "calendar.json"
+    cal = json.loads(cal_p.read_text())
+    cats = cal["afd_language"]["categories"]
+    if any(c.get("sentences") for c in cats):
+        return
+    nws = json.loads((repo / "data" / "nws.json").read_text())
+    seed = _first_prose_sentence(
+        ((nws.get("products") or {}).get("AFD") or {}).get("text") or "")
+    section = (cal["afd_language"].get("sections_scanned") or ["LONG TERM"])[0]
+    cats[0]["sentences"] = [{
+        "section": section, "sentence": seed, "matched_patterns": []}]
+    cats[0]["sentence_count"] = 1
+    cal["afd_language"]["any_language_found"] = True
+    cal_p.write_text(json.dumps(cal))
+
+
 @case("a quoted AFD sentence edited in the data (ledger's job, not the renderer's)",
       expect_fail=False)
 def _c2(repo):
+    seed_afd_sentence(repo)
     def fn(cal):
         for cat in cal["afd_language"]["categories"]:
             if cat["sentences"]:
@@ -80,6 +122,7 @@ def _c2(repo):
 
 @case("an AFD quotation given a date")
 def _c3(repo):
+    seed_afd_sentence(repo)
     def fn(cal):
         for cat in cal["afd_language"]["categories"]:
             if cat["sentences"]:
@@ -425,6 +468,67 @@ def _cav4(repo):
     patch_json(repo, "data/landlord.json", fn)
     patch_text(repo, "assets/js/app.js",
                "el('div', { class: 'off-sub', text: cav.reason || 'The archived discussion could not be read this run.' }),",
+               "el('div', { class: 'off-sub', text: '' }),")
+    return repo
+
+
+# ==========================================================================
+# Cases for render guard 31: the ENSO strength outlook card.
+# ==========================================================================
+
+@case("an ENSO strength sentence in the dataset but not rendered",
+      expect_msg="strength quote")
+def _str1(repo):
+    # Mirror of _cav1 for the strength card, with one improvement: it asserts
+    # the fixture carries at least two quotes before slicing one away, so a
+    # rewritten discussion cannot turn this case into a silent no-op pass.
+    ll = json.loads((repo / "data" / "landlord.json").read_text())
+    n_quotes = len(((((ll.get("executive_summary") or {}).get("official_outlook")
+                       or {}).get("enso_strength")) or {}).get("quotes") or [])
+    assert n_quotes >= 2, "fixture expected at least two strength quotes to drop one of"
+    patch_text(repo, "assets/js/app.js",
+               "const squotes = (estr.quotes || []).map(q => [",
+               "const squotes = (estr.quotes || []).slice(0, 1).map(q => [")
+    return repo
+
+
+@case("the strength card rendered without its no-added-number marker",
+      expect_msg="no number or date of its own")
+def _str2(repo):
+    patch_text(repo, "assets/js/app.js",
+               "document.createTextNode('Quoted verbatim from CPC\\u2019s discussion "
+               "\\u2014 no number or date of its own added by this project \\u00b7 '),",
+               "document.createTextNode('From the discussion \\u00b7 '),")
+    return repo
+
+
+@case("the strength card rendered without its source link",
+      expect_msg="does not link the ENSO Diagnostic Discussion")
+def _str3(repo):
+    patch_text(repo, "assets/js/app.js",
+               "link(estr.source_url, 'Read CPC\\u2019s ENSO Diagnostic Discussion')",
+               "document.createTextNode('CPC ENSO Diagnostic Discussion')")
+    return repo
+
+
+@case("an unavailable strength card that renders without its stated reason",
+      expect_msg="does not state its reason")
+def _str4(repo):
+    # Make the dataset honestly unavailable (reason stated), then break the
+    # renderer's disclosure of that reason.
+    def fn(ll):
+        estr = ll["executive_summary"]["official_outlook"]["enso_strength"]
+        estr.clear()
+        estr.update({
+            "available": False,
+            "reason": "The archived ENSO Diagnostic Discussion is absent or "
+                    "empty in this run, so no strength outlook can be quoted.",
+            "source_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml",
+            "quotes": [],
+        })
+    patch_json(repo, "data/landlord.json", fn)
+    patch_text(repo, "assets/js/app.js",
+               "el('div', { class: 'off-sub', text: estr.reason || 'The archived ENSO discussion could not be read this run.' }),",
                "el('div', { class: 'off-sub', text: '' }),")
     return repo
 

@@ -925,3 +925,121 @@ names or inspect the page's raw HTML from a browser.
   `pipeline/verify_claims.py`, `tests/test_parsers.py`,
   `tests/falsify_guards.py`, `index.html`, `README.md`, both workflows,
   `docs/NEXT_SESSION.md`, this file.
+
+## Session 12 — 19 September 2026 (pass 12): dry-discussion seed fix, ENSO strength probabilities on the outlook strip
+
+Starting point: `main` at `b4f1be5` (a nightly `[skip ci]` data refresh; the
+session-11 work — printable executive summary, ledger at 71 — already in the
+tree). This session implements priority 6 of the session-11 handoff (surface
+the ENSO strength probabilities) and fixes one harness bug found while
+re-proving the suite.
+
+### Bug 72 — the falsification harnesses assumed a discussion with quotable sentences
+
+| # | Symptom | Root cause | Fix |
+| --- | --- | --- | --- |
+| 72 | `tests/falsify_guards.py` failed 4 cases and `tests/falsify_smoke.py` 1 case against the refreshed data, all *expected-fail-got-pass*: the AFD-language mutations had nothing to mutate | The September AFD carries no storm-language sentence the scanner quotes, so cases that "edit the first quotation" / "drop a quotation" were no-ops that passed. Same family as bugs 70–71 (fixtures decaying under real data), but inverted: an *empty* product instead of a changed one | The harnesses now **seed one verbatim sentence from the archived AFD text and then mutate it** (rejected alternative: fail loudly on empty discussions, which would red-den CI on every dry discussion). Both harnesses re-proved: 65/65 ledger cases, 27/27 smoke cases |
+
+Process note: two same-file `falsify_guards.py` edits applied in parallel
+mid-session raced last-writer-wins and silently dropped each other; the suite
+caught the stale bodies before anything was merged. Same-file edits are now
+applied strictly sequentially.
+
+### Feature: the El Niño strength outlook, quoted verbatim (closes handoff priority 6)
+
+**Why.** The outlook strip already showed the ENSO state (El Niño Advisory,
++1.80 °C) and the forecasters' caveats — but not the probabilities *behind*
+the outlook: the September ENSO Diagnostic Discussion states a greater than
+90% chance of a very strong event during the Northern Hemisphere fall and
+winter 2026-27, and a 75% chance of a historic event for the
+October–December 2026 season. Those sentences were archived in
+`data/enso.json` and live-verified in session 11, yet unreachable from the
+page a landlord reads.
+
+**What was built** (`enso_strength_outlook()` in
+`pipeline/landlord_summary.py`, rendered in the outlook strip,
+`#landlord-official`, and as a bullet in the printable executive summary):
+
+* Two pattern-located sentences are extracted from the *archived* ENSO
+  Diagnostic Discussion in `data/enso.json` (URL, SHA-256 and byte count of
+  the fetch carried alongside): the very-strong-event probability and the
+  historic-event probability. Patterns generalise the parts CPC rewrites
+  monthly (the percentage, the season) because the discussion is a new
+  document each issuance.
+* Quotations only, copied verbatim (whitespace-collapsed), with a stated
+  marker that no number or date of the project's own was added. A matched
+  sentence that is not clean printable text is refused and reported, never
+  published.
+* What was watched for and not found is published (`not_found`); when the
+  October discussion drops or rewords a sentence, the card follows the same
+  run and cannot hold a stale quote over.
+* A discussion the pipeline flagged as carrying no current-year text is
+  **refused outright** (`usable_as_current_source: false` → honest
+  `available: false` with a reason): last month's probabilities printed next
+  to this month's ONI would read as current when they are not.
+
+**Defect caught by the new tests before merge (no bug number — never
+published broken):** the first historic-pattern tail (`[^.]+`) ended the
+quotation at the first period *anywhere*, clipping the committed quote to
+"…dating back to 1950 (+2." and silently dropping the threshold definition
+"(+2.5 °C or more for a 3-month RONI value)". Both pattern tails now match a
+decimal number atomically, so only a period outside a number can end a
+quotation; the offline suite pins a decimal-threshold sentence verbatim.
+
+**Guardrails added** (each falsified before being kept):
+
+* Ledger check `enso-strength-verbatim` (**check 72**): every published quote
+  must be a whitespace-collapsed substring of the archived ENSO discussion;
+  the archive must trace to a recorded fetch and be usable as a current
+  source; quote keys must come from `patterns_watched_for`; an `available`
+  block must have the archive and non-empty quotes; an unavailable block must
+  state a reason and carry no quotes; no quote may contain control characters
+  or U+FFFD. Falsified by 8 new cases in `tests/falsify_guards.py` (edited
+  quote, hand-added key, block removed, archive deleted, honest
+  unavailability passing, mojibake smuggling, U+FFFD smuggling, stale
+  discussion quoted as current) — 73 cases total.
+* Render guard 31 in `tests/smoke.js`: every strength quote in the dataset
+  must render inside the outlook strip with the no-added-number marker and
+  the source link; an unavailable card must state its reason. Falsified by 4
+  new cases in `tests/falsify_smoke.py` (renderer drops a quote — asserting
+  the fixture carries two first, so a rewritten discussion cannot no-op the
+  case — marker removed, link removed, unavailable card without its reason)
+  — 31 cases total.
+* 13 new offline assertions in `tests/test_parsers.py` pin the extractor
+  against synthetic discussions: full extraction, both sentences verbatim,
+  issuance line, source/hash lineage, rewritten discussion (both absent,
+  named), control-character refusal with the surviving sentence still
+  published, U+FFFD refusal, missing archive, empty enso file, stale-discussion
+  refusal, the decimal-threshold tail, and the committed `landlord.json`
+  block equal to a fresh extraction over the committed `enso.json` — **439
+  assertions total**.
+
+### Live re-verification (~21:55 UTC, after the data refresh)
+
+Every item fetched live from the official product and compared against the
+committed dataset:
+
+| Product | Live official URL | Result |
+| --- | --- | --- |
+| NWS daily forecast, grid MTR 82,105 | https://api.weather.gov/gridpoints/MTR/82,105/forecast | All 14 committed periods **exact match** (This Afternoon 66 °F PoP 0; Sun 62 °F PoP 1; Mon 62/58 °F PoP 2/2; Tue 64/57 °F PoP 0/0; Wed 70/58; Thu 72/59; Fri 68 °F) |
+| NWS alerts, zone CAZ006 | https://api.weather.gov/alerts/active?zone=CAZ006 | 0 active alerts, updated 21:55 UTC — matches the committed count |
+| Official ONI file | https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt | Last line `JJA 2026 +1.80` — **exact match**; AMJ derived 0.98 vs official 0.95 (0.03 ERSST-lag difference, documented) |
+| ENSO Diagnostic Discussion (issued 10 Sep 2026) | https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml | Page matches the archived text verbatim, including both published strength sentences in full (the 90% synopsis sentence and the 75% historic-event sentence with its +2.5 °C RONI threshold); next discussion 8 Oct 2026 |
+| CPC long-lead Prognostic Discussion fxus05 (issued 17 Sep 2026) | https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html | Issuance line, OND wording, the third caveat sentence ("may be increased further … mid-late October") and the "superseded … Oct 15 2026" line all match the archived text — page unchanged since the pipeline's fetch |
+
+### Standings after this pass
+
+* `pipeline/verify_claims.py`: **72 checks pass, 0 fail, 0 warnings** (71 +
+  `enso-strength-verbatim`), 19 recorded claims.
+* `tests/test_parsers.py`: **439/439** (426 + 13). `tests/falsify_guards.py`:
+  **73 cases** behave (65 + 8). `tests/falsify_smoke.py`: **31 cases** behave
+  (27 + 4). `npm test` (jsdom render, guards 1–31) passes.
+* Data files regenerated offline from the same verified inputs:
+  `data/landlord.json` (carries the strength block), `data/executive_summary.md`/`.json`
+  (the new strength bullet), `data/verify.json` / `verify_report.txt` (72
+  checks). Nothing else in `data/` changed.
+* New/changed files: `pipeline/landlord_summary.py`,
+  `pipeline/executive_summary.py`, `pipeline/verify_claims.py`,
+  `assets/js/app.js`, `tests/smoke.js`, `tests/test_parsers.py`,
+  `tests/falsify_guards.py`, `tests/falsify_smoke.py`, `README.md`,
+  `docs/LIMITATIONS.md`, `docs/NEXT_SESSION.md`, this file.

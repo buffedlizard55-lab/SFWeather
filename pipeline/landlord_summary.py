@@ -476,12 +476,118 @@ def prognostic_caveats(cpc):
     }
 
 
+#: Sentences this page watches for in CPC's monthly ENSO Diagnostic Discussion
+#: (ensodisc.shtml): the forecasters' probability statements about how strong
+#: the current El Niño gets.  They are the numbers behind the seasonal
+#: outlook this page summarises - the ">90% chance of a very strong event"
+#: in the synopsis and the "75% chance of a historic event" for OND - so
+#: they belong on the outlook strip next to the ENSO state, quoted verbatim.
+#: Same contract as the prognostic caveats above: the parts CPC rewrites
+#: each month (the percentage, the season) are generalised, and what is
+#: published is the matched span, verbatim - never a paraphrase.
+ENSO_STRENGTH_PATTERNS = [
+    {
+        "key": "very_strong_event_probability",
+        "label": "CPC's stated chance of a very strong event this fall and winter",
+        # Tail matches a decimal number atomically: these sentences carry
+        # thresholds such as "+2.5C", and a bare [^.]+ tail would clip the
+        # quotation at the decimal point.
+        "pattern": (r"[^.:]*?greater than \d+% chance of a very strong event "
+                    r"during (?:\d+\.\d+|[^.])+\."),
+    },
+    {
+        "key": "historic_event_probability",
+        "label": "CPC's stated chance of a historic-strength event this season",
+        # Same decimal-tolerant tail: the committed September discussion writes
+        # "(+2.5C or more ...)", which the bare tail clipped to "(+2.".
+        "pattern": (r"During the [A-Za-z]+-[A-Za-z]+ \d{4} season, there is a "
+                    r"\d+% chance of a historic event(?:\d+\.\d+|[^.])+\."),
+    },
+]
+
+
+def enso_strength_outlook(enso):
+    """Extract CPC's El Niño strength outlook, quoted verbatim.
+
+    The ENSO Diagnostic Discussion is fetched, hashed and archived whole by
+    the pipeline (``data/enso.json`` -> ``sources``).  This function reads
+    that archived text and pulls out the sentences that state how strong CPC
+    expects the current El Niño to get - the probabilities behind the
+    seasonal outlook, in the forecasters' own words.  Design rules, same as
+    prognostic_caveats() above:
+
+    * quotations only, copied verbatim (whitespace collapsed) - the reader
+      sees CPC's probabilities, never this project's restatement of them;
+    * located by pattern, so a rewritten discussion simply publishes nothing
+      rather than a stale quote;
+    * what was watched for and not found is published as ``not_found``;
+    * no date, amount or probability of this project's making is attached.
+
+    A discussion the pipeline flagged as stale (no current-year text) is
+    refused outright: strength probabilities from an outdated discussion,
+    printed next to today's ONI, would read as current when they are not.
+    """
+    sources = (enso or {}).get("sources") or []
+    disc = next((d for d in sources
+                 if "ensodisc" in (d.get("url") or "")
+                 or "ENSO Diagnostic Discussion" in (d.get("label") or "")), None)
+    if not disc or not (disc.get("text") or "").strip():
+        return {
+            "available": False,
+            "reason": ("The archived ENSO Diagnostic Discussion is absent or "
+                       "empty in this run, so no strength outlook can be quoted."),
+            "source_url": ENSODISC_URL,
+        }
+    if disc.get("usable_as_current_source") is False:
+        return {
+            "available": False,
+            "reason": ("The archived ENSO Diagnostic Discussion carries no "
+                       "current-year text, so its strength probabilities are not "
+                       "quoted as current."),
+            "source_url": disc.get("url") or ENSODISC_URL,
+        }
+
+    collapsed = climo.collapse_ws(disc["text"])
+    quotes, not_found = [], []
+    for spec in ENSO_STRENGTH_PATTERNS:
+        m = re.search(spec["pattern"], collapsed)
+        if not m:
+            not_found.append(spec["key"])
+            continue
+        text = m.group(0).strip()
+        # Same refusal as the caveats: a matched sentence that is not clean
+        # printable text is reported, not silently dropped and not published.
+        if any(ord(ch) < 32 or ord(ch) in (127, 0xFFFD) for ch in text):
+            not_found.append(spec["key"] + " (matched but not clean plain text)")
+            continue
+        quotes.append({"key": spec["key"], "label": spec["label"], "text": text})
+
+    return {
+        "available": True,
+        "issued_line": disc.get("issued"),
+        "quotes": quotes,
+        "not_found": not_found,
+        "patterns_watched_for": [s["key"] for s in ENSO_STRENGTH_PATTERNS],
+        "source_url": disc.get("url") or ENSODISC_URL,
+        "discussion_sha256": disc.get("sha256"),
+        "discussion_characters": disc.get("characters"),
+        "how_to_read": (
+            "Sentences copied verbatim from the ENSO Diagnostic Discussion "
+            "CPC issued with its monthly ENSO assessment, located by pattern in "
+            "the text the pipeline fetched and hashed. They are CPC's own "
+            "probability statements about this El Niño's strength; no number "
+            "or date has been attached by this project. When a later discussion "
+            "no longer contains a sentence, it stops appearing here and is "
+            "listed under not_found."),
+    }
+
+
 def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
                       wind_rain, heavy_wind_and_rain, max_gust, expected_days,
                       severity, latest_oni, oni_when, diagnostic_status,
                       tilt, storms, days_in_horizon, horizon_last_day,
                       enso_strat=None, hourly_wind_rain=None,
-                      caveats=None):
+                      caveats=None, enso_strength=None):
     """The landlord's questions, answered in the order they were asked.
 
     Every value is copied from an already-verified structure; nothing here is
@@ -835,6 +941,12 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
     # project's making.
     if caveats is not None:
         official["prognostic_caveats"] = caveats
+    # CPC's own strength outlook for this El Niño, quoted verbatim from the
+    # archived diagnostic discussion (or a visible statement that it could not
+    # be quoted).  Same rules as the caveats: quotations only, never a number
+    # of this project's making.
+    if enso_strength is not None:
+        official["enso_strength"] = enso_strength
 
     # The only bridge this project is entitled to draw between "the official
     # outlook says X" and "that costs Y": the same 30 seasons, split by the
@@ -1615,7 +1727,8 @@ def main():
         days_in_horizon=(calendar.get("nws_window") or {}).get("scoreboard_days_in_horizon"),
         horizon_last_day=(calendar.get("nws_window") or {}).get("last_day"),
         enso_strat=enso_strat, hourly_wind_rain=hourly_wind_rain,
-        caveats=prognostic_caveats(cpc))
+        caveats=prognostic_caveats(cpc),
+        enso_strength=enso_strength_outlook(enso))
 
     # Phase-aware ENSO sentence for the key finding: the tilt wording has to
     # follow the phase NOAA actually published, not a template that always

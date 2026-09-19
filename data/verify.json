@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-19T20:57:37Z",
+  "generated_utc": "2026-09-19T22:25:18Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,8 +9,8 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 71,
-    "passed": 71,
+    "total": 72,
+    "passed": 72,
     "failed": 0,
     "warnings": 0,
     "failed_checks": [],
@@ -234,7 +234,7 @@
       "id": "raw-phase-tokens-dataset",
       "title": "No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)",
       "status": "pass",
-      "detail": "0 raw tokens across 22801 scanned string(s)",
+      "detail": "0 raw tokens across 22812 scanned string(s)",
       "evidence": []
     },
     {
@@ -709,7 +709,7 @@
       "evidence": {
         "unmatched": [],
         "block_found": true,
-        "published_number_count": 404,
+        "published_number_count": 405,
         "allowlist": [
           0.01,
           0.1,
@@ -918,6 +918,19 @@
         "quotes": 3,
         "not_found": [],
         "issued_line": "830 AM EDT Thu Sep 17 2026"
+      }
+    },
+    {
+      "id": "enso-strength-verbatim",
+      "title": "CPC ENSO strength outlook is present, verbatim, current, and source-traced",
+      "status": "pass",
+      "detail": "2 quoted sentence(s) all verbatim in the archived ENSO discussion (3407 collapsed characters)",
+      "evidence": {
+        "problems": [],
+        "source_traced": true,
+        "quotes": 2,
+        "not_found": [],
+        "issued_line": "10 September 2026"
       }
     },
     {

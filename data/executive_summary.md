@@ -110,6 +110,10 @@ On the station record, the season averages 3.2 days a season at ≥ 1.00 in of r
 
 - **ENSO state:** El Niño (+1.80 °C, JJA 2026) — alert status: El Niño Advisory
   - Verify: [https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml)
+- **How strong CPC expects this El Niño to get (quoted verbatim):**
+  - CPC's stated chance of a very strong event this fall and winter: “El Niño is strengthening, with a greater than 90% chance of a very strong event during the Northern Hemisphere fall and winter 2026-27.”
+  - CPC's stated chance of a historic-strength event this season: “During the October-December 2026 season, there is a 75% chance of a historic event that would exceed the strength of previous El Niño events dating back to 1950 (+2.5°C or more for a 3-month RONI value ).”
+  - Verify the whole discussion: [https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml)
 - **CPC long-lead outlooks:** 6 period(s) cover this season; 2 carry a tilt away from the one-in-three climatological baseline, 4 sit at the baseline (Equal Chances).
   - Strongest tilt: **JFM 2027 — Above median at 50.0%** (issued 2026-09-17).
   - Verify: [https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip](https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip)

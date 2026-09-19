@@ -325,6 +325,39 @@ function renderBottomLine(ll) {
       el('div', { class: 'off-sub' }, [link(enso.source_url, 'CPC ENSO Diagnostic Discussion')])
     ]));
   }
+  // CPC's own strength outlook for this El Niño, quoted verbatim from the
+  // diagnostic discussion.  The quotes carry CPC's probabilities, so the
+  // marker states the project attached none of its own - worded differently
+  // from the caveats card's marker on purpose, so the two cards are checked
+  // independently (a shared phrase would let one card cover for the other).
+  const estr = outlook.enso_strength;
+  if (estr && estr.available) {
+    const squotes = (estr.quotes || []).map(q => [
+      el('blockquote', { class: 'off-quote', text: '\u201c' + q.text + '\u201d' }),
+      el('div', { class: 'off-quote-label', text: q.label || q.key || '' })
+    ]);
+    cells.push(el('div', { class: 'off-cell' }, [
+      el('div', { class: 'off-label', text: 'How strong CPC expects this El Ni\u00f1o to get' }),
+      ...[].concat(...squotes),
+      (estr.issued_line
+        ? el('div', { class: 'off-sub', text: 'Discussion issued ' + estr.issued_line })
+        : null),
+      (estr.not_found && estr.not_found.length
+        ? el('div', { class: 'off-sub',
+            text: 'Watched for but not stated in this discussion: ' + estr.not_found.join(', ') + '.' })
+        : null),
+      el('div', { class: 'off-sub' }, [
+        document.createTextNode('Quoted verbatim from CPC\u2019s discussion \u2014 no number or date of its own added by this project \u00b7 '),
+        link(estr.source_url, 'Read CPC\u2019s ENSO Diagnostic Discussion')
+      ])
+    ]));
+  } else if (estr && !estr.available) {
+    cells.push(el('div', { class: 'off-cell' }, [
+      el('div', { class: 'off-label', text: 'How strong CPC expects this El Ni\u00f1o to get' }),
+      el('div', { class: 'off-sub', text: estr.reason || 'The archived ENSO discussion could not be read this run.' }),
+      el('div', { class: 'off-sub' }, [link(estr.source_url, 'Read CPC\u2019s ENSO Diagnostic Discussion')])
+    ]));
+  }
   const tilt = outlook.cpc_tilt;
   if (tilt) {
     cells.push(el('div', { class: 'off-cell' }, [

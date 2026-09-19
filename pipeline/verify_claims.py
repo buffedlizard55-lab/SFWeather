@@ -2226,6 +2226,83 @@ def main() -> int:
                       "not_found": p_cav.get("not_found"),
                       "issued_line": p_cav.get("issued_line")})
 
+    # ---------------- 12l-bis. ENSO strength outlook is verbatim -------------
+    # The outlook strip quotes CPC's own strength probabilities for this El
+    # Niño (>90% chance of a very strong event, 75% chance of a historic one).
+    # Same rules as the caveats: quotations only, each a whitespace-collapsed
+    # substring of the fetched ENSO Diagnostic Discussion; the archived
+    # discussion traces to a recorded fetch; a quote key must be one the
+    # extractor declares; and the block's availability claim must agree with
+    # the archived discussion's presence.  One rule more: the extractor
+    # refuses a stale discussion (no current-year text), so a block that
+    # quotes one anyway fails here rather than printing last year's
+    # probabilities next to today's ONI.
+    e_str = (((landlord.get("executive_summary") or {}).get("official_outlook")
+              or {}).get("enso_strength"))
+    e_disc = next((d for d in (enso.get("sources") or [])
+                   if "ensodisc" in (d.get("url") or "")
+                   or "ENSO Diagnostic Discussion" in (d.get("label") or "")), None)
+    e_text = climo_lib.collapse_ws((e_disc or {}).get("text") or "")
+    if e_str is None:
+        ledger.check("enso-strength-verbatim",
+                     "CPC ENSO strength outlook is present, verbatim, current, "
+                     "and source-traced",
+                     False, "landlord.json has no enso_strength block",
+                     evidence={})
+    else:
+        e_bad = []
+        if e_str.get("available"):
+            if not e_text:
+                e_bad.append("block says available but the archived ENSO Diagnostic "
+                             "Discussion text is missing or empty")
+            if not e_disc or not e_disc.get("sha256"):
+                e_bad.append("no hashed archive of the discussion to verify against")
+            if (e_disc or {}).get("usable_as_current_source") is False:
+                e_bad.append("block quotes a discussion the pipeline flagged as stale "
+                             "(no current-year text)")
+        else:
+            if e_str.get("quotes"):
+                e_bad.append("an unavailable block still carries quotes")
+            if not (e_str.get("reason") or "").strip():
+                e_bad.append("an unavailable block states no reason")
+        for q in e_str.get("quotes") or []:
+            t = climo_lib.collapse_ws(q.get("text") or "")
+            k = q.get("key") or "?"
+            if not t:
+                e_bad.append(f"{k}: empty quote")
+                continue
+            if not e_text:
+                e_bad.append(f"{k}: no discussion text to verify against")
+            elif t not in e_text:
+                e_bad.append(f"{k}: not a substring of the fetched discussion")
+            if any(ord(ch) < 32 or ord(ch) in (127, 0xFFFD) for ch in t):
+                e_bad.append(f"{k}: contains control or replacement characters")
+        known = set(e_str.get("patterns_watched_for") or [])
+        if e_str.get("available") and not known:
+            e_bad.append("patterns_watched_for is empty - the quote-key contract is missing")
+        for q in e_str.get("quotes") or []:
+            if q.get("key") not in known:
+                e_bad.append(f"{q.get('key') or '?'}: quote key not in patterns_watched_for")
+        disc_url = ((e_disc or {}).get("url")
+                    or "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/"
+                       "enso_advisory/ensodisc.shtml")
+        src_ok = (e_str.get("source_url") == disc_url
+                  and (fetch_has_evidence(disc_url) if e_text else True))
+        if not e_text and e_str.get("available") is not True:
+            src_ok = True  # nothing quoted; the source rule is satisfied vacuously
+        ledger.check(
+            "enso-strength-verbatim",
+            "CPC ENSO strength outlook is present, verbatim, current, and source-traced",
+            not e_bad and src_ok,
+            (f"{len(e_str.get('quotes') or [])} quoted sentence(s) all verbatim in the "
+             f"archived ENSO discussion ({len(e_text)} collapsed characters)"
+             if not e_bad and src_ok else "; ".join(e_bad[:6])
+             + ("" if src_ok else "; source URL not traced to a recorded fetch")),
+            evidence={"problems": e_bad[:10], "source_traced": src_ok,
+                      "quotes": len(e_str.get("quotes") or []),
+                      "not_found": e_str.get("not_found"),
+                      "issued_line": e_str.get("issued_line")})
+
     # --------------------------------- 12i. digest / RSS traceable
     if not digest:
         ledger.check("digest-rss-traceable",
