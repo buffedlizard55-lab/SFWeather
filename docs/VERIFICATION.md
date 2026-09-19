@@ -628,6 +628,38 @@ The run's diagnostics were committed by the workflow as
 `chore(data): refresh NOT published`, and are merged here for the record; the
 regenerated diagnostics in this tree describe the merged code instead.
 
+### What the second live CI run found (bug 69)
+
+The next nightly run, at `7290d32`, passed the ledger and **published**
+(`data: refresh NOAA/NWS/NCEI/CPC sources`) with both previously dormant
+model-guidance checks running for the first time: 69 checks passed, 0 failed,
+0 warnings. The published tier was nevertheless nearly empty.
+
+| Published by that run | Value |
+| --- | --- |
+| `pages_retrieved` | 7 of 7 requested, all HTTP 200 |
+| `images_archived` | **0** |
+| `nmme_archive_latest` probe | **skipped** — *"the archive page was retrieved but listed no run directories"* |
+| the archive page itself | 32,319 bytes, HTTP 200, hashed like every other fetch |
+
+| # | Bug | Root cause | Fix |
+| --- | --- | --- | --- |
+| 69 | Every NMME page was fetched successfully and **nothing was extracted from any of them** — no map URLs, no archived run directories — so the tier published an empty list while looking healthy | Both patterns were matched against raw markup and each assumed one shape. `IMAGE_RE` required an absolute href in double quotes with `/` immediately before `images/`; `ARCHIVE_ROW_RE` required the same and additionally required the coverage label to sit between `>` and `<` with no tag in between. CPC's pages use relative hrefs, single-quoted and unquoted attributes, wrap their archive labels in their own markup (`<font>`), and link run directories with a trailing slash — none of which this project controls | `extract_links()` pulls every `href`/`src` in any quoting style and resolves it with `urljoin` against the page's own URL, so `IMAGE_URL_RE` / `ARCHIVE_RUN_RE` match a **resolved URL** instead of markup; `extract_anchors()` returns `(url, label)` per anchor in document order with nested tags stripped, preserving the newest-first order the archive listing uses; the probe fetches the directory URL exactly as NOAA links it rather than a normalised guess. When a page is retrieved but parses to nothing the run now publishes `markup_excerpt` (≤700 chars from the first anchor) plus a warning irregularity naming the byte count, and every page records `n_links_seen`. Without that, "HTTP 200 and understood nothing" is undiagnosable from the committed data — which is why this took a second live run to find. Self-checks 31 → **53** (four markup shapes × four assertions, plus two diagnosability checks) |
+
+Confirmed by the run after the fix (`3f89643`, published as `561544d`): **10 maps
+archived** under `assets/model_guidance/` — five precipitation-rate and five
+2m-temperature seasons, 30,357–31,998 bytes each, every one re-hashed by the
+ledger against `data/model_guidance.json` — `nmme_archive_latest` resolving to
+`https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026080800` at HTTP 200 with its own
+SHA-256, `probes_ok: 2`, `irregularities: []`, coverage still published verbatim
+as NOAA prints it (`October 2026 - April 2027`), and the ledger at **69 passed /
+0 failed / 0 warnings**. That commit is what PR #18 merged to main (`2d62c3d`).
+
+The lesson is recorded rather than buried: a tier can be *honest* and still be
+*empty*. Bug 68's disclosure fix made such a failure visible to the ledger; this
+fix makes the extraction work, and the excerpt means the next one is diagnosable
+from the published data alone, without needing sandbox access to NOAA.
+
 ### How the collision with pass 8 was resolved
 
 Pass 8 merged first, so it is the baseline. The rule applied was: **where both
@@ -656,13 +688,22 @@ shrinkage.
   claims (pass 8's 59 + 8 ported: 3 CPC coverage, 2 auxiliary manifests,
   1 model-guidance isolation, 2 feed). Two further model-guidance checks
   (`-quotes-verbatim`, `-links-fetched`) run only when `model_guidance.json` exists,
-  i.e. on a live CI run.
+  i.e. on a live CI run — both have now run live and pass, so a live run reports
+  **69 checks, 0 failed, 0 warnings**.
 * `tests/test_parsers.py`: **409 assertions** (pass 8's 310 + 99 ported).
 * `tests/falsify_guards.py`: **56 cases** behave (33 + 23 ported).
 * `tests/falsify_smoke.py`: **23 cases** behave.
 * `pipeline/verify_sources.py`: exit 0 scanning every manifest.
-* Module self-tests in CI: `model_guidance` 25, `build_feed` 36 — **61 offline checks**.
+* Module self-tests in CI: `model_guidance` **53**, `build_feed` 36 — **89 offline
+  checks** (model guidance started at 25, gained 6 for bug 68's probe disclosure
+  and 22 for bug 69's markup shapes and diagnosability).
 * `npm test`: passes, now including smoke guards 28 (model-guidance tier) and 29
   (feed).
 * `data/feed.json` rebuilt against pass 8's live data: **202 entries** (+3 undated),
   202 official / 0 not-official, 198 provenance-verified / 2 labelled pointers only.
+  Against the data CI published live at `561544d`: **212 entries**, 211 official /
+  1 not-official (the model-guidance rows, labelled as such), 207 traced to a
+  recorded fetch.
+* Model guidance, live: 7 pages retrieved (all HTTP 200, all hashed), 10 maps
+  archived under `assets/model_guidance/`, 7 verbatim definition sentences,
+  2 availability probes ok and neither decoded.
