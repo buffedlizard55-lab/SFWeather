@@ -2,23 +2,28 @@
 
 ## 1. State at the end of this session (18 Sep 2026 — Pass 1: CPC back-test pipeline, GSOD/ISD retirement, deep links, AFD history, digest)
 
-**Ledger:** 67 checks, 19 claims — all pass, 0 warnings. Pass 8's 59 plus 8 ported
-from the parallel pass 9 (`cpc-record-coverage-declared`, `cpc-season-covers-complete`,
-`cpc-record-reach`, `auxiliary-manifests-vetted`, `auxiliary-manifests-separate`,
-`model-guidance-isolation`, `feed-traceable`, `feed-provenance`). Two more
-(`model-guidance-quotes-verbatim`, `model-guidance-links-fetched`) run only when
-`data/model_guidance.json` exists, i.e. after a live CI run.
+**Ledger:** 67 checks offline / **69 live**, 19 claims — all pass, 0 warnings.
+Pass 8's 59 plus 8 ported from the parallel pass 9 (`cpc-record-coverage-declared`,
+`cpc-season-covers-complete`, `cpc-record-reach`, `auxiliary-manifests-vetted`,
+`auxiliary-manifests-separate`, `model-guidance-isolation`, `feed-traceable`,
+`feed-provenance`). The two that need a live CI run
+(`model-guidance-quotes-verbatim`, `model-guidance-links-fetched`) have now run
+live and pass.
 
 **Tests:** `tests/test_parsers.py` 409/409 · `tests/falsify_guards.py` 56 cases ·
 `tests/falsify_smoke.py` 23 cases · `npm test` (jsdom smoke, guards 1–29) passes ·
 `pipeline/verify_sources.py` passes (every manifest) · `pipeline/verify_claims.py`
-passes · module self-tests: `model_guidance` 25, `build_feed` 36.
+passes · module self-tests: `model_guidance` 53, `build_feed` 36.
 
-**Pass 9 (parallel session, merged as PR #18):** the model-guidance tier and the
-official-product feed were built (pass 8 had left model guidance open), and one
-live bug was found in the merged tree — cross-New-Year CPC season labels were
-attached to no day at all. See `docs/VERIFICATION.md` Session 9, including the
-table recording which implementation won each collision and why.
+**Pass 9 (parallel session, MERGED to main as PR #18 → `2d62c3d`):** the
+model-guidance tier and the official-product feed were built (pass 8 had left model
+guidance open), and three live-run bugs were found and fixed — cross-New-Year CPC
+season labels attached to no day at all (bug 65), a probe publishing `ok: false`
+with no `error`, which correctly blocked a publish (bug 68), and every NMME page
+fetching HTTP 200 while yielding nothing, because the extraction patterns assumed
+one markup shape (bug 69). After the last fix CI archived 10 maps and both probes
+resolved. See `docs/VERIFICATION.md` Session 9, including the table recording which
+implementation won each collision and why.
 
 **Pass 2 (same session, bug/edge-case review of the diff above):** 10 further
 defects found and fixed, all with regression tests — a wrong helper name that
@@ -139,7 +144,7 @@ this static project cannot do honestly.
 
 ### 6. Model guidance — DONE 18 Sep 2026, as a separate warned tier
 
-`pipeline/model_guidance.py` (+25 offline self-checks, its own workflow step and
+`pipeline/model_guidance.py` (+53 offline self-checks, its own workflow step and
 its own manifest `data/model_guidance_provenance.json`) archives NOAA's NMME
 seasonal probability maps locally with their SHA-256, quotes NOAA's definition
 sentences verbatim (the description page is **CP1252** — decode it with the
@@ -153,30 +158,40 @@ score (NOAA's RPSS and verification pages are linked instead). Isolation is
 enforced twice — pass 8's `model-guidance-separated` inspects the scoreboard days,
 pass 9's `model-guidance-isolation` also audits the guidance file and scans
 `calendar.json` / `landlord.json` for model-guidance mentions outside quoted
-official text. **Open:** the tier has never run live, so the first CI run should be
-watched (see §2.7).
+official text. **No longer open:** the tier has run live three times (see §2.7),
+publishing 10 archived maps, 7 verbatim definition sentences and 2 resolved
+probes.
 
-### 7. Watch the next live CI run of the two new tiers
+### 7. Live CI runs of the two new tiers — DONE, and they found two real bugs
 
-The first live run happened on 19 Sep 2026 at `3941ac6`: every step exited 0 and
-the ledger then **failed the publish** on `model-guidance-links-fetched`, because a
-raw-archive probe that could not run published `ok: false` with no `error`. That is
-fixed (bug 68 in `docs/VERIFICATION.md`) and covered by six new self-checks, but the
-run did not publish, so `data/model_guidance.json` and its archived PNGs are still
-unseen. On the next nightly run, check that:
+Three live runs happened on 19 Sep 2026. Read this before trusting any tier that
+has not been exercised against the publisher's real markup.
 
-* `MODEL_GUIDANCE_EXIT=0` and `FEED_EXIT=0` appear in `data/run_diagnostics.txt`
-  (the publish gate now requires all nine exit codes);
-* `assets/model_guidance/*.png` were archived and their hashes match
+| Run | Commit | Outcome |
+| --- | --- | --- |
+| 1 | `3941ac6` | Every step exited 0; the ledger **refused to publish** on `model-guidance-links-fetched` — a raw-archive probe that could not run published `ok: false` with no `error`. Diagnostics only were committed. Fixed as bug 68 (+6 self-checks) |
+| 2 | `7290d32` | Ledger **passed and published** (69 checks, 0 failed, 0 warnings; both dormant checks running for the first time) — but the tier was empty: 7 pages at HTTP 200, `images_archived: 0`, archive probe skipped with "page retrieved but listed no run directories". Fixed as bug 69 (+22 self-checks) |
+| 3 | `3f89643` | **Passed and published as `561544d`**: 10 maps archived under `assets/model_guidance/` (30,357–31,998 bytes, each re-hashed by the ledger), `nmme_archive_latest` resolved to `…/NMME/archive/2026080800` at HTTP 200, `probes_ok: 2`, `irregularities: []`, coverage verbatim `October 2026 - April 2027`. Merged to main by PR #18 as `2d62c3d` |
+
+What run 2 teaches, and what to check on any future nightly run:
+
+* `MODEL_GUIDANCE_EXIT=0` and `FEED_EXIT=0` in `data/run_diagnostics.txt` (the
+  publish gate requires all nine exit codes);
+* `assets/model_guidance/*.png` present and matching the hashes in
   `data/model_guidance.json` (the ledger re-hashes them);
-* the two dormant checks `model-guidance-quotes-verbatim` and
-  `model-guidance-links-fetched` appear in `data/verify.json` and pass — if a
-  NOAA page moved, they fail rather than silently dropping;
-* `data/feed.json` gains the model-guidance rows labelled `NOT OFFICIAL`, and the
-  feed's `provenance_unverified` count stays small and explained;
-* if the raw-archive probe is skipped again, the reason it publishes tells you
-  whether NOAA was unreachable or whether `ARCHIVE_ROW_RE` no longer matches their
-  page — the second needs a code fix, the first needs nothing.
+* `counts.images_archived` **non-zero**. A tier can be honest and still be empty:
+  run 2 passed every check while archiving nothing. If it drops to 0 again, look at
+  `n_links_seen` and `markup_excerpt` on the affected page — those are published
+  precisely so a markup change at NOAA is diagnosable from committed data without
+  network access;
+* the two model-guidance checks appear in `data/verify.json` and pass — if a NOAA
+  page moved, they fail rather than silently dropping;
+* `data/feed.json` keeps its model-guidance rows labelled `NOT OFFICIAL`, and
+  `provenance_unverified` stays small and explained;
+* if the raw-archive probe is ever skipped again, the reason it publishes says
+  whether NOAA was unreachable (nothing to do) or whether the listing stopped
+  matching (a code fix). The stale `ARCHIVE_ROW_RE` name is gone from that message —
+  extraction now matches resolved URLs, not markup.
 
 ### 8. Still open from earlier passes
 
@@ -231,6 +246,17 @@ outage.
   `time_known: false` with the publisher's own wording beside it; no date at all
   means the entry is listed undated. A timestamp that will not parse is dropped with
   a warning, not guessed at.
+* **Match resolved URLs, not markup.** Anything scraped from a publisher's page is
+  extracted by resolving every `href`/`src` against that page's own URL and matching
+  the resolved URL — never by assuming a quoting style, an absolute path, or a label
+  with no tag inside it. Bug 69 was exactly that assumption, and it cost a whole
+  live run: seven pages fetched at HTTP 200 and nothing understood from any of them.
+* **An empty result that passes every check is still a failure.** Assert the counts a
+  tier exists to produce (`images_archived`, `n_archived_runs_listed`, entries per
+  month), not only the exit codes. And when a page is retrieved but parses to
+  nothing, publish a bounded `markup_excerpt` plus a warning irregularity — the next
+  such failure has to be diagnosable from committed data, because the sandbox that
+  finds it may have no route to the publisher at all.
 * **Two provenance conventions coexist on purpose** (`docs/METHODS.md` §26): a step
   whose rows must appear in the run's published totals merges back into
   `provenance.json`; a tier meant to be read on its own writes
