@@ -160,5 +160,66 @@
         "sentences": []
       }
     ]
+  },
+  {
+    "issuance_time": "2026-09-19T11:24:00+00:00",
+    "product_id": "1992ce78-3097-4692-ba44-844828d14b5e",
+    "source_url": "https://api.weather.gov/products/1992ce78-3097-4692-ba44-844828d14b5e",
+    "text_sha256": "4643b1c8e40c1277bea0a437719e1238f8a2f457e3555824293bea210609f516",
+    "text_chars": 6408,
+    "sentences_scanned": 24,
+    "categories": [
+      {
+        "id": "atmospheric_river",
+        "label": "Atmospheric river / subtropical moisture plume",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "prolonged_rain",
+        "label": "Prolonged / multi-day rain",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "heavy_rain",
+        "label": "Heavy rain / flooding",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "strong_wind",
+        "label": "Strong wind / wind hazard",
+        "sentence_count": 2,
+        "sentences": [
+          {
+            "sentence": "The upper level trough that brought us cool temperatures and widespread clouds is crawling over southern Idaho, and as it does, the pressure gradients will start to support some northeasterly offshore flow in the higher elevations of the North Bay and East Bay, with gusts to 20 to 30 mph possible through the morning hours.",
+            "section": "SHORT TERM",
+            "matched_patterns": [
+              "gusts? (?:of|to|up to|near|around) \\d"
+            ]
+          },
+          {
+            "sentence": "Afternoon breezes should be similar to those seen yesterday with gusts of 20 to 30 miles per hour along the coast, through favored gaps and passes, and within the Salinas Valley.",
+            "section": "SHORT TERM",
+            "matched_patterns": [
+              "gusts? (?:of|to|up to|near|around) \\d"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "quoted_rainfall_amount",
+        "label": "An explicit rainfall amount in NWS's own text",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "wind_and_rain_together",
+        "label": "Wind and rain in the same sentence",
+        "sentence_count": 0,
+        "sentences": []
+      }
+    ]
   }
 ]
