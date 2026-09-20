@@ -5,7 +5,7 @@
   "station_list_ok": true,
   "station_list_status": 200,
   "station_list_sha256": "812ea50bd5efd1b9cc09d5800c55825b3d43b3c5aa75ab17b2848f43b1bfaaef",
-  "retrieved_utc": "2026-09-19T23:46:09Z",
+  "retrieved_utc": "2026-09-20T00:11:08Z",
   "note": "GHCNh (hourly) replaces ISD; SSODv2 (daily) replaces GSOD. Both live on www.ncei.noaa.gov, already a vetted host.",
   "contains_sfo_ids": {
     "USW00023234": true,
