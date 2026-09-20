@@ -1491,6 +1491,65 @@ def enso_stratified_streaks(seasons):
     return out
 
 
+# The per-season severity counters that the phase-conditioned table summarises.
+# Each key is a field of the season rows built by build_season_statistics; the
+# label is what the site prints for it.  Keeping the list here - next to the
+# function that reads it - is what lets the ledger, the tests and the site agree
+# on which figures exist without any of them retyping a key name.
+ENSO_SEVERITY_FIELDS = (
+    ("wet_days_ge_050in", "Days with \u2265 0.50 in of rain per season", 1),
+    ("wet_days_ge_1in", "Days with \u2265 1.00 in of rain per season", 1),
+    ("wet_days_ge_2in", "Days with \u2265 2.00 in of rain per season", 1),
+    ("max_daily_prcp_in", "Wettest single day of the season (in)", 2),
+    ("wind_and_rain_days", "Wind + rain days per season (\u2265 0.01 in and sustained \u2265 20 kt, whole-day pairing)", 1),
+    ("heavy_wind_and_rain_days", "Heavy wind + rain days per season (\u2265 0.50 in and a gust \u2265 35 kt)", 1),
+    ("severe_wind_and_rain_days", "Days per season both \u2265 1.00 in and a gust \u2265 40 kt", 1),
+    ("gust_days_ge_40kt", "Days per season with a gust \u2265 40 kt", 1),
+    ("wind_days_ge_30kt", "Days per season with sustained wind \u2265 30 kt", 1),
+    ("max_gust_mph", "Strongest gust of the season (mph)", 1),
+)
+
+
+def enso_stratified_severity(seasons):
+    """Heavy-rain, wind and wind+rain counters per ENSO phase, from the season rows.
+
+    The rain-duration question was conditioned on the phase in an earlier
+    session (:func:`enso_stratified_streaks`).  This does the same for the
+    landlord's other questions - hard-rain days, gusts, and wind and rain
+    together - using exactly the same season rows, so the phase a season sits
+    in can never differ between the two tables.
+
+    For every counter in :data:`ENSO_SEVERITY_FIELDS` each phase publishes the
+    :func:`summarise` block (n, mean, median, min, max, percentiles) over the
+    seasons in that phase, plus ``seasons_with_any`` - how many of those seasons
+    had at least one such day - so a reader can see a mean of 0.5 is "about half
+    the seasons had one", not "every season had half a day".  A phase with no
+    seasons yields no entry at all; a counter that is missing from every row of
+    a phase yields ``{"n": 0}`` rather than an invented zero.
+    """
+    groups = defaultdict(list)
+    for s in seasons:
+        if s.get("enso_phase"):
+            groups[s["enso_phase"]].append(s)
+
+    out = {}
+    for phase, rows in sorted(groups.items()):
+        entry = {
+            "n": len(rows),
+            "phase_label": phase_label(phase),
+            "seasons": [r.get("season") for r in rows],
+            "metrics": {},
+        }
+        for key, label, ndigits in ENSO_SEVERITY_FIELDS:
+            vals = [r.get(key) for r in rows if r.get(key) is not None]
+            block = summarise(vals, ndigits)
+            block["label"] = label
+            block["seasons_with_any"] = sum(1 for v in vals if v > 0) if vals else None
+            entry["metrics"][key] = block
+        out[phase] = entry
+    return out
+
+
 def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_series,
                             oni_seasons=None):
     """Year-by-year wet-season statistics plus their distribution.
@@ -1662,6 +1721,10 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
     # seasons out of 30 - so every row publishes n and the site carries the
     # small-sample caveat rather than presenting the split as a forecast.
     streaks_by_phase = enso_stratified_streaks(seasons)
+    # ... and the severity counters (hard-rain days, gusts, wind + rain) on the
+    # same rows, so the remaining landlord questions can be asked of the phase
+    # the season is in too.  Same small-sample caveat, same published n.
+    severity_by_phase = enso_stratified_severity(seasons)
 
     n_seasons = len(seasons)
 
@@ -1730,6 +1793,7 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
             for phase, vals in sorted(by_phase.items())
         },
         "enso_stratified_streaks": streaks_by_phase,
+        "enso_stratified_severity": severity_by_phase,
         "wettest_seasons": [{"season": s["season"], "total_prcp_in": s["total_prcp_in"]}
                             for s in ranked[-5:]][::-1],
         "driest_seasons": [{"season": s["season"], "total_prcp_in": s["total_prcp_in"]}
@@ -2326,6 +2390,29 @@ def afd_language_scan(afd, excluded_sections=AFD_EXCLUDED_SECTIONS):
     return base
 
 
+_CD_LAYER_RE = re.compile(r"^(\d+)(?:st|nd|rd|th) Congressional Districts$")
+
+
+def _congressional_layer_key(geos):
+    """Name of the congressional-district layer in a Census geographies dict.
+
+    Returns the highest-numbered ``"<n>th Congressional Districts"`` key that
+    holds at least one record, falling back to a bare ``"Congressional
+    Districts"`` key; ``None`` when the response carries no such layer.  The
+    vintage is not typed in anywhere, so a new Congress cannot blank the field.
+    """
+    best, best_n = None, -1
+    for key, rows in (geos or {}).items():
+        if not isinstance(key, str) or not rows:
+            continue
+        m = _CD_LAYER_RE.match(key)
+        if m and int(m.group(1)) > best_n:
+            best, best_n = key, int(m.group(1))
+    if best is None and (geos or {}).get("Congressional Districts"):
+        best = "Congressional Districts"
+    return best
+
+
 def parse_census_geographies(payload):
     """Read the Census reverse-geocode response for the 94122 centroid.
 
@@ -2357,7 +2444,15 @@ def parse_census_geographies(payload):
     place = first("Incorporated Places") or first("Census Designated Places")
     tract = first("Census Tracts")
     block = first("2020 Census Blocks") or first("Census Blocks")
-    cd = first("119th Congressional Districts") or first("Congressional Districts")
+    # The Census geocoder names the congressional-district layer after the
+    # Congress it belongs to, and the "Current_Current" vintage moves: the
+    # 20 Sep 2026 01:23Z run got "120th Congressional Districts" (with 2026
+    # legislative layers) while the 01:38Z run got "119th ...".  A hard-coded
+    # "119th" published a dash on the first of those two runs even though the
+    # district was in the response (bug 75).  Take the highest-numbered layer
+    # present and publish which one it was, so the reviewer sees the vintage.
+    cd_key = _congressional_layer_key(geos)
+    cd = first(cd_key) if cd_key else None
     urban = first("Urban Areas")
 
     out = {
@@ -2371,6 +2466,7 @@ def parse_census_geographies(payload):
         "census_tract_geoid": name_of(tract, "GEOID"),
         "census_block_geoid": name_of(block, "GEOID"),
         "congressional_district": name_of(cd, "NAME"),
+        "congressional_district_layer": cd_key if cd else None,
         "urban_area": name_of(urban, "NAME"),
         "geography_types_returned": sorted(geos.keys()),
     }

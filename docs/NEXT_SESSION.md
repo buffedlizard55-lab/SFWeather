@@ -1,5 +1,104 @@
 # Next session — handoff
 
+## 1. State at the end of session 14 (20 Sep 2026 — storm severity conditioned on the ENSO phase; the "upper bound" wording withdrawn; the Congress-vintage hole; live re-verification)
+
+**Ledger:** **74 checks live**, 19 claims — all pass, 0 warnings (session 13's
+73 plus `enso-severity-recompute`). Verified in the sandbox by running the
+ledger against the regenerated datasets; the next full proof is the CI run
+this push triggers.
+
+**Tests:** `tests/test_parsers.py` **473/473** in this data state (one
+cross-check is guarded — see PR #24's correction, carried into the README) ·
+`tests/falsify_guards.py` **85 cases** · `tests/falsify_smoke.py` **42 cases** ·
+`npm test` (jsdom smoke) passes with the new strip cell, the three new ENSO-card
+columns and the page-wide wording ban (guard 33).
+
+**What session 14 changed:**
+
+1. **Storm severity asked of *this* ENSO phase** (handoff priority 7, now
+   closed). `climo.enso_stratified_severity()` splits ten existing per-season
+   counters — days ≥ 0.50/1.00/2.00 in, wettest day, the three wind + rain
+   pairings, gust ≥ 40 kt and sustained ≥ 30 kt days, the season-max gust — by
+   phase, from the same season rows as the totals and spell tables. Published
+   as `calendar.enso_stratified_severity`; `landlord_summary.py` derives a
+   full-width strip cell (`official_outlook.enso_conditioned_severity`, phase
+   mean · median · max beside the all-season mean · max, every row with
+   `(n of the N)`), phase rows and one sentence each on bottom-line answers 3–6
+   and cost drivers 2–4; the ENSO season card gained three columns; the
+   printable summary gained the table. Ledger check `enso-severity-recompute`
+   rebuilds the table from the 30 season rows and checks every derived row's
+   n / mean / median / max / label. 6 ledger + 9 render falsification cases,
+   19 offline assertions. Finding: El Niño tilts the heavy-rain-day count up
+   (3.7 vs 3.2 days ≥ 1.00 in) and the ≥ 40 kt gust-day count (3.2 vs 2.4);
+   the joint counters and the season-max gust do not separate the phases at
+   n = 11 / 12 / 7. The site says exactly that.
+2. **Bug 74 — "SFO is an upper bound for the Sunset" withdrawn.** Written in
+   session 1, copied to five documents, `index.html`, the wind card, the
+   bottom line and the cost drivers; no source in the project establishes the
+   direction (bay-shore airport vs ocean-facing ZIP, no long wind record inside
+   94122). One caveat string (`WIND_STATION_CAVEAT`) now states station,
+   distance and the gap; guard 33 bans the old sentence page-wide; all docs
+   corrected in place (`LIMITATIONS.md` §26).
+3. **Bug 75 — the congressional district blanked by a hard-coded Congress
+   number.** PR #24's data diff showed the Census geocoder answering
+   `120th Congressional Districts` (+ 2026 legislative layers) at 01:23Z and
+   `119th` (+ 2024 layers) at 01:38Z for the same `Current_Current` request;
+   the parser read the literal `119th` key and published `null` on the first.
+   The parser now takes the highest-numbered Congress layer present and
+   publishes `congressional_district_layer`; the page prints it; the ledger
+   fails a returned layer with no district. **The vintage flip itself is an
+   irregularity in the Census service, flagged for review** — expect the layer
+   label on the page to alternate until the Bureau settles its vintage.
+4. **Live re-verification (~02:00 UTC).** ONI tail, the 10 Sep ENSO discussion
+   (status + both strength sentences verbatim, `RONI value).` with no space),
+   fxus05 (all three caveats, the Oct-15 supersession line, the CA coastal
+   50–60% maximum), NWS gridpoint (14 periods identical to the committed file;
+   only period 1's start hour moved), CAZ006 alerts (empty), the GSOD README
+   (units and UTC-day statements). NCEI `access/*.csv` again HTTP 500 through
+   the fetch tool — recorded as a gap, not retried.
+5. **PR #24 superseded.** Its 449/450 count correction is carried into the
+   README as 473–474 with the same explanation; the PR itself conflicts with
+   `main` and should be closed, not merged.
+
+**Watch items for the next session:**
+
+* **8 October 2026** — next ENSO Diagnostic Discussion; the strength card
+  requotes from the new text the same run (`LIMITATIONS.md` §20).
+* **15 October 2026** — the current fxus05 says it "will be superseded by the
+  issuance of the new set next month on Oct 15 2026"; the caveat card's three
+  quotes rotate that day. NOAA's own words: the coastal-CA probabilities "may be
+  increased further".
+* **First pipeline run after this merge** — confirm `enso-severity-recompute`
+  passes on freshly fetched data, that the strip cell renders with `(11 of the
+  30)`, and which congressional layer the geocoder answered with (the page now
+  prints it).
+* **19 Oct – 19 Nov 2026** — the ubuntu-latest migration window; workflows are
+  pinned to ubuntu-24.04.
+
+## Priorities for session 15 (as of 20 Sep 2026, end of session 14)
+
+1. **CPC issuance watches (8 Oct + 15 Oct)** — low effort, time-critical.
+2. **Confirm the post-merge live run** passes `enso-severity-recompute` and
+   `census-geographies-traceable` on freshly fetched data, and close PR #24.
+3. **A wind record nearer the ocean.** Bug 74 leaves the Sunset's wind exposure
+   genuinely unknown to this project. Candidates, all official: NDBC/CO-OPS
+   coastal stations (e.g. the San Francisco tide station's met sensor at
+   `tidesandcurrents.noaa.gov`, a new host that would need a deliberate
+   `ALLOWED_HOSTS` entry), the GHCNh hourly successor, or a NWS/ASOS station on
+   the ocean side. Any addition must publish its own coverage and distance and
+   must not silently move the 1991–2020 SFO statistics.
+4. **Multi-ZIP support.** (a) ZIP→centroid manifest from the Census Gazetteer
+   fetch, (b) per-ZIP tiers in the nightly job, (c) a front-end picker.
+5. **Wind successor stitching (GHCNh/SSODv2)** — a maintainer decision; probes
+   keep recording coverage.
+6. **CPC back-test archive** — inspect `llarc.ind.php` raw HTML or POST
+   `llarc.php` with candidate parameters.
+7. **The two PR-15 follow-ups**: explicit "not returned" rows for individual
+   Census geography fields (bug 75 makes this more useful — the
+   `geography_types_returned` list already shows what came back), and a
+   `failed-fetches-explained` ledger check.
+8. **Deliberate ubuntu-26.04 migration** after the window opens.
+
 ## 1. State at the end of session 13 (20 Sep 2026 — verbatim-quote fidelity fix; rain duration conditioned on the ENSO phase; live re-verification)
 
 **Ledger:** **73 checks live**, 19 claims — all pass, 0 warnings (session 12's

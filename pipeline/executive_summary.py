@@ -193,6 +193,33 @@ def build_markdown():
                       f"averaged {esc(c.get('mean_in'))} in.")
         if ecr.get("source_url"):
             md.append(f"  - Verify: [{esc(ecr['source_url'])}]({ecr['source_url']})")
+    # The severity counters (hard-rain days, gusts, wind + rain) in the seasons
+    # that sat in this same phase, beside all 30.  Copied row by row from the
+    # dataset; the phase, its n and the all-season figure are printed in every
+    # row because a small-sample conditional average must never be read as a
+    # settled number, let alone a forecast.
+    ecs = outlook.get("enso_conditioned_severity") or {}
+    if ecs and ecs.get("rows"):
+        md.append("")
+        md.append(f"**Hard rain, wind and wind + rain in past {esc(ecs.get('phase_label'))} seasons "
+                  f"(n = {esc(ecs.get('seasons_in_phase'))} of {esc(ecs.get('seasons_total'))}), "
+                  "beside all seasons:**")
+        md.append("")
+        md.append(f"| Counter (per Oct 1 – Jan 31 season) | {esc(ecs.get('phase_label'))} seasons "
+                  f"(n = {esc(ecs.get('seasons_in_phase'))}): mean · median · max | "
+                  f"All {esc(ecs.get('seasons_total'))} seasons: mean · max |")
+        md.append("| --- | --- | --- |")
+        for r in ecs["rows"]:
+            md.append(f"| {esc(r.get('label'))} | {esc(r.get('phase_mean'))} · "
+                      f"{esc(r.get('phase_median'))} · {esc(r.get('phase_max'))} | "
+                      f"{esc(r.get('all_mean'))} · {esc(r.get('all_max'))} |")
+        md.append("")
+        if ecs.get("how_to_read"):
+            md.append(f"_{esc(ecs['how_to_read'])}_")
+            md.append("")
+        if ecs.get("sources"):
+            md.append(f"Verify: {fmt_sources(ecs['sources'])}")
+            md.append("")
     daily = outlook.get("daily_forecast") or {}
     if daily and daily.get("official_horizon_ends"):
         md.append(f"- **The live NWS forecast:** {esc(daily.get('days_in_this_scoreboard_with_a_real_forecast'))} "

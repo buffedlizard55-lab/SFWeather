@@ -351,6 +351,113 @@ check("the function is pure: same rows in, same numbers out",
       "recomputation differed")
 
 
+section("phase-conditioned severity statistics (hard rain, gusts, wind + rain)")
+
+# Same shape as the pipeline's season rows.  Two El Nino seasons, one La Nina,
+# one neutral, one season with no phase (must be ignored, not invented).
+_sev_seasons = [
+    {"season": "1991-1992", "enso_phase": "el_nino", "wet_days_ge_050in": 10, "wet_days_ge_1in": 4,
+     "wet_days_ge_2in": 1, "max_daily_prcp_in": 2.5, "wind_and_rain_days": 12,
+     "heavy_wind_and_rain_days": 3, "severe_wind_and_rain_days": 1, "gust_days_ge_40kt": 4,
+     "wind_days_ge_30kt": 3, "max_gust_mph": 60.0},
+    {"season": "1992-1993", "enso_phase": "el_nino", "wet_days_ge_050in": 6, "wet_days_ge_1in": 2,
+     "wet_days_ge_2in": 0, "max_daily_prcp_in": 1.5, "wind_and_rain_days": 8,
+     "heavy_wind_and_rain_days": 1, "severe_wind_and_rain_days": 0, "gust_days_ge_40kt": 2,
+     "wind_days_ge_30kt": 1, "max_gust_mph": 50.0},
+    {"season": "1993-1994", "enso_phase": "la_nina", "wet_days_ge_050in": 5, "wet_days_ge_1in": 1,
+     "wet_days_ge_2in": 0, "max_daily_prcp_in": 1.1, "wind_and_rain_days": 7,
+     "heavy_wind_and_rain_days": 0, "severe_wind_and_rain_days": 0, "gust_days_ge_40kt": 0,
+     "wind_days_ge_30kt": 0, "max_gust_mph": 45.0},
+    {"season": "1994-1995", "enso_phase": "neutral", "wet_days_ge_050in": 9, "wet_days_ge_1in": 3,
+     "wet_days_ge_2in": 1, "max_daily_prcp_in": 3.0, "wind_and_rain_days": 10,
+     "heavy_wind_and_rain_days": 2, "severe_wind_and_rain_days": 1, "gust_days_ge_40kt": 3,
+     "wind_days_ge_30kt": 2, "max_gust_mph": 55.0},
+    {"season": "1995-1996", "enso_phase": None, "wet_days_ge_1in": 99},
+]
+_sv = climo.enso_stratified_severity(_sev_seasons)
+check("severity means are taken over the seasons in that phase only",
+      _sv["el_nino"]["metrics"]["wet_days_ge_1in"]["mean"] == 3.0
+      and _sv["el_nino"]["metrics"]["wet_days_ge_1in"]["max"] == 4
+      and _sv["la_nina"]["metrics"]["wet_days_ge_1in"]["mean"] == 1.0,
+      repr({p: v["metrics"]["wet_days_ge_1in"] for p, v in _sv.items()}))
+check("each severity phase publishes n and the seasons it was computed over",
+      _sv["el_nino"]["n"] == 2 and _sv["el_nino"]["seasons"] == ["1991-1992", "1992-1993"]
+      and _sv["neutral"]["n"] == 1,
+      repr({p: (v["n"], v["seasons"]) for p, v in _sv.items()}))
+check("a season with no phase is ignored, never assigned or invented",
+      set(_sv) == {"el_nino", "la_nina", "neutral"}
+      and all(v["metrics"]["wet_days_ge_1in"]["max"] < 99 for v in _sv.values()),
+      repr(sorted(_sv)))
+check("every counter in ENSO_SEVERITY_FIELDS is published for every phase, with its label",
+      all(set(v["metrics"]) == {k for k, _l, _d in climo.ENSO_SEVERITY_FIELDS} for v in _sv.values())
+      and _sv["el_nino"]["metrics"]["max_gust_mph"]["label"] == "Strongest gust of the season (mph)",
+      repr(sorted(_sv["el_nino"]["metrics"])))
+check("seasons_with_any counts seasons with at least one such day, not the day total",
+      _sv["el_nino"]["metrics"]["severe_wind_and_rain_days"]["seasons_with_any"] == 1
+      and _sv["el_nino"]["metrics"]["wet_days_ge_2in"]["seasons_with_any"] == 1
+      and _sv["la_nina"]["metrics"]["gust_days_ge_40kt"]["seasons_with_any"] == 0,
+      repr(_sv["el_nino"]["metrics"]["severe_wind_and_rain_days"]))
+check("the wettest-day counter keeps two decimals, the day counters one",
+      _sv["el_nino"]["metrics"]["max_daily_prcp_in"]["mean"] == 2.0
+      and _sv["el_nino"]["metrics"]["max_daily_prcp_in"]["max"] == 2.5
+      and _sv["el_nino"]["metrics"]["max_gust_mph"]["mean"] == 55.0,
+      repr(_sv["el_nino"]["metrics"]["max_daily_prcp_in"]))
+check("a counter missing from every row of a phase yields n = 0, not an invented zero",
+      climo.enso_stratified_severity([{"season": "x", "enso_phase": "la_nina"}])
+      ["la_nina"]["metrics"]["wet_days_ge_1in"] == {"n": 0, "label": "Days with \u2265 1.00 in of rain per season",
+                                                    "seasons_with_any": None},
+      repr(climo.enso_stratified_severity([{"season": "x", "enso_phase": "la_nina"}])))
+check("the severity function is pure: same rows in, same numbers out",
+      climo.enso_stratified_severity(_sev_seasons) == _sv, "recomputation differed")
+
+# The landlord summary's row builder on top of that table.
+import landlord_summary as _ls  # noqa: E402
+_all_blocks = {"wet_days_ge_1in": {"n": 4, "mean": 2.5, "max": 4},
+               "gust_days_ge_40kt": {"n": 4, "mean": 2.3, "max": 4}}
+_cond = _ls.phase_conditioned_severity(_sv, {"phase": "el_nino", "phase_label": "El Ni\u00f1o"}, _all_blocks)
+check("phase_conditioned_severity names the phase, its n and the all-season n",
+      _cond and _cond["phase"] == "el_nino" and _cond["seasons_in_phase"] == 2
+      and _cond["seasons_total"] == 4 and _cond["phase_label"] == "El Ni\u00f1o",
+      repr({k: _cond.get(k) for k in ("phase", "seasons_in_phase", "seasons_total")} if _cond else None))
+_row = next(r for r in _cond["rows"] if r["key"] == "wet_days_ge_1in")
+check("each derived row copies the phase mean/median/max and the all-season mean/max verbatim",
+      _row["phase_mean"] == 3.0 and _row["phase_median"] == 3.0 and _row["phase_max"] == 4
+      and _row["all_mean"] == 2.5 and _row["all_max"] == 4 and _row["phase_n"] == 2,
+      repr(_row))
+check("a counter with no all-season block still publishes the phase figure (all-season side empty)",
+      next(r for r in _cond["rows"] if r["key"] == "max_gust_mph")["all_mean"] is None,
+      repr([r for r in _cond["rows"] if r["key"] == "max_gust_mph"]))
+check("other phases are listed with their n for contrast, the current phase excluded",
+      [o["phase"] for o in _cond["other_phases"]] == ["la_nina", "neutral"]
+      and _cond["other_phases"][0]["n"] == 1,
+      repr(_cond["other_phases"]))
+check("an unknown or absent phase yields None, never an empty table",
+      _ls.phase_conditioned_severity(_sv, {"phase": "el_nino_strong"}, _all_blocks) is None
+      and _ls.phase_conditioned_severity(_sv, {}, _all_blocks) is None
+      and _ls.phase_conditioned_severity({}, {"phase": "el_nino"}, _all_blocks) is None,
+      "a placeholder table was produced")
+_br = _ls._phase_row(_cond, "wet_days_ge_1in", "Days \u2265 1.00 in per season")
+check("a bottom-line phase row states the phase, n-of-total, and the all-season mean",
+      _br["label"] == "Days \u2265 1.00 in per season in El Ni\u00f1o seasons on record (2 of the 4)"
+      and _br["value"] == "mean 3.0 \u00b7 median 3.0 \u00b7 max 4.0 \u2014 all 4 seasons: mean 2.5",
+      repr(_br))
+check("a bottom-line row for a counter absent from the table is None (no invented row)",
+      _ls._phase_row(_cond, "not_a_counter", "x") is None and _ls._phase_row(None, "wet_days_ge_1in", "x") is None,
+      "a row was invented")
+_ps = _ls._phase_sentence(_cond, "wet_days_ge_1in", "days at \u2265 1.00 in")
+check("the phase sentence quotes both means, the n and the small-sample caveat",
+      "In the 2 El Ni\u00f1o seasons on record, days at \u2265 1.00 in averaged 3.0 against 2.5 over all 4" in _ps
+      and "small sample: 2 seasons" in _ps and "not a forecast" in _ps,
+      repr(_ps))
+check("no sentence is written when the all-season mean is missing",
+      _ls._phase_sentence(_cond, "max_gust_mph", "gusts") == "" and _ls._phase_sentence(None, "x", "y") == "",
+      "a sentence was written without an all-season comparison")
+check("the wind-station caveat no longer asserts an unsourced direction",
+      "upper bound" not in _ls.WIND_STATION_CAVEAT and "more exposed" not in _ls.WIND_STATION_CAVEAT
+      and "11.9 mi" in _ls.WIND_STATION_CAVEAT and "windier or calmer" in _ls.WIND_STATION_CAVEAT,
+      repr(_ls.WIND_STATION_CAVEAT))
+
+
 section("rainy-season aggregation (synthetic GHCN, exact expected values)")
 
 ghcn_header = ("STATION,DATE,LATITUDE,LONGITUDE,ELEVATION,NAME,PRCP,PRCP_ATTRIBUTES,"
@@ -1859,8 +1966,14 @@ _bl_none, _off_none = landlord.build_bottom_line(
 check("an entirely missing severity block still renders six answers",
       len(_bl_none) == 6 and all(i["answer"] for i in _bl_none), str(len(_bl_none)))
 check("the official outlook separates ENSO, CPC, the horizon and the conditioned record",
-      set(_off_none) == {"enso", "cpc_tilt", "daily_forecast", "enso_conditioned_record"},
+      set(_off_none) == {"enso", "cpc_tilt", "daily_forecast", "enso_conditioned_record",
+                         "enso_conditioned_severity"},
       str(sorted(_off_none)))
+check("with no severity table the conditioned-severity block is None, and no answer carries a phase row",
+      _off_none.get("enso_conditioned_severity") is None
+      and not any("seasons on record (" in str(num.get("label"))
+                  for i in _bl_none for num in (i.get("numbers") or [])),
+      str(_off_none.get("enso_conditioned_severity")))
 
 # --------------------------------------------------------------------------- #
 section("storm-severity counters (hand-computable synthetic season)")
@@ -2358,6 +2471,41 @@ check("a geography is read by name, so a re-ordered response still parses",
           "County Subdivisions": [{"BASENAME": "Sunset", "NAME": "Sunset CCD",
                                    "GEOID": "0607593267"}]}}})["county_subdivision"] == "Sunset CCD",
       "name lookup failed")
+check("the real response's congressional district is read with its layer named",
+      _geo["congressional_district"] == "Congressional District 11"
+      and _geo["congressional_district_layer"] == "119th Congressional Districts",
+      str({k: _geo[k] for k in ("congressional_district", "congressional_district_layer")}))
+# Bug 75: the geocoder's "Current_Current" vintage flipped between two runs on
+# 20 Sep 2026 ("120th Congressional Districts" at 01:23Z, "119th" at 01:38Z) and a
+# hard-coded "119th" published a dash for the district that was in the response.
+_cd120 = {"result": {"geographies": {
+    "County Subdivisions": [{"NAME": "Sunset CCD", "GEOID": "0607593267"}],
+    "120th Congressional Districts": [{"NAME": "Congressional District 11", "GEOID": "0611",
+                                       "CDSESSN": "120"}]}}}
+_g120 = climo.parse_census_geographies(_cd120)
+check("a 120th-Congress layer is read, not blanked (bug 75)",
+      _g120["congressional_district"] == "Congressional District 11"
+      and _g120["congressional_district_layer"] == "120th Congressional Districts",
+      str(_g120))
+_cdboth = {"result": {"geographies": {
+    "County Subdivisions": [{"NAME": "Sunset CCD", "GEOID": "0607593267"}],
+    "119th Congressional Districts": [{"NAME": "Congressional District 11 (old)"}],
+    "120th Congressional Districts": [{"NAME": "Congressional District 11"}]}}}
+check("when two Congress layers are present the newest one is published",
+      climo.parse_census_geographies(_cdboth)["congressional_district"] == "Congressional District 11"
+      and climo.parse_census_geographies(_cdboth)["congressional_district_layer"]
+      == "120th Congressional Districts", str(climo.parse_census_geographies(_cdboth)))
+_cdnone = {"result": {"geographies": {
+    "County Subdivisions": [{"NAME": "Sunset CCD", "GEOID": "0607593267"}],
+    "120th Congressional Districts": []}}}
+check("an empty congressional layer publishes None for both the name and the layer",
+      climo.parse_census_geographies(_cdnone)["congressional_district"] is None
+      and climo.parse_census_geographies(_cdnone)["congressional_district_layer"] is None,
+      str(climo.parse_census_geographies(_cdnone)))
+check("a look-alike layer name is not mistaken for the congressional layer",
+      climo._congressional_layer_key({"Congressional Districts of Somewhere": [{"NAME": "x"}],
+                                      "119th Congressional District": [{"NAME": "x"}]}) is None,
+      "regex matched a look-alike")
 
 
 # --------------------------------------------------------------------------- #

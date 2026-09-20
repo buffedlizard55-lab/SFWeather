@@ -152,6 +152,28 @@ def _c4(tmp):
     return with_geo(mutate)(tmp)
 
 
+@case("a congressional layer returned but no district published (bug 75)", "fail",
+      "census-geographies-traceable")
+def _c4b(tmp):
+    def mutate(geo):
+        geo["geography_types_returned"] = ["120th Congressional Districts", "Counties",
+                                           "County Subdivisions", "Census Tracts"]
+        geo["congressional_district"] = None
+        geo["congressional_district_layer"] = None
+    return with_geo(mutate)(tmp)
+
+
+@case("a 120th-Congress district published from a 120th layer", "pass",
+      "census-geographies-traceable")
+def _c4c(tmp):
+    def mutate(geo):
+        geo["geography_types_returned"] = ["120th Congressional Districts", "Counties",
+                                           "County Subdivisions", "Census Tracts"]
+        geo["congressional_district"] = "Congressional District 11"
+        geo["congressional_district_layer"] = "120th Congressional Districts"
+    return with_geo(mutate)(tmp)
+
+
 @case("census geography absent but flagged as an irregularity", "pass", "census-geographies-traceable")
 def _c5(tmp):
     for f in DATA.glob("*.json"):
@@ -1317,6 +1339,105 @@ def _es4(tmp):
     st["super_el_nino"] = {"n": 4, "phase_label": "Super El Ni\u00f1o",
                            "ge_7_days": {"seasons": 4, "pct": 100.0}}
     dump(tmp / "calendar.json", cal)
+    return tmp
+
+
+# --------------------------------------------------------------------------
+# Phase-conditioned severity statistics (ledger check enso-severity-recompute).
+# Same rule as the spell table: every figure is a summary over the seasons in
+# that phase, and the rows the landlord summary derived from it must quote the
+# table.  A mean edited by hand, a table stripped out, a phase invented with no
+# seasons, or a derived row whose n or mean drifts from the table must all fail.
+# --------------------------------------------------------------------------
+
+@case("a phase-conditioned severity mean edited by hand", "fail",
+      "enso-severity-recompute")
+def _ev1(tmp):
+    _copy_all_with_streaks(tmp)
+    cal = load("calendar.json")
+    sv = cal.get("enso_stratified_severity") or {}
+    if "el_nino" not in sv:
+        raise AssertionError("fixture expected a phase-conditioned severity table")
+    sv["el_nino"]["metrics"]["wet_days_ge_1in"]["mean"] = 9.9
+    dump(tmp / "calendar.json", cal)
+    return tmp
+
+
+@case("the phase-conditioned severity table stripped from the dataset", "fail",
+      "enso-severity-recompute")
+def _ev2(tmp):
+    _copy_all_with_streaks(tmp)
+    cal = load("calendar.json")
+    if not cal.get("enso_stratified_severity"):
+        raise AssertionError("fixture expected a phase-conditioned severity table")
+    cal.pop("enso_stratified_severity")
+    dump(tmp / "calendar.json", cal)
+    return tmp
+
+
+@case("a severity phase invented with no seasons behind it", "fail",
+      "enso-severity-recompute")
+def _ev3(tmp):
+    _copy_all_with_streaks(tmp)
+    cal = load("calendar.json")
+    sv = cal.get("enso_stratified_severity") or {}
+    sv["super_el_nino"] = {"n": 3, "phase_label": "Super El Ni\u00f1o", "seasons": [],
+                           "metrics": {"wet_days_ge_1in": {"n": 3, "mean": 8.0, "median": 8.0,
+                                                           "min": 7.0, "max": 9.0}}}
+    dump(tmp / "calendar.json", cal)
+    return tmp
+
+
+@case("a derived phase-conditioned row whose mean drifted from the table", "fail",
+      "enso-severity-recompute")
+def _ev4(tmp):
+    _copy_all_with_streaks(tmp)
+    ll = load("landlord.json")
+    cond = ((ll.get("executive_summary") or {}).get("official_outlook") or {}).get(
+        "enso_conditioned_severity") or {}
+    rows = cond.get("rows") or []
+    if not rows:
+        raise AssertionError("fixture expected derived phase-conditioned severity rows")
+    rows[0]["phase_mean"] = (rows[0].get("phase_mean") or 0) + 1.0
+    dump(tmp / "landlord.json", ll)
+    return tmp
+
+
+@case("a bottom-line phase row naming a different n than the table", "fail",
+      "enso-severity-recompute")
+def _ev5(tmp):
+    _copy_all_with_streaks(tmp)
+    ll = load("landlord.json")
+    es = ll.get("executive_summary") or {}
+    cond = (es.get("official_outlook") or {}).get("enso_conditioned_severity") or {}
+    label = cond.get("phase_label")
+    hit = False
+    for item in es.get("bottom_line") or []:
+        for num in item.get("numbers") or []:
+            lab = str(num.get("label") or "")
+            if label and f"in {label} seasons on record" in lab and " of the " in lab:
+                num["label"] = lab.replace(f"({cond.get('seasons_in_phase')} of the ",
+                                           f"({int(cond.get('seasons_in_phase')) + 5} of the ")
+                hit = True
+                break
+        if hit:
+            break
+    if not hit:
+        raise AssertionError("fixture expected a bottom-line row quoting the phase n")
+    dump(tmp / "landlord.json", ll)
+    return tmp
+
+
+@case("the derived severity rows removed while the current phase is in the table", "fail",
+      "enso-severity-recompute")
+def _ev6(tmp):
+    _copy_all_with_streaks(tmp)
+    ll = load("landlord.json")
+    off = (ll.get("executive_summary") or {}).get("official_outlook") or {}
+    if not off.get("enso_conditioned_severity"):
+        raise AssertionError("fixture expected derived phase-conditioned severity rows")
+    off["enso_conditioned_severity"] = None
+    dump(tmp / "landlord.json", ll)
     return tmp
 
 

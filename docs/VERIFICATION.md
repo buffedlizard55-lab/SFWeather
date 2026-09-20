@@ -97,7 +97,7 @@ the site's **Data quality** section rather than smoothed over:
   be checked against the published map.
 * **Thin samples per calendar date** - 30 seasons at most, so a single-date
   percentage carries roughly +/- 3.3 points of sampling noise.
-* **SFO wind is upper bound for Sunset** — exposure at KSFO is more open than 94122, so wind figures are intentionally conservative for landlord planning.
+* **SFO wind is an SFO reference value, not a bound for the Sunset** — earlier passes wrote "upper bound" here; no official source in this project establishes the direction, so the claim was withdrawn as bug 74 (session 14, below).
 
 ---
 
@@ -1173,3 +1173,118 @@ Ledger after the live run: **73 passed, 0 failed, 0 warnings**. The remaining wa
 item — the `Oct 15 2026` supersession line and the `mid-late October` revision
 language — still needs the mid-October discussion to move, and stays on the
 `NEXT_SESSION.md` list.
+
+## Session 14 — 20 September 2026 (pass 14): severity conditioned on the ENSO phase, the wind-station wording withdrawn, the Congress-vintage hole, live re-verification
+
+### Live re-verification against the official products (20 Sep 2026, ~02:00 UTC)
+
+Every fetch below was made from the session, read in full, and compared with the
+committed datasets (`main` at `d5b1030`, the 01:38Z refresh). Nothing on the site
+was found to differ from its source. The sandbox itself has no direct network
+egress, so the pipeline was **not** run locally — the live proof of the new
+checks is the CI run this branch triggers.
+
+| Product | Fetched | Compared with | Result |
+| --- | --- | --- | --- |
+| CPC ONI `oni.ascii.txt` | tail of the table | `data/enso.json` | ✓ `JJA 2026 … 1.80`, El Niño, strong band |
+| CPC ENSO Diagnostic Discussion (10 Sep 2026) | full text | strength-card quotes, alert status | ✓ El Niño Advisory; `75% chance of a historic event … 3-month RONI value).` verbatim (bug 73 stays fixed); next discussion 8 Oct 2026 |
+| CPC prognostic discussion `fxus05` (830 AM EDT Thu Sep 17 2026) | 3 chunks, full text | caveat-card quotes, DJF/JFM probabilities | ✓ PDO `-1.11` sentence, `may dampen` sentence, `mid-late October` sentence verbatim; `superseded … Oct 15 2026` present; CA coastal maximum 50–60% in DJF/JFM/FMA |
+| NWS `gridpoints/MTR/82,105/forecast` | 14 periods (generated 02:04Z) | `data/nws.json` (updateTime 2026-09-19T20:26:32Z) | ✓ identical temperatures/POPs/winds; only period 1's start hour advanced with generation time (expected API behaviour, not an irregularity); no rain in the window |
+| NWS `alerts/active?zone=CAZ006` | live | alert count | ✓ `features: []` — 0, as published |
+| NCEI GSOD README (10/28/2020) | full text | units/UTC-day statements on the site | ✓ knots in tenths, PRCP hundredths, day = 0000Z–2359Z, `GUST/PRCP appear less frequently` |
+| NCEI `normals-daily/1991-2020/access/USW00023272.csv` | — | — | ✗ **HTTP 500 through the fetch tool** (session 13 saw the same on GHCN-Daily/GSOD `access/*.csv`). Not a data error: CI fetched the file per `data/provenance.json` (status, bytes, SHA-256 recorded). The large NCEI files remain a known gap for manual re-fetching from the session and are listed as such. |
+
+### Feature: hard-rain days, gusts and wind + rain, asked of *this* ENSO phase (closes handoff priority 1)
+
+Session 13 conditioned only the **duration** question on the phase. This pass
+conditions the **severity** counters the same way, with the same rule that every
+figure prints its own `n` and calls itself an observed frequency, not a forecast.
+
+* `pipeline/climo.py` — `ENSO_SEVERITY_FIELDS` names ten per-season counters
+  that already existed in the season rows (`wet_days_ge_050in`, `_1in`, `_2in`,
+  `max_daily_prcp_in`, `wind_and_rain_days`, `heavy_wind_and_rain_days`,
+  `severe_wind_and_rain_days`, `gust_days_ge_40kt`, `wind_days_ge_30kt`,
+  `max_gust_mph`). `enso_stratified_severity()` summarises each per phase
+  (n, mean, median, min, max, p10/p90, `seasons_with_any`); an absent counter
+  publishes `n: 0`, never a zero. Published under
+  `calendar.enso_stratified_severity`.
+* `pipeline/landlord_summary.py` — `phase_conditioned_severity()` builds the
+  strip block (`official_outlook.enso_conditioned_severity`: current phase,
+  `seasons_in_phase`, `seasons_total`, ten rows each carrying the phase mean /
+  median / max **beside the all-season mean and max**). Bottom-line answers 3–6
+  and cost drivers 2–4 gained phase rows in the fixed pattern
+  `<label> in El Niño seasons on record (11 of the 30)` → `mean a · median b ·
+  max c — all 30 seasons: mean d`, plus one sentence each.
+* `assets/js/app.js` — a full-width strip cell (`data-test="enso-conditioned-severity"`)
+  renders the table with its fine print and three source links; the
+  season-by-season ENSO card gained three columns (`Days ≥ 1.00 in, mean`,
+  `Days gust ≥ 40 kt, mean`, `Wind + rain days (whole-day), mean`, each with
+  the worst season in brackets).
+* `pipeline/verify_claims.py` — new check **`enso-severity-recompute`**
+  rebuilds the whole table from the 30 season rows in `climatology.json`, then
+  checks every derived bottom-line / cost-driver row (n, mean, median, max, and
+  the `(n of the N)` label) against it, and fails if the current phase is in
+  the table but the derived rows are missing. Ledger: **74 checks**.
+* Falsified: `tests/falsify_guards.py` +6 (mean edited by hand; table stripped;
+  phase invented with no seasons; derived row drifted; bottom-line row naming a
+  different n; derived rows removed while the phase is in the table);
+  `tests/falsify_smoke.py` +9 (table not rendered; a value re-rounded; `n`
+  missing; caveat missing; a row dropped; ENSO card column removed; a cell
+  rendered with no rows behind it; the `upper bound` wording reintroduced in
+  the dataset; the same wording reintroduced in `index.html`).
+
+What the numbers say (1991–2020, El Niño n = 11 / La Niña 12 / Neutral 7): El
+Niño seasons averaged **3.7** days ≥ 1.00 in against **3.2** over all 30, and
+**3.2** days with a gust ≥ 40 kt against **2.4**; the joint counters (11.5 vs
+11.1 whole-day wind + rain days; 0.5 vs 0.5 days at ≥ 1.00 in with a ≥ 40 kt
+gust) and the season-maximum gust (53.7 vs 53.8 mph) are indistinguishable
+between phases at these sample sizes. The page says exactly that and nothing
+stronger.
+
+### Bug 74 — "SFO is an upper bound for the Sunset" had no source
+
+| # | Symptom | Cause | Fix |
+| --- | --- | --- | --- |
+| 74 | The wind card, the bottom line, the cost drivers, the season-statistics card, the static wind paragraph in `index.html`, and five documents said SFO is *more exposed* than the Sunset and that every wind figure is therefore an **upper bound** for 94122 | Written in session 1 as a plausibility, then copied forward. No official source in this project establishes the direction: SFO sits on the bay shore, the Outer Sunset faces the open Pacific at Ocean Beach, and no official station inside 94122 holds a 30-year wind record to compare against. A directional claim without a source is exactly the kind of statement the project's rules forbid | The wording now states the station, the distance and the gap (`WIND_STATION_CAVEAT` in `landlord_summary.py`, one definition): *SFO reference value, not a bound for 94122*. `tests/smoke.js` guard 33 bans `upper bound for the Sunset/94122/ZIP/neighbourhood`, `SFO is more exposed` and `runs windier than the …` page-wide; `tests/test_parsers.py` pins the caveat text; both harnesses prove the ban fires. `README.md`, `docs/LIMITATIONS.md` (table row, three bullets, new §26), `docs/METHODS.md` §16, `docs/LANDLORD_GUIDE.md` and this file were corrected in place. The one remaining "upper bound" in `docs/METHODS.md` (§ NWS wind ranges, `"5 to 11 mph"` → 11) is a different, correct usage |
+
+### Bug 75 — a hard-coded Congress number blanked the congressional district
+
+| # | Symptom | Cause | Fix |
+| --- | --- | --- | --- |
+| 75 | PR #24's data diff shows two CI runs 15 minutes apart on 20 Sep 2026 disagreeing on the Census geography block: the 01:23Z run published `congressional_district: null` with `geography_types_returned` listing **`120th Congressional Districts`** and **2026** state-legislative layers; the 01:38Z run (now on `main`) published `Congressional District 11` under **`119th Congressional Districts`** and **2024** layers | The Census geocoder's `Current_Current` vintage is not stable across its servers, and `climo.parse_census_geographies` read the layer by the literal key `"119th Congressional Districts"`. When the geocoder answered with the 120th-Congress layer the district was in the response and the page printed a dash | `_congressional_layer_key()` picks the highest-numbered `<n>th Congressional Districts` layer present (bare `Congressional Districts` as fallback) and the parser now publishes `congressional_district_layer` beside the name, so the vintage answered is visible. The page prints it (`Congressional District 11 (119th Congressional Districts)`). The ledger's `census-geographies-traceable` check now **fails** when a congressional layer was returned but no district published. Parser tests +5 (119th real fixture, 120th, both layers → newest, empty layer → None, look-alike names rejected); falsify_guards +2 (the hole fails; a 120th-layer district passes) |
+
+The vintage flip itself is **flagged as an irregularity for review**: it is the
+Census Bureau's behaviour, not this project's, and the site now shows which
+layer it was given on each run rather than assuming one.
+
+### Carried in from PR #24 (superseded, not merged)
+
+PR #24 (branch `arena/01a0bc4f-sfweather`) corrected the published parser count
+from 450 to "449–450" because one cross-check — the derived-window gust maximum
+against the gust NWS's text forecast states — is guarded and skips when the text
+forecast states no gust (as the 20 Sep 2026 forecast does). It could not merge
+(`CONFLICTING` with the later data refresh on `main`); its correction is carried
+here: the count is published as **473–474** (473 in this data state) with the
+same explanation, and the PR is credited in `README.md`.
+
+### Standings after this pass
+
+* `pipeline/verify_claims.py`: **74 checks pass, 0 fail, 0 warnings** (73 +
+  `enso-severity-recompute`), 19 recorded claims — run in the sandbox against
+  the regenerated datasets.
+* `tests/test_parsers.py`: **473/473** in this data state (450 − 1 guarded +
+  19 phase-severity + 5 Congress-layer). `tests/falsify_guards.py`: **85 cases**
+  behave (77 + 6 + 2). `tests/falsify_smoke.py`: **42 cases** behave (33 + 9).
+  `npm test` passes with the new cell, the three new columns and guard 33.
+  Every `--selftest` passes.
+* Changed files: `pipeline/climo.py`, `pipeline/build_calendar.py`,
+  `pipeline/landlord_summary.py`, `pipeline/executive_summary.py`,
+  `pipeline/verify_claims.py`, `assets/js/app.js`, `assets/css/style.css`,
+  `index.html`, `tests/smoke.js`, `tests/test_parsers.py`,
+  `tests/falsify_guards.py`, `tests/falsify_smoke.py`, `README.md`, `docs/*`,
+  and the regenerated `data/calendar.json`, `data/landlord.json`,
+  `data/executive_summary.{md,json}`, `data/verify.json`, `data/verify_report.txt`.
+* Still open: the mid-October CPC issuances (8 Oct ENSO discussion, 15 Oct
+  long-lead outlooks — the `superseded` line is a dated watch item), multi-ZIP
+  support, GHCNh/SSODv2 wind stitching, the CPC back-test archive. See
+  `docs/NEXT_SESSION.md`.

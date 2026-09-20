@@ -476,6 +476,12 @@ dialog form { padding: 0 22px 20px; }
   background: #f2f7fb; font-size: 12.5px; line-height: 1.5; color: var(--ink);
 }
 .off-quote-label { font-size: 11px; color: var(--ink-soft); margin-top: 2px; font-style: italic; }
+/* The phase-conditioned severity table spans the whole strip: ten rows of
+ * three columns do not fit a 240px cell, and squeezing them would hide the
+ * all-season comparison that makes each row honest. */
+.off-cell-wide { grid-column: 1 / -1; }
+.off-cell-wide table { margin: 8px 0 6px; font-size: 12.5px; }
+.off-cell-wide .table-scroll { margin: 0; }
 
 @media (max-width: 620px) {
   .official-strip { grid-template-columns: 1fr; }

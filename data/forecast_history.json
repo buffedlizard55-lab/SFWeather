@@ -159,12 +159,12 @@
   },
   {
     "issuance_date": "2026-09-20",
-    "generated_utc": "2026-09-20T01:11:30+00:00",
+    "generated_utc": "2026-09-20T02:36:15+00:00",
     "forecast_updated": "2026-09-19T20:26:32+00:00",
     "days": [
       {
         "target_date": "2026-09-19",
-        "high_f": 62,
+        "high_f": 60,
         "low_f": 59,
         "pop_pct": 1,
         "qpf_in": 0.0,

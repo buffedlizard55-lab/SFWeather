@@ -1016,6 +1016,64 @@ setTimeout(() => {
     }
   }
 
+  // 33. The phase-conditioned severity table (hard-rain days, gusts, wind +
+  //     rain in the seasons that sat in this ENSO phase).  When the dataset
+  //     carries it, the official strip must render every row with the value
+  //     the dataset holds, the phase's n beside the all-season n, and the
+  //     small-sample "not a forecast" wording; the ENSO season card must carry
+  //     the three severity columns.  When the dataset lacks it, nothing may be
+  //     rendered in its place - an empty table would read as "no severity".
+  {
+    const stripText = text('#landlord-official');
+    let cs = null;
+    try {
+      cs = (((JSON.parse(fs.readFileSync(path.join(repo, 'data/landlord.json'), 'utf8'))
+        .executive_summary || {}).official_outlook || {}).enso_conditioned_severity) || null;
+    } catch (e) { cs = null; }
+    const cell = doc.querySelector('[data-test="enso-conditioned-severity"]');
+    if (!cs || !(cs.rows || []).length) {
+      if (cell) problems.push('no enso_conditioned_severity rows in the dataset but a severity cell rendered');
+    } else {
+      if (!cell) {
+        problems.push('enso_conditioned_severity is in the dataset but the strip did not render it');
+      } else {
+        const ct = cell.textContent.replace(/\s+/g, ' ');
+        if (!ct.includes(`(${cs.seasons_in_phase} of the ${cs.seasons_total})`)) {
+          problems.push('the severity cell does not print the phase n beside the all-season n');
+        }
+        if (!/not a forecast/i.test(ct)) {
+          problems.push('the severity cell lacks the "not a forecast" small-sample wording');
+        }
+        const rowsRendered = cell.querySelectorAll('tbody tr').length;
+        if (rowsRendered !== cs.rows.length) {
+          problems.push('the severity cell rendered ' + rowsRendered + ' row(s) for ' + cs.rows.length + ' in the dataset');
+        }
+        cs.rows.forEach(r => {
+          const want = `${r.phase_mean} \u00b7 ${r.phase_median} \u00b7 ${r.phase_max}`;
+          if (!ct.includes(r.label) || !ct.includes(want)) {
+            problems.push('severity row not rendered as published: ' + r.label + ' -> ' + want);
+          }
+        });
+        if (/upper bound/i.test(ct)) {
+          problems.push('the severity cell asserts an unsourced "upper bound" for the Sunset');
+        }
+        if (!cell.querySelector('a[href]')) problems.push('the severity cell has no source link');
+      }
+      const ensoText = text('#enso-strat');
+      ['Days \u2265 1.00 in, mean', 'Days gust \u2265 40 kt, mean', 'Wind + rain days (whole-day), mean'].forEach(h => {
+        if (!ensoText.includes(h)) problems.push('ENSO season card lost the severity column "' + h + '"');
+      });
+    }
+    // The wind figures may no longer be presented as a bound for the ZIP: no
+    // source in this project establishes the direction (bug 74).
+    const pageText = doc.body.textContent.replace(/\s+/g, ' ');
+    if (/upper bound for (the )?(Sunset|94122|ZIP|neighbou?rhood)/i.test(pageText)
+        || /SFO is more exposed/i.test(pageText)
+        || /(runs|is) windier than the (Sunset|ZIP|neighbou?rhood)/i.test(pageText)) {
+      problems.push('the page still calls the SFO wind record an "upper bound" / "more exposed" for the Sunset (unsourced direction, bug 74)');
+    }
+  }
+
   if (problems.length) {
     console.error('SMOKE TEST FAILED');
     problems.forEach(p => console.error(' - ' + p));

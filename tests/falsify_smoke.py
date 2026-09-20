@@ -557,9 +557,8 @@ def run_smoke(repo):
       expect_msg="lost the phase-conditioned 7+ day wet-spell column")
 def _st1(repo):
     patch_text(repo, "assets/js/app.js",
-               "{ label: '7+ day wet spell', num: true },"
-               " { label: 'Longest run, mean', num: true }], srows,",
-               "], srows,")
+               "{ label: '7+ day wet spell', num: true }, { label: 'Longest run, mean', num: true },",
+               "")
     return repo
 
 
@@ -569,6 +568,98 @@ def _st2(repo):
     patch_text(repo, "assets/js/app.js",
                "`${n(st.ge_7_days.pct, 1)}% (${st.ge_7_days.seasons} of ${st.n})`",
                "`${n(st.ge_7_days.pct, 1)}%`")
+    return repo
+
+
+# --------------------------------------------------------------------------
+# Guard 33: the phase-conditioned severity table and the wind-station wording.
+# --------------------------------------------------------------------------
+
+@case("the severity table in the dataset but not rendered",
+      expect_msg="did not render it")
+def _sv1(repo):
+    patch_text(repo, "assets/js/app.js",
+               "if (cs && Array.isArray(cs.rows) && cs.rows.length) {",
+               "if (false) {")
+    return repo
+
+
+@case("a severity row rendered with a different value than the dataset",
+      expect_msg="not rendered as published")
+def _sv2(repo):
+    patch_text(repo, "assets/js/app.js",
+               "`${fmtOrDash(r.phase_mean)} \\u00b7 ${fmtOrDash(r.phase_median)} \\u00b7 ${fmtOrDash(r.phase_max)}`",
+               "`${fmtOrDash(Number(r.phase_mean) + 1)} \\u00b7 ${fmtOrDash(r.phase_median)} \\u00b7 ${fmtOrDash(r.phase_max)}`")
+    return repo
+
+
+@case("the severity cell rendered without the phase n beside the all-season n",
+      expect_msg="does not print the phase n")
+def _sv3(repo):
+    patch_text(repo, "assets/js/app.js",
+               "`(${cs.seasons_in_phase} of the ${cs.seasons_total}), beside all seasons`",
+               "`, beside all seasons`")
+    return repo
+
+
+@case("the severity cell rendered without the not-a-forecast wording",
+      expect_msg="small-sample")
+def _sv4(repo):
+    patch_text(repo, "assets/js/app.js",
+               "el('div', { class: 'off-sub', text: cs.how_to_read || '' }),",
+               "el('div', { class: 'off-sub', text: '' }),")
+    return repo
+
+
+@case("a severity row dropped from the render",
+      expect_msg="row(s) for")
+def _sv5(repo):
+    patch_text(repo, "assets/js/app.js",
+               "cs.rows.map(r => [\n          r.label,",
+               "cs.rows.slice(1).map(r => [\n          r.label,")
+    return repo
+
+
+@case("the ENSO season card rendered without the severity columns",
+      expect_msg="lost the severity column")
+def _sv6(repo):
+    patch_text(repo, "assets/js/app.js",
+               "{ label: 'Days \\u2265 1.00 in, mean', num: true }, ",
+               "")
+    return repo
+
+
+@case("a severity cell rendered although the dataset has no rows",
+      expect_msg="but a severity cell rendered")
+def _sv7(repo):
+    def fn(ll):
+        off = (ll.get("executive_summary") or {}).get("official_outlook") or {}
+        off["enso_conditioned_severity"] = None
+    patch_json(repo, "data/landlord.json", fn)
+    patch_text(repo, "assets/js/app.js",
+               "if (cs && Array.isArray(cs.rows) && cs.rows.length) {",
+               "if (true) { const cs = { rows: [{label: 'x'}], sources: [] };")
+    return repo
+
+
+@case("the page calling the SFO wind record an upper bound for the Sunset again",
+      expect_msg="unsourced direction, bug 74")
+def _sv8(repo):
+    def fn(ll):
+        es = ll.get("executive_summary") or {}
+        for item in es.get("bottom_line") or []:
+            if item.get("key") == "wind":
+                item["answer"] = (item.get("answer") or "") + " Treat these as an upper bound for the Sunset."
+    patch_json(repo, "data/landlord.json", fn)
+    return repo
+
+
+@case("the static wind paragraph calling SFO an upper bound for the neighbourhood again",
+      expect_msg="unsourced direction, bug 74")
+def _sv9(repo):
+    patch_text(repo, "index.html",
+               "not as a bound for the neighbourhood.",
+               "read these as an upper bound for the neighbourhood.")
     return repo
 
 
