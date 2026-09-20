@@ -1154,3 +1154,22 @@ gained exactly the one new key and nothing else changed.
 * Still open from earlier sessions and unchanged here: multi-ZIP support, the
   GHCNh/SSODv2 wind stitching, the CPC archive back-fill, and the two PR-15
   follow-ups. See `docs/NEXT_SESSION.md`.
+
+## Session 13 addendum — first live pipeline run on the new code
+
+The session-13 changes were committed, pushed and executed end to end by the
+`Update NOAA data` workflow (run `35480736701`, green, 2026-09-20T01:23Z), which
+re-fetched every official source and re-derived every published dataset. Both
+session-13 changes therefore now have a live proof, not only a fixture proof:
+
+| Item | Live result after the rerun |
+| --- | --- |
+| Bug 73 (inline-tag space in verbatim quotes) | The regenerated `3-month RONI value` sentence reads `… 3-month RONI value).` — no space before the parenthesis. The published quotation now matches CPC's own plain-text rendering character for character. |
+| `enso-streaks-recompute` ledger check on freshly fetched data | **PASS** — "all phases match". The phase-conditioned block was recomputed from the season rows built in this run, not copied from our earlier data. |
+| Phase figures stable across a fresh fetch | El Niño 9 of 11 = 81.8% (longest mean 9.1 d); La Niña 4 of 12 = 33.3%; Neutral 3 of 7 = 42.9%. |
+| Bottom-line answer 2 | Renders the phase sentence plus its denominator: `Any 7+ day wet run in El Niño seasons on record (11 of the 30) — 81.8% of those seasons (9 of 11)`. |
+
+Ledger after the live run: **73 passed, 0 failed, 0 warnings**. The remaining watch
+item — the `Oct 15 2026` supersession line and the `mid-late October` revision
+language — still needs the mid-October discussion to move, and stays on the
+`NEXT_SESSION.md` list.
