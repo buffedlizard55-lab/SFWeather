@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-20T01:28:49Z",
+  "generated_utc": "2026-09-20T01:43:09Z",
   "pipeline_version": "1.0",
   "target": {
     "zip": "94122",
@@ -32,13 +32,13 @@
         "census_tract": "Census Tract 326.01",
         "census_tract_geoid": "06075032601",
         "census_block_geoid": "060750326013006",
-        "congressional_district": null,
+        "congressional_district": "Congressional District 11",
         "urban_area": "San Francisco--Oakland, CA Urban Area",
         "geography_types_returned": [
-          "120th Congressional Districts",
+          "119th Congressional Districts",
           "2020 Census Blocks",
-          "2026 State Legislative Districts - Lower",
-          "2026 State Legislative Districts - Upper",
+          "2024 State Legislative Districts - Lower",
+          "2024 State Legislative Districts - Upper",
           "Census Tracts",
           "Combined Statistical Areas",
           "Counties",
@@ -51,8 +51,8 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-20T01:23:41Z",
-        "sha256": "407ce6bb637e8c512b1ad551ad96a709d1be46102e3ab5ed9d2dc8120cb517c0",
+        "retrieved_utc": "2026-09-20T01:38:15Z",
+        "sha256": "b7b8df03b1365a8463fe07a95913f07e23627f52eff60daece1b6a8ea4f65fb7",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
     }

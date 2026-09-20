@@ -5033,7 +5033,7 @@
       "elevation_m": 62.419992,
       "distance_m": 17818.193337506,
       "observation": {
-        "timestamp": "2026-09-20T00:45:00+00:00",
+        "timestamp": "2026-09-20T01:15:00+00:00",
         "temperature_c": null,
         "dewpoint_c": null,
         "relative_humidity_pct": null,
@@ -5053,7 +5053,7 @@
       "elevation_m": 3.048,
       "distance_m": 19117.58413345,
       "observation": {
-        "timestamp": "2026-09-20T00:55:00+00:00",
+        "timestamp": "2026-09-20T01:20:00+00:00",
         "temperature_c": 16,
         "dewpoint_c": 12,
         "relative_humidity_pct": 77.155040268598,
@@ -5101,14 +5101,14 @@
       "elevation_m": 29.410152,
       "distance_m": 22798.124785519,
       "observation": {
-        "timestamp": "2026-09-20T00:34:00+00:00",
-        "temperature_c": 19.44,
-        "dewpoint_c": 14.35,
-        "relative_humidity_pct": 72.41707317214,
+        "timestamp": "2026-09-20T01:16:00+00:00",
+        "temperature_c": 18.33,
+        "dewpoint_c": 13.89,
+        "relative_humidity_pct": 75.335630194286,
         "wind_speed_kmh": 0,
         "wind_gust_kmh": null,
-        "wind_direction_deg": 31,
-        "barometric_pressure_pa": 101400,
+        "wind_direction_deg": 35,
+        "barometric_pressure_pa": 101370,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
         "text_description": ""
@@ -5121,7 +5121,7 @@
     "count": 0,
     "test_count": 0,
     "count_including_tests": 0,
-    "updated": "2026-09-20T01:23:45+00:00",
+    "updated": "2026-09-20T01:37:59+00:00",
     "events": [],
     "source_url": "https://api.weather.gov/alerts/active?zone=CAZ006",
     "human_url": "https://www.weather.gov/mtr"
