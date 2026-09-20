@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-20T00:11:55Z",
+  "generated_utc": "2026-09-20T01:16:44Z",
   "location": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset) - 37.7605N, -122.4839W",
   "season_window": "October 1, 2026 - January 31, 2027 (123 days)",
   "questions": [
@@ -585,7 +585,7 @@
       ],
       "source_url": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
       "discussion_sha256": "c6307e499e46cf2c0047f87de6a3169ed484923b62755f5e4350d786589ea781",
-      "discussion_characters": 16942,
+      "discussion_characters": 16882,
       "how_to_read": "Sentences copied verbatim from the long-lead Prognostic Discussion CPC issued with the seasonal outlook, located by pattern in the text the pipeline fetched and hashed. They are NOAA's forecasters qualifying their own outlook; no number or date has been attached by this project. When a later discussion no longer contains a sentence, it stops appearing here and is listed under not_found."
     },
     "enso_strength": {
@@ -600,7 +600,7 @@
         {
           "key": "historic_event_probability",
           "label": "CPC's stated chance of a historic-strength event this season",
-          "text": "During the October-December 2026 season, there is a 75% chance of a historic event that would exceed the strength of previous El Ni\u00f1o events dating back to 1950 (+2.5\u00b0C or more for a 3-month RONI value )."
+          "text": "During the October-December 2026 season, there is a 75% chance of a historic event that would exceed the strength of previous El Ni\u00f1o events dating back to 1950 (+2.5\u00b0C or more for a 3-month RONI value)."
         }
       ],
       "not_found": [],
@@ -610,7 +610,7 @@
       ],
       "source_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml",
       "discussion_sha256": "eacaf2fa573069c599ad95006be54a1f363384d2fea7b6ef25abdc8c654af575",
-      "discussion_characters": 3482,
+      "discussion_characters": 3440,
       "how_to_read": "Sentences copied verbatim from the ENSO Diagnostic Discussion CPC issued with its monthly ENSO assessment, located by pattern in the text the pipeline fetched and hashed. They are CPC's own probability statements about this El Ni\u00f1o's strength; no number or date has been attached by this project. When a later discussion no longer contains a sentence, it stops appearing here and is listed under not_found."
     },
     "enso_conditioned_record": {

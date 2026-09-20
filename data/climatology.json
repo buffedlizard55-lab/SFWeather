@@ -6808,50 +6808,6 @@
         "phase_label": "Neutral"
       }
     },
-    "wettest_seasons": [
-      {
-        "season": "1997-1998",
-        "total_prcp_in": 22.82
-      },
-      {
-        "season": "1994-1995",
-        "total_prcp_in": 22.49
-      },
-      {
-        "season": "1996-1997",
-        "total_prcp_in": 20.99
-      },
-      {
-        "season": "2001-2002",
-        "total_prcp_in": 18.59
-      },
-      {
-        "season": "2016-2017",
-        "total_prcp_in": 18.47
-      }
-    ],
-    "driest_seasons": [
-      {
-        "season": "2013-2014",
-        "total_prcp_in": 1.71
-      },
-      {
-        "season": "2020-2021",
-        "total_prcp_in": 5.39
-      },
-      {
-        "season": "2011-2012",
-        "total_prcp_in": 5.93
-      },
-      {
-        "season": "2008-2009",
-        "total_prcp_in": 6.38
-      },
-      {
-        "season": "1991-1992",
-        "total_prcp_in": 7.27
-      }
-    ],
     "enso_stratified_streaks": {
       "el_nino": {
         "n": 11,
@@ -6946,7 +6902,51 @@
           "pct": 14.3
         }
       }
-    }
+    },
+    "wettest_seasons": [
+      {
+        "season": "1997-1998",
+        "total_prcp_in": 22.82
+      },
+      {
+        "season": "1994-1995",
+        "total_prcp_in": 22.49
+      },
+      {
+        "season": "1996-1997",
+        "total_prcp_in": 20.99
+      },
+      {
+        "season": "2001-2002",
+        "total_prcp_in": 18.59
+      },
+      {
+        "season": "2016-2017",
+        "total_prcp_in": 18.47
+      }
+    ],
+    "driest_seasons": [
+      {
+        "season": "2013-2014",
+        "total_prcp_in": 1.71
+      },
+      {
+        "season": "2020-2021",
+        "total_prcp_in": 5.39
+      },
+      {
+        "season": "2011-2012",
+        "total_prcp_in": 5.93
+      },
+      {
+        "season": "2008-2009",
+        "total_prcp_in": 6.38
+      },
+      {
+        "season": "1991-1992",
+        "total_prcp_in": 7.27
+      }
+    ]
   },
   "meta": {
     "normals_period": [
