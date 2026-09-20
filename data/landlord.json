@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-20T00:11:55Z",
+  "generated_utc": "2026-09-20T01:28:49Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Sunset District \u2014 Inner and Outer Sunset)",
@@ -50,7 +50,7 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-20T00:06:46Z",
+        "retrieved_utc": "2026-09-20T01:23:41Z",
         "sha256": "407ce6bb637e8c512b1ad551ad96a709d1be46102e3ab5ed9d2dc8120cb517c0",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
@@ -906,6 +906,101 @@
         "phase_label": "Neutral"
       }
     },
+    "enso_stratified_streaks": {
+      "el_nino": {
+        "n": 11,
+        "phase_label": "El Ni\u00f1o",
+        "longest_streak_days": {
+          "n": 11,
+          "mean": 9.1,
+          "median": 8.0,
+          "min": 4.0,
+          "max": 17.0,
+          "p10": 4.0,
+          "p25": 7.0,
+          "p75": 11.0,
+          "p90": 13.0
+        },
+        "ge_3_days": {
+          "seasons": 11,
+          "pct": 100.0
+        },
+        "ge_5_days": {
+          "seasons": 9,
+          "pct": 81.8
+        },
+        "ge_7_days": {
+          "seasons": 9,
+          "pct": 81.8
+        },
+        "ge_10_days": {
+          "seasons": 4,
+          "pct": 36.4
+        }
+      },
+      "la_nina": {
+        "n": 12,
+        "phase_label": "La Ni\u00f1a",
+        "longest_streak_days": {
+          "n": 12,
+          "mean": 6.3,
+          "median": 6.0,
+          "min": 3.0,
+          "max": 11.0,
+          "p10": 4.0,
+          "p25": 5.0,
+          "p75": 7.0,
+          "p90": 11.0
+        },
+        "ge_3_days": {
+          "seasons": 12,
+          "pct": 100.0
+        },
+        "ge_5_days": {
+          "seasons": 10,
+          "pct": 83.3
+        },
+        "ge_7_days": {
+          "seasons": 4,
+          "pct": 33.3
+        },
+        "ge_10_days": {
+          "seasons": 2,
+          "pct": 16.7
+        }
+      },
+      "neutral": {
+        "n": 7,
+        "phase_label": "Neutral",
+        "longest_streak_days": {
+          "n": 7,
+          "mean": 6.1,
+          "median": 6.0,
+          "min": 2.0,
+          "max": 10.0,
+          "p10": 4.0,
+          "p25": 5.0,
+          "p75": 8.0,
+          "p90": 8.0
+        },
+        "ge_3_days": {
+          "seasons": 6,
+          "pct": 85.7
+        },
+        "ge_5_days": {
+          "seasons": 5,
+          "pct": 71.4
+        },
+        "ge_7_days": {
+          "seasons": 3,
+          "pct": 42.9
+        },
+        "ge_10_days": {
+          "seasons": 1,
+          "pct": 14.3
+        }
+      }
+    },
     "expected_days": {
       "ge_025in_days": 14.97,
       "ge_100in_days": 3.19,
@@ -948,7 +1043,7 @@
         "n": 2,
         "key": "rain_duration",
         "question": "Will it rain for days or weeks straight?",
-        "answer": "A long wet spell is the normal case, not the exception: 96.7% of seasons had a run of 3+ consecutive wet days, 80.0% had 5+ days, 53.3% had 7+ days and 23.3% had 10+ days. The longest run averages 7.3 days and has reached 17.0 days. A week-long spell is roughly a coin flip \u2014 worth pre-emptive gutter, roof-drain and tenant-communication plans.",
+        "answer": "A long wet spell is the normal case, not the exception: 96.7% of seasons had a run of 3+ consecutive wet days, 80.0% had 5+ days, 53.3% had 7+ days and 23.3% had 10+ days. The longest run averages 7.3 days and has reached 17.0 days. Conditioned on the phase this season is in \u2014 El Ni\u00f1o \u2014 81.8% of those 11 seasons on record had a 7+ day spell, against 53.3% over all 30 (small sample: 11 seasons). A week-long spell is roughly a coin flip on the 30-season record \u2014 worth pre-emptive gutter, roof-drain and tenant-communication plans.",
         "numbers": [
           {
             "label": "Any 3+ day wet run",
@@ -969,10 +1064,14 @@
           {
             "label": "Longest run",
             "value": "mean 7.3 d \u00b7 max 17.0 d"
+          },
+          {
+            "label": "Any 7+ day wet run in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "81.8% of those seasons (9 of 11)"
           }
         ],
         "basis": "1991\u20132020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown) \u2014 wet day = \u2265 0.01 in of liquid precipitation, run counted inside Oct 1 \u2013 Jan 31",
-        "confidence": "n = 30 seasons",
+        "confidence": "n = 30 seasons; the phase split rests on 11 of them",
         "sources": [
           {
             "label": "NCEI GHCN-Daily USW00023272",
@@ -1267,7 +1366,7 @@
         ],
         "source_url": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
         "discussion_sha256": "c6307e499e46cf2c0047f87de6a3169ed484923b62755f5e4350d786589ea781",
-        "discussion_characters": 16942,
+        "discussion_characters": 16882,
         "how_to_read": "Sentences copied verbatim from the long-lead Prognostic Discussion CPC issued with the seasonal outlook, located by pattern in the text the pipeline fetched and hashed. They are NOAA's forecasters qualifying their own outlook; no number or date has been attached by this project. When a later discussion no longer contains a sentence, it stops appearing here and is listed under not_found."
       },
       "enso_strength": {
@@ -1282,7 +1381,7 @@
           {
             "key": "historic_event_probability",
             "label": "CPC's stated chance of a historic-strength event this season",
-            "text": "During the October-December 2026 season, there is a 75% chance of a historic event that would exceed the strength of previous El Ni\u00f1o events dating back to 1950 (+2.5\u00b0C or more for a 3-month RONI value )."
+            "text": "During the October-December 2026 season, there is a 75% chance of a historic event that would exceed the strength of previous El Ni\u00f1o events dating back to 1950 (+2.5\u00b0C or more for a 3-month RONI value)."
           }
         ],
         "not_found": [],
@@ -1292,7 +1391,7 @@
         ],
         "source_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml",
         "discussion_sha256": "eacaf2fa573069c599ad95006be54a1f363384d2fea7b6ef25abdc8c654af575",
-        "discussion_characters": 3482,
+        "discussion_characters": 3440,
         "how_to_read": "Sentences copied verbatim from the ENSO Diagnostic Discussion CPC issued with its monthly ENSO assessment, located by pattern in the text the pipeline fetched and hashed. They are CPC's own probability statements about this El Ni\u00f1o's strength; no number or date has been attached by this project. When a later discussion no longer contains a sentence, it stops appearing here and is listed under not_found."
       },
       "enso_conditioned_record": {
@@ -1550,6 +1649,10 @@
           {
             "label": "Longest run in a season",
             "value": "mean 7.3 days \u00b7 max 17.0 days on record"
+          },
+          {
+            "label": "Run of \u22657 consecutive wet days in El Ni\u00f1o seasons on record",
+            "value": "81.8% of the 11 such seasons (9 of 11); longest run in those seasons averaged 9.1 days, max 17.0"
           }
         ],
         "sources": [
@@ -2735,7 +2838,7 @@
     "station_id": "USW00023272",
     "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
     "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-    "retrieved_utc": "2026-09-20T00:11:09Z",
+    "retrieved_utc": "2026-09-20T01:28:03Z",
     "dates_parsed": 366,
     "columns": {
       "normal_high_f": "DLY-TMAX-NORMAL",

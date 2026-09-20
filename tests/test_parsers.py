@@ -315,6 +315,42 @@ if mheader:
 # 4. end-to-end aggregation on a synthetic GHCN file
 # --------------------------------------------------------------------------- #
 
+section("phase-conditioned wet-spell statistics (small-sample honesty)")
+
+# Synthetic season rows shaped exactly like the pipeline's season_by_year: the
+# function must count seasons-with-a-spell over the seasons *in that phase*, and
+# must never emit a 0% for a phase that has no seasons at all.
+_streak_seasons = [
+    {"season": "1991-1992", "enso_phase": "el_nino", "longest_wet_streak_days": 9,
+     "streaks_ge_3": 2, "streaks_ge_5": 1, "streaks_ge_7": 1, "streaks_ge_10": 0},
+    {"season": "1992-1993", "enso_phase": "el_nino", "longest_wet_streak_days": 17,
+     "streaks_ge_3": 7, "streaks_ge_5": 3, "streaks_ge_7": 2, "streaks_ge_10": 1},
+    {"season": "1993-1994", "enso_phase": "la_nina", "longest_wet_streak_days": 6,
+     "streaks_ge_3": 3, "streaks_ge_5": 1, "streaks_ge_7": 0, "streaks_ge_10": 0},
+    {"season": "1994-1995", "enso_phase": "neutral", "longest_wet_streak_days": 4,
+     "streaks_ge_3": 1, "streaks_ge_5": 0, "streaks_ge_7": 0, "streaks_ge_10": 0},
+]
+_st = climo.enso_stratified_streaks(_streak_seasons)
+check("phase percentages divide by the seasons in that phase, not by all seasons",
+      _st["el_nino"]["ge_7_days"] == {"seasons": 2, "pct": 100.0}
+      and _st["la_nina"]["ge_7_days"] == {"seasons": 0, "pct": 0.0}
+      and _st["neutral"]["ge_10_days"] == {"seasons": 0, "pct": 0.0},
+      repr(_st))
+check("each phase publishes the denominator it was computed over",
+      _st["el_nino"]["n"] == 2 and _st["la_nina"]["n"] == 1 and _st["neutral"]["n"] == 1,
+      repr({k: v["n"] for k, v in _st.items()}))
+check("the longest-spell summary is taken over the seasons in the phase",
+      _st["el_nino"]["longest_streak_days"]["mean"] == 13.0
+      and _st["el_nino"]["longest_streak_days"]["max"] == 17,
+      repr(_st["el_nino"]["longest_streak_days"]))
+check("a phase with no seasons produces no row at all (no invented 0%)",
+      "la_nina_strong" not in _st and set(_st) == {"el_nino", "la_nina", "neutral"},
+      repr(sorted(_st)))
+check("the function is pure: same rows in, same numbers out",
+      climo.enso_stratified_streaks(_streak_seasons) == _st,
+      "recomputation differed")
+
+
 section("rainy-season aggregation (synthetic GHCN, exact expected values)")
 
 ghcn_header = ("STATION,DATE,LATITUDE,LONGITUDE,ELEVATION,NAME,PRCP,PRCP_ATTRIBUTES,"
@@ -426,6 +462,43 @@ check("figure references do not cut a sentence in half",
       str(sentences[:3]))
 check("stand-alone headings are not quoted as sentences",
       all(not (s.upper() == s) for s in sentences), str(sentences[:2]))
+
+# Bug 73 (20 Sep 2026): inline markup must not become a space.  The generic
+# tag->space rule inserted one, so a hyperlink inside a cited sentence produced
+# "3-month RONI value )." where CPC publishes "3-month RONI value)."  The same
+# sentence is plain text in CPC's own fxus05 product, which is how it was caught.
+inline_html = (
+    "<p>During the October-December 2026 season, there is a 75% chance of a "
+    "historic event (+2.5&deg;C or more for a "
+    "<a href=\"https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/\">"
+    "3-month RONI value</a>). With an event of this magnitude, the chances are "
+    "larger.</p>"
+)
+inline_plain = pipeline_main.html_to_text(inline_html)
+check("an inline link does not inject a space before punctuation",
+      "(+2.5°C or more for a 3-month RONI value)." in inline_plain,
+      repr(inline_plain))
+check("no stray space survives where the publisher wrote none",
+      "value )." not in inline_plain and " ." not in inline_plain,
+      repr(inline_plain))
+check("inline markup around a word leaves the word attached on both sides",
+      pipeline_main.html_to_text(
+          "<p>m<sup>3</sup> and <b>bold</b>text</p>").strip() == "m3 and boldtext",
+      repr(pipeline_main.html_to_text("<p>m<sup>3</sup> and <b>bold</b>text</p>")))
+check("block markup still separates words",
+      __import__("re").search(r"^one\s+two$",
+                              pipeline_main.html_to_text("<p>one</p><p>two</p>").strip()) is not None,
+      repr(pipeline_main.html_to_text("<p>one</p><p>two</p>")))
+check("tags that are not inline (e.g. <img>) still separate, never merge words",
+      "before" in pipeline_main.html_to_text("<td>before</td><img src='x.png'><td>after</td>")
+      and "beforeafter" not in pipeline_main.html_to_text(
+          "<td>before</td><img src='x.png'><td>after</td>"),
+      repr(pipeline_main.html_to_text("<td>before</td><img src='x.png'><td>after</td>")))
+# The prefix rule is length-ordered, so <span> is not eaten as </s>+pan (which
+# would leave the characters "pan>" in the text).
+check("longer inline tag names are not matched as their prefix",
+      pipeline_main.html_to_text("<p><span>kept</span></p>").strip() == "kept",
+      repr(pipeline_main.html_to_text("<p><span>kept</span></p>")))
 # The long-lead discussion is hard-wrapped, and a naive splitter turned each
 # wrapped line into its own "sentence" ("... a greater than 90" / "percent
 # chance of ...").

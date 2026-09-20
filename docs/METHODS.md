@@ -708,3 +708,40 @@ Two conventions coexist here, deliberately, and both satisfy those checks:
 Either way the invariants hold: a fetch is recorded in exactly one manifest, every
 manifest is held to the vetted-host and evidence rules, and the totals `run.json`
 publishes are recomputed from the entries rather than carried over.
+
+## 27. Rain duration conditioned on the ENSO phase (added 20 Sep 2026, session 13)
+
+The duration question ("will it rain for days or weeks straight?") was already
+answered over all 30 seasons of the 1991–2020 record. For a season running under a
+strong El Niño the useful denominator is narrower, so `climo.enso_stratified_streaks()`
+publishes, per phase:
+
+* `n` — how many of the 30 seasons the record assigns to that phase;
+* for 3, 5, 7 and 10 consecutive wet days: `seasons` (the count) and `pct`
+  (the count / `n`), where a wet day is ≥ 0.01 in and the run is counted inside
+  Oct 1 – Jan 31;
+* `longest_streak_days` — the same distribution summary (mean/median/min/max and
+  the deciles) the season totals get, taken over the seasons in that phase.
+
+Three rules, all enforced rather than promised:
+
+1. **One source of phase assignment.** The function takes the season rows
+   `build_season_statistics` already produced, so the duration table and the
+   totals table cannot disagree about which season belongs to which phase. The
+   ledger check `enso-streaks-recompute` re-derives the whole block from those
+   same rows and fails on any difference.
+2. **No denominator, no number.** Every percentage is published next to the
+   counts it came from, and the site prints `81.8% (9 of 11)` — never a bare
+   percentage. The bottom-line answer's confidence line reads
+   `n = 30 seasons; the phase split rests on 11 of them`.
+3. **Small samples are labelled, not smoothed.** With 11 El Niño, 7 neutral and
+   12 La Niña seasons, one season moves a phase percentage by about 8–14 points.
+   The site says so beside the table and in the cost driver, and the figures are
+   described as observed frequencies in that subset of the record — never as a
+   forecast for the coming season. A phase with no seasons yields no row at all,
+   so a 0% can never be read as "never happens".
+
+Regeneration: the new block was added to the committed `climatology.json` by
+calling this same function on the season rows already in that file, and every
+downstream dataset was rebuilt by the committed offline builders. The nightly job
+re-derives it from the fetched sources; `calendar.json` gained exactly this one key.

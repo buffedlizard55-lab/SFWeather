@@ -1157,6 +1157,7 @@ def main():
         "severity_record": season_climo.get("severity_record", {}),
         "streak_probability": season_climo.get("probability_of_at_least_one_streak", {}),
         "enso_stratified": season_climo.get("enso_stratified_season_total_prcp_in", {}),
+        "enso_stratified_streaks": season_climo.get("enso_stratified_streaks", {}),
         "wettest_seasons": season_climo.get("wettest_seasons", []),
         "driest_seasons": season_climo.get("driest_seasons", []),
         "season_by_year": season_climo.get("seasons", []),

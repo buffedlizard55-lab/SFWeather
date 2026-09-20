@@ -1037,17 +1037,39 @@ function renderSeason(cal) {
 
   /* ENSO stratification ------------------------------------------------- */
   const strat = cal.enso_stratified || {};
+  const stratStreaks = cal.enso_stratified_streaks || {};
   // Label from the record the pipeline publishes; the previous hard-coded
   // ternary left "neutral" lower-case beside "El Niño" / "La Niña".
-  const srows = Object.entries(strat).map(([phase, d]) => [
-    d.phase_label || phaseLabel(phase),
-    d.n, n(d.mean, 2), n(d.median, 2),
-    d.min === undefined ? null : `${Number(d.min).toFixed(2)} \u2013 ${Number(d.max).toFixed(2)}`
-  ]);
+  //
+  // The last two columns answer the duration question for the phase the season
+  // is actually in.  Both are observed frequencies in that subset of the 30
+  // seasons - the column header carries the denominator so a small sample can
+  // never be read as a settled number, and a phase with no 7+ day spell shows
+  // the count (0 of n) rather than a blank.
+  const srows = Object.entries(strat).map(([phase, d]) => {
+    const st = stratStreaks[phase] || {};
+    const longRun = st.longest_streak_days || {};
+    return [
+      d.phase_label || phaseLabel(phase),
+      d.n, n(d.mean, 2), n(d.median, 2),
+      d.min === undefined ? null : `${Number(d.min).toFixed(2)} \u2013 ${Number(d.max).toFixed(2)}`,
+      st.ge_7_days === undefined ? null : `${n(st.ge_7_days.pct, 1)}% (${st.ge_7_days.seasons} of ${st.n})`,
+      longRun.mean === undefined ? null : `${n(longRun.mean, 1)} d (max ${n(longRun.max, 0)})`
+    ];
+  });
   $('#enso-strat').append(table(
     [{ label: 'Phase' }, { label: 'Seasons', num: true }, { label: 'Mean (in)', num: true },
-     { label: 'Median (in)', num: true }, { label: 'Range (in)', num: true }], srows,
+     { label: 'Median (in)', num: true }, { label: 'Range (in)', num: true },
+     { label: '7+ day wet spell', num: true }, { label: 'Longest run, mean', num: true }], srows,
     { empty: 'Not enough ENSO-classified seasons to stratify.' }));
+  if (Object.keys(stratStreaks).length) {
+    $('#enso-strat').append(el('p', { class: 'fine', text:
+      'The last two columns condition the rain-duration question on the phase: how often a ' +
+      '7+ consecutive-wet-day spell occurred in the seasons the record assigns to that phase, ' +
+      'and the mean longest spell in those seasons. They are observed frequencies in that ' +
+      'subset of the 1991-2020 seasons - the sample size is printed in the column - not a ' +
+      'forecast for any coming season.' }));
+  }
 
   /* discussions --------------------------------------------------------- */
   const discs = (cal.cpc.discussions || []).filter(d => !d.stale);

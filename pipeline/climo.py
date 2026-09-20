@@ -1455,6 +1455,42 @@ def build_daily_climatology(ghcn, gsod_by_date, season_month_days, period):
     return daily
 
 
+def enso_stratified_streaks(seasons):
+    """Wet-spell statistics per ENSO phase, from the season rows this module built.
+
+    Takes the same ``season_by_year`` rows the totals are stratified from, so the
+    two phase tables can never disagree about which season is in which phase.
+    Every published percentage is ``seasons with a spell / seasons in the phase``,
+    the denominator is published as ``n``, and a phase with no seasons yields
+    ``None`` rather than a 0% that would read as "never happened".
+    """
+    thresholds = ((3, "streaks_ge_3"), (5, "streaks_ge_5"),
+                  (7, "streaks_ge_7"), (10, "streaks_ge_10"))
+    groups = defaultdict(list)
+    for s in seasons:
+        if s.get("enso_phase"):
+            groups[s["enso_phase"]].append(s)
+
+    out = {}
+    for phase, rows in sorted(groups.items()):
+        n = len(rows)
+        entry = {
+            "n": n,
+            "phase_label": phase_label(phase),
+            "longest_streak_days": summarise(
+                [r["longest_wet_streak_days"] for r in rows
+                 if r.get("longest_wet_streak_days") is not None], 1),
+        }
+        for days, key in thresholds:
+            hits = sum(1 for r in rows if (r.get(key) or 0) >= 1)
+            entry[f"ge_{days}_days"] = {
+                "seasons": hits,
+                "pct": pct(hits, n) if n else None,
+            }
+        out[phase] = entry
+    return out
+
+
 def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_series,
                             oni_seasons=None):
     """Year-by-year wet-season statistics plus their distribution.
@@ -1619,6 +1655,14 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
         if s["total_prcp_in"] is not None:
             by_phase[s["enso_phase"]].append(s["total_prcp_in"])
 
+    # Wet *spell* statistics conditioned on the phase, alongside the (already
+    # published) phase-conditioned totals.  The landlord's second question is
+    # about duration, and this is the one part of the record that speaks to it
+    # for the phase the season is actually in.  Samples are small - 11 El Nino
+    # seasons out of 30 - so every row publishes n and the site carries the
+    # small-sample caveat rather than presenting the split as a forecast.
+    streaks_by_phase = enso_stratified_streaks(seasons)
+
     n_seasons = len(seasons)
 
     # Record values, each bound to the season that produced it so the reader
@@ -1685,6 +1729,7 @@ def build_season_statistics(ghcn, gsod_by_date, season_month_days, period, oni_s
             phase: dict(summarise(vals, 2), phase_label=phase_label(phase))
             for phase, vals in sorted(by_phase.items())
         },
+        "enso_stratified_streaks": streaks_by_phase,
         "wettest_seasons": [{"season": s["season"], "total_prcp_in": s["total_prcp_in"]}
                             for s in ranked[-5:]][::-1],
         "driest_seasons": [{"season": s["season"], "total_prcp_in": s["total_prcp_in"]}

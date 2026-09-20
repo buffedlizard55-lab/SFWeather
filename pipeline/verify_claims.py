@@ -516,6 +516,26 @@ def main() -> int:
                      bool(ok_streaks),
                      "; ".join(f"{k}: {v['seasons']}/{n_seasons} = {v['pct']}%"
                                for k, v in sorted(streak.items())))
+        # The phase-conditioned spell table answers the duration question for the
+        # ENSO phase this season is in.  It is re-derived here from the same
+        # season rows, so a percentage can never drift from the seasons it
+        # summarises, and the denominator (n) is checked to be the number of
+        # seasons actually in that phase.
+        from climo import enso_stratified_streaks as _ess
+        published_streaks = (cal.get("enso_stratified_streaks") or {})
+        recomputed_streaks = _ess((climo.get("season") or {}).get("seasons") or [])
+        streak_problems = []
+        if published_streaks != recomputed_streaks:
+            for phase in sorted(set(published_streaks) | set(recomputed_streaks)):
+                if published_streaks.get(phase) != recomputed_streaks.get(phase):
+                    streak_problems.append(phase)
+        ledger.check("enso-streaks-recompute",
+                     "Every phase-conditioned wet-spell figure equals the seasons in that "
+                     "phase that produced it (recomputed from the same season rows)",
+                     not streak_problems,
+                     ("all phases match" if not streak_problems
+                      else "mismatched: " + ", ".join(streak_problems)))
+
         ledger.claim("streak-duration", "Chance of at least one 7-day run of wet days in a season",
                      (streak.get("ge_7_days") or {}).get("pct"), "%",
                      method=(f"share of the {n_seasons} seasons from 1991-2020 with at least one run "
