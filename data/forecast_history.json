@@ -159,8 +159,8 @@
   },
   {
     "issuance_date": "2026-09-20",
-    "generated_utc": "2026-09-20T12:25:55+00:00",
-    "forecast_updated": "2026-09-20T08:26:17+00:00",
+    "generated_utc": "2026-09-20T17:09:54+00:00",
+    "forecast_updated": "2026-09-20T16:46:51+00:00",
     "days": [
       {
         "target_date": "2026-09-20",
@@ -168,13 +168,13 @@
         "low_f": 58,
         "pop_pct": 2,
         "qpf_in": 0.0,
-        "wind_max_mph": 12.0,
+        "wind_max_mph": 10.0,
         "gust_max_mph": 15.0
       },
       {
         "target_date": "2026-09-21",
         "high_f": 62,
-        "low_f": 58,
+        "low_f": 57,
         "pop_pct": 2,
         "qpf_in": 0.0,
         "wind_max_mph": 12.0,
@@ -184,15 +184,15 @@
         "target_date": "2026-09-22",
         "high_f": 63,
         "low_f": 58,
-        "pop_pct": 1,
+        "pop_pct": 0,
         "qpf_in": 0.0,
         "wind_max_mph": 12.0,
-        "gust_max_mph": 15.0
+        "gust_max_mph": 16.1
       },
       {
         "target_date": "2026-09-23",
         "high_f": 69,
-        "low_f": 58,
+        "low_f": 57,
         "pop_pct": 0,
         "qpf_in": 0.0,
         "wind_max_mph": 10.0,
@@ -200,30 +200,30 @@
       },
       {
         "target_date": "2026-09-24",
-        "high_f": 71,
-        "low_f": 59,
-        "pop_pct": 0,
-        "qpf_in": 0.0,
-        "wind_max_mph": 10.0,
-        "gust_max_mph": 15.0
-      },
-      {
-        "target_date": "2026-09-25",
         "high_f": 68,
-        "low_f": 59,
+        "low_f": 58,
         "pop_pct": 0,
         "qpf_in": 0.0,
         "wind_max_mph": 14.0,
-        "gust_max_mph": 19.6
+        "gust_max_mph": 18.4
+      },
+      {
+        "target_date": "2026-09-25",
+        "high_f": 67,
+        "low_f": 59,
+        "pop_pct": 0,
+        "qpf_in": 0.0,
+        "wind_max_mph": 15.0,
+        "gust_max_mph": 20.7
       },
       {
         "target_date": "2026-09-26",
-        "high_f": 65,
-        "low_f": 58,
-        "pop_pct": 1,
+        "high_f": 64,
+        "low_f": 57,
+        "pop_pct": 0,
         "qpf_in": 0.0,
         "wind_max_mph": 13.0,
-        "gust_max_mph": 18.4
+        "gust_max_mph": 17.3
       }
     ]
   }

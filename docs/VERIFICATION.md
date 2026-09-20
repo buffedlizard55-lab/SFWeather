@@ -1310,3 +1310,69 @@ same explanation, and the PR is credited in `README.md`.
   long-lead outlooks), multi-ZIP support, GHCNh/SSODv2 wind stitching, the CPC
   back-test archive. See `docs/NEXT_SESSION.md`.
 
+## Session 16 — 20 September 2026 (pass 16): the ocean-side wind record (NDBC 46026), and two bugs it exposed
+
+### Bug 77 — the modern NDBC header names two different columns `MM`
+
+NDBC's current standard-met header is `#YY MM DD hh mm WDIR ...`. Uppercased, the
+month column and the minutes column are the same token, and the parser resolved
+columns by name — so every report's minutes were silently zeroed. Day-based
+aggregation was unaffected (a truncated timestamp keeps its date), but the
+published "strongest gust of the season: ... at" timestamps were wrong by up to 59
+minutes, and the metadata could not tell a reader which resolution a file actually
+carried. **Fix:** columns are resolved by occurrence (`MM` is the month, `MM#2` the
+minutes), the metadata says whether the file resolves to the minute or to the hour,
+and both the tier's self-test and `tests/test_parsers.py` assert that the four
+ten-minute rows of the 2020-era fixture still read `[0, 10, 20, 30]`.
+
+### Bug 78 — a season nobody observed was averaged in as a zero
+
+The tier's first summary computed every counter over all 30 season rows. A season
+with no data publishes integer day counters of 0 (correctly — the row itself must
+show that nothing was counted), but averaging those zeros in made the headline read
+"mean 0.07 gust days ≥ 34 kt per season" for a record whose observed seasons saw
+gales. That is a statement about the outage, not about the ocean, and it is exactly
+the kind of number a reader would have taken as "the ocean rarely blows".
+**Fix:** `coverage_rule.counter_rule` now travels with the data — every mean,
+median, minimum and maximum is computed over the seasons that observed at least one
+Oct–Jan UTC date, the seasons used are listed in `summary.counted_seasons`, the
+seasons left out are the ones already named beside the means, and the ledger
+re-derives the counters under the declared rule (a dataset that declares a rule the
+ledger does not know how to re-derive fails). The tier's self-test asserts both
+halves: the unobserved season still publishes 0 in its own row, and it does not
+appear in the mean.
+
+### What was added, and how it is verified
+
+* `pipeline/ocean_wind.py` (tier) and `pipeline/selftest_ocean_wind.py` (46 offline
+  checks over recorded NDBC fixtures: three file eras, sentinels, unit conversion,
+  season windows, coverage arithmetic, the counter rule, the station table, page
+  discovery, an unparseable annual file and an empty station-history page).
+* `tests/fixtures/ndbc/` — eight recorded fixtures, and
+  `tests/fixtures/ocean_wind_render.json`, rebuilt from the tier's own `build()`
+  with the corrected counters.
+* `pipeline/verify_claims.py` §13h — six checks when the tier is published
+  (`ocean-wind-recompute`, `-coverage`, `-station-identity`, `-marine-labelled`,
+  `-units-verbatim`, `-isolation`), plus `ocean-wind-landlord-consistency` (§13i)
+  and the `ocean-wind-published` warning when it is not.
+* `tests/falsify_guards.py` — 11 ocean-wind cases, including the new
+  `ocean-wind-marine-labelled`, `ocean-wind-units-verbatim` and the not-yet-published
+  warning state.
+* `tests/falsify_smoke.py` — 7 ocean-wind render cases, including the card going
+  silent about an unpublished record.
+* `assets/js/app.js` + `index.html` — the card, printing the dataset's caveat
+  verbatim, every season row, the coverage sentence and the NDBC-only links.
+
+### Standings after this pass
+
+* `pipeline/verify_claims.py`: **76 checks pass, 0 fail, 0 warnings, 19 claims** in
+  the committed state; **81** with the staged fixture build of `data/ocean_wind.json`.
+* `tests/test_parsers.py`: **485/485** (486 with the guarded gust cross-check).
+* `tests/falsify_guards.py`: **96 cases** behave as expected.
+* `tests/falsify_smoke.py`: **51 cases** behave as expected.
+* `npm test`: passes with the ocean-wind guard.
+* `pipeline/ocean_wind.py --selftest`: **46/46**.
+* Still open: the first live run of the tier, the mid-October CPC issuances,
+  multi-ZIP support, GHCNh/SSODv2 wind stitching, the CPC back-test archive. See
+  `docs/NEXT_SESSION.md`.
+

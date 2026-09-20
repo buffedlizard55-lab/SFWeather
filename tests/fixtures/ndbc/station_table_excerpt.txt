@@ -1,0 +1,7 @@
+# STATION_ID | OWNER | TTYPE | HULL | NAME | PAYLOAD | LOCATION | TIMEZONE | FORECAST | NOTE
+#
+51000|N|3-meter foam buoy|3DV43|NORTHERN HAWAII ONE - 245NM NE of Honolulu HI|SCOOP payload|23.534 N 153.752 W (23&#176;32'3" N 153&#176;45'9" W)|H|FZHW60.PHFO |
+51001|N|2.1-meter ionomer foam buoy|2.1D15|NORTHWESTERN HAWAII ONE - 188 NM NW of Kauai Island, HI|SCOOP payload|24.475 N 162.030 W (24&#176;28'30" N 162&#176;1'48" W)|H|FZHW60.PHFO |
+51111|PO|||Backyard Buoys - Tau Faga Cove||14.245 S 169.509 W (14&#176;14'43" S 169&#176;30'32" W)|| |
+1801589|N|Uncrewed Surface Vehicle|SD1073|SD 1073 - 24 NM SSW of San Francisco, CA (Site of 46012)|Saildrone Explorer|37.356 N 122.881 W (37&#176;21'20" N 122&#176;52'51" W)|P|FZUS56.KMTR |
+46026|N|3-meter foam buoy||SAN FRANCISCO - 18NM West of San Francisco, CA|SCOOP payload|37.750 N 122.838 W (37&#176;45'0" N 122&#176;50'18" W)|P|FZUS56.KMTR |

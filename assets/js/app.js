@@ -15,6 +15,7 @@ const FILES = {
   quality: 'data/quality_report.json',
   storms: 'data/storm_events.json',
   landlord: 'data/landlord.json',
+  oceanWind: 'data/ocean_wind.json',
   verify: 'data/verify.json',
   digest: 'data/digest.json'
 };
@@ -1896,6 +1897,148 @@ function renderWind(cal, landlord) {
     ]), { empty: 'Gust climatology unavailable.' }));
 }
 
+/* ------------------------------------------------------ ocean-side wind */
+
+/** Label a published counter from its own key, so no threshold is re-typed in
+ *  the renderer: days_gust_ge_34kt means what it says because the key says it. */
+function oceanCounterLabel(key) {
+  let m = /^days_gust_ge_(\d+)kt$/.exec(key);
+  if (m) return 'Days per season with a gust \u2265 ' + m[1] + ' kt';
+  m = /^days_wind_ge_(\d+)kt$/.exec(key);
+  if (m) return 'Days per season with sustained wind \u2265 ' + m[1] + ' kt';
+  const named = {
+    max_gust_kt: 'Strongest gust of the season (kt)',
+    max_gust_mph: 'Strongest gust of the season (mph)',
+    max_wind_kt: 'Strongest sustained wind of the season (kt)',
+    max_wvht_m: 'Highest significant wave height of the season (m)',
+    max_wvht_ft: 'Highest significant wave height of the season (ft)'
+  };
+  return named[key] || null;
+}
+
+/** NOAA NDBC station 46026 \u2014 the nearest official anemometer on the ocean side.
+ *
+ *  Built only from data/ocean_wind.json.  The card prints the dataset's own
+ *  caveat verbatim (a paraphrase in the renderer could soften it), names the
+ *  seasons with data beside every mean, and says so plainly when the file is not
+ *  published \u2014 an empty card would read as "the ocean is calm".
+ */
+function renderOceanWind(ow, cal) {
+  const host = $('#ocean-wind-body');
+  if (!host) return;
+  if (!ow || !ow.available) {
+    const why = ((ow || {}).irregularities || [])[0];
+    host.append(el('p', { class: 'fine bl-warn', text:
+      'Not published in this snapshot: ' +
+      (why && why.message ? why.message + ' ' : 'the nightly run has not retrieved the buoy record yet. ') +
+      'Nothing is shown rather than something unverifiable.' }));
+    return;
+  }
+  const st = ow.station || {};
+  const su = ow.summary || {};
+  const counts = su.counters || {};
+  const has = v => v !== null && v !== undefined;
+
+  host.append(kvTable([
+    ['Station', st.id ? st.id + (st.name ? ' \u2014 ' + st.name : '') : DASH],
+    ['Type', [st.type, st.owner ? 'owner code ' + st.owner : null].filter(Boolean).join(' \u00b7 ') || DASH],
+    ['Position',
+      (has(st.lat) && has(st.lon)) ? st.lat.toFixed(3) + '\u00b0 N, ' + Math.abs(st.lon).toFixed(3) + '\u00b0 W'
+        : (st.location_text || DASH)],
+    ['Distance from the 94122 centroid',
+      has(st.distance_mi_from_centroid) ? n(st.distance_mi_from_centroid, 1) + ' mi' : DASH],
+    ['Anemometer height',
+      has(st.anemometer_height_m) ? n(st.anemometer_height_m, 1) + ' m above the sea surface'
+        : 'not stated on the station page'],
+    ['Water depth at the mooring', has(st.water_depth_m) ? n(st.water_depth_m, 0) + ' m' : DASH],
+    ['Record', (ow.window || {}).label || DASH],
+    ['Day basis', (ow.window || {}).day_basis || DASH],
+    ['Seasons with data', n(su.seasons_with_data, 0) + ' of ' + n(su.seasons, 0)],
+    ['Latest provisional observation',
+      (ow.latest_observation || {}).observed_label
+        ? (ow.latest_observation || {}).observed_label + ' \u00b7 wind ' +
+          n((ow.latest_observation || {}).wind_kt, 1) + ' kt from ' + n((ow.latest_observation || {}).wind_dir_deg, 0) +
+          '\u00b0 \u00b7 gust ' + n((ow.latest_observation || {}).gust_kt, 1) + ' kt' +
+          (has((ow.latest_observation || {}).wave_height_ft)
+            ? ' \u00b7 wave ' + n((ow.latest_observation || {}).wave_height_ft, 1) + ' ft' : '')
+        : DASH]
+  ]));
+
+  // The dataset's caveat, character for character.  The claim ledger re-checks
+  // that the published string still says all three of these things.
+  host.append(el('div', { class: 'callout' }, [el('p', { text: ow.caveat || DASH })]));
+
+  const thin = su.thin_seasons || [];
+  const noData = su.seasons_with_no_data || [];
+  host.append(el('p', { class: 'fine', text:
+    'Coverage is published with the means, because a mean over seasons nobody observed is not a mean: ' +
+    n(su.seasons_with_data, 0) + ' of ' + n(su.seasons, 0) + ' seasons carry data' +
+    (noData.length ? '; ' + noData.length + ' carry none (' + noData.slice(0, 8).join(', ') +
+      (noData.length > 8 ? ', \u2026' : '') + ')' : '') + '. ' +
+    (thin.length ? 'Thin seasons (under ' + n(((ow.coverage_rule || {}).thin_below_pct), 1) +
+      '% of the ' + n(ow.season_dates_expected, 0) + ' dates): ' + thin.slice(0, 8).join(', ') +
+      (thin.length > 8 ? ', \u2026' : '') + '.' : 'Every season with data covers the full window.') }));
+
+  const rows = Object.keys(counts).map(k => {
+    const v = counts[k] || {};
+    const label = oceanCounterLabel(k);
+    if (!label) return null;
+    return [label, 'mean ' + n(v.mean, 1) + ' \u00b7 median ' + n(v.median, 1) +
+            ' \u00b7 min ' + n(v.min, 0) + ' \u00b7 max ' + n(v.max, 0),
+            'n = ' + n(v.n_seasons_with_value, 0)];
+  }).filter(Boolean);
+  host.append(table([{ label: 'Ocean buoy 46026 \u2014 season statistics' },
+                     { label: 'Across the seasons with a value' }, { label: 'Seasons', num: true }],
+    rows, { empty: 'No buoy statistics are published in this snapshot.' }));
+  if (su.counter_basis) host.append(el('p', { class: 'fine', text: su.counter_basis }));
+
+  // The point of the whole tier: the same threshold, two different environments.
+  const sfo40 = (((cal || {}).season_summary || {}).gust_days_ge_40kt) || {};
+  const buoy40 = counts.days_gust_ge_40kt || {};
+  if (has(sfo40.mean) && has(buoy40.mean)) {
+    // Two references, two environments, neither of them the neighbourhood.  The
+    // distance is the dataset's own figure, never typed in here, and the sentence
+    // asserts no direction (bug 74: an unsourced "more exposed" claim).
+    const where = has(st.distance_mi_from_centroid)
+      ? n(st.distance_mi_from_centroid, 1) + ' mi out at sea' : 'offshore';
+    host.append(el('p', { class: 'fine', text:
+      'At the same 40 kt gust threshold the two records measure different environments: ' +
+      'SFO, on the bay shore, averages ' + n(sfo40.mean, 1) + ' days per season; this buoy, ' +
+      where + ', averages ' + n(buoy40.mean, 1) + '. Two reference points for two different ' +
+      'places \u2014 neither one is a statement about what a street in the Sunset experiences.' }));
+  }
+
+  const seasons = (ow.seasons || []).slice().sort((a, b) => a.season.localeCompare(b.season));
+  host.append(el('div', { id: 'ocean-wind-seasons' }, [table(
+    [{ label: 'Season' }, { label: 'Dates with data', num: true }, { label: 'Coverage', num: true },
+     { label: 'Gusts \u2265 34 kt', num: true }, { label: 'Gusts \u2265 48 kt', num: true },
+     { label: 'Strongest gust', num: true }, { label: 'Highest wave', num: true }],
+    seasons.map(sn => [
+      sn.season,
+      n(sn.dates_with_data, 0) + ' of ' + n(ow.season_dates_expected, 0),
+      pct(sn.coverage_pct, 1),
+      n(sn.days_gust_ge_34kt, 0), n(sn.days_gust_ge_48kt, 0),
+      has(sn.max_gust_mph) ? n(sn.max_gust_kt, 1) + ' kt / ' + n(sn.max_gust_mph, 1) + ' mph' : DASH,
+      has(sn.max_wvht_ft) ? n(sn.max_wvht_m, 1) + ' m / ' + n(sn.max_wvht_ft, 1) + ' ft' : DASH
+    ]), { empty: 'No season rows are published in this snapshot.' })]));
+
+  const quotes = ow.units_page_quotes || {};
+  const shown = ['wspd_units', 'missing_values', 'utc_only'].filter(k => quotes[k] && quotes[k].quote);
+  if (shown.length) {
+    host.append(el('p', { class: 'fine', text:
+      'NDBC\u2019s own words, so the conversion above can be checked rather than trusted:' }));
+    host.append(el('ul', { class: 'fine' }, shown.map(k =>
+      el('li', {}, [document.createTextNode('\u201c' + quotes[k].quote + '\u201d '), link(quotes[k].source, 'source')]))));
+  }
+  const linkRows = [
+    [st.station_page_url, 'Station ' + (st.id || '') + ' \u2014 latest observations and sensor heights'],
+    [st.station_table_url, 'NDBC station table (position, owner, hull; the row this card is built from)'],
+    [ow.units_page_url, 'NDBC \u2014 Measurement Descriptions and Units'],
+    [((ow.latest_observation || {}).source), 'Realtime standard meteorological file (last 45 days)']
+  ].filter(r => r[0]);
+  host.append(el('ul', { class: 'fine' }, linkRows.map(r => el('li', {}, [link(r[0], r[1])]))));
+}
+
 function renderStorms(s, cal) {
   if (!s || !s.county) {
     $('#storm-summary').append(el('p', { class: 'empty', text: 'Storm Events data unavailable in this run.' }));
@@ -2865,15 +3008,16 @@ async function boot() {
   if (state.booted) return;
   state.booted = true;
   try {
-    const [run, calendar, nws, prov, quality, storms, landlord, verify, digest] = await Promise.all([
+    const [run, calendar, nws, prov, quality, storms, landlord, oceanWind, verify, digest] = await Promise.all([
       loadJSON('run'), loadJSON('calendar'), loadJSON('nws'),
       loadJSON('provenance'), loadJSON('quality'),
       loadJSON('storms').catch(() => null),
       loadJSON('landlord').catch(() => null),
+      loadJSON('oceanWind').catch(() => null),
       loadJSON('verify').catch(() => null),
       loadJSON('digest').catch(() => null)
     ]);
-    Object.assign(state.data, { run, calendar, nws, prov, quality, storms, landlord, verify, digest });
+    Object.assign(state.data, { run, calendar, nws, prov, quality, storms, landlord, oceanWind, verify, digest });
 
     const idx = MONTHS.findIndex(m => (calendar.days || []).some(d => d.date.startsWith(m.key) && d.tier === 'nws'));
     state.month = idx >= 0 ? MONTHS[idx].key : MONTHS[0].key;
@@ -2889,6 +3033,7 @@ async function boot() {
     renderCalendar(calendar);
     renderDuration(calendar);
     renderWind(calendar, landlord);
+    renderOceanWind(oceanWind, calendar);
     renderStorms(storms, calendar);
     renderSources(prov);
     renderNwsVerification();

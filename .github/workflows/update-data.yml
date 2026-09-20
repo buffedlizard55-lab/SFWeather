@@ -86,6 +86,14 @@ jobs:
           echo "CPC_BACKTEST_EXIT=$code" >> data/run_diagnostics.txt
           exit $code
 
+      - name: Retrieve the ocean-side wind record (NDBC buoy 46026)
+        run: |
+          set +e
+          python3 -u pipeline/ocean_wind.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "OCEAN_WIND_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
+
       - name: Build landlord-focused summary
         run: |
           set +e
@@ -202,6 +210,7 @@ jobs:
           p = pathlib.Path("data/run_diagnostics.txt")
           lines = set(p.read_text().splitlines()) if p.exists() else set()
           need = ["PIPELINE_EXIT=0", "CALENDAR_EXIT=0", "CPC_BACKTEST_EXIT=0",
+                  "OCEAN_WIND_EXIT=0",
                   "LANDLORD_EXIT=0", "EXEC_SUMMARY_EXIT=0", "DIGEST_EXIT=0",
                   "MODEL_GUIDANCE_EXIT=0",
                   "FEED_EXIT=0", "VERIFY_EXIT=0", "CLAIMS_EXIT=0"]

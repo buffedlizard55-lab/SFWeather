@@ -81,3 +81,5 @@ jobs:
         run: python3 pipeline/model_guidance.py --selftest
       - name: Official-product feed self-test (offline)
         run: python3 pipeline/build_feed.py --selftest
+      - name: Ocean-side wind tier self-test (offline)
+        run: python3 pipeline/ocean_wind.py --selftest

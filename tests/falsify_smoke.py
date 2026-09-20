@@ -663,6 +663,24 @@ def _sv9(repo):
     return repo
 
 
+
+def patch_ocean(repo, fn):
+    """Mutate the ocean-wind payload the smoke guard renders.
+
+    The guard reads data/ocean_wind.json when the nightly run has published one and
+    the tier's render fixture otherwise, so a case writes the mutated payload to the
+    *published* path: that is the file the guard will read whichever exists.  A case
+    that mutated the fixture while a published file was present would change nothing
+    and pass vacuously.
+    """
+    src = repo / "data" / "ocean_wind.json"
+    if not src.exists():
+        src = repo / "tests" / "fixtures" / "ocean_wind_render.json"
+    obj = json.loads(src.read_text())
+    fn(obj)
+    (repo / "data" / "ocean_wind.json").write_text(json.dumps(obj))
+    return repo
+
 @case("the Outer Sunset profile card element removed from index.html",
       expect_msg="#landlord-sunset-card element missing from the page")
 def _osp1(repo):
@@ -677,6 +695,68 @@ def _osp2(repo):
                "el('tr', {}, [el('th', { text: 'Pacific Ocean Exposure' }), el('td', { text: osp.ocean_exposure })]),",
                "")
     return repo
+
+
+@case("the ocean-side wind card element removed from index.html",
+      expect_msg="ocean-side wind card is missing")
+def _ow1(repo):
+    patch_text(repo, "index.html", 'id="ocean-wind-body"', 'id="ocean-wind-body-renamed"')
+    return repo
+
+
+@case("the ocean-side wind renderer disabled (card renders nothing)",
+      expect_msg="#ocean-wind-body rendered nothing at all")
+def _ow2(repo):
+    patch_text(repo, "assets/js/app.js",
+               "function renderOceanWind(ow, cal) {",
+               "function renderOceanWind(ow, cal) { return;")
+    return repo
+
+
+@case("the ocean-side wind caveat paraphrased instead of published verbatim",
+      expect_msg="does not carry the dataset caveat phrase")
+def _ow3(repo):
+    return patch_ocean(repo, lambda ow: ow.update(
+        {"caveat": "The buoy is the best available guide to wind in the Sunset."}))
+
+
+@case("the ocean-side wind coverage line dropped from the payload",
+      expect_msg="does not publish how many seasons carry data")
+def _ow4(repo):
+    return patch_ocean(repo, lambda ow: ow["summary"].pop("seasons_with_data", None))
+
+
+@case("the ocean-side wind season table rendering only ten of its rows",
+      expect_msg="the ocean-wind season table rendered")
+def _ow5(repo):
+    # The defect is in the renderer, not the payload: a payload that lost seasons
+    # is the claim ledger's business (ocean-wind-coverage), while a table that
+    # silently drops the seasons with no data would read as a full record.
+    patch_text(repo, "assets/js/app.js",
+               "const seasons = (ow.seasons || []).slice().sort((a, b) => a.season.localeCompare(b.season));",
+               "const seasons = (ow.seasons || []).slice().sort((a, b) => a.season.localeCompare(b.season)).slice(0, 10);")
+    return repo
+
+
+@case("the ocean-side wind card linking to a host that is not NDBC",
+      expect_msg="links to a host that is not NDBC")
+def _ow6(repo):
+    return patch_ocean(repo, lambda ow: ow["station"].update(
+        {"station_page_url": "https://example.com/46026"}))
+
+
+
+@case("the ocean-side wind record missing and the card silent about it",
+      expect_msg="does not say the record is unpublished")
+def _ow7(repo):
+    # Two edits, one defect: the payload says the record is not published *and* the
+    # card stops saying so.  An empty card reads as calm water, which is the whole
+    # reason the fallback sentence exists.
+    patch_ocean(repo, lambda ow: ow.clear())
+    patch_text(repo, "assets/js/app.js",
+               "Not published in this snapshot: ", "Nothing to report. ")
+    return repo
+
 
 
 def main():

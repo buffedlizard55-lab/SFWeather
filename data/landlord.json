@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-20T12:28:50Z",
+  "generated_utc": "2026-09-20T17:13:15Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Sunset District \u2014 Inner and Outer Sunset)",
@@ -51,8 +51,8 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-20T12:25:55Z",
-        "sha256": "d906dfc69fd302da41fe3e04b1b7a6b052957575b2388c4cd85b60c05ea8d96e",
+        "retrieved_utc": "2026-09-20T17:09:53Z",
+        "sha256": "407ce6bb637e8c512b1ad551ad96a709d1be46102e3ab5ed9d2dc8120cb517c0",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
     }
@@ -857,6 +857,94 @@
       "p25": 0.0,
       "p75": 3.0,
       "p90": 5.0
+    },
+    "ocean_wind": {
+      "available": true,
+      "station_id": "46026",
+      "station_name": "SAN FRANCISCO - 18NM West of San Francisco, CA",
+      "station_type": "3-meter foam buoy",
+      "position": {
+        "lat": 37.75,
+        "lon": -122.838
+      },
+      "distance_mi_from_centroid": 19.4,
+      "anemometer_height_m": 4.1,
+      "water_depth_m": 53.0,
+      "window_label": "1 October \u2013 31 January, UTC dates (NDBC files are UTC only)",
+      "day_basis": "UTC dates (NDBC files are UTC only)",
+      "seasons_with_data": 30,
+      "seasons_total": 30,
+      "thin_seasons": [
+        "1995-1996",
+        "1998-1999",
+        "2002-2003",
+        "2009-2010",
+        "2010-2011"
+      ],
+      "counter_basis": "Every counter is counted per season from NDBC station 46026's own observations, then averaged over the 30 of 30 seasons that observed at least one Oct-Jan UTC date \u2014 a season with no data is named in seasons_with_no_data and is never averaged in as a zero, and the number of seasons behind each counter is printed with it. Day counters count UTC dates; the counters' coverage cut is published in coverage_rule.",
+      "gale_days_ge_34kt": {
+        "mean": 7.37,
+        "median": 7.0,
+        "min": 2,
+        "max": 14,
+        "n_seasons": 30
+      },
+      "days_ge_40kt": {
+        "mean": 2.0,
+        "median": 1.0,
+        "min": 0,
+        "max": 5,
+        "n_seasons": 30
+      },
+      "storm_days_ge_48kt": {
+        "mean": 0.2,
+        "median": 0.0,
+        "min": 0,
+        "max": 1,
+        "n_seasons": 30
+      },
+      "max_gust_kt": {
+        "mean": 44.21,
+        "median": 44.5,
+        "min": 36.2,
+        "max": 53.8,
+        "n_seasons": 30
+      },
+      "max_gust_mph": {
+        "mean": 50.86,
+        "median": 51.2,
+        "min": 41.6,
+        "max": 62.0,
+        "n_seasons": 30
+      },
+      "max_wvht_ft": {
+        "mean": 19.48,
+        "median": 18.4,
+        "min": 13.5,
+        "max": 28.2,
+        "n_seasons": 30
+      },
+      "sfo_days_ge_40kt": {
+        "mean": 2.4,
+        "median": 1.0,
+        "max": 7.0
+      },
+      "caveat": "NOT A LAND STATION and NOT A MEASUREMENT INSIDE ZIP 94122: this is a moored buoy in the open Pacific, and its open-water wind is NOT a bound on what buildings in the Sunset experience \u2014 neither an upper nor a lower one. NDBC's own description of station IDs (quoted verbatim with this dataset) warns that an ID can be reassigned to a future deployment in the same one-degree square, so this record describes the station site over time rather than one specific hull. Read it as the nearest official ocean-side reference, standing alongside the SFO reference \u2014 neither is the neighbourhood.",
+      "is_land_station": false,
+      "is_measurement_inside_94122": false,
+      "is_a_bound_for_94122": false,
+      "source_urls": {
+        "station_page": "https://www.ndbc.noaa.gov/station_page.php?station=46026",
+        "station_table": "https://www.ndbc.noaa.gov/data/stations/station_table.txt",
+        "units": "https://www.ndbc.noaa.gov/faq/measdes.shtml"
+      },
+      "why_this_is_here": "Every other wind number this project publishes is from SFO, on the bay side. This is the nearest official anemometer on the ocean side of the Golden Gate, published beside those numbers so the ocean side of the question is not left to guesswork.",
+      "what_this_tier_does_not_do": [
+        "It does not describe any street in ZIP 94122 \u2014 see the caveat.",
+        "It is not a bound, an upper limit or a lower limit for the neighbourhood.",
+        "It is not a forecast, and it never enters the day-by-day scoreboard.",
+        "It does not publish rain, so it cannot speak to simultaneous wind and rain."
+      ]
     },
     "max_gust": {
       "n": 30,
@@ -3628,7 +3716,7 @@
     "station_id": "USW00023272",
     "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
     "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-    "retrieved_utc": "2026-09-20T12:28:17Z",
+    "retrieved_utc": "2026-09-20T17:12:38Z",
     "dates_parsed": 366,
     "columns": {
       "normal_high_f": "DLY-TMAX-NORMAL",

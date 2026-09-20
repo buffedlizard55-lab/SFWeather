@@ -1,0 +1,12 @@
+# SYNTHETIC FIXTURE - NOT NDBC DATA.  Rows written in NDBC's modern
+# standard-meteorological layout (the same header and column order as the real
+# 46026h2020.txt.gz) so the season aggregator can be tested without the network.
+# Every value below was chosen to land on a threshold boundary; the expectations
+# are written out in pipeline/selftest_ocean_wind.py.
+#YY  MM DD hh mm WDIR WSPD GST  WVHT   DPD   APD MWD   PRES  ATMP  WTMP  DEWP  VIS  TIDE
+#yr  mo dy hr mn degT m/s  m/s     m   sec   sec degT   hPa  degC  degC  degC   mi    ft
+1991 10 01 00 00 310 10.0 18.0  3.00 12.00  7.00 300 1010.0  12.0  13.0 999.0 99.0 99.00
+1991 10 01 00 10 310 12.0 25.0  4.50 12.00  7.00 300 1010.0  12.0  13.0 999.0 99.0 99.00
+1991 11 05 00 00 300  5.0  8.0  2.00 10.00  6.00 290 1012.0  11.0  12.0 999.0 99.0 99.00
+1992 01 15 00 00 280 16.0 21.0  5.00 14.00  8.00 270  995.0  10.0  12.0 999.0 99.0 99.00
+1992 01 15 00 10 280 99.0 99.0 99.00 99.00 99.00 999 9999.0 999.0 999.0 999.0 99.0 99.00
