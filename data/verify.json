@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-20T01:49:08Z",
+  "generated_utc": "2026-09-20T02:35:40Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,8 +9,8 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 73,
-    "passed": 73,
+    "total": 74,
+    "passed": 74,
     "failed": 0,
     "warnings": 0,
     "failed_checks": [],
@@ -210,6 +210,13 @@
       "evidence": null
     },
     {
+      "id": "enso-severity-recompute",
+      "title": "Every phase-conditioned severity figure (hard-rain days, gusts, wind + rain per ENSO phase) equals the seasons in that phase that produced it, and every row the executive summary derived from it quotes the same n and values",
+      "status": "pass",
+      "detail": "all phases match; 10 derived row(s) for El Ni\u00f1o agree",
+      "evidence": null
+    },
+    {
       "id": "cost-drivers-structure",
       "title": "Every maintenance cost driver is ranked, carries evidence rows, and cites only official .gov sources",
       "status": "pass",
@@ -241,7 +248,7 @@
       "id": "raw-phase-tokens-dataset",
       "title": "No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)",
       "status": "pass",
-      "detail": "0 raw tokens across 22822 scanned string(s)",
+      "detail": "0 raw tokens across 23021 scanned string(s)",
       "evidence": []
     },
     {
@@ -665,6 +672,10 @@
           "census_tract_geoid": "06075032601",
           "census_block_geoid": "060750326013006"
         },
+        "congressional_district": "Congressional District 11",
+        "congressional_layers_returned": [
+          "119th Congressional Districts"
+        ],
         "nesting_issues": [],
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json"
       }
@@ -716,7 +727,7 @@
       "evidence": {
         "unmatched": [],
         "block_found": true,
-        "published_number_count": 414,
+        "published_number_count": 445,
         "allowlist": [
           0.01,
           0.1,

@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-20T01:49:08Z
+generated_utc: 2026-09-20T02:35:40Z
 
-checks: 73 passed, 0 failed, 0 warning(s)  (of 73)
+checks: 74 passed, 0 failed, 0 warning(s)  (of 74)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         189 recorded fetches (187 unique URLs)
@@ -41,12 +41,14 @@ checks: 73 passed, 0 failed, 0 warning(s)  (of 73)
         ge_10_days: 7/30 = 23.3%; ge_3_days: 29/30 = 96.7%; ge_5_days: 24/30 = 80.0%; ge_7_days: 16/30 = 53.3%
 [PASS] enso-streaks-recompute: Every phase-conditioned wet-spell figure equals the seasons in that phase that produced it (recomputed from the same season rows)
         all phases match
+[PASS] enso-severity-recompute: Every phase-conditioned severity figure (hard-rain days, gusts, wind + rain per ENSO phase) equals the seasons in that phase that produced it, and every row the executive summary derived from it quotes the same n and values
+        all phases match; 10 derived row(s) for El Niño agree
 [PASS] cost-drivers-structure: Every maintenance cost driver is ranked, carries evidence rows, and cites only official .gov sources
         6 drivers; all structural rules hold
 [PASS] cost-driver-expected-days-arithmetic: The published expected heavy-rain day counts equal the sum of the per-date 1991-2020 probabilities in the committed climatology table
         ge_025in_days: published 14.97 vs recomputed 14.97 over 123 season dates; ge_100in_days: published 3.19 vs recomputed 3.19 over 123 season dates
 [PASS] raw-phase-tokens-dataset: No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)
-        0 raw tokens across 22822 scanned string(s)
+        0 raw tokens across 23021 scanned string(s)
 [PASS] phase-label-present: Every ENSO phase value a renderer can reach ships with a reader-facing label (no underscore token, correct capitalisation)
         3 label(s) published
 [PASS] raw-phase-tokens: No raw ENSO data token (el_nino / la_nina) appears in any reader-facing executive-summary string

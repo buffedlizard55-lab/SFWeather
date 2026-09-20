@@ -1001,6 +1001,452 @@
         }
       }
     },
+    "enso_stratified_severity": {
+      "el_nino": {
+        "n": 11,
+        "phase_label": "El Ni\u00f1o",
+        "seasons": [
+          "1991-1992",
+          "1994-1995",
+          "1997-1998",
+          "2002-2003",
+          "2004-2005",
+          "2006-2007",
+          "2009-2010",
+          "2014-2015",
+          "2015-2016",
+          "2018-2019",
+          "2019-2020"
+        ],
+        "metrics": {
+          "wet_days_ge_050in": {
+            "n": 11,
+            "mean": 9.4,
+            "median": 9.0,
+            "min": 5.0,
+            "max": 17.0,
+            "p10": 5.0,
+            "p25": 5.0,
+            "p75": 12.0,
+            "p90": 13.0,
+            "label": "Days with \u2265 0.50 in of rain per season",
+            "seasons_with_any": 11
+          },
+          "wet_days_ge_1in": {
+            "n": 11,
+            "mean": 3.7,
+            "median": 4.0,
+            "min": 1.0,
+            "max": 6.0,
+            "p10": 2.0,
+            "p25": 2.0,
+            "p75": 6.0,
+            "p90": 6.0,
+            "label": "Days with \u2265 1.00 in of rain per season",
+            "seasons_with_any": 11
+          },
+          "wet_days_ge_2in": {
+            "n": 11,
+            "mean": 0.5,
+            "median": 1.0,
+            "min": 0.0,
+            "max": 1.0,
+            "p10": 0.0,
+            "p25": 0.0,
+            "p75": 1.0,
+            "p90": 1.0,
+            "label": "Days with \u2265 2.00 in of rain per season",
+            "seasons_with_any": 6
+          },
+          "max_daily_prcp_in": {
+            "n": 11,
+            "mean": 2.38,
+            "median": 2.32,
+            "min": 1.24,
+            "max": 5.54,
+            "p10": 1.28,
+            "p25": 1.3,
+            "p75": 2.99,
+            "p90": 3.4,
+            "label": "Wettest single day of the season (in)",
+            "seasons_with_any": 11
+          },
+          "wind_and_rain_days": {
+            "n": 11,
+            "mean": 11.5,
+            "median": 11.0,
+            "min": 6.0,
+            "max": 21.0,
+            "p10": 6.0,
+            "p25": 7.0,
+            "p75": 13.0,
+            "p90": 18.0,
+            "label": "Wind + rain days per season (\u2265 0.01 in and sustained \u2265 20 kt, whole-day pairing)",
+            "seasons_with_any": 11
+          },
+          "heavy_wind_and_rain_days": {
+            "n": 11,
+            "mean": 2.2,
+            "median": 2.0,
+            "min": 0.0,
+            "max": 5.0,
+            "p10": 0.0,
+            "p25": 0.0,
+            "p75": 3.0,
+            "p90": 4.0,
+            "label": "Heavy wind + rain days per season (\u2265 0.50 in and a gust \u2265 35 kt)",
+            "seasons_with_any": 8
+          },
+          "severe_wind_and_rain_days": {
+            "n": 11,
+            "mean": 0.5,
+            "median": 0.0,
+            "min": 0.0,
+            "max": 2.0,
+            "p10": 0.0,
+            "p25": 0.0,
+            "p75": 1.0,
+            "p90": 1.0,
+            "label": "Days per season both \u2265 1.00 in and a gust \u2265 40 kt",
+            "seasons_with_any": 5
+          },
+          "gust_days_ge_40kt": {
+            "n": 11,
+            "mean": 3.2,
+            "median": 3.0,
+            "min": 0.0,
+            "max": 7.0,
+            "p10": 0.0,
+            "p25": 1.0,
+            "p75": 6.0,
+            "p90": 6.0,
+            "label": "Days per season with a gust \u2265 40 kt",
+            "seasons_with_any": 9
+          },
+          "wind_days_ge_30kt": {
+            "n": 11,
+            "mean": 2.6,
+            "median": 2.0,
+            "min": 0.0,
+            "max": 7.0,
+            "p10": 1.0,
+            "p25": 1.0,
+            "p75": 4.0,
+            "p90": 7.0,
+            "label": "Days per season with sustained wind \u2265 30 kt",
+            "seasons_with_any": 10
+          },
+          "max_gust_mph": {
+            "n": 11,
+            "mean": 53.7,
+            "median": 56.4,
+            "min": 41.3,
+            "max": 64.3,
+            "p10": 44.9,
+            "p25": 47.2,
+            "p75": 58.8,
+            "p90": 61.0,
+            "label": "Strongest gust of the season (mph)",
+            "seasons_with_any": 11
+          }
+        }
+      },
+      "la_nina": {
+        "n": 12,
+        "phase_label": "La Ni\u00f1a",
+        "seasons": [
+          "1995-1996",
+          "1998-1999",
+          "1999-2000",
+          "2000-2001",
+          "2005-2006",
+          "2007-2008",
+          "2008-2009",
+          "2010-2011",
+          "2011-2012",
+          "2016-2017",
+          "2017-2018",
+          "2020-2021"
+        ],
+        "metrics": {
+          "wet_days_ge_050in": {
+            "n": 12,
+            "mean": 6.9,
+            "median": 6.5,
+            "min": 2.0,
+            "max": 15.0,
+            "p10": 2.0,
+            "p25": 4.0,
+            "p75": 9.0,
+            "p90": 12.0,
+            "label": "Days with \u2265 0.50 in of rain per season",
+            "seasons_with_any": 12
+          },
+          "wet_days_ge_1in": {
+            "n": 12,
+            "mean": 2.2,
+            "median": 2.0,
+            "min": 0.0,
+            "max": 5.0,
+            "p10": 0.0,
+            "p25": 1.0,
+            "p75": 4.0,
+            "p90": 4.0,
+            "label": "Days with \u2265 1.00 in of rain per season",
+            "seasons_with_any": 10
+          },
+          "wet_days_ge_2in": {
+            "n": 12,
+            "mean": 0.5,
+            "median": 0.0,
+            "min": 0.0,
+            "max": 2.0,
+            "p10": 0.0,
+            "p25": 0.0,
+            "p75": 1.0,
+            "p90": 1.0,
+            "label": "Days with \u2265 2.00 in of rain per season",
+            "seasons_with_any": 5
+          },
+          "max_daily_prcp_in": {
+            "n": 12,
+            "mean": 1.87,
+            "median": 1.44,
+            "min": 0.75,
+            "max": 3.61,
+            "p10": 0.98,
+            "p25": 1.2,
+            "p75": 2.2,
+            "p90": 3.19,
+            "label": "Wettest single day of the season (in)",
+            "seasons_with_any": 12
+          },
+          "wind_and_rain_days": {
+            "n": 12,
+            "mean": 10.2,
+            "median": 9.5,
+            "min": 4.0,
+            "max": 16.0,
+            "p10": 4.0,
+            "p25": 8.0,
+            "p75": 13.0,
+            "p90": 16.0,
+            "label": "Wind + rain days per season (\u2265 0.01 in and sustained \u2265 20 kt, whole-day pairing)",
+            "seasons_with_any": 12
+          },
+          "heavy_wind_and_rain_days": {
+            "n": 12,
+            "mean": 2.1,
+            "median": 1.0,
+            "min": 0.0,
+            "max": 8.0,
+            "p10": 0.0,
+            "p25": 1.0,
+            "p75": 3.0,
+            "p90": 4.0,
+            "label": "Heavy wind + rain days per season (\u2265 0.50 in and a gust \u2265 35 kt)",
+            "seasons_with_any": 9
+          },
+          "severe_wind_and_rain_days": {
+            "n": 12,
+            "mean": 0.6,
+            "median": 0.0,
+            "min": 0.0,
+            "max": 2.0,
+            "p10": 0.0,
+            "p25": 0.0,
+            "p75": 1.0,
+            "p90": 2.0,
+            "label": "Days per season both \u2265 1.00 in and a gust \u2265 40 kt",
+            "seasons_with_any": 4
+          },
+          "gust_days_ge_40kt": {
+            "n": 12,
+            "mean": 1.8,
+            "median": 1.0,
+            "min": 0.0,
+            "max": 6.0,
+            "p10": 0.0,
+            "p25": 1.0,
+            "p75": 2.0,
+            "p90": 4.0,
+            "label": "Days per season with a gust \u2265 40 kt",
+            "seasons_with_any": 10
+          },
+          "wind_days_ge_30kt": {
+            "n": 12,
+            "mean": 2.2,
+            "median": 1.0,
+            "min": 0.0,
+            "max": 6.0,
+            "p10": 1.0,
+            "p25": 1.0,
+            "p75": 3.0,
+            "p90": 4.0,
+            "label": "Days per season with sustained wind \u2265 30 kt",
+            "seasons_with_any": 11
+          },
+          "max_gust_mph": {
+            "n": 12,
+            "mean": 55.0,
+            "median": 53.5,
+            "min": 43.6,
+            "max": 70.0,
+            "p10": 44.9,
+            "p25": 47.2,
+            "p75": 61.0,
+            "p90": 66.9,
+            "label": "Strongest gust of the season (mph)",
+            "seasons_with_any": 12
+          }
+        }
+      },
+      "neutral": {
+        "n": 7,
+        "phase_label": "Neutral",
+        "seasons": [
+          "1992-1993",
+          "1993-1994",
+          "1996-1997",
+          "2001-2002",
+          "2003-2004",
+          "2012-2013",
+          "2013-2014"
+        ],
+        "metrics": {
+          "wet_days_ge_050in": {
+            "n": 7,
+            "mean": 9.3,
+            "median": 10.0,
+            "min": 1.0,
+            "max": 15.0,
+            "p10": 5.0,
+            "p25": 7.0,
+            "p75": 12.0,
+            "p90": 15.0,
+            "label": "Days with \u2265 0.50 in of rain per season",
+            "seasons_with_any": 7
+          },
+          "wet_days_ge_1in": {
+            "n": 7,
+            "mean": 4.0,
+            "median": 4.0,
+            "min": 0.0,
+            "max": 7.0,
+            "p10": 2.0,
+            "p25": 3.0,
+            "p75": 6.0,
+            "p90": 6.0,
+            "label": "Days with \u2265 1.00 in of rain per season",
+            "seasons_with_any": 6
+          },
+          "wet_days_ge_2in": {
+            "n": 7,
+            "mean": 0.4,
+            "median": 0.0,
+            "min": 0.0,
+            "max": 1.0,
+            "p10": 0.0,
+            "p25": 0.0,
+            "p75": 1.0,
+            "p90": 1.0,
+            "label": "Days with \u2265 2.00 in of rain per season",
+            "seasons_with_any": 3
+          },
+          "max_daily_prcp_in": {
+            "n": 7,
+            "mean": 1.74,
+            "median": 1.95,
+            "min": 0.78,
+            "max": 2.77,
+            "p10": 1.09,
+            "p25": 1.39,
+            "p75": 2.05,
+            "p90": 2.15,
+            "label": "Wettest single day of the season (in)",
+            "seasons_with_any": 7
+          },
+          "wind_and_rain_days": {
+            "n": 7,
+            "mean": 12.1,
+            "median": 9.0,
+            "min": 2.0,
+            "max": 24.0,
+            "p10": 6.0,
+            "p25": 9.0,
+            "p75": 14.0,
+            "p90": 21.0,
+            "label": "Wind + rain days per season (\u2265 0.01 in and sustained \u2265 20 kt, whole-day pairing)",
+            "seasons_with_any": 7
+          },
+          "heavy_wind_and_rain_days": {
+            "n": 7,
+            "mean": 2.6,
+            "median": 2.0,
+            "min": 0.0,
+            "max": 7.0,
+            "p10": 0.0,
+            "p25": 0.0,
+            "p75": 3.0,
+            "p90": 6.0,
+            "label": "Heavy wind + rain days per season (\u2265 0.50 in and a gust \u2265 35 kt)",
+            "seasons_with_any": 4
+          },
+          "severe_wind_and_rain_days": {
+            "n": 7,
+            "mean": 0.4,
+            "median": 0.0,
+            "min": 0.0,
+            "max": 2.0,
+            "p10": 0.0,
+            "p25": 0.0,
+            "p75": 0.0,
+            "p90": 1.0,
+            "label": "Days per season both \u2265 1.00 in and a gust \u2265 40 kt",
+            "seasons_with_any": 2
+          },
+          "gust_days_ge_40kt": {
+            "n": 7,
+            "mean": 2.4,
+            "median": 2.0,
+            "min": 0.0,
+            "max": 6.0,
+            "p10": 1.0,
+            "p25": 1.0,
+            "p75": 3.0,
+            "p90": 4.0,
+            "label": "Days per season with a gust \u2265 40 kt",
+            "seasons_with_any": 6
+          },
+          "wind_days_ge_30kt": {
+            "n": 7,
+            "mean": 2.6,
+            "median": 3.0,
+            "min": 1.0,
+            "max": 5.0,
+            "p10": 1.0,
+            "p25": 2.0,
+            "p75": 3.0,
+            "p90": 3.0,
+            "label": "Days per season with sustained wind \u2265 30 kt",
+            "seasons_with_any": 7
+          },
+          "max_gust_mph": {
+            "n": 7,
+            "mean": 51.7,
+            "median": 54.1,
+            "min": 44.8,
+            "max": 55.2,
+            "p10": 48.3,
+            "p25": 50.5,
+            "p75": 54.1,
+            "p90": 55.0,
+            "label": "Strongest gust of the season (mph)",
+            "seasons_with_any": 7
+          }
+        }
+      }
+    },
     "expected_days": {
       "ge_025in_days": 14.97,
       "ge_100in_days": 3.19,
@@ -1083,7 +1529,7 @@
         "n": 3,
         "key": "heavy_rain_days",
         "question": "How many hard-rain days will there be?",
-        "answer": "Expect about 14.97 days with \u2265 0.25 in and about 3.19 days with \u2265 1.00 in per season. Those are the days that overwhelm area drains, garage thresholds and ground-floor entryways. The counts are sums of the per-date observed probabilities, so they are an expectation over the 30-season record. NOAA's own published per-date probabilities give 14.9 and 3.26 days. The two independent methods agree to within 0.06 day(s) per season across 4 thresholds. ",
+        "answer": "Expect about 14.97 days with \u2265 0.25 in and about 3.19 days with \u2265 1.00 in per season. Those are the days that overwhelm area drains, garage thresholds and ground-floor entryways. The counts are sums of the per-date observed probabilities, so they are an expectation over the 30-season record. NOAA's own published per-date probabilities give 14.9 and 3.26 days. The two independent methods agree to within 0.06 day(s) per season across 4 thresholds. In the 11 El Ni\u00f1o seasons on record, days at \u2265 1.00 in averaged 3.7 against 3.2 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). ",
         "numbers": [
           {
             "label": "Days \u2265 0.25 in per season, method A (sum of this project's per-date probabilities)",
@@ -1116,10 +1562,22 @@
           {
             "label": "Days \u2265 4.00 in per season, method A (counted) vs method B (NOAA published)",
             "value": "0.0 vs 0.02"
+          },
+          {
+            "label": "Days \u2265 0.50 in per season in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 9.4 \u00b7 median 9.0 \u00b7 max 17.0 \u2014 all 30 seasons: mean 8.4"
+          },
+          {
+            "label": "Days \u2265 1.00 in per season in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 3.7 \u00b7 median 4.0 \u00b7 max 6.0 \u2014 all 30 seasons: mean 3.2"
+          },
+          {
+            "label": "Wettest single day of the season (in) in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 2.38 \u00b7 median 2.32 \u00b7 max 5.54 \u2014 all 30 seasons: mean 2.03"
           }
         ],
         "basis": "1991\u20132020 observed record \u2014 an expectation over those 30 seasons, not a prediction for 2026-27",
-        "confidence": "linearity of expectation over 123 dates",
+        "confidence": "linearity of expectation over 123 dates; the El Ni\u00f1o rows rest on 11 of the 30 seasons",
         "sources": [
           {
             "label": "NCEI GHCN-Daily USW00023272",
@@ -1135,7 +1593,7 @@
         "n": 4,
         "key": "wind",
         "question": "How windy will it get?",
-        "answer": "The strongest gust of the season averages 53.8 mph at SFO and has reached 70.0 mph in this record. Wind is measured at SFO, which is 11.9 mi away and more exposed than the Sunset, so treat these as an upper bound for the ZIP. The strongest gusts are a tree-limb, fence and loose-material risk with the shortest warning.",
+        "answer": "The strongest gust of the season averages 53.8 mph at SFO and has reached 70.0 mph in this record. In the 11 El Ni\u00f1o seasons on record, days with a gust \u2265 40 kt averaged 3.2 against 2.4 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991\u20132020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO \u2014 so treat these as the SFO reference values, not as a bound for the ZIP. The strongest gusts are a tree-limb, fence and loose-material risk with the shortest warning.",
         "numbers": [
           {
             "label": "Season max gust, mean",
@@ -1152,10 +1610,18 @@
           {
             "label": "Days with a gust \u2265 50 kt",
             "value": "mean 0.3 per season"
+          },
+          {
+            "label": "Strongest gust of the season (mph) in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 53.7 \u00b7 median 56.4 \u00b7 max 64.3 \u2014 all 30 seasons: mean 53.8"
+          },
+          {
+            "label": "Days with a gust \u2265 40 kt per season in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 3.2 \u00b7 median 3.0 \u00b7 max 7.0 \u2014 all 30 seasons: mean 2.4"
           }
         ],
         "basis": "1991\u20132020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away)",
-        "confidence": "n = 30 seasons; upper bound for 94122",
+        "confidence": "n = 30 seasons; SFO reference value, not a bound for 94122; the El Ni\u00f1o rows rest on 11 of the 30 seasons",
         "sources": [
           {
             "label": "NCEI GSOD 72494023234 (KSFO)",
@@ -1171,7 +1637,7 @@
         "n": 5,
         "key": "wind_and_rain",
         "question": "Will wind and rain hit at the same time?",
-        "answer": "On the hour-by-hour record at SFO, rain and sustained wind \u2265 20 kt coincide on about 7.9 days a season (median 7.0, range 1.0\u201316.0 over 30 seasons, 1991-1992 .. 2020-2021), which is about 29.5 simultaneous hours a season. Pairing a whole day\u2019s rain with a whole day\u2019s wind maximum \u2014 a method that cannot tell rain in the morning from wind at night \u2014 gives 11.1 days on that same station and 11.1 days when the downtown rain gauge is paired with SFO wind (the figure this page published before the hourly record was used). The two whole-day constructions agree, so the gap to the hourly count is the pairing rule, not the change of rain gauge. Those are the days water is driven sideways under shingles, laps and window seals, and the days fences fail. The SFO wind figure is an upper bound for the Sunset.",
+        "answer": "On the hour-by-hour record at SFO, rain and sustained wind \u2265 20 kt coincide on about 7.9 days a season (median 7.0, range 1.0\u201316.0 over 30 seasons, 1991-1992 .. 2020-2021), which is about 29.5 simultaneous hours a season. Pairing a whole day\u2019s rain with a whole day\u2019s wind maximum \u2014 a method that cannot tell rain in the morning from wind at night \u2014 gives 11.1 days on that same station and 11.1 days when the downtown rain gauge is paired with SFO wind (the figure this page published before the hourly record was used). The two whole-day constructions agree, so the gap to the hourly count is the pairing rule, not the change of rain gauge. In the 11 El Ni\u00f1o seasons on record, whole-day wind + rain days averaged 11.5 against 11.1 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). Those are the days water is driven sideways under shingles, laps and window seals, and the days fences fail. Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991\u20132020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO \u2014 so treat these as the SFO reference values, not as a bound for the ZIP.",
         "numbers": [
           {
             "label": "Days per season with a simultaneous wind+rain hour (hourly record)",
@@ -1192,10 +1658,18 @@
           {
             "label": "Heavy wind+rain days per season (\u2265 0.50 in and a gust \u2265 35 kt, whole-day pairing)",
             "value": "mean 2.2 \u00b7 max 8.0"
+          },
+          {
+            "label": "Wind+rain days per season (whole-day pairing) in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 11.5 \u00b7 median 11.0 \u00b7 max 21.0 \u2014 all 30 seasons: mean 11.1"
+          },
+          {
+            "label": "Heavy wind+rain days per season (\u2265 0.50 in and a gust \u2265 35 kt) in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 2.2 \u00b7 median 2.0 \u00b7 max 5.0 \u2014 all 30 seasons: mean 2.2"
           }
         ],
         "basis": "1991\u20132020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown); 1991\u20132020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away); hour-by-hour observed record, NOAA NCEI ISD hourly station 72494023234 (SFO ASLO, 11.9 mi away) \u2014 an hour counts when a single observation carries wind \u2265 20 kt and precipitation > 0",
-        "confidence": "n = 30 seasons; thinnest season covers 96.7% of the 123 Oct\u2013Jan dates; 86 of the 1029 counted hours came from reports whose precipitation period was longer than one hour, so those are multi-hour accumulations rather than hour-by-hour measurements; the whole-day method pairs a local-day rain total with a UTC-day wind figure (00\u201324Z), which is why it counts more days",
+        "confidence": "n = 30 seasons; thinnest season covers 96.7% of the 123 Oct\u2013Jan dates; 86 of the 1029 counted hours came from reports whose precipitation period was longer than one hour, so those are multi-hour accumulations rather than hour-by-hour measurements; the whole-day method pairs a local-day rain total with a UTC-day wind figure (00\u201324Z), which is why it counts more days; the El Ni\u00f1o rows rest on 11 of the 30 seasons",
         "sources": [
           {
             "label": "NCEI ISD hourly archive (station 72494023234, SFO)",
@@ -1215,7 +1689,7 @@
         "n": 6,
         "key": "storm_severity",
         "question": "How severe have the storms actually been here?",
-        "answer": "On the station record, the season averages 3.2 days a season at \u2265 1.00 in of rain, 2.4 days with a gust \u2265 40 kt, 0.5 days that are both. NOAA's Storm Events Database holds 119 records for San Francisco County over 2014\u20132026, of which 99 are rain-related (Flood, Flash Flood, Heavy Rain, Debris Flow). Its damage column is not usable as a cost estimate \u2014 every non-zero value NCEI holds for this county is a token amount (12 of 119 records carry one) \u2014 so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. No named warning category (Advisory / Warning / High Wind) is applied: those criteria are written per forecast zone and this project does not restate them.",
+        "answer": "On the station record, the season averages 3.2 days a season at \u2265 1.00 in of rain, 2.4 days with a gust \u2265 40 kt, 0.5 days that are both. In the 11 El Ni\u00f1o seasons on record, days that are both \u2265 1.00 in and a \u2265 40 kt gust averaged 0.5 against 0.5 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). NOAA's Storm Events Database holds 119 records for San Francisco County over 2014\u20132026, of which 99 are rain-related (Flood, Flash Flood, Heavy Rain, Debris Flow). Its damage column is not usable as a cost estimate \u2014 every non-zero value NCEI holds for this county is a token amount (12 of 119 records carry one) \u2014 so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. No named warning category (Advisory / Warning / High Wind) is applied: those criteria are written per forecast zone and this project does not restate them.",
         "numbers": [
           {
             "label": "Storm Events records, SF County",
@@ -1240,10 +1714,22 @@
           {
             "label": "Days per season both \u2265 1.00 in and a gust \u2265 40 kt",
             "value": "mean 0.5 \u00b7 peak 2"
+          },
+          {
+            "label": "Days per season at \u2265 1.00 in in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 3.7 \u00b7 median 4.0 \u00b7 max 6.0 \u2014 all 30 seasons: mean 3.2"
+          },
+          {
+            "label": "Days per season with a gust \u2265 40 kt in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 3.2 \u00b7 median 3.0 \u00b7 max 7.0 \u2014 all 30 seasons: mean 2.4"
+          },
+          {
+            "label": "Days per season both \u2265 1.00 in and a gust \u2265 40 kt in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 0.5 \u00b7 median 0.0 \u00b7 max 2.0 \u2014 all 30 seasons: mean 0.5"
           }
         ],
         "basis": "NOAA NCEI Storm Events Database, reported events only \u2014 under-reporting is likely",
-        "confidence": "counts derived from the station record; no dollar estimate is made",
+        "confidence": "counts derived from the station record; no dollar estimate is made; the El Ni\u00f1o rows rest on 11 of the 30 seasons",
         "sources": [
           {
             "label": "NCEI Storm Events Database",
@@ -1419,6 +1905,273 @@
         ],
         "source_url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
         "phase_source_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml"
+      },
+      "enso_conditioned_severity": {
+        "phase": "el_nino",
+        "phase_label": "El Ni\u00f1o",
+        "seasons_in_phase": 11,
+        "seasons_total": 30,
+        "seasons": [
+          "1991-1992",
+          "1994-1995",
+          "1997-1998",
+          "2002-2003",
+          "2004-2005",
+          "2006-2007",
+          "2009-2010",
+          "2014-2015",
+          "2015-2016",
+          "2018-2019",
+          "2019-2020"
+        ],
+        "rows": [
+          {
+            "key": "wet_days_ge_050in",
+            "label": "Days with \u2265 0.50 in of rain per season",
+            "phase_n": 11,
+            "phase_mean": 9.4,
+            "phase_median": 9.0,
+            "phase_min": 5.0,
+            "phase_max": 17.0,
+            "phase_seasons_with_any": 11,
+            "all_n": 30,
+            "all_mean": 8.4,
+            "all_max": 17.0
+          },
+          {
+            "key": "wet_days_ge_1in",
+            "label": "Days with \u2265 1.00 in of rain per season",
+            "phase_n": 11,
+            "phase_mean": 3.7,
+            "phase_median": 4.0,
+            "phase_min": 1.0,
+            "phase_max": 6.0,
+            "phase_seasons_with_any": 11,
+            "all_n": 30,
+            "all_mean": 3.2,
+            "all_max": 7.0
+          },
+          {
+            "key": "wet_days_ge_2in",
+            "label": "Days with \u2265 2.00 in of rain per season",
+            "phase_n": 11,
+            "phase_mean": 0.5,
+            "phase_median": 1.0,
+            "phase_min": 0.0,
+            "phase_max": 1.0,
+            "phase_seasons_with_any": 6,
+            "all_n": 30,
+            "all_mean": 0.5,
+            "all_max": 2.0
+          },
+          {
+            "key": "max_daily_prcp_in",
+            "label": "Wettest single day of the season (in)",
+            "phase_n": 11,
+            "phase_mean": 2.38,
+            "phase_median": 2.32,
+            "phase_min": 1.24,
+            "phase_max": 5.54,
+            "phase_seasons_with_any": 11,
+            "all_n": 30,
+            "all_mean": 2.03,
+            "all_max": 5.54
+          },
+          {
+            "key": "wind_and_rain_days",
+            "label": "Wind + rain days per season (\u2265 0.01 in and sustained \u2265 20 kt, whole-day pairing)",
+            "phase_n": 11,
+            "phase_mean": 11.5,
+            "phase_median": 11.0,
+            "phase_min": 6.0,
+            "phase_max": 21.0,
+            "phase_seasons_with_any": 11,
+            "all_n": 30,
+            "all_mean": 11.1,
+            "all_max": 24.0
+          },
+          {
+            "key": "heavy_wind_and_rain_days",
+            "label": "Heavy wind + rain days per season (\u2265 0.50 in and a gust \u2265 35 kt)",
+            "phase_n": 11,
+            "phase_mean": 2.2,
+            "phase_median": 2.0,
+            "phase_min": 0.0,
+            "phase_max": 5.0,
+            "phase_seasons_with_any": 8,
+            "all_n": 30,
+            "all_mean": 2.2,
+            "all_max": 8.0
+          },
+          {
+            "key": "severe_wind_and_rain_days",
+            "label": "Days per season both \u2265 1.00 in and a gust \u2265 40 kt",
+            "phase_n": 11,
+            "phase_mean": 0.5,
+            "phase_median": 0.0,
+            "phase_min": 0.0,
+            "phase_max": 2.0,
+            "phase_seasons_with_any": 5,
+            "all_n": 30,
+            "all_mean": 0.5,
+            "all_max": 2.0
+          },
+          {
+            "key": "gust_days_ge_40kt",
+            "label": "Days per season with a gust \u2265 40 kt",
+            "phase_n": 11,
+            "phase_mean": 3.2,
+            "phase_median": 3.0,
+            "phase_min": 0.0,
+            "phase_max": 7.0,
+            "phase_seasons_with_any": 9,
+            "all_n": 30,
+            "all_mean": 2.4,
+            "all_max": 7.0
+          },
+          {
+            "key": "wind_days_ge_30kt",
+            "label": "Days per season with sustained wind \u2265 30 kt",
+            "phase_n": 11,
+            "phase_mean": 2.6,
+            "phase_median": 2.0,
+            "phase_min": 0.0,
+            "phase_max": 7.0,
+            "phase_seasons_with_any": 10,
+            "all_n": 30,
+            "all_mean": 2.4,
+            "all_max": 7.0
+          },
+          {
+            "key": "max_gust_mph",
+            "label": "Strongest gust of the season (mph)",
+            "phase_n": 11,
+            "phase_mean": 53.7,
+            "phase_median": 56.4,
+            "phase_min": 41.3,
+            "phase_max": 64.3,
+            "phase_seasons_with_any": 11,
+            "all_n": 30,
+            "all_mean": 53.8,
+            "all_max": 70.0
+          }
+        ],
+        "other_phases": [
+          {
+            "phase": "la_nina",
+            "phase_label": "La Ni\u00f1a",
+            "n": 12,
+            "metrics": {
+              "wet_days_ge_050in": {
+                "mean": 6.9,
+                "max": 15.0
+              },
+              "wet_days_ge_1in": {
+                "mean": 2.2,
+                "max": 5.0
+              },
+              "wet_days_ge_2in": {
+                "mean": 0.5,
+                "max": 2.0
+              },
+              "max_daily_prcp_in": {
+                "mean": 1.87,
+                "max": 3.61
+              },
+              "wind_and_rain_days": {
+                "mean": 10.2,
+                "max": 16.0
+              },
+              "heavy_wind_and_rain_days": {
+                "mean": 2.1,
+                "max": 8.0
+              },
+              "severe_wind_and_rain_days": {
+                "mean": 0.6,
+                "max": 2.0
+              },
+              "gust_days_ge_40kt": {
+                "mean": 1.8,
+                "max": 6.0
+              },
+              "wind_days_ge_30kt": {
+                "mean": 2.2,
+                "max": 6.0
+              },
+              "max_gust_mph": {
+                "mean": 55.0,
+                "max": 70.0
+              }
+            }
+          },
+          {
+            "phase": "neutral",
+            "phase_label": "Neutral",
+            "n": 7,
+            "metrics": {
+              "wet_days_ge_050in": {
+                "mean": 9.3,
+                "max": 15.0
+              },
+              "wet_days_ge_1in": {
+                "mean": 4.0,
+                "max": 7.0
+              },
+              "wet_days_ge_2in": {
+                "mean": 0.4,
+                "max": 1.0
+              },
+              "max_daily_prcp_in": {
+                "mean": 1.74,
+                "max": 2.77
+              },
+              "wind_and_rain_days": {
+                "mean": 12.1,
+                "max": 24.0
+              },
+              "heavy_wind_and_rain_days": {
+                "mean": 2.6,
+                "max": 7.0
+              },
+              "severe_wind_and_rain_days": {
+                "mean": 0.4,
+                "max": 2.0
+              },
+              "gust_days_ge_40kt": {
+                "mean": 2.4,
+                "max": 6.0
+              },
+              "wind_days_ge_30kt": {
+                "mean": 2.6,
+                "max": 5.0
+              },
+              "max_gust_mph": {
+                "mean": 51.7,
+                "max": 55.2
+              }
+            }
+          }
+        ],
+        "how_to_read": "Each figure is the El Ni\u00f1o seasons in the 1991-2020 record (n = 11), whose published CPC ONI placed them in the same phase this season is in, summarised beside all 30 seasons. Rain counters come from the downtown gauge (GHCN-Daily USW00023272); wind and the whole-day wind + rain pairings from SFO (GSOD 72494023234). An observed conditional frequency in a small sample, not a forecast for 2026-27: the spread inside the phase is as informative as the mean.",
+        "source_urls": [
+          "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
+          "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
+          "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
+        ],
+        "sources": [
+          {
+            "label": "NCEI GHCN-Daily USW00023272 (rain counters)",
+            "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+          },
+          {
+            "label": "NCEI GSOD 72494023234 (KSFO wind)",
+            "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+          },
+          {
+            "label": "NOAA CPC official ONI product (phase assignment)",
+            "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
+          }
+        ]
       }
     },
     "severity": {
@@ -1676,6 +2429,14 @@
             "value": "3.19 days"
           },
           {
+            "label": "Days \u2265 1.00 in rain per season in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 3.7 \u00b7 median 4.0 \u00b7 max 6.0 \u2014 all 30 seasons: mean 3.2"
+          },
+          {
+            "label": "Wettest single day of the season (in) in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 2.38 \u00b7 median 2.32 \u00b7 max 5.54 \u2014 all 30 seasons: mean 2.03"
+          },
+          {
             "label": "Wettest December / January on record (1991\u20132020)",
             "value": "12.03 in / 12.07 in"
           },
@@ -1702,7 +2463,7 @@
       },
       {
         "driver": "Wind + rain together \u2014 wind-driven water intrusion",
-        "why_it_costs": "Wind pushes rain sideways under shingles, laps and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. These are also fence-failure and tree-limb days. Wind is recorded at SFO, 11.9 miles away (computed great-circle distance from the 94122 centroid, see climatology.meta.station_distance_mi) and more exposed, so treat the counts as an upper bound for the Sunset. The headline count is the hour-by-hour one: rain and wind measured in the same hour, not rain and wind somewhere on the same day.",
+        "why_it_costs": "Wind pushes rain sideways under shingles, laps and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. These are also fence-failure and tree-limb days. Wind is recorded at SFO, 11.9 miles away (computed great-circle distance from the 94122 centroid, see climatology.meta.station_distance_mi); no source held here establishes whether the ocean-facing Sunset is windier or calmer than SFO, so the counts are SFO reference values, not a bound for the ZIP. The headline count is the hour-by-hour one: rain and wind measured in the same hour, not rain and wind somewhere on the same day.",
         "evidence": [
           {
             "label": "Days per season with a simultaneous wind \u2265 20 kt + rain hour (hour-by-hour record, SFO)",
@@ -1719,6 +2480,14 @@
           {
             "label": "Days with rain \u2265 0.50 in and a gust \u2265 35 kt",
             "value": "mean 2.2 \u00b7 median 2.0 \u00b7 max 8.0 per season"
+          },
+          {
+            "label": "Wind + rain days per season (whole-day pairing) in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 11.5 \u00b7 median 11.0 \u00b7 max 21.0 \u2014 all 30 seasons: mean 11.1"
+          },
+          {
+            "label": "Days with rain \u2265 0.50 in and a gust \u2265 35 kt in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 2.2 \u00b7 median 2.0 \u00b7 max 5.0 \u2014 all 30 seasons: mean 2.2"
           }
         ],
         "sources": [
@@ -1739,11 +2508,19 @@
       },
       {
         "driver": "Peak gusts \u2014 trees, fences, roofing & tenant safety",
-        "why_it_costs": "The strongest gust of the season is what breaks limbs onto roofs and cars and flattens fences - the storm-season liability with the shortest fuse. SFO is more exposed than the Sunset, so these gusts are an upper bound for the ZIP.",
+        "why_it_costs": "The strongest gust of the season is what breaks limbs onto roofs and cars and flattens fences - the storm-season liability with the shortest fuse. Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991\u20132020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO \u2014 so treat these as the SFO reference values, not as a bound for the ZIP.",
         "evidence": [
           {
             "label": "Strongest gust of the season (SFO ASOS)",
             "value": "mean 53.8 mph \u00b7 median 54.1 mph \u00b7 record 70.0 mph"
+          },
+          {
+            "label": "Strongest gust of the season (mph) in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 53.7 \u00b7 median 56.4 \u00b7 max 64.3 \u2014 all 30 seasons: mean 53.8"
+          },
+          {
+            "label": "Days per season with a gust \u2265 40 kt in El Ni\u00f1o seasons on record (11 of the 30)",
+            "value": "mean 3.2 \u00b7 median 3.0 \u00b7 max 7.0 \u2014 all 30 seasons: mean 2.4"
           },
           {
             "label": "Thunderstorm-wind reports in SF County (2014\u20132026)",
@@ -1850,7 +2627,7 @@
       }
     ],
     "cost_drivers_note": "Ranked for the landlord question behind this site: what about this rainy season plausibly drives repair and maintenance cost. The 'Why it matters' sentence under each driver is maintenance guidance about cost mechanisms \u2014 it is not a weather claim. Every number is computed from, and links to, the official sources shown. Expected-day counts are sums of the per-date 1991\u20132020 observed probabilities (linearity of expectation): an expectation over the distribution, not a prediction for 2026-27.",
-    "key_finding": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 7.9 days per season on average at SFO on the hour-by-hour record (upper bound for Sunset); pairing whole days instead gives 11.1 days. Current ENSO: El Ni\u00f1o (official ONI +1.80 \u00b0C, JJA 2026) - in this record El Ni\u00f1o seasons averaged wetter than La Ni\u00f1a (14.23 in vs 11.16 in), with a wide spread in both; CPC status \"El Ni\u00f1o Advisory\". The CPC outlooks attached to each day show the official probabilities for this window."
+    "key_finding": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 7.9 days per season on average at SFO on the hour-by-hour record (SFO reference value, not a bound for the Sunset); pairing whole days instead gives 11.1 days. Current ENSO: El Ni\u00f1o (official ONI +1.80 \u00b0C, JJA 2026) - in this record El Ni\u00f1o seasons averaged wetter than La Ni\u00f1a (14.23 in vs 11.16 in), with a wide spread in both; CPC status \"El Ni\u00f1o Advisory\". The CPC outlooks attached to each day show the official probabilities for this window."
   },
   "monthly": [
     {
@@ -2732,7 +3509,7 @@
       "category": "Wind + rain",
       "priority": "high",
       "title": "Expect 7.9 days per season when rain and sustained wind \u2265 20 kt happen in the same hour",
-      "detail": "Hour-by-hour NCEI ISD record at SFO ASOS (more exposed than the Sunset, so an upper bound for 94122): mean 7.9, median 7.0, max 16.0 local dates per Oct-Jan season carrying at least one hour with rain AND sustained wind \u2265 20 kt, over 30 seasons. Pairing whole days instead (the method used before) gives mean 11.1 days at the same station, and 11.1 days when the downtown rain gauge is paired with SFO wind. Heavy wind+rain (\u22650.50 in AND gust \u226535 kt, whole days): mean 2.2, max 8.0 days.",
+      "detail": "Hour-by-hour NCEI ISD record at SFO ASOS (11.9 mi away; an SFO reference value, not a bound for 94122): mean 7.9, median 7.0, max 16.0 local dates per Oct-Jan season carrying at least one hour with rain AND sustained wind \u2265 20 kt, over 30 seasons. Pairing whole days instead (the method used before) gives mean 11.1 days at the same station, and 11.1 days when the downtown rain gauge is paired with SFO wind. Heavy wind+rain (\u22650.50 in AND gust \u226535 kt, whole days): mean 2.2, max 8.0 days.",
       "source": "NCEI ISD hourly 72494023234 (KSFO) + GSOD + GHCN-Daily",
       "source_url": "https://www.ncei.noaa.gov/data/global-hourly/access/"
     },
@@ -2740,7 +3517,7 @@
       "category": "Wind / gusts",
       "priority": "high",
       "title": "Seasonal max gust averages 53.8 mph (record 70.0 mph)",
-      "detail": "SFO ASOS reports average strongest gust of season 53.8 mph, median 54.1 mph. Sunset will be less, but this is the verified upper bound. Check trees, fences, and loose items.",
+      "detail": "SFO ASOS reports average strongest gust of season 53.8 mph, median 54.1 mph. No source held here says whether the ocean-facing Sunset is windier or calmer than SFO, so use it as the SFO reference value, not a bound. Check trees, fences, and loose items.",
       "source": "NCEI GSOD 72494023234",
       "source_url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt"
     },

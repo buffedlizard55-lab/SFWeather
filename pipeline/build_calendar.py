@@ -783,8 +783,10 @@ def main():
                 f"mean of the GSOD daily maximum sustained wind (MXSPD, knots converted "
                 f"at 1 kt = 1.15078 mph) for this calendar date over the {n_years_w} "
                 f"seasons with a value ({period_txt}) at station {w_id} ({w_name}); GSOD "
-                "days are UTC days (0000Z-2359Z), about 16:00-16:00 Pacific, and SFO is "
-                "more exposed than the Sunset, so this is an upper bound"
+                "days are UTC days (0000Z-2359Z), about 16:00-16:00 Pacific; SFO is the "
+                "nearest official station with a complete wind record, 11.9 mi away, and no "
+                "source held here says whether the ocean-facing Sunset is windier or calmer "
+                "than SFO, so this is an SFO reference value, not a bound for 94122"
             ) if c.get("normal_max_sustained_mph") is not None else None
             entry["gust_basis"] = (
                 f"mean of the GSOD daily peak gust values (GUST, knots converted at "
@@ -1158,6 +1160,15 @@ def main():
         "streak_probability": season_climo.get("probability_of_at_least_one_streak", {}),
         "enso_stratified": season_climo.get("enso_stratified_season_total_prcp_in", {}),
         "enso_stratified_streaks": season_climo.get("enso_stratified_streaks", {}),
+        # The severity counters (hard-rain days, gusts, wind + rain) conditioned
+        # on the phase.  Derived here from the season rows in the same file
+        # rather than copied, so the table exists as soon as the rows do and is
+        # always the pure function of them that the ledger recomputes
+        # (enso-severity-recompute).  climatology.json carries the same table
+        # once the fetching pipeline has run on this code; both come from
+        # climo.enso_stratified_severity on identical rows.
+        "enso_stratified_severity": climo_lib.enso_stratified_severity(
+            season_climo.get("seasons") or []),
         "wettest_seasons": season_climo.get("wettest_seasons", []),
         "driest_seasons": season_climo.get("driest_seasons", []),
         "season_by_year": season_climo.get("seasons", []),

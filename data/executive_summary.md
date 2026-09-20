@@ -42,7 +42,7 @@ A long wet spell is the normal case, not the exception: 96.7% of seasons had a r
 
 ### Q3: How many hard-rain days will there be?
 
-Expect about 14.97 days with ≥ 0.25 in and about 3.19 days with ≥ 1.00 in per season. Those are the days that overwhelm area drains, garage thresholds and ground-floor entryways. The counts are sums of the per-date observed probabilities, so they are an expectation over the 30-season record. NOAA's own published per-date probabilities give 14.9 and 3.26 days. The two independent methods agree to within 0.06 day(s) per season across 4 thresholds. 
+Expect about 14.97 days with ≥ 0.25 in and about 3.19 days with ≥ 1.00 in per season. Those are the days that overwhelm area drains, garage thresholds and ground-floor entryways. The counts are sums of the per-date observed probabilities, so they are an expectation over the 30-season record. NOAA's own published per-date probabilities give 14.9 and 3.26 days. The two independent methods agree to within 0.06 day(s) per season across 4 thresholds. In the 11 El Niño seasons on record, days at ≥ 1.00 in averaged 3.7 against 3.2 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). 
 
 | Figure | Value |
 | --- | --- |
@@ -54,14 +54,17 @@ Expect about 14.97 days with ≥ 0.25 in and about 3.19 days with ≥ 1.00 in pe
 | Days ≥ 1.00 in per season, method A (counted) vs method B (NOAA published) | 3.2 vs 3.26 |
 | Days ≥ 2.00 in per season, method A (counted) vs method B (NOAA published) | 0.5 vs 0.51 |
 | Days ≥ 4.00 in per season, method A (counted) vs method B (NOAA published) | 0.0 vs 0.02 |
+| Days ≥ 0.50 in per season in El Niño seasons on record (11 of the 30) | mean 9.4 · median 9.0 · max 17.0 — all 30 seasons: mean 8.4 |
+| Days ≥ 1.00 in per season in El Niño seasons on record (11 of the 30) | mean 3.7 · median 4.0 · max 6.0 — all 30 seasons: mean 3.2 |
+| Wettest single day of the season (in) in El Niño seasons on record (11 of the 30) | mean 2.38 · median 2.32 · max 5.54 — all 30 seasons: mean 2.03 |
 
-**Basis:** 1991–2020 observed record — an expectation over those 30 seasons, not a prediction for 2026-27 · **Confidence:** linearity of expectation over 123 dates
+**Basis:** 1991–2020 observed record — an expectation over those 30 seasons, not a prediction for 2026-27 · **Confidence:** linearity of expectation over 123 dates; the El Niño rows rest on 11 of the 30 seasons
 
 **Verify:** [NCEI GHCN-Daily USW00023272](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv); [NCEI 1991–2020 daily normals (NOAA's own probabilities)](https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv)
 
 ### Q4: How windy will it get?
 
-The strongest gust of the season averages 53.8 mph at SFO and has reached 70.0 mph in this record. Wind is measured at SFO, which is 11.9 mi away and more exposed than the Sunset, so treat these as an upper bound for the ZIP. The strongest gusts are a tree-limb, fence and loose-material risk with the shortest warning.
+The strongest gust of the season averages 53.8 mph at SFO and has reached 70.0 mph in this record. In the 11 El Niño seasons on record, days with a gust ≥ 40 kt averaged 3.2 against 2.4 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991–2020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO — so treat these as the SFO reference values, not as a bound for the ZIP. The strongest gusts are a tree-limb, fence and loose-material risk with the shortest warning.
 
 | Figure | Value |
 | --- | --- |
@@ -69,14 +72,16 @@ The strongest gust of the season averages 53.8 mph at SFO and has reached 70.0 m
 | Season max gust, record | 70.0 mph |
 | Days with sustained wind ≥ 30 kt | mean 2.4 per season |
 | Days with a gust ≥ 50 kt | mean 0.3 per season |
+| Strongest gust of the season (mph) in El Niño seasons on record (11 of the 30) | mean 53.7 · median 56.4 · max 64.3 — all 30 seasons: mean 53.8 |
+| Days with a gust ≥ 40 kt per season in El Niño seasons on record (11 of the 30) | mean 3.2 · median 3.0 · max 7.0 — all 30 seasons: mean 2.4 |
 
-**Basis:** 1991–2020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away) · **Confidence:** n = 30 seasons; upper bound for 94122
+**Basis:** 1991–2020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away) · **Confidence:** n = 30 seasons; SFO reference value, not a bound for 94122; the El Niño rows rest on 11 of the 30 seasons
 
 **Verify:** [NCEI GSOD 72494023234 (KSFO)](https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/); [GSOD units README](https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt)
 
 ### Q5: Will wind and rain hit at the same time?
 
-On the hour-by-hour record at SFO, rain and sustained wind ≥ 20 kt coincide on about 7.9 days a season (median 7.0, range 1.0–16.0 over 30 seasons, 1991-1992 .. 2020-2021), which is about 29.5 simultaneous hours a season. Pairing a whole day’s rain with a whole day’s wind maximum — a method that cannot tell rain in the morning from wind at night — gives 11.1 days on that same station and 11.1 days when the downtown rain gauge is paired with SFO wind (the figure this page published before the hourly record was used). The two whole-day constructions agree, so the gap to the hourly count is the pairing rule, not the change of rain gauge. Those are the days water is driven sideways under shingles, laps and window seals, and the days fences fail. The SFO wind figure is an upper bound for the Sunset.
+On the hour-by-hour record at SFO, rain and sustained wind ≥ 20 kt coincide on about 7.9 days a season (median 7.0, range 1.0–16.0 over 30 seasons, 1991-1992 .. 2020-2021), which is about 29.5 simultaneous hours a season. Pairing a whole day’s rain with a whole day’s wind maximum — a method that cannot tell rain in the morning from wind at night — gives 11.1 days on that same station and 11.1 days when the downtown rain gauge is paired with SFO wind (the figure this page published before the hourly record was used). The two whole-day constructions agree, so the gap to the hourly count is the pairing rule, not the change of rain gauge. In the 11 El Niño seasons on record, whole-day wind + rain days averaged 11.5 against 11.1 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). Those are the days water is driven sideways under shingles, laps and window seals, and the days fences fail. Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991–2020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO — so treat these as the SFO reference values, not as a bound for the ZIP.
 
 | Figure | Value |
 | --- | --- |
@@ -85,14 +90,16 @@ On the hour-by-hour record at SFO, rain and sustained wind ≥ 20 kt coincide on
 | Days per season, same station, whole-day pairing (for comparison) | mean 11.1 · median 10.5 · max 21.0 |
 | Days per season, whole-day pairing, downtown rain gauge + SFO wind | mean 11.1 · max 24.0 |
 | Heavy wind+rain days per season (≥ 0.50 in and a gust ≥ 35 kt, whole-day pairing) | mean 2.2 · max 8.0 |
+| Wind+rain days per season (whole-day pairing) in El Niño seasons on record (11 of the 30) | mean 11.5 · median 11.0 · max 21.0 — all 30 seasons: mean 11.1 |
+| Heavy wind+rain days per season (≥ 0.50 in and a gust ≥ 35 kt) in El Niño seasons on record (11 of the 30) | mean 2.2 · median 2.0 · max 5.0 — all 30 seasons: mean 2.2 |
 
-**Basis:** 1991–2020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown); 1991–2020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away); hour-by-hour observed record, NOAA NCEI ISD hourly station 72494023234 (SFO ASLO, 11.9 mi away) — an hour counts when a single observation carries wind ≥ 20 kt and precipitation > 0 · **Confidence:** n = 30 seasons; thinnest season covers 96.7% of the 123 Oct–Jan dates; 86 of the 1029 counted hours came from reports whose precipitation period was longer than one hour, so those are multi-hour accumulations rather than hour-by-hour measurements; the whole-day method pairs a local-day rain total with a UTC-day wind figure (00–24Z), which is why it counts more days
+**Basis:** 1991–2020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown); 1991–2020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away); hour-by-hour observed record, NOAA NCEI ISD hourly station 72494023234 (SFO ASLO, 11.9 mi away) — an hour counts when a single observation carries wind ≥ 20 kt and precipitation > 0 · **Confidence:** n = 30 seasons; thinnest season covers 96.7% of the 123 Oct–Jan dates; 86 of the 1029 counted hours came from reports whose precipitation period was longer than one hour, so those are multi-hour accumulations rather than hour-by-hour measurements; the whole-day method pairs a local-day rain total with a UTC-day wind figure (00–24Z), which is why it counts more days; the El Niño rows rest on 11 of the 30 seasons
 
 **Verify:** [NCEI ISD hourly archive (station 72494023234, SFO)](https://www.ncei.noaa.gov/data/global-hourly/access/); [NCEI GSOD 72494023234 (KSFO)](https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/); [NCEI GHCN-Daily USW00023272](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv)
 
 ### Q6: How severe have the storms actually been here?
 
-On the station record, the season averages 3.2 days a season at ≥ 1.00 in of rain, 2.4 days with a gust ≥ 40 kt, 0.5 days that are both. NOAA's Storm Events Database holds 119 records for San Francisco County over 2014–2026, of which 99 are rain-related (Flood, Flash Flood, Heavy Rain, Debris Flow). Its damage column is not usable as a cost estimate — every non-zero value NCEI holds for this county is a token amount (12 of 119 records carry one) — so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. No named warning category (Advisory / Warning / High Wind) is applied: those criteria are written per forecast zone and this project does not restate them.
+On the station record, the season averages 3.2 days a season at ≥ 1.00 in of rain, 2.4 days with a gust ≥ 40 kt, 0.5 days that are both. In the 11 El Niño seasons on record, days that are both ≥ 1.00 in and a ≥ 40 kt gust averaged 0.5 against 0.5 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). NOAA's Storm Events Database holds 119 records for San Francisco County over 2014–2026, of which 99 are rain-related (Flood, Flash Flood, Heavy Rain, Debris Flow). Its damage column is not usable as a cost estimate — every non-zero value NCEI holds for this county is a token amount (12 of 119 records carry one) — so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. No named warning category (Advisory / Warning / High Wind) is applied: those criteria are written per forecast zone and this project does not restate them.
 
 | Figure | Value |
 | --- | --- |
@@ -102,8 +109,11 @@ On the station record, the season averages 3.2 days a season at ≥ 1.00 in of r
 | Days per season at ≥ 1.00 in | mean 3.2 · peak 7 in 1996-1997 |
 | Days per season with a gust ≥ 40 kt | mean 2.4 |
 | Days per season both ≥ 1.00 in and a gust ≥ 40 kt | mean 0.5 · peak 2 |
+| Days per season at ≥ 1.00 in in El Niño seasons on record (11 of the 30) | mean 3.7 · median 4.0 · max 6.0 — all 30 seasons: mean 3.2 |
+| Days per season with a gust ≥ 40 kt in El Niño seasons on record (11 of the 30) | mean 3.2 · median 3.0 · max 7.0 — all 30 seasons: mean 2.4 |
+| Days per season both ≥ 1.00 in and a gust ≥ 40 kt in El Niño seasons on record (11 of the 30) | mean 0.5 · median 0.0 · max 2.0 — all 30 seasons: mean 0.5 |
 
-**Basis:** NOAA NCEI Storm Events Database, reported events only — under-reporting is likely · **Confidence:** counts derived from the station record; no dollar estimate is made
+**Basis:** NOAA NCEI Storm Events Database, reported events only — under-reporting is likely · **Confidence:** counts derived from the station record; no dollar estimate is made; the El Niño rows rest on 11 of the 30 seasons
 
 **Verify:** [NCEI Storm Events Database](https://www.ncdc.noaa.gov/stormevents/); [NCEI Storm Events CSV files](https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/); [NCEI GSOD 72494023234 (KSFO wind)](https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/)
 
@@ -133,6 +143,26 @@ On the station record, the season averages 3.2 days a season at ≥ 1.00 in of r
   - Contrast: Neutral seasons (n = 7) averaged 13.31 in.
   - Contrast: La Niña seasons (n = 12) averaged 11.16 in.
   - Verify: [https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt](https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt)
+
+**Hard rain, wind and wind + rain in past El Niño seasons (n = 11 of 30), beside all seasons:**
+
+| Counter (per Oct 1 – Jan 31 season) | El Niño seasons (n = 11): mean · median · max | All 30 seasons: mean · max |
+| --- | --- | --- |
+| Days with ≥ 0.50 in of rain per season | 9.4 · 9.0 · 17.0 | 8.4 · 17.0 |
+| Days with ≥ 1.00 in of rain per season | 3.7 · 4.0 · 6.0 | 3.2 · 7.0 |
+| Days with ≥ 2.00 in of rain per season | 0.5 · 1.0 · 1.0 | 0.5 · 2.0 |
+| Wettest single day of the season (in) | 2.38 · 2.32 · 5.54 | 2.03 · 5.54 |
+| Wind + rain days per season (≥ 0.01 in and sustained ≥ 20 kt, whole-day pairing) | 11.5 · 11.0 · 21.0 | 11.1 · 24.0 |
+| Heavy wind + rain days per season (≥ 0.50 in and a gust ≥ 35 kt) | 2.2 · 2.0 · 5.0 | 2.2 · 8.0 |
+| Days per season both ≥ 1.00 in and a gust ≥ 40 kt | 0.5 · 0.0 · 2.0 | 0.5 · 2.0 |
+| Days per season with a gust ≥ 40 kt | 3.2 · 3.0 · 7.0 | 2.4 · 7.0 |
+| Days per season with sustained wind ≥ 30 kt | 2.6 · 2.0 · 7.0 | 2.4 · 7.0 |
+| Strongest gust of the season (mph) | 53.7 · 56.4 · 64.3 | 53.8 · 70.0 |
+
+_Each figure is the El Niño seasons in the 1991-2020 record (n = 11), whose published CPC ONI placed them in the same phase this season is in, summarised beside all 30 seasons. Rain counters come from the downtown gauge (GHCN-Daily USW00023272); wind and the whole-day wind + rain pairings from SFO (GSOD 72494023234). An observed conditional frequency in a small sample, not a forecast for 2026-27: the spread inside the phase is as informative as the mean._
+
+Verify: [NCEI GHCN-Daily USW00023272 (rain counters)](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv); [NCEI GSOD 72494023234 (KSFO wind)](https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/); [NOAA CPC official ONI product (phase assignment)](https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt)
+
 - **The live NWS forecast:** 0 scoreboard day(s) currently carry a real daily forecast; the official horizon ends 2026-09-26.
 
 ## 3. Repair & maintenance cost drivers — ranked
@@ -162,6 +192,8 @@ _Ranked for the landlord question behind this site: what about this rainy season
 | --- | --- |
 | Days ≥ 0.25 in rain per season (expected count) | 14.97 days |
 | Days ≥ 1.00 in rain per season (expected count) | 3.19 days |
+| Days ≥ 1.00 in rain per season in El Niño seasons on record (11 of the 30) | mean 3.7 · median 4.0 · max 6.0 — all 30 seasons: mean 3.2 |
+| Wettest single day of the season (in) in El Niño seasons on record (11 of the 30) | mean 2.38 · median 2.32 · max 5.54 — all 30 seasons: mean 2.03 |
 | Wettest December / January on record (1991–2020) | 12.03 in / 12.07 in |
 | Rain-related storm reports in SF County (Flood, Flash Flood, Heavy Rain, Debris Flow; 2014–2026) | 99 events in NOAA Storm Events (reported events only - under-reporting is likely) |
 | …of those, reports carrying a recorded property-damage figure | 4 of 99 (county damage entries are sparse in this database) |
@@ -170,7 +202,7 @@ _Ranked for the landlord question behind this site: what about this rainy season
 
 ### Rank 3: Wind + rain together — wind-driven water intrusion
 
-**Why it costs (guidance, not a weather claim):** Wind pushes rain sideways under shingles, laps and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. These are also fence-failure and tree-limb days. Wind is recorded at SFO, 11.9 miles away (computed great-circle distance from the 94122 centroid, see climatology.meta.station_distance_mi) and more exposed, so treat the counts as an upper bound for the Sunset. The headline count is the hour-by-hour one: rain and wind measured in the same hour, not rain and wind somewhere on the same day.
+**Why it costs (guidance, not a weather claim):** Wind pushes rain sideways under shingles, laps and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. These are also fence-failure and tree-limb days. Wind is recorded at SFO, 11.9 miles away (computed great-circle distance from the 94122 centroid, see climatology.meta.station_distance_mi); no source held here establishes whether the ocean-facing Sunset is windier or calmer than SFO, so the counts are SFO reference values, not a bound for the ZIP. The headline count is the hour-by-hour one: rain and wind measured in the same hour, not rain and wind somewhere on the same day.
 
 | Evidence | Value |
 | --- | --- |
@@ -178,16 +210,20 @@ _Ranked for the landlord question behind this site: what about this rainy season
 | Days per season, whole-day pairing at the same station (for comparison) | mean 11.1 · median 10.5 · max 21.0 |
 | Days with rain ≥ 0.01 in and sustained wind ≥ 20 kt (whole-day pairing, downtown gauge + SFO wind) | mean 11.1 · median 10.0 · max 24.0 per season |
 | Days with rain ≥ 0.50 in and a gust ≥ 35 kt | mean 2.2 · median 2.0 · max 8.0 per season |
+| Wind + rain days per season (whole-day pairing) in El Niño seasons on record (11 of the 30) | mean 11.5 · median 11.0 · max 21.0 — all 30 seasons: mean 11.1 |
+| Days with rain ≥ 0.50 in and a gust ≥ 35 kt in El Niño seasons on record (11 of the 30) | mean 2.2 · median 2.0 · max 5.0 — all 30 seasons: mean 2.2 |
 
 **Verify:** [NCEI ISD hourly archive (station 72494023234, SFO)](https://www.ncei.noaa.gov/data/global-hourly/access/); [NCEI GSOD 72494023234 (KSFO wind)](https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/); [NCEI GHCN-Daily USW00023272 (SF downtown gauge)](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv)
 
 ### Rank 4: Peak gusts — trees, fences, roofing & tenant safety
 
-**Why it costs (guidance, not a weather claim):** The strongest gust of the season is what breaks limbs onto roofs and cars and flattens fences - the storm-season liability with the shortest fuse. SFO is more exposed than the Sunset, so these gusts are an upper bound for the ZIP.
+**Why it costs (guidance, not a weather claim):** The strongest gust of the season is what breaks limbs onto roofs and cars and flattens fences - the storm-season liability with the shortest fuse. Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991–2020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO — so treat these as the SFO reference values, not as a bound for the ZIP.
 
 | Evidence | Value |
 | --- | --- |
 | Strongest gust of the season (SFO ASOS) | mean 53.8 mph · median 54.1 mph · record 70.0 mph |
+| Strongest gust of the season (mph) in El Niño seasons on record (11 of the 30) | mean 53.7 · median 56.4 · max 64.3 — all 30 seasons: mean 53.8 |
+| Days per season with a gust ≥ 40 kt in El Niño seasons on record (11 of the 30) | mean 3.2 · median 3.0 · max 7.0 — all 30 seasons: mean 2.4 |
 | Thunderstorm-wind reports in SF County (2014–2026) | 4 events in NOAA Storm Events |
 
 **Verify:** [NCEI GSOD 72494023234 (KSFO wind)](https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/); [NCEI Storm Events CSV archive (SF County)](https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/)

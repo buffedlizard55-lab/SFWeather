@@ -83,6 +83,22 @@ HOURLY_SEASON_MIN_COVERAGE_PCT = 95.0
 #: and 99 for the same quantity.
 RAIN_RELATED_EVENT_TYPES = ("Flood", "Flash Flood", "Heavy Rain", "Debris Flow")
 
+#: What this project can honestly say about where its wind record comes from.
+#: Earlier sessions called SFO "more exposed than the Sunset" and every wind
+#: figure "an upper bound for 94122".  No official source in this project
+#: establishes that direction: SFO sits on the bay shore, the Outer Sunset faces
+#: the open Pacific at Ocean Beach, and no official station inside 94122 holds
+#: a 30-year wind record to compare against.  A directional claim without a
+#: source is exactly the kind of statement this project is not allowed to make,
+#: so the wording now states the station, the distance and the gap - nothing
+#: more (bug 74, docs/LIMITATIONS.md section 26).
+WIND_STATION_CAVEAT = (
+    "Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station "
+    "with a complete 1991\u20132020 wind record. No official station inside 94122 holds a "
+    "long wind record, and this project holds no source that establishes whether the "
+    "ocean-facing Sunset is windier or calmer than SFO \u2014 so treat these as the SFO "
+    "reference values, not as a bound for the ZIP.")
+
 
 def summarise_hourly_wind_rain(isd, period, daily_wind_rain, heavy_wind_rain,
                                min_coverage_pct=HOURLY_SEASON_MIN_COVERAGE_PCT):
@@ -582,12 +598,123 @@ def enso_strength_outlook(enso):
     }
 
 
+def phase_conditioned_severity(enso_severity, latest_oni, all_season):
+    """The severity counters for the ENSO phase this season is in, beside all 30.
+
+    ``enso_severity`` is ``calendar.enso_stratified_severity`` (one entry per
+    phase, built by :func:`climo.enso_stratified_severity` from the season
+    rows); ``all_season`` maps the same metric keys to their all-season
+    ``summarise`` blocks.  Returns ``None`` when the current phase is unknown or
+    has no seasons in the record - never an empty table dressed up as one.
+
+    Every row carries the phase's ``n`` and the all-season mean, because the
+    only honest reading of these figures is "in the 11 El Nino seasons on
+    record, X" against "over all 30, Y".  Small samples: an observed frequency,
+    never a forecast for 2026-27, and each row's label says which.
+    """
+    phase = (latest_oni or {}).get("phase")
+    entry = (enso_severity or {}).get(phase) if phase else None
+    if not entry or not entry.get("n"):
+        return None
+    n = entry["n"]
+    label = entry.get("phase_label") or phase_label(phase)
+    metrics = entry.get("metrics") or {}
+    rows = []
+    for key, default_label, _nd in climo.ENSO_SEVERITY_FIELDS:
+        m = metrics.get(key) or {}
+        if m.get("mean") is None:
+            continue
+        base = (all_season or {}).get(key) or {}
+        rows.append({
+            "key": key,
+            "label": m.get("label") or default_label,
+            "phase_n": n,
+            "phase_mean": m.get("mean"),
+            "phase_median": m.get("median"),
+            "phase_min": m.get("min"),
+            "phase_max": m.get("max"),
+            "phase_seasons_with_any": m.get("seasons_with_any"),
+            "all_n": base.get("n"),
+            "all_mean": base.get("mean"),
+            "all_max": base.get("max"),
+        })
+    if not rows:
+        return None
+    other = []
+    for p, e in sorted((enso_severity or {}).items()):
+        if p == phase or not e.get("n"):
+            continue
+        other.append({
+            "phase": p,
+            "phase_label": e.get("phase_label") or phase_label(p),
+            "n": e.get("n"),
+            "metrics": {k: {"mean": (e.get("metrics") or {}).get(k, {}).get("mean"),
+                            "max": (e.get("metrics") or {}).get(k, {}).get("max")}
+                        for k, _l, _d in climo.ENSO_SEVERITY_FIELDS},
+        })
+    total = ((all_season or {}).get("wet_days_ge_1in", {}).get("n")
+             or sum(e.get("n") or 0 for e in (enso_severity or {}).values()))
+    return {
+        "phase": phase,
+        "phase_label": label,
+        "seasons_in_phase": n,
+        "seasons_total": total,
+        "seasons": entry.get("seasons") or [],
+        "rows": rows,
+        "other_phases": other,
+        "how_to_read": (
+            f"Each figure is the {label} seasons in the 1991-2020 record (n = {n}), "
+            "whose published CPC ONI placed them in the same phase this season is in, "
+            f"summarised beside all {total} seasons. Rain counters come from the downtown gauge "
+            "(GHCN-Daily USW00023272); wind and the whole-day wind + rain pairings from "
+            "SFO (GSOD 72494023234). An observed conditional frequency in a small sample, "
+            "not a forecast for 2026-27: the spread inside the phase is as informative as "
+            "the mean."),
+        "source_urls": [GHCN_URL, GSOD_URL, ONI_URL],
+        "sources": [
+            {"label": "NCEI GHCN-Daily USW00023272 (rain counters)", "url": GHCN_URL},
+            {"label": "NCEI GSOD 72494023234 (KSFO wind)", "url": GSOD_URL},
+            {"label": "NOAA CPC official ONI product (phase assignment)", "url": ONI_URL},
+        ],
+    }
+
+
+def _phase_row(cond, key, question_label):
+    """One bottom-line number row for a phase-conditioned counter, or None."""
+    if not cond:
+        return None
+    row = next((r for r in cond.get("rows") or [] if r.get("key") == key), None)
+    if not row:
+        return None
+    return {
+        "label": (f"{question_label} in {cond.get('phase_label')} seasons on record "
+                  f"({cond.get('seasons_in_phase')} of the {cond.get('seasons_total')})"),
+        "value": (f"mean {row.get('phase_mean')} \u00b7 median {row.get('phase_median')} \u00b7 "
+                  f"max {row.get('phase_max')} \u2014 all {cond.get('seasons_total')} seasons: "
+                  f"mean {row.get('all_mean')}"),
+    }
+
+
+def _phase_sentence(cond, key, what):
+    """A sentence comparing the phase figure with the all-season one, or ''."""
+    if not cond:
+        return ""
+    row = next((r for r in cond.get("rows") or [] if r.get("key") == key), None)
+    if not row or row.get("all_mean") is None:
+        return ""
+    return (f"In the {cond.get('seasons_in_phase')} {cond.get('phase_label')} seasons on record, "
+            f"{what} averaged {row.get('phase_mean')} against {row.get('all_mean')} over all "
+            f"{cond.get('seasons_total')} (small sample: {cond.get('seasons_in_phase')} seasons; "
+            "an observed frequency, not a forecast). ")
+
+
 def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
                       wind_rain, heavy_wind_and_rain, max_gust, expected_days,
                       severity, latest_oni, oni_when, diagnostic_status,
                       tilt, storms, days_in_horizon, horizon_last_day,
                       enso_strat=None, hourly_wind_rain=None,
-                      caveats=None, enso_strength=None, enso_streaks=None):
+                      caveats=None, enso_strength=None, enso_streaks=None,
+                      enso_severity=None):
     """The landlord's questions, answered in the order they were asked.
 
     Every value is copied from an already-verified structure; nothing here is
@@ -615,6 +742,27 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
                   "wind \u2265 20 kt and precipitation > 0")
     exp_basis = ("1991\u20132020 observed record \u2014 an expectation over those 30 seasons, "
                  "not a prediction for 2026-27")
+
+    # The severity counters asked of the phase this season is in (hard-rain
+    # days, gusts, wind + rain), beside the all-season figures.  None when the
+    # phase is unknown or the table is absent, in which case no row is added
+    # and no sentence is written - never a placeholder.
+    all_season_blocks = {
+        "wet_days_ge_050in": g(severity, "wet_days_ge_050in"),
+        "wet_days_ge_1in": g(severity, "wet_days_ge_1in"),
+        "wet_days_ge_2in": g(severity, "wet_days_ge_2in"),
+        "max_daily_prcp_in": g(severity, "max_daily_prcp_in"),
+        "wind_and_rain_days": wind_rain,
+        "heavy_wind_and_rain_days": heavy_wind_and_rain,
+        "severe_wind_and_rain_days": g(severity, "severe_wind_and_rain_days"),
+        "gust_days_ge_40kt": g(severity, "gust_days_ge_40kt"),
+        "wind_days_ge_30kt": g(severity, "wind_days_ge_30kt"),
+        "max_gust_mph": max_gust,
+    }
+    cond_sev = phase_conditioned_severity(enso_severity, latest_oni, all_season_blocks)
+    phase_conf = (f"; the {cond_sev.get('phase_label')} rows rest on "
+                  f"{cond_sev.get('seasons_in_phase')} of the {cond_sev.get('seasons_total')} seasons"
+                  if cond_sev else "")
 
     out = []
 
@@ -717,7 +865,8 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
             + (f"NOAA's own published per-date probabilities give {g(g(severity,'published_expected'),'ge_025in_days')} "
                f"and {g(g(severity,'published_expected'),'ge_100in_days')} days. "
                + (g(g(severity, 'two_method_agreement'), 'statement') + " "
-                  if g(g(severity, 'two_method_agreement'), 'statement') else ""))),
+                  if g(g(severity, 'two_method_agreement'), 'statement') else ""))
+            + _phase_sentence(cond_sev, "wet_days_ge_1in", "days at \u2265 1.00 in")),
         "numbers": [
             {"label": "Days \u2265 0.25 in per season, method A (sum of this project's per-date probabilities)",
              "value": f"{g(expected_days,'ge_025in_days')} days"},
@@ -731,9 +880,13 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
                        f"({g(g(severity, 'record_daily_prcp_in'), 'season')})"
                        if g(g(severity, "record_daily_prcp_in"), "value") is not None
                        else "not derived this run")},
-        ] + thr_rows,
+        ] + thr_rows + [r for r in (
+            _phase_row(cond_sev, "wet_days_ge_050in", "Days \u2265 0.50 in per season"),
+            _phase_row(cond_sev, "wet_days_ge_1in", "Days \u2265 1.00 in per season"),
+            _phase_row(cond_sev, "max_daily_prcp_in", "Wettest single day of the season (in)"),
+        ) if r],
         "basis": exp_basis,
-        "confidence": "linearity of expectation over 123 dates",
+        "confidence": "linearity of expectation over 123 dates" + phase_conf,
         "sources": [{"label": "NCEI GHCN-Daily USW00023272", "url": GHCN_URL},
                     {"label": "NCEI 1991\u20132020 daily normals (NOAA's own probabilities)",
                      "url": NORMALS_URL}],
@@ -745,8 +898,9 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
         "question": "How windy will it get?",
         "answer": (
             f"The strongest gust of the season averages {g(max_gust,'mean')} mph at SFO and has reached "
-            f"{g(max_gust,'max')} mph in this record. Wind is measured at SFO, which is 11.9 mi away and more "
-            "exposed than the Sunset, so treat these as an upper bound for the ZIP. The strongest gusts are a "
+            f"{g(max_gust,'max')} mph in this record. "
+            + _phase_sentence(cond_sev, "gust_days_ge_40kt", "days with a gust \u2265 40 kt")
+            + WIND_STATION_CAVEAT + " The strongest gusts are a "
             "tree-limb, fence and loose-material risk with the shortest warning."),
         "numbers": [
             {"label": "Season max gust, mean", "value": f"{g(max_gust,'mean')} mph"},
@@ -757,9 +911,13 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
             {"label": "Days with a gust \u2265 50 kt",
              "value": (f"mean {float(g(g(severity,'gust_days_ge_50kt'),'mean')):.1f} per season"
                        if g(g(severity, 'gust_days_ge_50kt'), 'mean') is not None else "not derived this run")},
-        ],
+        ] + [r for r in (
+            _phase_row(cond_sev, "max_gust_mph", "Strongest gust of the season (mph)"),
+            _phase_row(cond_sev, "gust_days_ge_40kt", "Days with a gust \u2265 40 kt per season"),
+        ) if r],
         "basis": obs_wind,
-        "confidence": f"n = {g(max_gust,'n')} seasons; upper bound for 94122",
+        "confidence": (f"n = {g(max_gust,'n')} seasons; SFO reference value, not a bound for 94122"
+                       + phase_conf),
         "sources": [{"label": "NCEI GSOD 72494023234 (KSFO)", "url": GSOD_URL},
                     {"label": "GSOD units README", "url":
                      "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt"}],
@@ -803,8 +961,10 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
             + f"{g(wind_rain,'mean')} days when the downtown rain gauge is paired with SFO wind (the figure "
               "this page published before the hourly record was used)."
             + agreement_sentence
-            + " Those are the days water is driven sideways under shingles, laps and window seals, and the "
-              "days fences fail. The SFO wind figure is an upper bound for the Sunset.")
+            + " " + _phase_sentence(cond_sev, "wind_and_rain_days",
+                                    "whole-day wind + rain days")
+            + "Those are the days water is driven sideways under shingles, laps and window seals, and the "
+              "days fences fail. " + WIND_STATION_CAVEAT)
         hourly_numbers = [
             {"label": "Days per season with a simultaneous wind+rain hour (hourly record)",
              "value": (f"mean {g(hourly_days,'mean')} \u00b7 median {g(hourly_days,'median')} \u00b7 "
@@ -821,7 +981,12 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
              "value": f"mean {g(wind_rain,'mean')} \u00b7 max {g(wind_rain,'max')}"},
             {"label": "Heavy wind+rain days per season (\u2265 0.50 in and a gust \u2265 35 kt, whole-day pairing)",
              "value": f"mean {g(heavy_wind_and_rain,'mean')} \u00b7 max {g(heavy_wind_and_rain,'max')}"},
-        ]
+        ] + [r for r in (
+            _phase_row(cond_sev, "wind_and_rain_days",
+                       "Wind+rain days per season (whole-day pairing)"),
+            _phase_row(cond_sev, "heavy_wind_and_rain_days",
+                       "Heavy wind+rain days per season (\u2265 0.50 in and a gust \u2265 35 kt)"),
+        ) if r]
         if multi is None:
             multi_sentence = ("the multi-hour-accumulation count is not published in this run\u2019s "
                               "hourly dataset")
@@ -847,7 +1012,7 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
             f"Yes \u2014 on about {g(wind_rain,'mean')} days a season at SFO (\u2265 0.01 in of rain and sustained "
             f"wind \u2265 20 kt), and on about {g(heavy_wind_and_rain,'mean')} heavy days (\u2265 0.50 in and a "
             "gust \u2265 35 kt). Those are the days water is driven sideways under shingles, laps and window "
-            "seals, and the days fences fail. The SFO wind figure is an upper bound; the rain figure is the "
+            "seals, and the days fences fail. " + WIND_STATION_CAVEAT + " The rain figure is the "
             "downtown gauge. The hour-by-hour record could not be summarised this run "
             f"({hourly.get('reason') or 'no reason recorded'}), so the whole-day figure is shown alone.")
         hourly_numbers = [
@@ -855,7 +1020,10 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
              "value": f"mean {g(wind_rain,'mean')} \u00b7 max {g(wind_rain,'max')}"},
             {"label": "Heavy wind+rain days per season",
              "value": f"mean {g(heavy_wind_and_rain,'mean')} \u00b7 max {g(heavy_wind_and_rain,'max')}"},
-        ]
+        ] + [r for r in (
+            _phase_row(cond_sev, "wind_and_rain_days",
+                       "Wind+rain days per season (whole-day pairing)"),
+        ) if r]
         hourly_confidence = ("GSOD days are 00\u201324Z (about 16:00\u201316:00 local), so the joint statistic "
                              "pairs a local-day rain total with a UTC-day wind figure \u2014 stated, not "
                              "corrected. No hour-by-hour summary was available this run.")
@@ -869,7 +1037,7 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
         "answer": hourly_answer,
         "numbers": hourly_numbers,
         "basis": obs + "; " + obs_wind + "; " + obs_hourly,
-        "confidence": hourly_confidence,
+        "confidence": hourly_confidence + phase_conf,
         "sources": hourly_sources,
     })
 
@@ -901,6 +1069,8 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
     sev_sentence = ("On the station record, the season averages " + ", ".join(sev_bits) + ".")
     sev_answer = (
         (sev_sentence + " " if sev_bits else "")
+        + _phase_sentence(cond_sev, "severe_wind_and_rain_days",
+                          "days that are both \u2265 1.00 in and a \u2265 40 kt gust")
         + f"NOAA's Storm Events Database holds {n_all} records for San Francisco County over {span}, of "
         + f"which {n_flood} are rain-related ({', '.join(flood_types)}). "
         + "Its damage column is not usable as a cost estimate "
@@ -929,6 +1099,12 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
             "label": "Days per season both \u2265 1.00 in and a gust \u2265 40 kt",
             "value": (f"mean {sev_severe}" + (f" \u00b7 peak {sev_severe_rec}"
                                               if sev_severe_rec is not None else ""))})
+    sev_numbers += [r for r in (
+        _phase_row(cond_sev, "wet_days_ge_1in", "Days per season at \u2265 1.00 in"),
+        _phase_row(cond_sev, "gust_days_ge_40kt", "Days per season with a gust \u2265 40 kt"),
+        _phase_row(cond_sev, "severe_wind_and_rain_days",
+                   "Days per season both \u2265 1.00 in and a gust \u2265 40 kt"),
+    ) if r]
 
     out.append({
         "n": 6,
@@ -937,7 +1113,7 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
         "answer": sev_answer,
         "numbers": sev_numbers,
         "basis": "NOAA NCEI Storm Events Database, reported events only \u2014 under-reporting is likely",
-        "confidence": "counts derived from the station record; no dollar estimate is made",
+        "confidence": "counts derived from the station record; no dollar estimate is made" + phase_conf,
         "sources": [{"label": "NCEI Storm Events Database", "url":
                      "https://www.ncdc.noaa.gov/stormevents/"},
                     {"label": "NCEI Storm Events CSV files", "url": STORM_URL},
@@ -1005,6 +1181,10 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
         official["enso_conditioned_record"] = entry
     else:
         official["enso_conditioned_record"] = None
+    # The same bridge for the severity questions: hard-rain days, gusts and
+    # wind + rain in the seasons that sat in this phase, beside all 30.  None
+    # when it cannot be built; the site then shows nothing rather than a blank.
+    official["enso_conditioned_severity"] = cond_sev
     return out, official
 
 
@@ -1020,7 +1200,7 @@ def g_(d, k):
 
 def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
                        diagnostic_status, relevant_cpc, storms, monthly,
-                       hourly_wind_rain=None, enso_streaks=None):
+                       hourly_wind_rain=None, enso_streaks=None, enso_severity=None):
     """Ranked repair & maintenance cost drivers for the 94122 rainy season.
 
     Every number in ``evidence`` is copied from the verified datasets produced
@@ -1034,6 +1214,17 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
     ghcn = [{"label": "NCEI GHCN-Daily USW00023272 (SF downtown gauge)", "url": GHCN_URL}]
     gsod = [{"label": "NCEI GSOD 72494023234 (KSFO wind)", "url": GSOD_URL}]
     storm_src = [{"label": "NCEI Storm Events CSV archive (SF County)", "url": STORM_URL}]
+    # The severity counters for the phase this season is in, beside all 30
+    # seasons.  Each evidence row built from it names the phase and its n.
+    cond_sev = phase_conditioned_severity(enso_severity, latest_oni, {
+        k: dist.get(k) for k in (
+            "wet_days_ge_050in", "wet_days_ge_1in", "wet_days_ge_2in", "max_daily_prcp_in",
+            "wind_and_rain_days", "heavy_wind_and_rain_days", "severe_wind_and_rain_days",
+            "gust_days_ge_40kt", "wind_days_ge_30kt", "max_gust_mph")})
+
+    def phase_evidence(key, label):
+        row = _phase_row(cond_sev, key, label)
+        return [row] if row else []
 
     # 1. Prolonged wet spells ---------------------------------------------
     lp = streak_prob or {}
@@ -1108,6 +1299,8 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
         if exp_100 is not None:
             evidence.append({"label": "Days ≥ 1.00 in rain per season (expected count)",
                              "value": f"{exp_100} days"})
+        evidence += phase_evidence("wet_days_ge_1in", "Days ≥ 1.00 in rain per season")
+        evidence += phase_evidence("max_daily_prcp_in", "Wettest single day of the season (in)")
         if dec.get("max") is not None:
             evidence.append({
                 "label": "Wettest December / January on record (1991–2020)",
@@ -1164,15 +1357,20 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
              "value": (f"mean {hwr.get('mean')} · median {hwr.get('median')} · "
                        f"max {hwr.get('max')} per season")},
         ]
+        evidence += phase_evidence("wind_and_rain_days",
+                                   "Wind + rain days per season (whole-day pairing)")
+        evidence += phase_evidence("heavy_wind_and_rain_days",
+                                   "Days with rain ≥ 0.50 in and a gust ≥ 35 kt")
         drivers.append({
             "driver": "Wind + rain together — wind-driven water intrusion",
             "why_it_costs": ("Wind pushes rain sideways under shingles, laps and window seals and "
                              "into vents, so buildings leak during storms that would stay dry in "
                              "calm rain. These are also fence-failure and tree-limb days. Wind is "
                              "recorded at SFO, 11.9 miles away (computed great-circle distance from the "
-                             "94122 centroid, see climatology.meta.station_distance_mi) and "
-                             "more exposed, so treat the "
-                             "counts as an upper bound for the Sunset. The headline count is the "
+                             "94122 centroid, see climatology.meta.station_distance_mi); no source "
+                             "held here establishes whether the ocean-facing Sunset is windier or "
+                             "calmer than SFO, so the counts are SFO reference values, not a bound "
+                             "for the ZIP. The headline count is the "
                              "hour-by-hour one: rain and wind measured in the same hour, not rain "
                              "and wind somewhere on the same day."),
             "evidence": evidence,
@@ -1191,6 +1389,8 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
              "value": (f"mean {mg.get('mean')} mph · median {mg.get('median')} mph · "
                        f"record {mg.get('max')} mph")},
         ]
+        evidence += phase_evidence("max_gust_mph", "Strongest gust of the season (mph)")
+        evidence += phase_evidence("gust_days_ge_40kt", "Days per season with a gust ≥ 40 kt")
         if tw_count is not None:
             evidence.append({
                 "label": f"Thunderstorm-wind reports in SF County ({storm_years or 'archive years'})",
@@ -1199,8 +1399,7 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
             "driver": "Peak gusts — trees, fences, roofing & tenant safety",
             "why_it_costs": ("The strongest gust of the season is what breaks limbs onto roofs and "
                              "cars and flattens fences - the storm-season liability with the "
-                             "shortest fuse. SFO is more exposed than the Sunset, so these gusts "
-                             "are an upper bound for the ZIP."),
+                             "shortest fuse. " + WIND_STATION_CAVEAT),
             "evidence": evidence,
             "sources": gsod + storm_src,
         })
@@ -1365,6 +1564,7 @@ def main():
     streak_prob = calendar.get("streak_probability", {})
     enso_strat = calendar.get("enso_stratified", {})
     enso_streaks = calendar.get("enso_stratified_streaks", {})
+    enso_severity = calendar.get("enso_stratified_severity", {})
     monthly = calendar.get("monthly", [])
     days = calendar.get("days", [])
 
@@ -1491,8 +1691,8 @@ def main():
             "priority": "high",
             "title": (f"Expect {hourly_days.get('mean')} days per season when rain and sustained "
                       "wind ≥ 20 kt happen in the same hour"),
-            "detail": (f"Hour-by-hour NCEI ISD record at SFO ASOS (more exposed than the Sunset, so an "
-                       f"upper bound for 94122): mean {hourly_days.get('mean')}, median "
+            "detail": (f"Hour-by-hour NCEI ISD record at SFO ASOS (11.9 mi away; an SFO reference value, "
+                       f"not a bound for 94122): mean {hourly_days.get('mean')}, median "
                        f"{hourly_days.get('median')}, max {hourly_days.get('max')} local dates per "
                        f"Oct-Jan season carrying at least one hour with rain AND sustained wind ≥ 20 kt, "
                        f"over {(hourly_wind_rain or {}).get('n_seasons_used')} seasons. "
@@ -1512,7 +1712,7 @@ def main():
             "category": "Wind + rain",
             "priority": "high",
             "title": f"Expect {wind_rain.get('mean')} days per season with both rain and sustained wind ≥20 kt",
-            "detail": f"At SFO ASOS (more exposed than Sunset, so upper bound for 94122): mean {wind_rain.get('mean')}, median {wind_rain.get('median')}, max {wind_rain.get('max')} days per Oct-Jan season with ≥0.01 in rain AND ≥20 kt sustained wind. Heavy wind+rain (≥0.50 in AND gust ≥35 kt): mean {heavy_wind_rain.get('mean')}, max {heavy_wind_rain.get('max')} days.",
+            "detail": f"At SFO ASOS (11.9 mi away; an SFO reference value, not a bound for 94122): mean {wind_rain.get('mean')}, median {wind_rain.get('median')}, max {wind_rain.get('max')} days per Oct-Jan season with ≥0.01 in rain AND ≥20 kt sustained wind. Heavy wind+rain (≥0.50 in AND gust ≥35 kt): mean {heavy_wind_rain.get('mean')}, max {heavy_wind_rain.get('max')} days.",
             "source": "NCEI GSOD 72494023234 (KSFO) + GHCN-Daily",
             "source_url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
         })
@@ -1523,7 +1723,7 @@ def main():
             "category": "Wind / gusts",
             "priority": "high",
             "title": f"Seasonal max gust averages {max_gust.get('mean')} mph (record {max_gust.get('max')} mph)",
-            "detail": f"SFO ASOS reports average strongest gust of season {max_gust.get('mean')} mph, median {max_gust.get('median')} mph. Sunset will be less, but this is the verified upper bound. Check trees, fences, and loose items.",
+            "detail": f"SFO ASOS reports average strongest gust of season {max_gust.get('mean')} mph, median {max_gust.get('median')} mph. No source held here says whether the ocean-facing Sunset is windier or calmer than SFO, so use it as the SFO reference value, not a bound. Check trees, fences, and loose items.",
             "source": "NCEI GSOD 72494023234",
             "source_url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt"
         })
@@ -1607,7 +1807,7 @@ def main():
     }
     cost_drivers = build_cost_drivers(
         days=days, dist=dist, streak_prob=streak_prob, enso_strat=enso_strat,
-        enso_streaks=enso_streaks,
+        enso_streaks=enso_streaks, enso_severity=enso_severity,
         latest_oni=latest_oni, diagnostic_status=diagnostic_status,
         relevant_cpc=relevant_cpc, storms=storms, monthly=monthly,
         hourly_wind_rain=hourly_wind_rain)
@@ -1780,7 +1980,7 @@ def main():
         enso_strat=enso_strat, hourly_wind_rain=hourly_wind_rain,
         caveats=prognostic_caveats(cpc),
         enso_strength=enso_strength_outlook(enso),
-        enso_streaks=enso_streaks)
+        enso_streaks=enso_streaks, enso_severity=enso_severity)
 
     # Phase-aware ENSO sentence for the key finding: the tilt wording has to
     # follow the phase NOAA actually published, not a template that always
@@ -1806,12 +2006,12 @@ def main():
     if _hourly_days.get("mean") is not None:
         wind_rain_sentence = (
             f"Wind+rain together occurred {_hourly_days.get('mean')} days per season on average at "
-            f"SFO on the hour-by-hour record (upper bound for Sunset); pairing whole days instead "
+            f"SFO on the hour-by-hour record (SFO reference value, not a bound for the Sunset); pairing whole days instead "
             f"gives {wind_rain.get('mean')} days. ")
     else:
         wind_rain_sentence = (
             f"Wind+rain together occurred {wind_rain.get('mean')} days per season on average at SFO "
-            "(upper bound for Sunset). ")
+            "(SFO reference value, not a bound for the Sunset). ")
 
     # Final landlord JSON
     landlord = {
@@ -1849,6 +2049,7 @@ def main():
             "max_gust": max_gust,
             "enso_stratified": enso_strat,
             "enso_stratified_streaks": enso_streaks,
+            "enso_stratified_severity": enso_severity,
             "expected_days": expected_days,
             # The landlord's six questions, answered in the order asked, each
             # with the basis it rests on and the official file to check it in.

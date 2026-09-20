@@ -57,6 +57,13 @@ function n(v, dp = 0, suffix = '') {
 
 function pct(v, dp = 0) { return v === null || v === undefined ? DASH : Number(v).toFixed(dp) + '%'; }
 
+/** A value the pipeline already rounded, printed as published (never re-rounded
+ *  here, so the page cannot show a different digit from the dataset), or an em
+ *  dash when it is absent. */
+function fmtOrDash(v) {
+  return (v === null || v === undefined || v === '') ? DASH : String(v);
+}
+
 /** Reader-facing ENSO phase label. "el_nino" is a data key, not a phrase -
  *  the executive summary used to print it raw. */
 function phaseLabel(p) {
@@ -434,6 +441,32 @@ function renderBottomLine(ll) {
       ])
     ]));
   }
+  // The same bridge for the severity questions: hard-rain days, gusts and
+  // wind + rain in the seasons that sat in this phase, beside all 30.  Every
+  // row prints the phase's n and the all-season figure, so a small-sample
+  // conditional average can never be read as a settled number or a forecast.
+  const cs = outlook.enso_conditioned_severity;
+  if (cs && Array.isArray(cs.rows) && cs.rows.length) {
+    const srcs = (cs.sources || []).filter(s => s && s.url);
+    cells.push(el('div', { class: 'off-cell off-cell-wide', 'data-test': 'enso-conditioned-severity' }, [
+      el('div', { class: 'off-label',
+        text: `Hard rain, wind and wind + rain in past ${cs.phase_label || cs.phase} seasons ` +
+              `(${cs.seasons_in_phase} of the ${cs.seasons_total}), beside all seasons` }),
+      table(
+        [{ label: 'Counter (per Oct 1 \u2013 Jan 31 season)' },
+         { label: `${cs.phase_label || cs.phase} seasons (n = ${cs.seasons_in_phase}): mean \u00b7 median \u00b7 max`, num: true },
+         { label: `All ${cs.seasons_total} seasons: mean \u00b7 max`, num: true }],
+        cs.rows.map(r => [
+          r.label,
+          `${fmtOrDash(r.phase_mean)} \u00b7 ${fmtOrDash(r.phase_median)} \u00b7 ${fmtOrDash(r.phase_max)}`,
+          `${fmtOrDash(r.all_mean)} \u00b7 ${fmtOrDash(r.all_max)}`
+        ])),
+      el('div', { class: 'off-sub', text: cs.how_to_read || '' }),
+      srcs.length ? el('div', { class: 'off-sub' }, srcs.flatMap((s, i) => [
+        i ? document.createTextNode(' \u00b7 ') : null, link(s.url, s.label || s.url)
+      ])) : null
+    ]));
+  }
   const horizon = outlook.daily_forecast || {};
   if (horizon.official_horizon_ends !== undefined) {
     cells.push(el('div', { class: 'off-cell' }, [
@@ -480,8 +513,8 @@ function renderLandlord(ll, cal) {
         ? `${n(exec.wind_and_rain_hourly.days_with_a_simultaneous_hour.mean, 1)} days/season`
         : (exec.wind_and_rain ? `${n(exec.wind_and_rain.mean, 1)} days/season` : DASH)),
       sub: exec.wind_and_rain_hourly?.available
-        ? `Same-hour co-occurrence at SFO (upper bound for Sunset) · Median ${n(exec.wind_and_rain_hourly.days_with_a_simultaneous_hour?.median, 0)} · Max ${n(exec.wind_and_rain_hourly.days_with_a_simultaneous_hour?.max, 0)} · whole-day pairing: ${n(exec.wind_and_rain?.mean, 1)} days avg`
-        : (exec.wind_and_rain ? `At SFO (upper bound for Sunset). Median ${n(exec.wind_and_rain.median, 0)} · Max ${n(exec.wind_and_rain.max, 0)} · Heavy (≥0.5 in + gust ≥35 kt): ${n(exec.heavy_wind_and_rain?.mean, 1)} days avg` : ''),
+        ? `Same-hour co-occurrence at SFO (SFO reference value, not a bound for the Sunset) · Median ${n(exec.wind_and_rain_hourly.days_with_a_simultaneous_hour?.median, 0)} · Max ${n(exec.wind_and_rain_hourly.days_with_a_simultaneous_hour?.max, 0)} · whole-day pairing: ${n(exec.wind_and_rain?.mean, 1)} days avg`
+        : (exec.wind_and_rain ? `At SFO (SFO reference value, not a bound for the Sunset). Median ${n(exec.wind_and_rain.median, 0)} · Max ${n(exec.wind_and_rain.max, 0)} · Heavy (≥0.5 in + gust ≥35 kt): ${n(exec.heavy_wind_and_rain?.mean, 1)} days avg` : ''),
     },
     {
       cls: 'gust',
@@ -581,13 +614,13 @@ function renderLandlord(ll, cal) {
     'Heavy wind+rain (≥35kt gust + ≥0.5in, whole days)',
     `mean ${n(exec.heavy_wind_and_rain?.mean, 1)} · median ${n(exec.heavy_wind_and_rain?.median, 0)} · max ${n(exec.heavy_wind_and_rain?.max, 0)}`]);
   windRainRows.push([
-    'Season max gust (SFO, upper bound)',
+    'Season max gust (SFO reference value)',
     `mean ${n(exec.max_gust?.mean, 0)} mph · median ${n(exec.max_gust?.median, 0)} mph · max ${n(exec.max_gust?.max, 0)} mph`]);
   windRainRows.push([
     'Source',
     hwr.available
-      ? 'NCEI ISD hourly 72494023234 (KSFO) for the hourly figure, GSOD 72494023234 + GHCN-Daily USW00023272 for the whole-day figures — wind at SFO is windier than Sunset, so treat as upper bound'
-      : 'NCEI GSOD 72494023234 (KSFO) + GHCN-Daily USW00023272 — wind at SFO is windier than Sunset, so treat as upper bound']);
+      ? 'NCEI ISD hourly 72494023234 (KSFO) for the hourly figure, GSOD 72494023234 + GHCN-Daily USW00023272 for the whole-day figures — no source held here says whether the ocean-facing Sunset is windier or calmer than SFO, so these are SFO reference values, not a bound'
+      : 'NCEI GSOD 72494023234 (KSFO) + GHCN-Daily USW00023272 — no source held here says whether the ocean-facing Sunset is windier or calmer than SFO, so these are SFO reference values, not a bound']);
   $('#landlord-windrain').append(el('table', { class: 'kv' }, windRainRows.map(([k, v]) =>
     el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
   if (hwr.available && hwr.method) {
@@ -786,7 +819,12 @@ function renderLocation(run) {
     ['Census tract', g.census_tract
       ? `${g.census_tract} · GEOID ${g.census_tract_geoid || DASH}` : null],
     ['Census block', g.census_block_geoid || null],
-    ['Congressional district', g.congressional_district || null],
+    // The layer name carries the Congress the district belongs to (119th,
+    // 120th ...); it is published so the vintage the geocoder answered with is
+    // visible, never assumed (bug 75).
+    ['Congressional district', g.congressional_district
+      ? `${g.congressional_district}${g.congressional_district_layer ? ' (' + g.congressional_district_layer + ')' : ''}`
+      : null],
     ['Urban area', g.urban_area || null],
     ['Geography source', link(g.url, 'U.S. Census Bureau geocoder — reverse lookup of this point')]
   ] : [
@@ -1046,6 +1084,17 @@ function renderSeason(cal) {
   // seasons - the column header carries the denominator so a small sample can
   // never be read as a settled number, and a phase with no 7+ day spell shows
   // the count (0 of n) rather than a blank.
+  // The severity counters per phase (hard-rain days, gusts, wind + rain) come
+  // from the same season rows; the three columns added here print the mean
+  // with the max in brackets, exactly as the dataset carries them.
+  const stratSev = cal.enso_stratified_severity || {};
+  const sevCell = (phase, key) => {
+    const m = ((stratSev[phase] || {}).metrics || {})[key];
+    if (!m || m.mean === undefined || m.mean === null) return null;
+    // Counts are published to one decimal and their maxima are whole days;
+    // n() keeps 4.0 from printing as 4 beside a 3.7 in the row above.
+    return `${n(m.mean, 1)} (max ${n(m.max, 0)})`;
+  };
   const srows = Object.entries(strat).map(([phase, d]) => {
     const st = stratStreaks[phase] || {};
     const longRun = st.longest_streak_days || {};
@@ -1054,21 +1103,33 @@ function renderSeason(cal) {
       d.n, n(d.mean, 2), n(d.median, 2),
       d.min === undefined ? null : `${Number(d.min).toFixed(2)} \u2013 ${Number(d.max).toFixed(2)}`,
       st.ge_7_days === undefined ? null : `${n(st.ge_7_days.pct, 1)}% (${st.ge_7_days.seasons} of ${st.n})`,
-      longRun.mean === undefined ? null : `${n(longRun.mean, 1)} d (max ${n(longRun.max, 0)})`
+      longRun.mean === undefined ? null : `${n(longRun.mean, 1)} d (max ${n(longRun.max, 0)})`,
+      sevCell(phase, 'wet_days_ge_1in'),
+      sevCell(phase, 'gust_days_ge_40kt'),
+      sevCell(phase, 'wind_and_rain_days')
     ];
   });
   $('#enso-strat').append(table(
     [{ label: 'Phase' }, { label: 'Seasons', num: true }, { label: 'Mean (in)', num: true },
      { label: 'Median (in)', num: true }, { label: 'Range (in)', num: true },
-     { label: '7+ day wet spell', num: true }, { label: 'Longest run, mean', num: true }], srows,
+     { label: '7+ day wet spell', num: true }, { label: 'Longest run, mean', num: true },
+     { label: 'Days \u2265 1.00 in, mean', num: true }, { label: 'Days gust \u2265 40 kt, mean', num: true },
+     { label: 'Wind + rain days (whole-day), mean', num: true }], srows,
     { empty: 'Not enough ENSO-classified seasons to stratify.' }));
   if (Object.keys(stratStreaks).length) {
     $('#enso-strat').append(el('p', { class: 'fine', text:
-      'The last two columns condition the rain-duration question on the phase: how often a ' +
+      'The 7+ day spell and longest-run columns condition the rain-duration question on the phase: how often a ' +
       '7+ consecutive-wet-day spell occurred in the seasons the record assigns to that phase, ' +
       'and the mean longest spell in those seasons. They are observed frequencies in that ' +
       'subset of the 1991-2020 seasons - the sample size is printed in the column - not a ' +
       'forecast for any coming season.' }));
+  }
+  if (Object.keys(stratSev).length) {
+    $('#enso-strat').append(el('p', { class: 'fine', text:
+      'The last three columns do the same for severity: mean days per season with \u2265 1.00 in of rain ' +
+      '(downtown gauge), with a gust \u2265 40 kt (SFO), and with rain and sustained wind \u2265 20 kt on the ' +
+      'same day (whole-day pairing, SFO), each with the worst season in brackets. Same rows, same ' +
+      'small samples, same caveat: observed, not forecast.' }));
   }
 
   /* discussions --------------------------------------------------------- */
@@ -1796,7 +1857,7 @@ function renderWind(cal, landlord) {
   if (rg.max_gust_mph && rg.max_gust_mph.season) {
     $('#wind-table').append(el('p', { class: 'fine', text:
       `Most extreme gust on record in the window: ${n(rg.max_gust_mph.value, 1)} mph, ` +
-      `season ${rg.max_gust_mph.season} (GSOD daily maximum at SFO; upper bound for 94122).` }));
+      `season ${rg.max_gust_mph.season} (GSOD daily maximum at SFO, 11.9 mi away; an SFO reference value, not a bound for 94122).` }));
   }
 
   const top = days.slice()

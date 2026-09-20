@@ -21,7 +21,7 @@ falls entirely before 1 October.
 | Quantity | Station | Distance | Note |
 | --- | --- | --- | --- |
 | Rain, temperature | `USW00023272` San Francisco downtown | ~3.2 mi | closest long daily precipitation record |
-| Wind, gusts | `72494023234` KSFO | **11.9 mi SE** | most exposed; an **upper bound** for 94122 |
+| Wind, gusts | `72494023234` KSFO | **11.9 mi SE** | nearest complete 1991–2020 wind record; an SFO reference value, **not a bound** for 94122 (§26) |
 | Humidity normals | `USW00023234` KSFO hourly normals | 11.9 mi SE | the only hourly normals file available for the city |
 
 The wind/humidity distance is not typed in: it is the great-circle distance from the
@@ -377,9 +377,9 @@ carries current-year text. Consequences a reader should know:
   project deliberately does not restate them, so the counters cannot be read as
   an official severity classification.
 * **The wind counters are SFO's.** The rain counters are the downtown gauge
-  `USW00023272`; the wind counters are KSFO `72494023234`, 11.9 mi away and more
-  exposed. Joint counters therefore mix two stations: an upper bound on wind, a
-  downtown rain total.
+  `USW00023272`; the wind counters are KSFO `72494023234`, 11.9 mi away on the
+  bay shore. Joint counters therefore mix two stations: SFO wind beside a
+  downtown rain total, neither of them measured in the Sunset (§26).
 * **The ≥ 4.00 in row is thin.** One day in 30 seasons. Project 0.00 vs NOAA 0.02
   is a difference of one event in the record, not a disagreement; NOAA's
   per-date values are smoothed across years by construction.
@@ -393,9 +393,9 @@ carries current-year text. Consequences a reader should know:
 ## Wind and rain at the same time — what the hourly method does and does not fix (added 18 Sep 2026)
 
 * **It is still SFO, not the Sunset.** The hourly co-occurrence is measured at
-  `72494023234` (KSFO), 11.9 mi away and more exposed than the Sunset, so every
-  wind figure here remains an **upper bound** for 94122. What the hourly method
-  fixes is *when* the two happened, not *where* they were measured.
+  `72494023234` (KSFO), 11.9 mi away on the bay shore, so every wind figure here
+  remains an **SFO reference value, not a bound** for 94122 (§26). What the hourly
+  method fixes is *when* the two happened, not *where* they were measured.
 * **A wind speed at the observation time is not a gust.** The hourly statistic
   uses the sustained wind in the ISD `WND` field. Gusts are only published in the
   GSOD daily file, so the "heavy" rows (≥0.50 in and a ≥35 kt gust) remain
@@ -423,9 +423,9 @@ carries current-year text. Consequences a reader should know:
 ## The hourly record, and what it does and does not settle (added 18 Sep 2026 session 8)
 
 * **It is SFO, not the Sunset.** The hour-by-hour coincidence is measured at
-  station 72494023234 (KSFO), 11.9 mi away and more exposed.  Every wind figure
-  here stays an **upper bound** for 94122 — the hourly method fixes *when*, not
-  *where*.
+  station 72494023234 (KSFO), 11.9 mi away on the bay shore.  Every wind figure
+  here stays an **SFO reference value, not a bound** for 94122 (§26) — the hourly
+  method fixes *when*, not *where*.
 * **A sustained wind at the observation time is not a gust.**  The hourly
   statistic uses the ISD `WND` speed.  Gusts exist only in the GSOD daily file, so
   the "heavy" row (≥ 0.50 in and a gust ≥ 35 kt) is still a whole-day pairing and
@@ -467,10 +467,51 @@ carries current-year text. Consequences a reader should know:
   thresholds and its published ONI file.  PHASE-CONDITIONED WET-SPELL FIGURES
   INHERIT ANY UNCERTAINTY IN THAT ASSIGNMENT — an ONI value near ±0.5 °C puts a
   season near a phase boundary, and the record's 30 seasons cannot resolve that.
-* **Only the duration question has been stratified so far.**  Heavy-rain-day
-  counts, the wind+rain counters and the peak-gust record are still published for
-  the whole record; stratifying them by phase is open work (see
-  `docs/NEXT_SESSION.md` §7), and each will carry the same n-printed caveat.
+* **Since session 14 the severity counters are stratified too.**  Heavy-rain-day
+  counts, the wind+rain counters and the peak-gust record are now published per
+  phase beside the whole record (§26), and each carries the same n-printed caveat.
 * **A phase with no seasons produces no row.**  The table cannot show a 0% for a
   sample of zero, so absence of a row means absence of seasons, not absence of
   storms.
+
+## 26. Phase-conditioned severity counters rest on the same 7–12 seasons, and the wind station is a reference, not a bound (added 20 Sep 2026, session 14)
+
+* **Ten counters, three phases, small samples.**  The hard-rain-day counts
+  (≥ 0.50 / 1.00 / 2.00 in), the wettest day, the three wind + rain pairings, the
+  gust and sustained-wind day counts and the season-maximum gust are now
+  published per ENSO phase beside the whole 1991–2020 record.  The split is the
+  same **11 El Niño / 7 neutral / 12 La Niña** as §25, so one season moves a
+  phase mean by roughly a tenth of the counter's range.  Every row prints
+  `(n of the 30)` and the strip cell prints the phase `n` in its heading.
+* **Most of the differences are inside the noise, and the page says so.**  El
+  Niño seasons averaged 3.7 days ≥ 1.00 in against 3.2 over all 30, and 3.2 gust
+  ≥ 40 kt days against 2.4.  The joint counters (11.5 vs 11.1 whole-day
+  wind + rain days; 0.5 vs 0.5 days at ≥ 1.00 in with a ≥ 40 kt gust) and the
+  season-maximum gust (53.7 vs 53.8 mph) do not separate the phases.  A reader
+  who wants a "El Niño means windier storms" sentence will not find one here,
+  because the record does not support it at n = 11.
+* **A mean beside a max, never a mean alone.**  Each row carries the phase
+  median and worst season and the all-season mean and worst season, because
+  the spread inside a phase (e.g. 0–2 severe days, 41.3–64.3 mph peak gust in
+  El Niño seasons) is as informative as the mean.
+* **The phase assignment inherits §25's uncertainty**, and a phase with no
+  seasons produces no row.
+* **The wind station is a reference value, not a bound (bug 74).**  Earlier
+  passes wrote that SFO is "more exposed" than the Sunset and that every wind
+  figure is therefore an "upper bound" for 94122.  No official source in this
+  project establishes that direction: SFO sits on the bay shore, the Outer
+  Sunset faces the open Pacific at Ocean Beach, and no official station inside
+  94122 holds a 30-year wind record to compare against.  The wording everywhere
+  is now: *measured at SFO, 11.9 mi away, the nearest official station with a
+  complete 1991–2020 wind record; whether the Sunset is windier or calmer is
+  not established here.*  A page-wide render guard keeps the old sentence from
+  coming back.  Closing the gap for real needs a wind record from inside the
+  ZIP — the GHCNh / SSODv2 stitching item in `docs/NEXT_SESSION.md`.
+* **The Census geocoder's vintage is not stable (bug 75, irregularity for
+  review).**  Two CI runs 15 minutes apart on 20 Sep 2026 received different
+  congressional-district layers (`120th` then `119th`) and different
+  state-legislative vintages (2026 then 2024) from the same
+  `benchmark=Public_AR_Current&vintage=Current_Current` request.  The parser
+  no longer assumes a Congress number; the layer it was given is published
+  beside the district name, and a layer returned with no district published
+  fails the ledger.

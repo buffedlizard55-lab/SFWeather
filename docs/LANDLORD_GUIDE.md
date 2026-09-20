@@ -148,11 +148,22 @@ Source: same GHCN-Daily file.
 
 ### Wind, gusts, and wind+rain together
 
-Wind from **NCEI GSOD 72494023234 (KSFO)**, 11.9 miles SE of 94122 (great-circle distance from the 94122 centroid, published as `climatology.meta.station_distance_mi.wind_ksfo` and recomputed every run), more open/exposed than Sunset — so treat as **upper bound** for 94122. Units: knots in CSV, converted mph ×1.15078 per GSOD README: https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt (README is authority, also notes GSOD days are UTC 00-24Z ≈ 16:00-16:00 local, so joint stat is approximation).
+Wind from **NCEI GSOD 72494023234 (KSFO)**, 11.9 miles SE of 94122 (great-circle distance from the 94122 centroid, published as `climatology.meta.station_distance_mi.wind_ksfo` and recomputed every run), the nearest official station with a complete 1991–2020 wind record. No source in this project establishes whether the ocean-facing Sunset is windier or calmer than the bay-shore airport, so treat every wind figure as the **SFO reference value, not a bound** for 94122 (bug 74, `docs/LIMITATIONS.md` §26). Units: knots in CSV, converted mph ×1.15078 per GSOD README: https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt (README is authority, also notes GSOD days are UTC 00-24Z ≈ 16:00-16:00 local, so joint stat is approximation).
 
 - Average daily max sustained wind at SFO: **17.2 mph**; average daily max gust: **30.7 mph**
 - **2.2 days/season** with heavy rain (≥0.50 in) AND gust ≥35 kt (median 2, max 8)
 - Strongest gust of season: mean **53.8 mph**, record **70 mph**
+
+**Conditioned on the ENSO phase** (added session 14, same rule as the spell table: same record, smaller denominator, `n` always printed, observed **not** forecast). The figures below are copied from `data/calendar.json` → `enso_stratified_severity`; the site's strip cell, bottom-line answers 3–6, cost drivers 2–4 and the season card show the same rows, and `pipeline/verify_claims.py` recomputes them every run (`enso-severity-recompute`):
+
+| Phase | Seasons (n) | Days ≥ 1.00 in (mean · median · max) | Gust ≥ 40 kt days | Wind + rain days, whole-day | Days ≥ 1.00 in **and** gust ≥ 40 kt | Season-max gust, mph |
+| --- | --- | --- | --- | --- | --- | --- |
+| El Niño (this season's phase) | 11 | **3.7** · 4.0 · 6 | **3.2** · 3.0 · 7 | 11.5 · 11.0 · 21 | 0.5 · 0.0 · 2 | 53.7 · 56.4 · 64.3 |
+| La Niña | 12 | 2.2 · 2.0 · 5 | 1.8 · 1.0 · 6 | 10.2 · 9.5 · 16 | 0.6 · 0.0 · 2 | 55.0 · 53.5 · 70.0 |
+| Neutral | 7 | 4.0 · 4.0 · 7 | 2.4 · 2.0 · 6 | 12.1 · 9.0 · 24 | 0.4 · 0.0 · 2 | 51.7 · 54.1 · 55.2 |
+| All 30 | 30 | 3.2 · — · 7 | 2.4 · — · 7 | 11.1 · — · 24 | 0.5 · — · 2 | 53.8 · — · 70.0 |
+
+Read it as: El Niño seasons on this record carried somewhat more hard-rain days and ≥ 40 kt gust days than the average season, while the joint wind-and-rain counters and the season's strongest gust are indistinguishable between phases at n = 11 / 12 / 7. Plan off the all-season row; use the phase row as context, not as a forecast.
 
 **Wind and rain at the same time** is answered two ways, and the site publishes
 both rather than one:
@@ -214,8 +225,8 @@ Sources for climatology days:
 
 1. **Gutters, downspouts, roof drains** — Expect 12.79 in mean seasonal total, but up to 22.82 in in wettest El Niño year (1997-98). December mean 4.78 in, January 4.47 in. Clean before Oct 1.
 2. **Week-long rain plan** — 53.3% of seasons have ≥7-day wet streak, 23.3% have ≥10 days. Longest recorded 17 days. Tenant communication for extended wet periods, check for leaks.
-3. **Wind+rain combo** — the site's *Wind + rain together* card gives the hour-by-hour count (rain and ≥20 kt in the same hour) and, beside it, the whole-day count this guide used to quote. All of it is measured at SFO, an upper bound for the Sunset. Secure loose items, check trees and fences.
-4. **Gusts** — Season max gust mean 53.8 mph, record 70 mph at SFO. Sunset less, but use as upper bound for insurance/planning.
+3. **Wind+rain combo** — the site's *Wind + rain together* card gives the hour-by-hour count (rain and ≥20 kt in the same hour) and, beside it, the whole-day count this guide used to quote. All of it is measured at SFO, 11.9 mi away — an SFO reference value, not a bound for the Sunset. Secure loose items, check trees and fences.
+4. **Gusts** — Season max gust mean 53.8 mph, record 70 mph at SFO. Whether the ocean-facing Sunset sees more or less is not established by any source here; plan with the SFO figure and say where it came from.
 5. **ENSO tilt** — Read the current ENSO state and the current CPC probabilities on the site (*ENSO — the single biggest driver of a San Francisco winter* and *What the official CPC outlooks say for this window*); they are republished nightly from NOAA's own products and this file does not duplicate them, because a number typed here would contradict the verified dataset within a month. What is stable and safe to plan from is the observed record: in 1991-2020, El Niño seasons averaged 14.23 in and La Niña seasons 11.16 in over Oct-Jan, with substantial min/max overlap — a tilt, not a verdict.
 6. **No daily forecast beyond 7 days** — Don't trust any site showing specific rain amount for Jan 15 2027 today. Use climatology as planning baseline, and watch NWS 7-day as season approaches — dashboard auto-promotes days to real forecast nightly.
 7. **Use official sources for life-safety** — For warnings, use https://www.weather.gov/mtr and https://api.weather.gov/alerts/active?zone=CAZ006 directly.

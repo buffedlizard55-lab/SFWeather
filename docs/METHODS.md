@@ -397,8 +397,12 @@ The landlord's question is whether rain and wind arrive together, and the projec
 used to answer it with a **whole-day pairing**: a day counted when the GHCN
 downtown gauge recorded ≥0.01 in and the GSOD SFO daily maximum sustained wind
 reached ≥20 kt. That method cannot tell rain in the morning from wind at night,
-and its two halves come from two stations 11.9 miles apart. It was, and remains,
-an upper bound.
+and its two halves come from two stations 11.9 miles apart. It is the looser of
+the two methods: it counts every day on which the two ever met plus the days on
+which they happened hours apart — but because its rain half comes from the
+downtown gauge rather than SFO, it is not a strict superset of the hourly count,
+and it says nothing about whether the Sunset is windier or calmer than SFO
+(`docs/LIMITATIONS.md` §26).
 
 The hour-by-hour answer is now computed from the NCEI **ISD global-hourly**
 archive for the same wind station (`72494023234`, KSFO, the same station GSOD is
@@ -745,3 +749,65 @@ Regeneration: the new block was added to the committed `climatology.json` by
 calling this same function on the season rows already in that file, and every
 downstream dataset was rebuilt by the committed offline builders. The nightly job
 re-derives it from the fetched sources; `calendar.json` gained exactly this one key.
+
+## 28. Storm severity conditioned on the ENSO phase (added 20 Sep 2026, session 14)
+
+Section 27 answered *how many days straight* for the phase this season is in.
+This section does the same for *how hard*: `climo.enso_stratified_severity()`
+takes the same season rows and, for each phase, summarises ten per-season
+counters that already existed in those rows and were already published for the
+whole record. Nothing is measured anew; the record is only split.
+
+| Key | Counter (per Oct 1 – Jan 31 season) | Station | Rounding |
+| --- | --- | --- | --- |
+| `wet_days_ge_050in` / `_1in` / `_2in` | days with ≥ 0.50 / 1.00 / 2.00 in | GHCN-Daily `USW00023272` | 1 dp |
+| `max_daily_prcp_in` | wettest single day | `USW00023272` | 2 dp |
+| `wind_and_rain_days` | days with ≥ 0.01 in downtown **and** an SFO daily max sustained wind ≥ 20 kt (whole-day pairing) | both | 1 dp |
+| `heavy_wind_and_rain_days` | ≥ 0.50 in and an SFO gust ≥ 35 kt | both | 1 dp |
+| `severe_wind_and_rain_days` | ≥ 1.00 in and an SFO gust ≥ 40 kt | both | 1 dp |
+| `gust_days_ge_40kt` / `wind_days_ge_30kt` | days with a gust ≥ 40 kt / a sustained wind ≥ 30 kt | GSOD `72494023234` | 1 dp |
+| `max_gust_mph` | strongest gust of the season | `72494023234` | 1 dp |
+
+The output, `calendar.enso_stratified_severity[phase]`, carries `n`, the season
+labels, and for each key `{n, mean, median, min, max, p10, p90, seasons_with_any}`.
+A counter absent from a season row is left out of that key's sample (`n`
+drops), never counted as zero.
+
+Where it appears, and the rules that bind each place:
+
+1. **The outlook strip** — one full-width cell titled *Hard rain, wind and
+   wind + rain in past El Niño seasons (11 of the 30), beside all seasons*. Each
+   row is `phase mean · median · max` next to `all-season mean · max`, in the
+   dataset's own rounding (the render guard compares the cell text with the
+   JSON values, so a re-rounded figure fails). The cell states the stations and
+   ends with *An observed conditional frequency in a small sample, not a
+   forecast for 2026-27*. No rows in the dataset → no cell, and a cell with no
+   rows behind it is a smoke failure.
+2. **Bottom-line answers 3–6 and cost drivers 2–4** — each gains rows in the
+   fixed pattern `<label> in <Phase> seasons on record (<n> of the <N>)` →
+   `mean a · median b · max c — all N seasons: mean d`, and one sentence that
+   compares the phase mean with the all-season mean and repeats the sample
+   size. The ledger check `enso-severity-recompute` rebuilds the whole table
+   from the season rows and checks every such row's n, mean, median, max and
+   label against it; it also fails when the current phase is in the table but
+   the derived rows are absent.
+3. **The season-by-season ENSO card** — three added columns (days ≥ 1.00 in,
+   gust ≥ 40 kt days, whole-day wind + rain days; mean with the worst season in
+   brackets). Same rows, same `n`, same caveat paragraph.
+
+Three rules carried over from §27 and one added:
+
+* **One phase assignment** (the season rows), so the totals, the duration table
+  and the severity table cannot disagree about which season is which.
+* **No denominator, no number**: every row prints `(n of the N)`.
+* **Small samples are labelled, not smoothed**: the strip cell, the answers and
+  the card all say *observed, not forecast* and print the `n`.
+* **The wind station is a reference, not a bound.** Every wind figure names SFO
+  and its distance; the phrase "upper bound for the Sunset" was withdrawn as
+  bug 74 (`docs/LIMITATIONS.md` §26) because nothing in the project's sources
+  establishes the direction.
+
+Regeneration: `build_calendar.py` writes the block; `landlord_summary.py`
+derives the strip cell and the rows; `executive_summary.py` prints the table;
+`verify_claims.py` recomputes it. The nightly job re-derives everything from the
+fetched sources.

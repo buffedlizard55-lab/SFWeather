@@ -536,6 +536,59 @@ def main() -> int:
                      ("all phases match" if not streak_problems
                       else "mismatched: " + ", ".join(streak_problems)))
 
+        # The phase-conditioned severity table (hard-rain days, gusts, wind +
+        # rain per ENSO phase) is re-derived from the same season rows, and the
+        # rows the landlord summary built from it are checked against the
+        # table: a mean edited by hand, a phase invented with no seasons, or a
+        # bottom-line row that names a different n or mean than the table must
+        # all fail here rather than reach the page.
+        from climo import enso_stratified_severity as _esv, ENSO_SEVERITY_FIELDS as _esf
+        published_sev = (cal.get("enso_stratified_severity") or {})
+        recomputed_sev = _esv((climo.get("season") or {}).get("seasons") or [])
+        sev_problems = []
+        if published_sev != recomputed_sev:
+            for phase in sorted(set(published_sev) | set(recomputed_sev)):
+                if published_sev.get(phase) != recomputed_sev.get(phase):
+                    sev_problems.append(f"table:{phase}")
+        # the rows the executive summary derived from the table
+        _es_official = ((landlord.get("executive_summary") or {}).get("official_outlook") or {})
+        cond = _es_official.get("enso_conditioned_severity")
+        if cond:
+            tbl = recomputed_sev.get(cond.get("phase")) or {}
+            if not tbl:
+                sev_problems.append(f"rows:phase {cond.get('phase')!r} has no seasons in the table")
+            elif cond.get("seasons_in_phase") != tbl.get("n"):
+                sev_problems.append(f"rows:n {cond.get('seasons_in_phase')} vs table {tbl.get('n')}")
+            known = {k for k, _l, _d in _esf}
+            for r in cond.get("rows") or []:
+                m = (tbl.get("metrics") or {}).get(r.get("key")) or {}
+                if r.get("key") not in known:
+                    sev_problems.append(f"rows:unknown counter {r.get('key')!r}")
+                elif (r.get("phase_mean") != m.get("mean") or r.get("phase_median") != m.get("median")
+                      or r.get("phase_max") != m.get("max") or r.get("phase_n") != tbl.get("n")):
+                    sev_problems.append(f"rows:{r.get('key')} differs from the table")
+            # every bottom-line row that quotes the phase must quote the table's n
+            for item in (landlord.get("executive_summary") or {}).get("bottom_line") or []:
+                for num in item.get("numbers") or []:
+                    lab = str(num.get("label") or "")
+                    if f"in {cond.get('phase_label')} seasons on record" in lab and \
+                            f"({tbl.get('n')} of the " not in lab:
+                        sev_problems.append(f"bottom-line Q{item.get('n')} row names a different n: {lab[:60]}")
+        elif published_sev:
+            # a table exists but no rows were derived: allowed only when the
+            # current phase is not in it (e.g. the ONI product was not read)
+            cur_phase = ((cal.get("enso") or {}).get("latest_official") or {}).get("phase")
+            if cur_phase and cur_phase in published_sev:
+                sev_problems.append(f"rows:missing although phase {cur_phase!r} is in the table")
+        ledger.check("enso-severity-recompute",
+                     "Every phase-conditioned severity figure (hard-rain days, gusts, wind + rain "
+                     "per ENSO phase) equals the seasons in that phase that produced it, and every "
+                     "row the executive summary derived from it quotes the same n and values",
+                     not sev_problems,
+                     ((f"all phases match; {len((cond or {}).get('rows') or [])} derived row(s) "
+                       f"for {(cond or {}).get('phase_label') or 'no current phase'} agree")
+                      if not sev_problems else "mismatched: " + "; ".join(sev_problems)))
+
         ledger.claim("streak-duration", "Chance of at least one 7-day run of wet days in a season",
                      (streak.get("ge_7_days") or {}).get("pct"), "%",
                      method=(f"share of the {n_seasons} seasons from 1991-2020 with at least one run "
@@ -1513,6 +1566,15 @@ def main() -> int:
         bl = str(census_geo.get("census_block_geoid") or "")
         if tr and bl and not bl.startswith(tr):
             nesting.append(f"block GEOID {bl} does not start with tract GEOID {tr}")
+        # Bug 75: the geocoder's congressional layer is named after the Congress
+        # ("119th ...", "120th ...") and that vintage moves between runs.  If a
+        # congressional layer came back but no district was published, the
+        # parser dropped a record that was in the response - a silent hole.
+        cd_layers = [k for k in (census_geo.get("geography_types_returned") or [])
+                     if isinstance(k, str) and climo_lib._CD_LAYER_RE.match(k)]
+        if cd_layers and not census_geo.get("congressional_district"):
+            nesting.append(f"congressional layer(s) {cd_layers} returned but no "
+                           "district published (bug 75)")
         ok = (bool(geo_url) and fetch_has_evidence(geo_url)
               and host_of(geo_url or "") in OFFICIAL_HOSTS
               and any(census_geo.get(k) for k in
@@ -1534,6 +1596,8 @@ def main() -> int:
                       "geoids": {k: census_geo.get(k) for k in
                                  ("county_geoid", "county_subdivision_geoid",
                                   "census_tract_geoid", "census_block_geoid")},
+                      "congressional_district": census_geo.get("congressional_district"),
+                      "congressional_layers_returned": cd_layers,
                       "nesting_issues": nesting,
                       "url": geo_url})
     else:
