@@ -300,6 +300,58 @@ def build_markdown():
                           f"n = {esc(s.get('n'))} seasons).")
         md.append("")
 
+    # ------------------------------------------------ the ocean-side wind record
+    # SFO is on the bay shore.  This is the nearest official anemometer on the
+    # ocean side, published with the buoy dataset's own caveat; every figure is
+    # copied from that dataset and the ledger re-derives them.
+    ows = es.get("ocean_wind") or {}
+    if ows.get("available"):
+        md.append("## 4b. The ocean side of the wind question — NOAA NDBC buoy "
+                  f"{esc(ows.get('station_id'))}")
+        md.append("")
+        md.append("Every other wind figure in this document is measured at SFO, on the bay "
+                  "shore. This is the nearest official anemometer on the ocean side of the "
+                  "Golden Gate, so the ocean side of the question has numbers of its own.")
+        md.append("")
+        md.append(f"- **Station:** {esc(ows.get('station_id'))} — {esc(ows.get('station_name'))} "
+                  f"({esc(ows.get('station_type'))})")
+        md.append(f"- **Position:** {esc(ows.get('position', {}).get('lat'))} N, "
+                  f"{esc(ows.get('position', {}).get('lon'))} W · "
+                  f"**{esc(ows.get('distance_mi_from_centroid'))} mi** from the 94122 centroid · "
+                  f"anemometer {esc(ows.get('anemometer_height_m'))} m above the sea surface · "
+                  f"mooring depth {esc(ows.get('water_depth_m'))} m")
+        md.append(f"- **Record:** {esc(ows.get('window_label'))} · day basis: "
+                  f"{esc(ows.get('day_basis'))} · seasons with data: "
+                  f"{esc(ows.get('seasons_with_data'))} of {esc(ows.get('seasons_total'))}")
+        gale = ows.get("gale_days_ge_34kt") or {}
+        d40 = ows.get("days_ge_40kt") or {}
+        sfo40 = ows.get("sfo_days_ge_40kt") or {}
+        gust = ows.get("max_gust_mph") or {}
+        wave = ows.get("max_wvht_ft") or {}
+        md.append(f"- **Gale-force gust days (≥ 34 kt) per season:** mean {esc(gale.get('mean'))} · "
+                  f"median {esc(gale.get('median'))} · worst season {esc(gale.get('max'))} "
+                  f"(n = {esc(gale.get('n_seasons'))} seasons)")
+        md.append(f"- **At the same 40 kt gust threshold as the SFO table:** the buoy averages "
+                  f"{esc(d40.get('mean'))} days per season (max {esc(d40.get('max'))}) against "
+                  f"SFO's {esc(sfo40.get('mean'))}. Two different environments — open water and "
+                  "a bay-shore airport — and neither is a bound for a street in the Sunset.")
+        md.append(f"- **Strongest gust of the season:** mean {esc(gust.get('mean'))} mph · worst "
+                  f"season {esc(gust.get('max'))} mph. **Highest significant wave height:** mean "
+                  f"{esc(wave.get('mean'))} ft · worst season {esc(wave.get('max'))} ft")
+        if ows.get("thin_seasons"):
+            md.append(f"- **Seasons thinner than the published cut:** "
+                      f"{esc(', '.join(ows['thin_seasons'][:10]))}")
+        if ows.get("counter_basis"):
+            md.append(f"- _{esc(ows.get('counter_basis'))}_")
+        md.append("")
+        md.append(f"**Marine caveat, as published with the data:** {esc(ows.get('caveat'))}")
+        md.append("")
+    elif ows:
+        md.append("## 4b. The ocean side of the wind question — not in this snapshot")
+        md.append("")
+        md.append(f"_{esc(ows.get('reason'))}_")
+        md.append("")
+
     # ------------------------------------------------- what cannot be known
     md.append("## 5. What this document cannot tell you")
     md.append("")
@@ -342,6 +394,14 @@ def build_markdown():
         links.append(("CPC ENSO diagnostic discussion", enso["source_url"]))
     if cav.get("source_url"):
         links.append(("CPC long-lead prognostic discussion (caveats quoted above)", cav["source_url"]))
+    if ows.get("available"):
+        srcs = ows.get("source_urls") or {}
+        if srcs.get("station_page"):
+            links.append(("NDBC buoy 46026 — station page (sensor heights, latest observations)",
+                          srcs["station_page"]))
+        if srcs.get("units"):
+            links.append(("NDBC — Measurement Descriptions and Units (the units quoted above)",
+                          srcs["units"]))
     seen = set()
     for label, url in links:
         if url in seen:
@@ -365,6 +425,7 @@ def build_markdown():
         "outer_sunset_profile": osp,
         "questions": es.get("bottom_line"),
         "cost_drivers": es.get("cost_drivers"),
+        "ocean_wind": es.get("ocean_wind"),
         "official_outlook": outlook,
         "inputs": sorted(REQUIRED) + ["calendar.json", "cpc.json", "nws.json"],
         "note": "Machine-generated from the committed datasets on every pipeline run. "

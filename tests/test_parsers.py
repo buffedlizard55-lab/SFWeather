@@ -3269,6 +3269,90 @@ with _tempfile_es.TemporaryDirectory() as _es_copy:
           f"exit={_proc_es.returncode} out={(_proc_es.stderr + _proc_es.stdout)[-200:]}")
 
 
+
+# --------------------------------------------------------------------------
+# The ocean-side wind tier (NOAA NDBC station 46026)
+# --------------------------------------------------------------------------
+# The tier ships its own exhaustive self-test (pipeline/selftest_ocean_wind.py,
+# run by `python3 pipeline/ocean_wind.py --selftest`); what follows pins the few
+# invariants the rest of the project depends on, in the same standard-library-only
+# suite as everything else.  The fixtures are NDBC-shaped: the header lines and
+# the rows in the three era files are copied from the published archive, and
+# 46026_season_synthetic.txt says in its own first line that it is not NDBC data.
+import ocean_wind  # noqa: E402
+
+_NBDC_FIX = pathlib.Path(ROOT, "tests", "fixtures", "ndbc")
+
+
+def _ndbc(name):
+    return (_NBDC_FIX / name).read_text()
+
+
+section("ocean-side wind tier (NDBC 46026)")
+
+_rows96, _meta96 = ocean_wind.parse_stdmet(_ndbc("46026_1996_era.txt"))
+check("ocean wind: a 1990s file (two-digit year, WD/BAR headers, no units row) parses",
+      len(_rows96) == 5 and _meta96["first_ts"].year == 1996
+      and _rows96[0]["wdir"] == 318.0 and _meta96["wind_units"] == "m/s",
+      f"rows={len(_rows96)} first={_meta96['first_ts']} units={_meta96['wind_units']}")
+check("ocean wind: an all-9 report is dropped, never counted as an observation",
+      _meta96["n_empty_rows"] == 1 and all(r["gst_kt"] is not None or r["wspd_kt"] is not None
+                                           for r in _rows96),
+      f"empty={_meta96['n_empty_rows']}")
+
+_rows20, _meta20 = ocean_wind.parse_stdmet(_ndbc("46026_2020_era.txt"))
+check("ocean wind: a 2020s file (minutes column, WDIR/PRES, units row) parses",
+      len(_rows20) == 8 and _meta20["n_malformed"] == 1 and _meta20["wind_units"] == "m/s"
+      and _rows20[0]["wvht_m"] is None,
+      f"rows={len(_rows20)} malformed={_meta20['n_malformed']}")
+check("ocean wind: the minute of each report survives parsing (the header names its "
+      "month and its minutes column 'MM' alike)",
+      [r["ts"].minute for r in _rows20[:4]] == [0, 10, 20, 30]
+      and _rows20[0]["ts"].hour == 0,
+      f"minutes={[r['ts'].minute for r in _rows20[:4]]}")
+check("ocean wind: metres per second become knots, not knots read as m/s",
+      ocean_wind.wind_kt("9.9", "m/s") == 19.244
+      and round(9.9 * ocean_wind.MS_TO_KT, 2) == 19.24,
+      f"9.9 m/s -> {ocean_wind.wind_kt('9.9', 'm/s')} kt")
+
+_years = ocean_wind.discover_historical_years(_ndbc("station_history_excerpt.html"),
+                                             ocean_wind.STATION_HISTORY_PAGE)
+check("ocean wind: the annual files are taken from NDBC's own page, relative hrefs resolved",
+      set(_years) == {1982, 1991, 1996, 2005, 2021}
+      and all("Aug" not in u for u in _years.values())
+      and all("46012" not in u for u in _years.values()),
+      f"years={sorted(_years)}")
+
+_stations = ocean_wind.parse_station_table(_ndbc("station_table_excerpt.txt"))
+check("ocean wind: the station table gives the position, sign included",
+      _stations["46026"]["lat"] == 37.750 and _stations["46026"]["lon"] == -122.838
+      and _stations["51111"]["lat"] < 0 and _stations["51111"]["lon"] < 0,
+      f"46026={_stations['46026']['lat']},{_stations['46026']['lon']}")
+
+_quotes = ocean_wind.verbatim_excerpt(_ndbc("measdes_excerpt.html"), ocean_wind.UNITS_QUOTES)
+check("ocean wind: every quoted NDBC sentence is found in the page verbatim",
+      _quotes and all(v["found_verbatim"] for v in _quotes.values()),
+      ", ".join(k for k, v in _quotes.items() if not v["found_verbatim"]) or "all found")
+check("ocean wind: the marine caveat carries all three statements the ledger requires",
+      all(s in ocean_wind.CAVEAT for s in ("NOT A LAND STATION",
+                                           "NOT A MEASUREMENT INSIDE ZIP 94122",
+                                           "NOT a bound")),
+      ocean_wind.CAVEAT[:80])
+
+_d = ocean_wind.great_circle_mi(37.760459, -122.483894, 37.750, -122.838)
+check("ocean wind: the buoy sits ~19.5 statute miles west of the 94122 centroid",
+      19.0 < _d < 20.0, f"{_d:.2f} mi")
+
+_render = json.loads(pathlib.Path(ROOT, "tests", "fixtures",
+                                  "ocean_wind_render.json").read_text())
+_labels = [s["season"] for s in _render["seasons"]]
+check("ocean wind: the render fixture spans the declared window season by season",
+      _labels == [f"{y}-{y + 1}" for y in range(1991, 2021)]
+      and _render["tier"] == "ocean-wind" and _render["is_a_bound_for_94122"] is False,
+      f"{len(_labels)} seasons, {_labels[0]}..{_labels[-1]}")
+
+
+
 passed = sum(1 for _n, ok, _d in RESULTS if ok)
 failed = [(n, d) for n, ok, d in RESULTS if not ok]
 print("\n%d/%d checks passed" % (passed, len(RESULTS)))

@@ -1,0 +1,37 @@
+<!-- Reconstructed excerpt of NDBC's "Measurement Descriptions and Units" page.
+     The sentences the tier publishes verbatim are copied character-for-character
+     (including NDBC's own missing space after the bolded field names, which is why
+     the stored quotes read "WSPDWind speed ..."); the surrounding markup is
+     representative. -->
+<h1>Measurement Descriptions and Units</h1>
+<p>Real Time files generally contain the last 45 days of "Realtime" data - data that went
+through automated quality checks and were distributed as soon as they were received.
+Historical files have gone through post-processing analysis and represent the data sent to
+the archive centers. The formats for both are generally the same, with the major difference
+being the treatment of missing data. Missing data in the Realtime files are denoted by "MM"
+while a variable number of 9's are used to denote missing data in the Historical files,
+depending on the data type (for example: 999.0 99.0).</p>
+
+<h2>General</h2>
+<p><strong>Units</strong>: Station pages display the current hour's measurements in Imperial
+units by default, but can be changed by the viewer to metric units. When accessing Real Time
+and Historical data files, the <strong>measurements are generally in metric units</strong>, as
+described below, and cannot be changed.</p>
+<p><strong>Time</strong>: Station pages show current observations in station local time by
+default, but can be changed by the viewer to UTC (formerly GMT). <strong>Both Realtime and
+Historical files show times in UTC only</strong>.</p>
+<p><strong>Station ID</strong>: Five-digit WMO Station Identifier, used since 1976.
+ID's can be reassigned to future deployments within the same 1 degree square.</p>
+
+<h2>Standard Meteorological Data</h2>
+<p>
+<strong>WDIR</strong>Wind direction (the direction the wind is coming from in degrees
+clockwise from true N) during the same period used for WSPD.
+<strong>WSPD</strong>Wind speed (m/s) averaged over an eight-minute period for buoys and a
+two-minute period for land stations. Reported Hourly.
+<strong>GST</strong>Peak 5 or 8 second gust speed (m/s) measured during the eight-minute or
+two-minute period.
+<strong>WVHT</strong>Significant wave height (meters) is calculated as the average of the
+highest one-third of all of the wave heights during the 20-minute sampling period.
+<strong>PRES</strong>Sea level pressure (hPa). (labeled BAR in Historical files)
+</p>

@@ -200,6 +200,35 @@ Sources:
 - Hourly: https://www.ncei.noaa.gov/data/global-hourly/access/ (per-year station files)
 - Daily: https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/
 
+### The ocean-side wind record (NDBC buoy 46026)
+
+Every other wind number on this site is measured at SFO, on the bay shore, 11.9 mi
+from the ZIP centroid. The card in the wind section adds the nearest official
+anemometer on the **ocean** side: a moored buoy 19.4 mi west of the centroid, in the
+open Pacific. It is published as a reference and labelled as one, in the dataset's
+own words:
+
+* **It is not a land station, it is not a measurement inside 94122, and it is not a
+  bound** on what a building in the Sunset experiences — neither an upper nor a
+  lower one.
+* **It is a marine record, so it is counted in marine terms**: gust days at the gale
+  (≥ 34 kt) and storm (≥ 48 kt) scales, plus the 40 kt row the SFO tables use so the
+  two references can be read side by side; sustained-wind days at 20 and 30 kt; and
+  the season's strongest gust and highest significant wave height.
+* **Every mean prints its n and its coverage.** Each of the 30 seasons (1991-1992 →
+  2020-2021) publishes the share of the 123 Oct–Jan dates it observed; thin seasons
+  and seasons with no data are named, and a season nobody observed is never averaged
+  in as a calm one.
+* **It never enters the day-by-day scoreboard**, and its latest reading is a
+  *provisional observation*, not a forecast.
+
+Sources: the [station page](https://www.ndbc.noaa.gov/station_page.php?station=46026),
+the [station history page](https://www.ndbc.noaa.gov/station_history.php?station=46026)
+(which lists the per-year files), the
+[realtime file](https://www.ndbc.noaa.gov/data/realtime2/46026.txt) and
+[NDBC's measurement page](https://www.ndbc.noaa.gov/faq/measdes.shtml) for the units,
+UTC handling and missing-value conventions — all quoted in `data/ocean_wind.json`.
+
 ### Storm severity
 
 From **NCEI Storm Events Database** for San Francisco County FIPS 06075: https://www.ncdc.noaa.gov/stormevents/ and CSV directory https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/

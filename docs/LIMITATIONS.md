@@ -283,6 +283,31 @@ carries current-year text. Consequences a reader should know:
 
 ---
 
+## 27. The ocean-side wind record is a marine station 19.4 mi offshore, and its first live run has not happened yet (added 20 Sep 2026, session 16)
+
+* **It is not the neighbourhood, and it is not a bound.**  NDBC 46026 is a moored
+  buoy in the open Pacific, 19.4 mi west of the ZIP centroid.  Its wind is the
+  wind over the water; what a house in the Sunset experiences depends on terrain,
+  building height and street orientation that no station in this project measures.
+  The file and the page both say so in NDBC's own terms — *not a land station*,
+  *not a measurement inside ZIP 94122*, *not a bound* — and the ledger refuses a
+  publication that drops any of the three.
+* **Coverage is uneven across the 30 seasons, and the means say so.**  Each season
+  publishes the share of the 123 Oct–Jan dates it observed, the seasons below the
+  95 % cut and the seasons with no data at all are named, and every counter prints
+  how many seasons stand behind it.  A mean over unobserved seasons is not a mean:
+  a season with no data contributes nothing (bug 78 fixed exactly that).
+* **The tier has never run against the live network from this sandbox.**  The
+  module is verified against recorded fixtures and its own 46 self-checks, and CI
+  runs it before the landlord summary with its exit code in the publish gate, but
+  the first real fetch happens on GitHub Actions.  Watch the first nightly run:
+  anything NDBC answers differently (a moved station, a new file layout, a season
+  whose file is missing) must appear as an irregularity, and the ledger will fail
+  rather than publish a number that does not re-derive.
+* **One station, one window.**  The record is a single point west of the Golden
+  Gate for 1 Oct – 31 Jan; it says nothing about the bay side, the south of the
+  city, or the rest of the year.
+
 ## Recommended next work, in priority order
 
 ### High value, moderate effort

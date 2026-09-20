@@ -276,6 +276,10 @@ _Ranked for the landlord question behind this site: what about this rainy season
 - Seasons carry on average **0.5** days with at least 2.00 in (median 0.0, worst season 2.0, n = 30 seasons).
 - Seasons carry on average **0.0** days with at least 4.00 in (median 0.0, worst season 1.0, n = 30 seasons).
 
+## 4b. The ocean side of the wind question — not in this snapshot
+
+_the nightly run has not published the NDBC 46026 ocean-side record_
+
 ## 5. What this document cannot tell you
 
 No official product — NOAA, NWS, CPC or any national agency — forecasts a named day beyond the current NWS forecast horizon, which the pipeline reads from the fetched product on every run. Beyond that window this project publishes the 1991–2020 observed record for each calendar date and official period probabilities; it never invents a daily forecast. Daily forecast values fill in automatically on this site as the season approaches and each day enters the NWS window.

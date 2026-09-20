@@ -1198,6 +1198,76 @@ def g_(d, k):
     return None
 
 
+
+def build_ocean_wind_block(ocean, dist):
+    """The ocean-side buoy record, or the reason it is not in this snapshot.
+
+    Every figure is copied out of ``data/ocean_wind.json`` — including the marine
+    caveat, character for character.  The claim ledger re-derives each number from
+    that file and fails if this block states one the buoy dataset does not, so the
+    executive summary cannot describe the ocean side more strongly than the
+    observation supports.
+    """
+    if not ocean or not ocean.get("available"):
+        reasons = (ocean or {}).get("irregularities") or []
+        return {
+            "available": False,
+            "reason": (reasons[0].get("message") if reasons else
+                       "the nightly run has not published the NDBC 46026 ocean-side record"),
+            "what_it_would_add": ("The nearest official anemometer on the ocean side of the "
+                                  "Golden Gate, published beside the SFO (bay-side) figures "
+                                  "this summary otherwise uses."),
+        }
+
+    st = ocean.get("station") or {}
+    summary = ocean.get("summary") or {}
+    counters = summary.get("counters") or {}
+
+    def c(key):
+        row = counters.get(key) or {}
+        return {"mean": row.get("mean"), "median": row.get("median"),
+                "min": row.get("min"), "max": row.get("max"),
+                "n_seasons": row.get("n_seasons_with_value")}
+
+    sfo40 = dist.get("gust_days_ge_40kt") or {}
+    return {
+        "available": True,
+        "station_id": st.get("id"),
+        "station_name": st.get("name"),
+        "station_type": st.get("type"),
+        "position": {"lat": st.get("lat"), "lon": st.get("lon")},
+        "distance_mi_from_centroid": st.get("distance_mi_from_centroid"),
+        "anemometer_height_m": st.get("anemometer_height_m"),
+        "water_depth_m": st.get("water_depth_m"),
+        "window_label": (ocean.get("window") or {}).get("label"),
+        "day_basis": (ocean.get("window") or {}).get("day_basis"),
+        "seasons_with_data": summary.get("seasons_with_data"),
+        "seasons_total": summary.get("seasons"),
+        "thin_seasons": summary.get("thin_seasons") or [],
+        "counter_basis": summary.get("counter_basis"),
+        "gale_days_ge_34kt": c("days_gust_ge_34kt"),
+        "days_ge_40kt": c("days_gust_ge_40kt"),
+        "storm_days_ge_48kt": c("days_gust_ge_48kt"),
+        "max_gust_kt": c("max_gust_kt"),
+        "max_gust_mph": c("max_gust_mph"),
+        "max_wvht_ft": c("max_wvht_ft"),
+        "sfo_days_ge_40kt": {"mean": sfo40.get("mean"), "median": sfo40.get("median"),
+                             "max": sfo40.get("max")},
+        "caveat": ocean.get("caveat"),
+        "is_land_station": ocean.get("is_land_station"),
+        "is_measurement_inside_94122": ocean.get("is_measurement_inside_94122"),
+        "is_a_bound_for_94122": ocean.get("is_a_bound_for_94122"),
+        "source_urls": {
+            "station_page": (st.get("station_page_url")),
+            "station_table": (st.get("station_table_url")),
+            "units": ocean.get("units_page_url"),
+        },
+        "why_this_is_here": ocean.get("why_this_is_here"),
+        "what_this_tier_does_not_do": ocean.get("what_this_tier_does_not_do") or [],
+    }
+
+
+
 def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
                        diagnostic_status, relevant_cpc, storms, monthly,
                        hourly_wind_rain=None, enso_streaks=None, enso_severity=None):
@@ -1584,6 +1654,9 @@ def main():
     cpc = load("cpc.json")
     enso = load("enso.json")
     storms = load("storm_events.json")
+    # The ocean-side buoy record is its own tier: absent until the nightly run has
+    # fetched it, and reported as absent rather than as calm weather.
+    ocean_wind = load("ocean_wind.json")
 
     # Season summary
     dist = calendar.get("season_summary", {})
@@ -2072,6 +2145,9 @@ def main():
             "streak_probability": streak_prob,
             "wind_and_rain": wind_rain,
             "heavy_wind_and_rain": heavy_wind_rain,
+            # The nearest official anemometer on the ocean side, published beside the
+            # SFO figures with its marine caveat; absent when the tier has not run.
+            "ocean_wind": build_ocean_wind_block(ocean_wind, dist),
             "max_gust": max_gust,
             "enso_stratified": enso_strat,
             "enso_stratified_streaks": enso_streaks,

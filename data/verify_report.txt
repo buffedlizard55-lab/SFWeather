@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-20T12:34:27Z
+generated_utc: 2026-09-20T17:05:52Z
 
-checks: 74 passed, 0 failed, 0 warning(s)  (of 74)
+checks: 76 passed, 0 failed, 0 warning(s)  (of 76)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         189 recorded fetches (187 unique URLs)
@@ -48,7 +48,7 @@ checks: 74 passed, 0 failed, 0 warning(s)  (of 74)
 [PASS] cost-driver-expected-days-arithmetic: The published expected heavy-rain day counts equal the sum of the per-date 1991-2020 probabilities in the committed climatology table
         ge_025in_days: published 14.97 vs recomputed 14.97 over 123 season dates; ge_100in_days: published 3.19 vs recomputed 3.19 over 123 season dates
 [PASS] raw-phase-tokens-dataset: No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)
-        0 raw tokens across 23023 scanned string(s)
+        0 raw tokens across 23025 scanned string(s)
 [PASS] phase-label-present: Every ENSO phase value a renderer can reach ships with a reader-facing label (no underscore token, correct capitalisation)
         3 label(s) published
 [PASS] raw-phase-tokens: No raw ENSO data token (el_nino / la_nina) appears in any reader-facing executive-summary string
@@ -147,6 +147,10 @@ checks: 74 passed, 0 failed, 0 warning(s)  (of 74)
         7 definition sentence(s) verified against the fetched page text; coverage string verified
 [PASS] model-guidance-links-fetched: Every model-guidance link published on the site was actually fetched with status, size and SHA-256 recorded; a fetch that failed says so; and every archived guidance image on the site is the image that was hashed
         19 published guidance URL(s) all present in an auxiliary manifest; 10 archived image(s) match their recorded hash
+[PASS] ocean-wind-published: The ocean-side wind tier, if published, is labelled and re-derivable
+        data/ocean_wind.json is not published by this run
+[PASS] ocean-wind-landlord-consistency: Every ocean-side figure in the landlord executive summary is the buoy dataset's own figure, and its marine caveat is that dataset's sentence character for character
+        the summary carries the buoy block with its verbatim caveat and six re-derived counters
 [PASS] feed-traceable: The official-product feed is internally consistent, sorted, dated only where the publisher gave a date, links only vetted hosts, and never marks model guidance as official
         229 entries (+13 undated) across 10 dates; 217 verified against a recorded fetch
 [PASS] feed-provenance: Every feed entry whose content comes from a fetch points at a URL that was fetched successfully; entries that do not are labelled, not trusted

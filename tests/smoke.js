@@ -33,9 +33,24 @@ const dom = new JSDOM(html, {
 });
 const { window } = dom;
 
+/* The ocean-side wind card renders from data/ocean_wind.json, which the nightly
+ * run publishes from NOAA's NDBC.  Until it exists, the guard renders the tier's
+ * own fixture (built offline from the NDBC-shaped fixtures in tests/fixtures/ndbc
+ * by pipeline/selftest_ocean_wind.py's fake network) so the display rules are
+ * exercised either way — a card that is never rendered is never guarded. */
+const OCEAN_FIXTURE = path.join(repo, 'tests/fixtures/ocean_wind_render.json');
+window.__oceanWindServed = null;
 window.fetch = async (url) => {
   const rel = String(url).replace(/^https?:\/\/[^/]+\//, '').replace(/^\.\//, '');
-  const file = path.join(repo, rel);
+  let file = path.join(repo, rel);
+  if (rel === 'data/ocean_wind.json') {
+    if (fs.existsSync(file)) {
+      window.__oceanWindServed = 'published data/ocean_wind.json';
+    } else if (fs.existsSync(OCEAN_FIXTURE)) {
+      file = OCEAN_FIXTURE;
+      window.__oceanWindServed = 'tests/fixtures/ocean_wind_render.json';
+    }
+  }
   if (!fs.existsSync(file)) return { ok: false, status: 404, json: async () => ({}) };
   const body = fs.readFileSync(file, 'utf8');
   return { ok: true, status: 200, json: async () => JSON.parse(body), text: async () => body };
@@ -53,6 +68,7 @@ try {
 
 const REQUIRED_SECTIONS = [
   '#data-status', '#landlord-stats', '#landlord-cost-drivers', '#landlord-monthly',
+  '#ocean-wind-body',
   '#landlord-duration', '#landlord-windrain',
   '#landlord-bottom-line', '#landlord-official',
   '#landlord-cpc', '#landlord-actions', '#tier-legend', '#tbl-location', '#tbl-stations',
@@ -1105,6 +1121,88 @@ setTimeout(() => {
         if (!spt.includes('Salt-Air Marine Environment')) {
           problems.push('#landlord-sunset-profile missing Salt-Air Marine Environment row');
         }
+      }
+    }
+  }
+
+  // 35. The ocean-side wind card (NOAA NDBC station 46026).  Built only from
+  //     data/ocean_wind.json, and checked here against whatever payload the page
+  //     actually received: the published file when the nightly run has written
+  //     one, otherwise the tier's own render fixture.  The card must name the
+  //     station, carry NDBC's verbatim caveat (all three of its statements), say
+  //     how many seasons carry data, print every season row the payload carries,
+  //     link only to the official host, and never read as a bound for 94122.
+  {
+    const card = doc.querySelector('#ocean-wind-card');
+    const host = doc.querySelector('#ocean-wind-body');
+    if (!card || !host) {
+      problems.push('the ocean-side wind card is missing from the page');
+    } else {
+      let payload = null;
+      try {
+        payload = JSON.parse(fs.readFileSync(
+          fs.existsSync(path.join(repo, 'data/ocean_wind.json'))
+            ? path.join(repo, 'data/ocean_wind.json') : OCEAN_FIXTURE, 'utf8'));
+      } catch (e) { payload = null; }
+      const body = host.textContent.replace(/\s+/g, ' ');
+      if (!body.trim()) problems.push('#ocean-wind-body rendered nothing at all');
+      if (!payload) {
+        problems.push('no ocean-wind payload was available to the guard');
+      } else if (payload.available) {
+        if (!body.includes(String(payload.station.id))) {
+          problems.push('#ocean-wind-body does not name the station id');
+        }
+        ['NOT A LAND STATION', 'NOT A MEASUREMENT INSIDE ZIP 94122', 'NOT a bound'].forEach(phrase => {
+          if (!body.includes(phrase)) {
+            problems.push('the ocean-wind card does not carry the dataset caveat phrase "' + phrase + '"');
+          }
+        });
+        if (payload.station.distance_mi_from_centroid !== null &&
+            payload.station.distance_mi_from_centroid !== undefined &&
+            !body.includes(payload.station.distance_mi_from_centroid.toFixed(1) + ' mi')) {
+          problems.push('#ocean-wind-body omits the distance from the ZIP centroid');
+        }
+        const nData = payload.summary.seasons_with_data, nAll = payload.summary.seasons;
+        if (!body.includes(nData + ' of ' + nAll + ' seasons carry data')) {
+          problems.push('#ocean-wind-body does not publish how many seasons carry data (' +
+            nData + ' of ' + nAll + ')');
+        }
+        if (!body.includes(String(payload.season_dates_expected))) {
+          problems.push('#ocean-wind-body omits the 123-date window size');
+        }
+        // Every season row in the payload must reach the table: a card that
+        // silently drops the seasons with no data would read as a full record.
+        const seasonRows = doc.querySelectorAll('#ocean-wind-seasons tbody tr').length;
+        if (seasonRows !== (payload.seasons || []).length) {
+          problems.push('the ocean-wind season table rendered ' + seasonRows +
+            ' row(s) for ' + (payload.seasons || []).length + ' in the dataset');
+        }
+        const missing = (payload.seasons || []).map(x => x.season).filter(x => !body.includes(x));
+        if (missing.length) {
+          problems.push('the ocean-wind season table is missing ' + missing.length +
+            ' season label(s): ' + missing.slice(0, 4).join(', '));
+        }
+        // Every counter the payload publishes must be labelled and show its mean.
+        Object.keys(payload.summary.counters || {}).forEach(key => {
+          if (!/days_(gust|wind)_ge_\d+kt|max_/.test(key)) {
+            problems.push('the ocean-wind card cannot label the counter ' + key);
+          } else if (!body.includes('mean')) {
+            problems.push('the ocean-wind summary table shows no mean');
+          }
+        });
+        if (!/not a forecast|provisional observation/i.test(body)) {
+          problems.push('the ocean-wind card does not label its latest reading as an observation');
+        }
+        const links = Array.from(card.querySelectorAll('a[href]'));
+        if (!links.length) problems.push('the ocean-wind card carries no source link');
+        links.forEach(a => {
+          const href = a.getAttribute('href') || '';
+          if (!href.startsWith('https://www.ndbc.noaa.gov/')) {
+            problems.push('the ocean-wind card links to a host that is not NDBC: ' + href);
+          }
+        });
+      } else if (!/not published in this snapshot/i.test(body)) {
+        problems.push('the ocean-wind card is empty but does not say the record is unpublished');
       }
     }
   }

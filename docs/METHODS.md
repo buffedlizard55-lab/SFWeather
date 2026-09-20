@@ -811,3 +811,46 @@ Regeneration: `build_calendar.py` writes the block; `landlord_summary.py`
 derives the strip cell and the rows; `executive_summary.py` prints the table;
 `verify_claims.py` recomputes it. The nightly job re-derives everything from the
 fetched sources.
+
+## 29. The ocean-side wind record — NDBC station 46026 (added 20 Sep 2026, session 16)
+
+**Why it exists.** The project's wind record is SFO, a bay-shore airport 11.9 mi from
+the ZIP centroid. Adding the nearest official *ocean-side* anemometer does not fix
+that — a moored buoy 19.4 mi west is not the Sunset either — but it stops the site
+from having exactly one wind vantage point and calling it the city's.
+
+**What is fetched.** `pipeline/ocean_wind.py` reads NDBC's station page (owner, type,
+anemometer height, water depth), the station table (coordinates, hull), the measurement
+page (the units sentences it quotes), the realtime file (one latest provisional
+observation) and the per-year standard-met files for the 1991–2020 seasons — the year
+list comes from NDBC's own history page, and each file is fetched as published.
+
+**How it is parsed.** By header *name*, not column position: the archive spans three
+layouts (two-digit years with `WD`/`BAR`, four-digit years with `WDIR`/`PRES`, and the
+modern file whose month and minutes columns are both named `MM` after uppercasing).
+Missing values are NDBC's own sentinels — runs of 9s in the historical files, `MM` in
+the realtime file — and a report whose wind, gust and wave height are all missing is
+counted as an empty report rather than as an observation. Wind is converted from the
+file's own units (m/s) to knots at parse time; a 9.9 m/s gust is 19.2 kt, not 9.9.
+
+**How it is aggregated.** Days are distinct **UTC dates** inside 1 Oct – 31 Jan (the
+files carry UTC only, and the window is stated on the page). A threshold day is a date
+whose maximum reached the threshold: gusts at 34/40/48 kt — the marine gale and storm
+scales plus the 40 kt row the SFO tables use — and sustained wind at 20/30 kt. Each
+season also publishes its maximum gust (kt and mph) and its maximum significant wave
+height (m and ft), with the timestamps they occurred.
+
+**Two rules that travel with the data.** `coverage_rule.thin_below_pct` names the
+coverage below which a season is called thin, and `coverage_rule.counter_rule` states
+that every mean, median, minimum and maximum is computed over seasons that observed at
+least one Oct–Jan date. A season nobody observed is **not** a zero: averaging outages
+in as calm weather turned a gale record into "0.07 gust days per season" (bug 78), and
+the ledger re-derives the counters under exactly the declared rule.
+
+**What the ledger checks** (`verify_claims.py` §13h): every counter re-derived from the
+season rows; coverage arithmetic and the thin/missing season lists; the station's
+coordinates and distance from the ZIP centroid; the three marine statements and the
+three boolean flags; each quoted NDBC sentence found verbatim with the units page's
+fetch recorded; the latest-observation conversion; and isolation from the scoreboard.
+If `data/ocean_wind.json` is not published yet, the ledger says so as a warning instead
+of inventing an empty tier.

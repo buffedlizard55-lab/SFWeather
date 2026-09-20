@@ -1,5 +1,58 @@
 # Next session — handoff
 
+## 1. State at the end of session 16 (20 Sep 2026 — the ocean-side wind record; NDBC station 46026)
+
+**Ledger:** **76 checks live** in the committed data state, **81** once
+`data/ocean_wind.json` is published (19 claims, 0 warnings in both states).
+Verified in the sandbox by running the ledger against the committed data and
+against a staged fixture build of the buoy dataset in a scratch copy — the
+ocean-wind checks are exercised end to end that way, because the sandbox has no
+network and the real fetch happens on CI.
+
+**Tests:** `tests/test_parsers.py` **485/485** (486 with the guarded gust
+cross-check) · `tests/falsify_guards.py` **96 cases** (11 ocean-wind) ·
+`tests/falsify_smoke.py` **51 cases** (7 ocean-wind) · `npm test` passes with the
+new card · `pipeline/ocean_wind.py --selftest` **46/46**.
+
+**What session 16 changed:**
+
+1. **A new tier: the ocean-side wind record (NDBC 46026).**  `pipeline/ocean_wind.py`
+   + `pipeline/selftest_ocean_wind.py` + `data/ocean_wind.json` (written by the
+   nightly run, not committed yet) + `data/ocean_wind_provenance.json`.  Three NDBC
+   file eras are parsed by header name, missing-value sentinels are respected, the
+   three marine statements are published with the data, and every counter prints the
+   number of seasons behind it.
+2. **Two bugs found while building it.**  Bug 77: the modern NDBC header names its
+   month and its minutes column `MM` alike, and resolving columns by name dropped
+   every report's minutes (published "strongest gust at" timestamps were hours
+   only).  Bug 78: a season with no data was averaged into the day counters as a
+   zero, so a gale record read as "0.07 gust days per season" when the record had
+   outages.  Both are fixed with self-tests and ledger rules that fail if they
+   return.
+3. **The page and the summary carry it, caveated.**  `#ocean-wind-card` in the wind
+   section, `renderOceanWind` in `app.js`, a section in `data/executive_summary.md`
+   (4b) and an `ocean_wind` block in `landlord.json`, all printing the dataset's own
+   caveat character for character.
+4. **Gates and workflows.**  `www.ndbc.noaa.gov` added to the source gate's allow-list
+   and to the ledger's official-host list; the nightly workflow runs the tier before
+   the landlord summary and includes its exit code in the publish gate; `site-test.yml`
+   runs its self-test.
+
+**Open at the end of this session:** the first live run of the tier (next nightly),
+the mid-October CPC issuances, multi-ZIP support, GHCNh/SSODv2 wind stitching, and
+the CPC back-test archive.  See the priorities below.
+
+## Priorities for session 17 (as of 20 Sep 2026, end of session 16)
+
+1. **Watch the first live ocean-wind run.**  Confirm the fetch, the coverage, the
+   thin seasons and the ledger's 81 checks on the first nightly that publishes
+   `data/ocean_wind.json`; treat any irregularity as work, not as noise.
+2. **CPC issuance watches (8 Oct + 15 Oct)** — low effort, time-critical.
+3. **Multi-ZIP support.**  (a) ZIP→centroid manifest from the Census Gazetteer fetch,
+   (b) per-ZIP tiers in the nightly job, (c) a front-end picker.
+4. **Wind successor stitching (GHCNh/SSODv2)** — monitor NOAA/NCEI station listings.
+5. **CPC back-test archive** — inspect `llarc.ind.php` raw HTML or POST `llarc.php`.
+
 ## 1. State at the end of session 15 (20 Sep 2026 — Outer Sunset 94122 Property & Weather Profile; localized cost drivers; local Storm Events; guard 34)
 
 **Ledger:** **74 checks live**, 19 claims — all pass, 0 warnings. Verified in

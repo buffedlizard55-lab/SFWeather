@@ -40,12 +40,15 @@ ALLOWED_HOSTS = frozenset({
     "www.ncei.noaa.gov",
     "www.ncdc.noaa.gov",
     "nomads.ncep.noaa.gov",
+    "www.ndbc.noaa.gov",
     "www2.census.gov",
     "geocoding.geo.census.gov",
 })
 
 # Hosts that are known-good but require a note in the docs.
 NOTED = {
+    "www.ndbc.noaa.gov": ("NOAA/NWS National Data Buoy Center - the ocean-side wind tier "
+                          "(station 46026); official U.S. Government host, free, no key"),
     "www2.census.gov": "U.S. Census Bureau - official Gazetteer files",
     "geocoding.geo.census.gov": ("U.S. Census Bureau - Geocoder reverse lookup, used to "
                                  "name the geography that contains the published centroid"),

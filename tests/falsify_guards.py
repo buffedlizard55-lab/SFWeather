@@ -1441,6 +1441,163 @@ def _ev6(tmp):
     return tmp
 
 
+# ---------------------------------------------------------------- ocean wind
+
+def _ocean_fixture():
+    """The tier's own render fixture — the shape the nightly run publishes."""
+    return json.loads((REPO / "tests" / "fixtures" / "ocean_wind_render.json").read_text())
+
+
+def with_ocean(tmp, mutate=None):
+    """Stage data/ as if the ocean-wind tier had published, then mutate it.
+
+    The committed data/ carries no ocean_wind.json (the fetch happens on CI), so
+    every case here stages the tier's fixture payload *and* the manifest rows the
+    ledger demands evidence from: without them ocean-wind-station-identity would
+    fail for a reason that has nothing to do with the mutation under test.
+    """
+    _copy_all(tmp)
+    obj = _ocean_fixture()
+    if mutate:
+        mutate(obj)
+    dump(tmp / "ocean_wind.json", obj)
+    entries = [
+        {"url": obj["station"]["station_table_url"], "http_status": 200, "ok": True,
+         "bytes": 182340, "sha256": "a" * 64, "content_type": "text/plain",
+         "retrieved_utc": "2026-09-20T00:00:00Z", "manifest": "ocean_wind_provenance.json"},
+        {"url": obj["units_page_url"], "http_status": 200, "ok": True,
+         "bytes": 41230, "sha256": "b" * 64, "content_type": "text/html",
+         "retrieved_utc": "2026-09-20T00:00:00Z", "manifest": "ocean_wind_provenance.json"},
+    ]
+    dump(tmp / "ocean_wind_provenance.json",
+         {"area": "ocean_wind", "generated_utc": "2026-09-20T00:00:00Z",
+          "note": "falsification fixture: the rows the ocean-wind checks need evidence from",
+          "entries": entries})
+    return tmp
+
+
+@case("a buoy season counter edited so the published mean no longer re-derives", "fail",
+      "ocean-wind-recompute")
+def _ow1(tmp):
+    def mutate(obj):
+        obj["summary"]["counters"]["days_gust_ge_34kt"]["mean"] = 9.5
+    return with_ocean(tmp, mutate)
+
+
+@case("a buoy season dropped from the published window", "fail", "ocean-wind-coverage")
+def _ow2(tmp):
+    def mutate(obj):
+        obj["seasons"] = [s for s in obj["seasons"] if s["season"] != "1999-2000"]
+    return with_ocean(tmp, mutate)
+
+
+@case("the marine caveat softened into a claim about the Sunset", "fail",
+      "ocean-wind-marine-labelled")
+def _ow3(tmp):
+    def mutate(obj):
+        obj["caveat"] = ("Open-water winds are stronger than the neighbourhood's, so treat this "
+                         "as the expected wind in the Sunset.")
+    return with_ocean(tmp, mutate)
+
+
+@case("the buoy's distance from the ZIP centroid overstated by hand", "fail",
+      "ocean-wind-station-identity")
+def _ow4(tmp):
+    def mutate(obj):
+        obj["station"]["distance_mi_from_centroid"] = 12.0
+    return with_ocean(tmp, mutate)
+
+
+@case("an NDBC units quote no longer found on the fetched page", "fail",
+      "ocean-wind-units-verbatim")
+def _ow5(tmp):
+    def mutate(obj):
+        obj["units_page_quotes"]["wspd_units"]["found_verbatim"] = False
+    return with_ocean(tmp, mutate)
+
+
+@case("a buoy figure leaking into the day-by-day scoreboard", "fail", "ocean-wind-isolation")
+def _ow6(tmp):
+    # Stage the tier first: with_ocean() copies the committed data/ in, so a
+    # mutation written before it would simply be overwritten (this case's first
+    # draft did exactly that and passed without testing anything).
+    with_ocean(tmp)
+    cal = load("calendar.json")
+    cal["days"][0]["note"] = "NDBC 46026 ocean buoy reference"
+    dump(tmp / "calendar.json", cal)
+    return tmp
+
+
+
+@case("the landlord summary softening the buoy caveat into a Sunset claim", "fail",
+      "ocean-wind-landlord-consistency")
+def _ow7(tmp):
+    with_ocean(tmp)
+    ll = load("landlord.json")
+    block = ((ll.get("executive_summary") or {}).get("ocean_wind")) or {}
+    block.update({
+        "available": True,
+        "station_id": "46026",
+        "caveat": "Treat the buoy's wind as what the Sunset gets.",
+        "is_land_station": False,
+        "is_measurement_inside_94122": False,
+        "is_a_bound_for_94122": False,
+    })
+    ll["executive_summary"]["ocean_wind"] = block
+    dump(tmp / "landlord.json", ll)
+    return tmp
+
+
+@case("the landlord summary stating buoy figures the buoy dataset does not publish", "fail",
+      "ocean-wind-landlord-consistency")
+def _ow8(tmp):
+    with_ocean(tmp)
+    ll = load("landlord.json")
+    ocean = _ocean_fixture()
+    gale = ((ocean["summary"]["counters"]).get("days_gust_ge_34kt")) or {}
+    ll["executive_summary"]["ocean_wind"] = {
+        "available": True,
+        "station_id": "46026",
+        "distance_mi_from_centroid": ocean["station"]["distance_mi_from_centroid"],
+        "seasons_with_data": ocean["summary"]["seasons_with_data"],
+        "caveat": ocean["caveat"],
+        "is_land_station": False,
+        "is_measurement_inside_94122": False,
+        "is_a_bound_for_94122": False,
+        "gale_days_ge_34kt": {"mean": 12.0, "median": gale.get("median"), "min": gale.get("min"),
+                             "max": gale.get("max"),
+                             "n_seasons": gale.get("n_seasons_with_value")},
+    }
+    dump(tmp / "landlord.json", ll)
+    return tmp
+
+
+
+@case("the buoy dataset claiming its wind is a bound for 94122", "fail",
+      "ocean-wind-marine-labelled")
+def _ow9(tmp):
+    def mutate(obj):
+        obj["is_a_bound_for_94122"] = True
+    return with_ocean(tmp, mutate)
+
+
+@case("the buoy's latest wind reported in the wrong unit factor", "fail",
+      "ocean-wind-units-verbatim")
+def _ow10(tmp):
+    def mutate(obj):
+        obj["latest_observation"]["wind_file_value"] = 12.0
+    return with_ocean(tmp, mutate)
+
+
+@case("the ocean-side record not yet published: a warning state, not a silent pass",
+      "pass", "ocean-wind-published")
+def _ow11(tmp):
+    _copy_all(tmp)
+    (tmp / "ocean_wind.json").unlink(missing_ok=True)
+    return tmp
+
+
+
 def main():
     failures = []
     for name, expect, check_id, build in CASES:

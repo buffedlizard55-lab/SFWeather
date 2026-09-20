@@ -232,6 +232,33 @@ Two distinctions keep it honest:
 Model-guidance rows carry `official: false` and the tier's warning into the same
 list, so the difference is visible where a reader might otherwise blur it.
 
+## 7. NOAA NDBC — the ocean-side wind record (added 20 Sep 2026, session 16)
+
+Every other wind figure on this site is measured at SFO, on the bay shore, 11.9 mi
+from the ZIP centroid. The nearest official anemometer on the *ocean* side is a
+moored buoy, and it is a genuinely different environment, so it is published as its
+own tier with its own dataset and provenance manifest.
+
+| | |
+| --- | --- |
+| Product | Standard meteorological data, station **46026** ("SAN FRANCISCO - 18NM West of San Francisco, CA") |
+| Station page | <https://www.ndbc.noaa.gov/station_page.php?station=46026> |
+| Annual files | <https://www.ndbc.noaa.gov/data/historical/stdmet/46026hYYYY.txt.gz> (the list of years is read from the [station history page](https://www.ndbc.noaa.gov/station_history.php?station=46026), never typed in) |
+| Realtime file | <https://www.ndbc.noaa.gov/data/realtime2/46026.txt> (latest provisional observation; never enters the scoreboard) |
+| Station metadata | <https://www.ndbc.noaa.gov/data/stations/station_table.txt> |
+| Units / conventions | <https://www.ndbc.noaa.gov/faq/measdes.shtml> — quoted verbatim in `data/ocean_wind.json` |
+| Used for | Seasonal counts of gale-force gust days (≥ 34 kt), ≥ 40 kt gust days, ≥ 48 kt days, sustained-wind days, season-maximum gust and significant wave height, over the same 1 Oct – 31 Jan window the SFO tables use |
+| Result | 30 seasons 1991-1992 → 2020-2021; each season publishes the share of the 123 dates it covers; a season with no data is published as no data, never as a calm season |
+
+Three rules make it safe to show beside the SFO numbers. **It is marine** — the file
+states, and the page repeats, that the buoy is *not a land station*, *not a
+measurement inside ZIP 94122*, and *not a bound* on what the neighbourhood
+experiences in either direction. **Every counter prints its n** — how many of the 30
+seasons actually observed the window, with thin and missing seasons named beside the
+means. **Nothing is inferred** — the tier is kept out of `data/calendar.json` and the
+day-by-day scoreboard by a ledger check, and NDBC's own warning that a station ID can
+be reassigned to a future deployment is quoted with the record.
+
 ## Explicitly excluded
 
 | Provider | Why |

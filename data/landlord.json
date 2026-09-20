@@ -858,6 +858,11 @@
       "p75": 3.0,
       "p90": 5.0
     },
+    "ocean_wind": {
+      "available": false,
+      "reason": "the nightly run has not published the NDBC 46026 ocean-side record",
+      "what_it_would_add": "The nearest official anemometer on the ocean side of the Golden Gate, published beside the SFO (bay-side) figures this summary otherwise uses."
+    },
     "max_gust": {
       "n": 30,
       "mean": 53.8,

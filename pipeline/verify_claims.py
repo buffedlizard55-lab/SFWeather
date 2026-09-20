@@ -39,6 +39,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import climo as climo_lib  # noqa: E402
 import lib_provenance as provlib  # noqa: E402
 import model_guidance as mg_lib  # noqa: E402
+import ocean_wind as ow_lib  # noqa: E402
 from build_digest import POP_THRESHOLD_PCT  # noqa: E402
 # The Rain-related event-type set and the damage parser are used by the
 # storm-event recount below; importing them keeps one definition in the project
@@ -66,6 +67,7 @@ OFFICIAL_HOSTS = (
     "www2.census.gov",
     "geocoding.geo.census.gov",
     "nomads.ncep.noaa.gov",
+    "www.ndbc.noaa.gov",   # NOAA/NWS National Data Buoy Center (ocean-side wind tier)
 )
 
 SEASON_DAYS = 123  # 1 Oct 2026 .. 31 Jan 2027 inclusive
@@ -2840,6 +2842,327 @@ def main() -> int:
                      if not link_problems else "; ".join(link_problems[:4]),
                      evidence={"problems": link_problems[:5], "unevidenced": unevidenced[:8],
                                "bad_local": bad_local[:5]})
+
+    # ---- 13h. the ocean-side wind tier: marine, labelled, re-derivable -------
+    # The buoy block answers the gap doc §26 leaves open, so it is held to the same
+    # standard as everything else: every counter re-derived from the season rows it
+    # publishes, the station's own coordinates and distance re-checked, the marine
+    # caveat present as data, and the tier kept out of the day-by-day scoreboard.
+    ow = load("ocean_wind.json")
+
+    def ow_evidence(url):
+        """Was this URL fetched successfully with status/size/hash - in ANY manifest?
+
+        The nightly manifest and the auxiliary ones are separate files by design
+        (docs/METHODS.md §26), so a URL published by an auxiliary tier is looked up
+        across all of them rather than only in ``provenance.json``.
+        """
+        if not url:
+            return False
+        if fetch_has_evidence(url):
+            return True
+        return any(e.get("url") == url and e.get("ok")
+                   and isinstance(e.get("http_status"), int) and 200 <= e["http_status"] < 300
+                   and isinstance(e.get("bytes"), int) and e["bytes"] > 0 and e.get("sha256")
+                   for e in aux_entries)
+
+    ow_problems = []
+    if not ow:
+        ledger.check("ocean-wind-published",
+                     "The ocean-side wind tier, if published, is labelled and re-derivable",
+                     True, "data/ocean_wind.json is not published by this run",
+                     severity="warning")
+    else:
+        ow_seasons = [s for s in (ow.get("seasons") or []) if isinstance(s, dict)]
+        ow_summary = (ow.get("summary") or {}).get("counters") or {}
+        ow_station = ow.get("station") or {}
+
+        def _med(values):
+            vals = sorted(v for v in values if v is not None)
+            if not vals:
+                return None
+            mid = len(vals) // 2
+            return vals[mid] if len(vals) % 2 else (vals[mid - 1] + vals[mid]) / 2.0
+
+        # 1. Re-derive every published counter from the season rows.
+        #    The rule travels with the data (coverage_rule.counter_rule): only seasons
+        #    that observed at least one Oct-Jan date are counted.  A season with no
+        #    data averaged in as a zero would quietly turn an outage into calm weather,
+        #    which is how a gale record once read "0.07 gust days per season".
+        rule = (ow.get("coverage_rule") or {}).get("counter_rule")
+        if rule != "at least one observed Oct-Jan UTC date":
+            ow_problems.append(f"the dataset declares counter_rule {rule!r}, which this "
+                               "ledger does not know how to re-derive")
+        counted = [s for s in ow_seasons if (s.get("dates_with_data") or 0) > 0]
+        published_counted = sorted(str(x) for x in
+                                   ((ow.get("summary") or {}).get("counted_seasons") or []))
+        if published_counted != sorted(str(s.get("season")) for s in counted):
+            ow_problems.append("summary.counted_seasons does not match the season rows "
+                               "that observed at least one date")
+        recompute = {}
+        for cid, row in ow_summary.items():
+            present = [s.get(cid) for s in counted if s.get(cid) is not None]
+            recompute[cid] = {
+                "mean": round(sum(present) / len(present), 2) if present else None,
+                "median": round(_med(present), 2) if present else None,
+                "min": round(min(present), 2) if present else None,
+                "max": round(max(present), 2) if present else None,
+                "n_seasons_with_value": len(present),
+            }
+            if row != recompute[cid]:
+                ow_problems.append(f"{cid}: published {row} vs recomputed {recompute[cid]}")
+        if ow_summary and not ow_seasons:
+            ow_problems.append("a summary is published with no season rows to derive it from")
+        ledger.check("ocean-wind-recompute",
+                     "Every buoy mean, median, minimum and maximum is re-derivable from the "
+                     "season rows in the same file",
+                     not ow_problems and bool(ow_summary),
+                     (f"{len(ow_summary)} counter(s) recomputed from "
+                      f"{len(ow_seasons)} season rows") if not ow_problems and ow_summary
+                     else ("; ".join(ow_problems[:3]) or "no summary published"),
+                     evidence={"problems": ow_problems[:6], "counters": len(ow_summary)})
+
+        # 2. Coverage: the arithmetic, the thin seasons, and no data vs no storms.
+        cov_problems = []
+        expected = ow.get("season_dates_expected") or 123
+        for s in ow_seasons:
+            days = s.get("dates_with_data")
+            pct = s.get("coverage_pct")
+            if not isinstance(days, int) or not isinstance(pct, (int, float)):
+                cov_problems.append(f"{s.get('season')}: coverage not published")
+                continue
+            if days > expected or abs(pct - round(100.0 * days / expected, 1)) > 0.05:
+                cov_problems.append(f"{s.get('season')}: {days} dates -> {pct}% is not "
+                                    f"{round(100.0 * days / expected, 1)}%")
+            if days == 0 and any(s.get(k) for k in ("max_gust_kt", "max_wvht_m")):
+                cov_problems.append(f"{s.get('season')}: no dates of data but a maximum is "
+                                    f"published")
+        # The thin-season cut is published with the data (coverage_rule), not typed
+        # here: a threshold that lives in two places drifts, and the dataset's own
+        # number is the one the site prints beside the means.
+        thin_below = (ow.get("coverage_rule") or {}).get("thin_below_pct")
+        thin = sorted(s["season"] for s in ow_seasons
+                      if (s.get("coverage_pct") or 0) < (thin_below if thin_below is not None else 95.0))
+        if thin != sorted((ow.get("summary") or {}).get("thin_seasons") or []):
+            cov_problems.append("the thin-season list does not match the season rows")
+        zero = sorted(s["season"] for s in ow_seasons if not s.get("dates_with_data"))
+        if zero != sorted((ow.get("summary") or {}).get("seasons_with_no_data") or []):
+            cov_problems.append("the no-data season list does not match the season rows")
+        # The window is a promise: the seasons published must BE that window, one
+        # row per season, labelled with the year the row says it is.  Without this a
+        # payload that quietly carried 10 of the 30 seasons would reconcile against
+        # itself and every other check here would still pass.
+        window = ow.get("window") or {}
+        first, last = window.get("first_season"), window.get("last_season")
+        expected_labels = []
+        if first and last:
+            try:
+                start, end = int(str(first)[:4]), int(str(last)[:4])
+                expected_labels = [f"{y}-{y + 1}" for y in range(start, end + 1)]
+            except ValueError:
+                expected_labels = []
+        published_labels = [str(s.get("season")) for s in ow_seasons]
+        if not expected_labels:
+            cov_problems.append("the dataset does not declare its first and last season")
+        elif published_labels != expected_labels:
+            missing = [x for x in expected_labels if x not in published_labels]
+            extra = [x for x in published_labels if x not in expected_labels]
+            cov_problems.append(f"the season rows are not the declared window: "
+                                f"{len(expected_labels)} expected, {len(published_labels)} "
+                                f"published, missing {missing[:3]}, unexpected {extra[:3]}")
+        for s in ow_seasons:
+            year = s.get("season_year")
+            if not isinstance(year, int) or str(s.get("season")) != f"{year}-{year + 1}":
+                cov_problems.append(f"{s.get('season')!r} does not match its season_year "
+                                    f"{year!r}")
+        ledger.check("ocean-wind-coverage",
+                     "Every buoy season publishes the share of the 123 Oct-Jan dates it "
+                     "actually covers, thin seasons are named, and a season with no data is "
+                     "published as no data rather than as a quiet season",
+                     not cov_problems and bool(ow_seasons),
+                     (f"{len(ow_seasons)} season(s) spanning {window.get('first_season')} to "
+                      f"{window.get('last_season')}; {len(thin)} below "
+                      f"{thin_below if thin_below is not None else 95.0}% coverage; "
+                      f"{len(zero)} with no data") if not cov_problems and ow_seasons
+                     else ("; ".join(cov_problems[:3]) or "no season rows"),
+                     evidence={"problems": cov_problems[:6], "thin_seasons": thin[:8],
+                               "seasons_with_no_data": zero[:8]})
+
+        # 3. Where the station is, and how far that is from the ZIP point.
+        station_problems = []
+        lat, lon = ow_station.get("lat"), ow_station.get("lon")
+        centroid = ((run.get("target") or {}).get("centroid")) or {}
+        d_pub = ow_station.get("distance_mi_from_centroid")
+        d_re = None
+        if None in (lat, lon) or None in (centroid.get("lat"), centroid.get("lon")):
+            station_problems.append("station or centroid coordinates are missing")
+        else:
+            d_re = ow_lib.great_circle_mi(centroid["lat"], centroid["lon"], lat, lon)
+            if d_pub is None or abs(d_pub - d_re) > 0.15:
+                station_problems.append(f"published distance {d_pub} mi vs recomputed "
+                                        f"{round(d_re, 2)} mi")
+            if not (37.0 <= lat <= 38.5 and -123.5 <= lon <= -122.0):
+                station_problems.append(f"coordinates {lat},{lon} are not in the "
+                                        f"San Francisco coastal waters")
+        if not ow_evidence(ow_station.get("station_table_url")):
+            station_problems.append("the station-table URL the coordinates came from was not "
+                                    "fetched with evidence this run")
+        ledger.check("ocean-wind-station-identity",
+                     "The buoy's coordinates come from NDBC's own station table, and the "
+                     "distance to the 94122 centroid is recomputed from those coordinates",
+                     not station_problems,
+                     (f"station {ow_station.get('station_id')} at {lat}, {lon}: "
+                      f"{d_pub} mi from the centroid (recomputed {round(d_re or 0, 2)} mi)")
+                     if not station_problems
+                     else "; ".join(station_problems[:3]),
+                     evidence={"problems": station_problems[:5],
+                               "station_table_url": ow_station.get("station_table_url")})
+
+        # 4. The marine labelling: data, not decoration.
+        label_problems = []
+        caveat = ow.get("caveat") or ""
+        for needle in ("NOT A LAND STATION", "NOT A MEASUREMENT INSIDE ZIP 94122",
+                       "NOT a bound"):
+            if needle not in caveat:
+                label_problems.append(f"the caveat does not say {needle!r}")
+        for flag in ("is_land_station", "is_measurement_inside_94122", "is_a_bound_for_94122"):
+            if ow.get(flag) is not False:
+                label_problems.append(f"{flag} is {ow.get(flag)!r}, not False")
+        if ow.get("tier") != "ocean-wind":
+            label_problems.append(f"tier is {ow.get('tier')!r}")
+        ledger.check("ocean-wind-marine-labelled",
+                     "The buoy block carries its marine caveat as data and cannot be read as "
+                     "a measurement of ZIP 94122",
+                     not label_problems,
+                     "caveat present with all three required statements; three boolean flags "
+                     "are False" if not label_problems else "; ".join(label_problems[:3]),
+                     evidence={"problems": label_problems[:5], "caveat": caveat[:160]})
+
+        # 5. The units claim, and the arithmetic behind it.
+        unit_problems = []
+        quotes = ow.get("units_page_quotes") or {}
+        for key, item in quotes.items():
+            if not item.get("found_verbatim"):
+                unit_problems.append(f"{key}: the quote was not found in the fetched page")
+            excerpt = item.get("excerpt") or ""
+            if item.get("quote") and item["quote"] not in excerpt:
+                unit_problems.append(f"{key}: the stored excerpt does not contain the quote")
+        if not quotes:
+            unit_problems.append("no units-page quotes are published with the numbers")
+        if not ow_evidence(ow.get("units_page_url")):
+            unit_problems.append("the units page the quotes came from was not fetched with "
+                                 "evidence this run")
+        latest = ow.get("latest_observation") or {}
+        units = latest.get("file_wind_units")
+        factor = {"m/s": ow_lib.MS_TO_KT, "kt": 1.0,
+                  "mph": 1.0 / ow_lib.KT_TO_MPH, "km/h": 1.0 / 1.852}.get(units)
+        if latest and units and latest.get("wind_file_value") is not None and factor:
+            got = latest["wind_file_value"] * factor
+            if latest.get("wind_kt") is None or abs(got - latest["wind_kt"]) > 0.15:
+                unit_problems.append(f"latest observation: {latest['wind_file_value']} {units} "
+                                     f"-> {latest.get('wind_kt')} kt does not match "
+                                     f"{round(got, 2)} kt")
+        ledger.check("ocean-wind-units-verbatim",
+                     "NDBC's own sentences define the units, UTC handling and missing-value "
+                     "convention, and the knot conversion published on the page follows them",
+                     not unit_problems,
+                     (f"{len(quotes)} quoted sentence(s) from NDBC's measurement page; the "
+                      f"latest observation converts as published") if not unit_problems
+                     else "; ".join(unit_problems[:3]),
+                     evidence={"problems": unit_problems[:5],
+                               "units_page_url": ow.get("units_page_url")})
+
+        # 6. No buoy value may reach the scoreboard, and nothing here may be a forecast.
+        iso_problems = []
+        if ow.get("latest_observation"):
+            obs = str(latest.get("observation_utc") or "")
+            if obs and obs[:19] > gen[:19]:
+                iso_problems.append(f"the latest observation {obs} is after the run time {gen}")
+        for s in ow_seasons:
+            if not str(s.get("season") or "").endswith(str(int(s.get("season_year", 0)) + 1)):
+                iso_problems.append(f"{s.get('season')}: unparseable season label")
+        blob = json.dumps(cal, default=str)
+        for needle in ("ocean_wind", "46026", "NDBC"):
+            if needle in blob:
+                iso_problems.append(f"data/calendar.json carries {needle!r}; a marine buoy "
+                                    f"figure may not reach the day-by-day scoreboard")
+        worst = max((s.get("max_gust_kt") or 0) for s in ow_seasons) if ow_seasons else 0
+        sfo_worst = None
+        for row in ((cal.get("season_summary") or {}).get("seasons") or []):
+            g = row.get("max_gust_mph")
+            sfo_worst = g if (g is not None and (sfo_worst is None or g > sfo_worst)) else sfo_worst
+        ledger.check("ocean-wind-isolation",
+                     "The buoy record stays out of the day-by-day scoreboard and is published "
+                     "as observation only",
+                     not iso_problems and bool(ow_seasons),
+                     (f"{len(ow_seasons)} historical season rows, no future timestamp, and no "
+                      f"buoy value in calendar.json") if not iso_problems and ow_seasons
+                     else ("; ".join(iso_problems[:3]) or "no season rows"),
+                     evidence={"problems": iso_problems[:5],
+                               "buoy_worst_gust_kt": worst, "sfo_worst_gust_mph": sfo_worst})
+
+    # ---- 13i. the landlord summary cannot outrun the buoy dataset -------------
+    # The executive summary describes the ocean side to a reader who will not open
+    # ocean_wind.json.  Every figure it states must BE the buoy dataset's figure,
+    # and the caveat must be the dataset's sentence character for character, so a
+    # summary that softens "not a bound" into something more useful fails here
+    # rather than on the page.
+    ll_ow = ((landlord.get("executive_summary") or {}).get("ocean_wind")) or {}
+    consistency = []
+    if not ll_ow:
+        consistency.append("landlord.json carries no executive_summary.ocean_wind block, so "
+                           "the ocean side of the wind question is missing from the summary")
+    elif not ll_ow.get("available"):
+        if not ll_ow.get("reason"):
+            consistency.append("the ocean-wind block is unavailable but gives no reason for it")
+        if ow and ow.get("available"):
+            consistency.append("the landlord summary says the ocean-side record is unavailable "
+                               "although data/ocean_wind.json is published and available")
+    elif not (ow and ow.get("available")):
+        consistency.append("the landlord summary states ocean-side figures that "
+                           "data/ocean_wind.json does not publish")
+    else:
+        station = ow.get("station") or {}
+        summary = ow.get("summary") or {}
+        counters = summary.get("counters") or {}
+        if ll_ow.get("caveat") != ow.get("caveat"):
+            consistency.append("the caveat in the landlord summary is not the buoy dataset's "
+                               "caveat verbatim")
+        for flag in ("is_land_station", "is_measurement_inside_94122", "is_a_bound_for_94122"):
+            if ll_ow.get(flag) is not False:
+                consistency.append(f"{flag} is {ll_ow.get(flag)!r} in landlord.json, not False")
+        if ll_ow.get("station_id") != station.get("id"):
+            consistency.append(f"station_id {ll_ow.get('station_id')!r} vs "
+                               f"{station.get('id')!r}")
+        if ll_ow.get("distance_mi_from_centroid") != station.get("distance_mi_from_centroid"):
+            consistency.append(f"distance {ll_ow.get('distance_mi_from_centroid')!r} vs "
+                               f"{station.get('distance_mi_from_centroid')!r}")
+        if ll_ow.get("seasons_with_data") != summary.get("seasons_with_data"):
+            consistency.append(f"seasons_with_data {ll_ow.get('seasons_with_data')!r} vs "
+                               f"{summary.get('seasons_with_data')!r}")
+        for ll_key, count_key in (("gale_days_ge_34kt", "days_gust_ge_34kt"),
+                                  ("days_ge_40kt", "days_gust_ge_40kt"),
+                                  ("storm_days_ge_48kt", "days_gust_ge_48kt"),
+                                  ("max_gust_kt", "max_gust_kt"),
+                                  ("max_gust_mph", "max_gust_mph"),
+                                  ("max_wvht_ft", "max_wvht_ft")):
+            pub = ll_ow.get(ll_key) or {}
+            src = counters.get(count_key) or {}
+            for field in ("mean", "median", "min", "max", "n_seasons"):
+                got = pub.get(field)
+                want = src.get("n_seasons_with_value" if field == "n_seasons" else field)
+                if got != want:
+                    consistency.append(f"{ll_key}.{field}: summary says {got!r}, the buoy "
+                                       f"dataset says {want!r}")
+    ledger.check("ocean-wind-landlord-consistency",
+                 "Every ocean-side figure in the landlord executive summary is the buoy "
+                 "dataset's own figure, and its marine caveat is that dataset's sentence "
+                 "character for character",
+                 not consistency,
+                 ("the summary carries the buoy block with its verbatim caveat and six "
+                  "re-derived counters") if not consistency
+                 else "; ".join(consistency[:4]),
+                 evidence={"problems": consistency[:8], "available": ll_ow.get("available")})
 
     # ---- 13g. the feed: derived, dated and traceable -------------------------
     feed_data = load("feed.json")

@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-20T12:34:27Z",
+  "generated_utc": "2026-09-20T17:05:52Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,8 +9,8 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 74,
-    "passed": 74,
+    "total": 76,
+    "passed": 76,
     "failed": 0,
     "warnings": 0,
     "failed_checks": [],
@@ -91,7 +91,8 @@
           "www.ncdc.noaa.gov",
           "www2.census.gov",
           "geocoding.geo.census.gov",
-          "nomads.ncep.noaa.gov"
+          "nomads.ncep.noaa.gov",
+          "www.ndbc.noaa.gov"
         ]
       }
     },
@@ -248,7 +249,7 @@
       "id": "raw-phase-tokens-dataset",
       "title": "No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)",
       "status": "pass",
-      "detail": "0 raw tokens across 23023 scanned string(s)",
+      "detail": "0 raw tokens across 23025 scanned string(s)",
       "evidence": []
     },
     {
@@ -1076,6 +1077,23 @@
         "problems": [],
         "unevidenced": [],
         "bad_local": []
+      }
+    },
+    {
+      "id": "ocean-wind-published",
+      "title": "The ocean-side wind tier, if published, is labelled and re-derivable",
+      "status": "pass",
+      "detail": "data/ocean_wind.json is not published by this run",
+      "evidence": null
+    },
+    {
+      "id": "ocean-wind-landlord-consistency",
+      "title": "Every ocean-side figure in the landlord executive summary is the buoy dataset's own figure, and its marine caveat is that dataset's sentence character for character",
+      "status": "pass",
+      "detail": "the summary carries the buoy block with its verbatim caveat and six re-derived counters",
+      "evidence": {
+        "problems": [],
+        "available": false
       }
     },
     {
