@@ -255,6 +255,32 @@ found. Consequences a reader should know:
   (e.g. the spacing in "-1.11 ."). Sentences containing undecodable bytes are
   refused rather than rendered as mojibake.
 
+### 20. The strength card quotes two sentences, and only from a current discussion
+
+The "How strong CPC expects this El Niño to get" card quotes the monthly ENSO
+Diagnostic Discussion **verbatim** - but only the two sentences its patterns
+watch for (the "very strong event" probability and the "historic event"
+probability for the current season), and only when the archived discussion
+carries current-year text. Consequences a reader should know:
+
+* A strength statement CPC words differently - "strong" rather than "very
+  strong", a probability attached to a different season - does not appear on
+  the card. Its absence is **not** evidence CPC stated no strength outlook;
+  the card's "watched for but not stated" line says exactly what was looked
+  for and not found.
+* When CPC issues the next discussion (due 8 October 2026) the card requotes
+  from the new text the same run: sentences that survive keep their new
+  wording, sentences that disappear are listed as not found. The card cannot
+  hold last month's probabilities over next to this month's ONI - and if the
+  pipeline ever archives a discussion with no current-year text, the card
+  degrades to an explicit "not quoted as current" rather than printing stale
+  probabilities.
+* The quotations keep publisher quirks intact, including decimal thresholds
+  mid-sentence ("+2.5 °C or more for a 3-month RONI value") - an early pattern
+  clipped the quote at the decimal point, which the offline tests now pin
+  against. Sentences containing undecodable bytes are refused rather than
+  rendered as mojibake.
+
 ---
 
 ## Recommended next work, in priority order

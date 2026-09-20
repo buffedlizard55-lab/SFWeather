@@ -1,5 +1,82 @@
 # Next session — handoff
 
+## 1. State at the end of session 12 (19 Sep 2026 — dry-discussion seed fix; ENSO strength probabilities on the outlook strip)
+
+**Ledger:** **72 checks live**, 19 claims — all pass, 0 warnings (session 11's
+71 plus `enso-strength-verbatim`). Verified in the sandbox after every
+change; the next full proof is the CI run this push triggers.
+
+**Tests:** `tests/test_parsers.py` **439/439** · `tests/falsify_guards.py`
+**73 cases** · `tests/falsify_smoke.py` **31 cases** · `npm test` (jsdom
+smoke, guards 1–31) passes.
+
+**What session 12 changed:**
+
+1. **Bug 72 — dry-discussion seed fix.** The September AFD carries no
+   quotable storm-language sentence, so five falsification mutations had
+   nothing to mutate and passed vacuously. Both harnesses now seed one
+   verbatim sentence from the archived AFD text and then mutate it (failing
+   loudly on empty discussions was rejected: it would redden CI on every dry
+   discussion). See `docs/VERIFICATION.md` session 12.
+2. **ENSO strength probabilities on the outlook strip (closes session-11
+   priority 6).** `enso_strength_outlook()` extracts CPC's two strength
+   sentences from the archived ENSO Diagnostic Discussion and the site quotes
+   them verbatim with a no-added-number marker, a source link, and a
+   `not_found` line; the printable executive summary carries the same bullet.
+   A discussion with no current-year text is refused outright rather than
+   quoted as current. Ledger check + render guard + 13 offline assertions,
+   all falsified before being kept. A pattern-tail truncation ("(+2." instead
+   of the full "+2.5 °C or more" threshold) was caught by the new tests
+   before merge and is pinned against.
+3. **Live re-verification (~21:55 UTC).** NWS forecast (14 periods), CAZ006
+   alerts (0), ONI `JJA 2026 +1.80`, the full ensodisc page including both
+   strength sentences, and the fxus05 issuance line / OND wording / third
+   caveat / Oct-15 supersession line re-checked against the live official
+   pages: exact matches, table in `docs/VERIFICATION.md` session 12.
+
+**Watch items for the next session (one new behaviour added):**
+
+* **8 October 2026** — next ENSO Diagnostic Discussion. Confirm the nightly
+  run picks it up; the diagnostic_status/synopsis should change only if CPC
+  changes them. The new strength card will requote from the new text the same
+  run — expect its quotes and `not_found` list to rotate, which is designed
+  behaviour, not a bug (`docs/LIMITATIONS.md` §20).
+* **Mid-late October 2026** — next long-lead outlook + prognostic discussion.
+  NOAA's own words (quoted on the site): probabilities "may be increased
+  further". After that issuance the caveat card's `not_found` list will grow
+  as CPC rewrites sentences — designed behaviour, not a bug
+  (`docs/LIMITATIONS.md` §19).
+* **19 Oct – 19 Nov 2026** — the ubuntu-latest migration window. This repo is
+  pinned to ubuntu-24.04, so nothing should change; if a nightly run shows
+  OS-related irregularities anyway, that is the first place to look. The
+  deliberate migration to ubuntu-26.04 is an open item below.
+
+## Priorities for session 13 (as of 19 Sep 2026, end of session 12)
+
+1. **CPC issuance watches (8 Oct + mid-late Oct)** — low effort, time-critical,
+   nothing to code unless a pattern breaks (see watch items above; the 8 Oct
+   watch now covers the strength card's requote as well as the status line).
+2. **Multi-ZIP support.** The pipeline is parameterised by coordinate; what
+   remains is (a) a ZIP→centroid manifest derived from the same Census
+   Gazetteer fetch the pipeline already performs (one fetch, all SF ZIPs),
+   (b) running the per-point tiers for each selected ZIP in the nightly job,
+   (c) a front-end picker. Opened in session 8, still open.
+3. **Wind successor stitching (GHCNh/SSODv2).** The nightly probes keep
+   recording coverage; stitching moves every published 1991–2020 wind
+   statistic, so it stays a maintainer decision.
+4. **CPC back-test archive.** Next attempt: inspect the raw HTML of
+   `llarc.ind.php` from a real browser (the markdown render strips the form
+   field names) or POST `llarc.php` with candidate parameter names; the GIF
+   archive is mapped but not sampleable by `lib_shape`.
+5. **The two PR-15 follow-ups**: explicit "not returned" rows for individual
+   Census geography fields (latent bug-49 path in `kvTable` callers), and a
+   `failed-fetches-explained` ledger check (every failed, non-expected-absent
+   fetch must carry an explanation that renders).
+6. **Deliberate ubuntu-26.04 migration** after the window opens: test both
+   workflows on `ubuntu-26.04`, then unpin.
+
+---
+
 ## 1. State at the end of session 11 (19 Sep 2026 — stale-PR audit; falsify time bomb #2; printable executive summary; CI migration hardening)
 
 **Ledger:** **71 checks live**, 19 claims — all pass, 0 warnings (session 10's

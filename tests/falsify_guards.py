@@ -16,6 +16,7 @@ import copy
 import json
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -173,15 +174,75 @@ def _c5(tmp):
     return tmp
 
 
+# ---------------------------------------------------------------------------
+# Bug 72: the four AFD cases below used to loop for the first non-empty
+# category and mutate nothing when every sentence list was empty - so on a
+# dry discussion with zero flagged sentences they "passed" without testing
+# anything (four BAD lines on 19 Sep 2026).  _ensure_afd_sentence() seeds one
+# verbatim sentence, lifted from the fetched AFD text archived in the same
+# fixture, before the mutation runs.  The case then tests the guard against a
+# stormy-looking discussion; if the fixture carries no seedable sentence at
+# all the helper raises instead of silently no-op'ing (the _d README case
+# sets that precedent).
+# ---------------------------------------------------------------------------
+
+def _first_prose_sentence(afd_text):
+    """First furniture-free sentence of a fetched AFD product text.
+
+    The text is whitespace-collapsed exactly the way the ledger collapses it
+    (climo.collapse_ws), so the returned sentence is always a verbatim
+    substring of what the guard checks against.  WMO headers, section markers
+    ("..."), issuance lines and key-message bullets are skipped, leaving a
+    real forecast sentence.
+    """
+    collapsed = re.sub(r"\s+", " ", afd_text or "").strip()
+    for frag in re.split(r"(?<=[.!?])\s+", collapsed):
+        s = frag.strip()
+        if len(s) < 60:
+            continue
+        if s.startswith("Issued at"):
+            continue
+        if "..." in s or "&&" in s or "FXUS" in s or "AFDMTR" in s:
+            continue
+        if not re.match(r"[A-Z]", s):
+            continue
+        if s.count(".") > 3:
+            continue
+        return s
+    raise AssertionError("fixture AFD text carries no seedable prose sentence")
+
+
+def _ensure_afd_sentence(cal, nws):
+    """Return (category, sentence) for the first AFD sentence, seeding one.
+
+    When the scan flagged nothing (a dry discussion), one verbatim sentence
+    is taken from the fetched discussion text archived in the fixture and
+    published on the first category, with the count and the found-flag set
+    the way the pipeline would set them - so the guard under test sees the
+    same shape a stormy night produces.
+    """
+    cats = cal["afd_language"]["categories"]
+    for cat in cats:
+        if cat.get("sentences"):
+            return cat, cat["sentences"][0]
+    seed = _first_prose_sentence(
+        ((nws.get("products") or {}).get("AFD") or {}).get("text") or "")
+    section = (cal["afd_language"].get("sections_scanned") or ["LONG TERM"])[0]
+    cats[0]["sentences"] = [{
+        "section": section, "sentence": seed, "matched_patterns": []}]
+    cats[0]["sentence_count"] = 1
+    cal["afd_language"]["any_language_found"] = True
+    return cats[0], cats[0]["sentences"][0]
+
+
 @case("a quoted AFD sentence edited (no longer verbatim)", "fail", "afd-language-verbatim")
 def _a(tmp):
     for f in DATA.glob("*.json"):
         shutil.copy2(f, tmp / f.name)
     cal = load("calendar.json")
-    for cat in cal["afd_language"]["categories"]:
-        if cat["sentences"]:
-            cat["sentences"][0]["sentence"] = "INVENTED SENTENCE THAT NWS NEVER WROTE."
-            break
+    nws = load("nws.json")
+    _cat, sent = _ensure_afd_sentence(cal, nws)
+    sent["sentence"] = "INVENTED SENTENCE THAT NWS NEVER WROTE."
     dump(tmp / "calendar.json", cal)
     return tmp
 
@@ -191,10 +252,9 @@ def _a2(tmp):
     for f in DATA.glob("*.json"):
         shutil.copy2(f, tmp / f.name)
     cal = load("calendar.json")
-    for cat in cal["afd_language"]["categories"]:
-        if cat["sentences"]:
-            cat["sentence_count"] = 0
-            break
+    nws = load("nws.json")
+    cat, _sent = _ensure_afd_sentence(cal, nws)
+    cat["sentence_count"] = 0
     dump(tmp / "calendar.json", cal)
     return tmp
 
@@ -224,10 +284,9 @@ def _q(tmp):
     for f in DATA.glob("*.json"):
         shutil.copy2(f, tmp / f.name)
     cal = load("calendar.json")
-    for cat in cal["afd_language"]["categories"]:
-        if cat["sentences"]:
-            cat["sentences"][0]["date"] = "2026-12-25"
-            break
+    nws = load("nws.json")
+    _cat, sent = _ensure_afd_sentence(cal, nws)
+    sent["date"] = "2026-12-25"
     dump(tmp / "calendar.json", cal)
     return tmp
 
@@ -237,10 +296,9 @@ def _q2(tmp):
     for f in DATA.glob("*.json"):
         shutil.copy2(f, tmp / f.name)
     cal = load("calendar.json")
-    for cat in cal["afd_language"]["categories"]:
-        if cat["sentences"]:
-            cat["sentences"][0]["amount_in"] = 2.5
-            break
+    nws = load("nws.json")
+    _cat, sent = _ensure_afd_sentence(cal, nws)
+    sent["amount_in"] = 2.5
     dump(tmp / "calendar.json", cal)
     return tmp
 
@@ -1061,6 +1119,114 @@ def _pc7(tmp):
     def fn(cav):
         cav["quotes"][0]["text"] = "decoded with replacement \ufffd somewhere."
     _patch_caveats(tmp, fn)
+    return tmp
+
+
+# --------------------------------------------------------------------------
+# ENSO strength outlook (ledger check enso-strength-verbatim).
+# Same quotations-only contract as the caveats, plus one rule of its own:
+# a discussion the pipeline flagged as stale must never be quoted.
+# --------------------------------------------------------------------------
+
+def _patch_strength(tmp, fn):
+    ll = load("landlord.json")
+    estr = ll["executive_summary"]["official_outlook"]["enso_strength"]
+    fn(estr)
+    dump(tmp / "landlord.json", ll)
+
+
+@case("an ENSO strength quote edited (no longer verbatim)", "fail",
+      "enso-strength-verbatim")
+def _est1(tmp):
+    _copy_all(tmp)
+    def fn(estr):
+        estr["quotes"][0]["text"] = "CPC SAYS THIS EL NINO WILL BE MILD, PROBABLY."
+    _patch_strength(tmp, fn)
+    return tmp
+
+
+@case("an ENSO strength quote with a hand-added key outside the patterns", "fail",
+      "enso-strength-verbatim")
+def _est2(tmp):
+    _copy_all(tmp)
+    def fn(estr):
+        estr["quotes"][0]["key"] = "hand_added_opinion"
+    _patch_strength(tmp, fn)
+    return tmp
+
+
+@case("the ENSO strength block removed from the dataset", "fail",
+      "enso-strength-verbatim")
+def _est3(tmp):
+    _copy_all(tmp)
+    ll = load("landlord.json")
+    ll["executive_summary"]["official_outlook"].pop("enso_strength", None)
+    dump(tmp / "landlord.json", ll)
+    return tmp
+
+
+@case("strength claimed available but the archived discussion is gone", "fail",
+      "enso-strength-verbatim")
+def _est4(tmp):
+    _copy_all(tmp)
+    enso = load("enso.json")
+    before = len(enso.get("sources") or [])
+    enso["sources"] = [d for d in enso.get("sources", [])
+                       if "ensodisc" not in (d.get("url") or "")
+                       and "ENSO Diagnostic Discussion" not in (d.get("label") or "")]
+    if len(enso["sources"]) == before:
+        raise AssertionError("fixture expected an ensodisc source to strip")
+    dump(tmp / "enso.json", enso)
+    return tmp
+
+
+@case("an honestly unavailable strength block (reason stated, no quotes)", "pass",
+      "enso-strength-verbatim")
+def _est5(tmp):
+    _copy_all(tmp)
+    def fn(estr):
+        estr.clear()
+        estr.update({
+            "available": False,
+            "reason": "The archived ENSO Diagnostic Discussion is absent or "
+                    "empty in this run, so no strength outlook can be quoted.",
+            "source_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml",
+            "quotes": [],
+        })
+    _patch_strength(tmp, fn)
+    return tmp
+
+
+@case("a control-character (mojibake) sentence smuggled into the strength quotes", "fail",
+      "enso-strength-verbatim")
+def _est6(tmp):
+    _copy_all(tmp)
+    def fn(estr):
+        estr["quotes"][0]["text"] = "clean text \u0080\u009c with mojibake inside."
+    _patch_strength(tmp, fn)
+    return tmp
+
+
+@case("a Unicode replacement character smuggled into the strength quotes", "fail",
+      "enso-strength-verbatim")
+def _est7(tmp):
+    _copy_all(tmp)
+    def fn(estr):
+        estr["quotes"][0]["text"] = "decoded with replacement \ufffd somewhere."
+    _patch_strength(tmp, fn)
+    return tmp
+
+
+@case("a stale ENSO discussion quoted as if it were current", "fail",
+      "enso-strength-verbatim")
+def _est8(tmp):
+    _copy_all(tmp)
+    enso = load("enso.json")
+    disc = next(d for d in enso.get("sources", []) if "ensodisc" in (d.get("url") or ""))
+    if disc.get("usable_as_current_source") is not True:
+        raise AssertionError("fixture expected a current (non-stale) discussion to age")
+    disc["usable_as_current_source"] = False
+    dump(tmp / "enso.json", enso)
     return tmp
 
 

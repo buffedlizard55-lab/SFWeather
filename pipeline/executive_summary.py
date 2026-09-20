@@ -147,6 +147,16 @@ def build_markdown():
                   + (f" — alert status: {esc(enso.get('alert_status'))}" if enso.get("alert_status") else ""))
         if enso.get("source_url"):
             md.append(f"  - Verify: [{esc(enso['source_url'])}]({enso['source_url']})")
+    estr = outlook.get("enso_strength") or {}
+    if estr.get("available") and estr.get("quotes"):
+        md.append("- **How strong CPC expects this El Niño to get (quoted verbatim):**")
+        for q in estr["quotes"]:
+            md.append(f"  - {esc(q.get('label') or q.get('key'))}: “{esc(q.get('text'))}”")
+        if estr.get("source_url"):
+            md.append(f"  - Verify the whole discussion: [{esc(estr['source_url'])}]({estr['source_url']})")
+    elif estr.get("available") is False:
+        md.append("- **El Niño strength outlook:** not available this run — "
+                  + esc(estr.get("reason") or "see the outlook strip on the site"))
     tilt = outlook.get("cpc_tilt") or {}
     if tilt:
         md.append(f"- **CPC long-lead outlooks:** {esc(tilt.get('periods_covering_this_season'))} "

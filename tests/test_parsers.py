@@ -724,7 +724,7 @@ section("landlord maintenance cost drivers")
 
 from landlord_summary import (build_cost_drivers, expected_event_days,  # noqa: E402
                               phase_label, fmt_oni_c, parse_damage_usd,
-                              prognostic_caveats)
+                              prognostic_caveats, enso_strength_outlook)
 
 # --------------------------------------------------------------------------- #
 # Prognostic-discussion caveat extraction (landlord_summary.prognostic_caveats)
@@ -851,6 +851,155 @@ try:
               [q.get("key") for q in (_expect_cav.get("quotes") or [])]))
 except Exception as _e:  # noqa: BLE001
     check("caveats: the committed landlord.json block equals a fresh extraction",
+          False, "raised: %s" % _e)
+
+# --------------------------------------------------------------------------- #
+# ENSO strength outlook extraction (landlord_summary.enso_strength_outlook)
+#
+# Same contract as the caveats above, reading the archived ENSO Diagnostic
+# Discussion instead of the 90-day outlook discussion: locate CPC's strength
+# probability sentences by pattern, publish them verbatim, refuse
+# non-printable text, name what was watched for but absent, degrade honestly
+# when the archive is missing, and refuse a discussion the pipeline flagged
+# as stale rather than quote last month's probabilities as current.
+# --------------------------------------------------------------------------- #
+
+section("enso strength outlook")
+
+# The lead-in sentence ends with a period so the very-strong quotation is
+# pinned to its own sentence (the pattern's prefix may not cross one), and
+# the historic sentence carries a decimal threshold mid-span, as the real
+# September discussion does - the tail must not clip the quote there.
+_SYNTH_ENSODISC = (
+    "Climate Prediction Center - ENSO Diagnostic Discussion\n"
+    "10 September 2026\n"
+    "EL NI\u00d1O/SOUTHERN OSCILLATION (ENSO) DIAGNOSTIC DISCUSSION\n"
+    "El Ni\u00f1o conditions strengthened in August. "
+    "There is greater than 90% chance of a very strong event during "
+    "October-November-December.\n"
+    "During the October-December 2026 season, there is a 75% chance of a "
+    "historic event that would exceed previous events dating back to 1950 "
+    "(+2.5\u00b0C or more for a 3-month RONI value ).")
+
+_SYNTH_ENSO = {"sources": [
+    {"label": "ENSO Diagnostic Discussion", "ok": True,
+     "text": _SYNTH_ENSODISC, "issued": "10 September 2026",
+     "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/"
+            "enso_advisory/ensodisc.shtml",
+     "sha256": "5" * 64, "characters": len(_SYNTH_ENSODISC)}]}
+
+_s = enso_strength_outlook(_SYNTH_ENSO)
+check("strength: both watched-for sentences extracted",
+      len(_s.get("quotes") or []) == 2 and not _s.get("not_found"),
+      str([q.get("key") for q in (_s.get("quotes") or [])]) + str(_s.get("not_found")))
+check("strength: the extracted very-strong sentence is verbatim",
+      any(q["text"] == ("There is greater than 90% chance of a very strong "
+                        "event during October-November-December.")
+          for q in _s["quotes"]),
+      str((_s.get("quotes") or [{}])[0].get("text")))
+check("strength: the extracted historic sentence is verbatim",
+      any(q["text"] == ("During the October-December 2026 season, there is a "
+                        "75% chance of a historic event that would exceed "
+                        "previous events dating back to 1950 (+2.5\u00b0C or "
+                        "more for a 3-month RONI value ).")
+          for q in _s["quotes"]),
+      str([q.get("text") for q in (_s.get("quotes") or [])]))
+check("strength: a decimal threshold mid-sentence does not clip the quotation",
+      any("RONI value" in q["text"] and not q["text"].rstrip(".").endswith("2")
+          for q in _s["quotes"] if q["key"] == "historic_event_probability"),
+      str([q.get("text") for q in (_s.get("quotes") or [])]))
+check("strength: the issuance line is copied, not parsed",
+      _s.get("issued_line") == "10 September 2026", str(_s.get("issued_line")))
+check("strength: source url and hash follow the archived discussion",
+      _s.get("source_url") == "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/"
+                              "enso_advisory/ensodisc.shtml"
+      and _s.get("discussion_sha256") == "5" * 64,
+      str(_s.get("source_url")))
+
+# A rewritten discussion that no longer contains the strength sentences must
+# publish an empty quote list and name what it watched for.
+_s2 = enso_strength_outlook({"sources": [
+    {"label": "ENSO Diagnostic Discussion", "ok": True,
+     "text": "10 September 2026\nENSO-neutral conditions are present.",
+     "issued": "10 September 2026", "url": "https://x",
+     "sha256": "6" * 64, "characters": 48}]})
+check("strength: a rewritten discussion publishes nothing and says so",
+      _s2.get("available") is True and (_s2.get("quotes") or []) == []
+      and sorted(_s2.get("not_found") or []) ==
+          ["historic_event_probability", "very_strong_event_probability"],
+      str(_s2))
+
+# A matched sentence carrying publisher-side broken bytes is refused, while
+# the surviving sentence is still published.
+_SMOJI = _SYNTH_ENSODISC.replace(
+    "There is greater than 90% chance of a very strong event during "
+    "October-November-December.",
+    "There is greater than 90% chance of a very \u0080\u009c strong event "
+    "during October-November-December.")
+_s3 = enso_strength_outlook({"sources": [
+    {"label": "ENSO Diagnostic Discussion", "ok": True, "text": _SMOJI,
+     "issued": "10 September 2026", "url": "https://x",
+     "sha256": "7" * 64, "characters": len(_SMOJI)}]})
+check("strength: a matched sentence with control characters is refused",
+      _s3.get("available") is True
+      and "very_strong_event_probability" not in [q["key"] for q in (_s3.get("quotes") or [])]
+      and any("very_strong_event_probability" in nf for nf in (_s3.get("not_found") or []))
+      and "historic_event_probability" in [q["key"] for q in (_s3.get("quotes") or [])],
+      str(_s3.get("not_found")))
+
+_SRMBK = _SYNTH_ENSODISC.replace(
+    "dating back to 1950 (+2.5\u00b0C or more for a 3-month RONI value ).",
+    "dating back to 1950 (+2.5\u00b0C or more for a 3-month \ufffd value ).")
+_s3b = enso_strength_outlook({"sources": [
+    {"label": "ENSO Diagnostic Discussion", "ok": True, "text": _SRMBK,
+     "issued": "10 September 2026", "url": "https://x",
+     "sha256": "8" * 64, "characters": len(_SRMBK)}]})
+check("strength: a matched sentence with a replacement character is refused",
+      _s3b.get("available") is True
+      and "historic_event_probability" not in [q["key"] for q in (_s3b.get("quotes") or [])]
+      and any("historic_event_probability" in nf for nf in (_s3b.get("not_found") or [])),
+      str(_s3b.get("not_found")))
+
+# Missing archive: honest unavailability, no quotes, a reason, no crash.
+_s4 = enso_strength_outlook({"sources": []})
+check("strength: no archived discussion degrades to an honest unavailable block",
+      _s4.get("available") is False and not _s4.get("quotes")
+      and bool((_s4.get("reason") or "").strip()),
+      str(_s4))
+_s5 = enso_strength_outlook({})
+check("strength: no enso file at all degrades the same way",
+      _s5.get("available") is False and not _s5.get("quotes"), str(_s5))
+
+# A stale discussion is refused even though its sentences still match.
+_s6 = enso_strength_outlook({"sources": [
+    {"label": "ENSO Diagnostic Discussion", "ok": True,
+     "text": _SYNTH_ENSODISC, "issued": "10 September 2026",
+     "url": "https://x", "sha256": "9" * 64,
+     "characters": len(_SYNTH_ENSODISC),
+     "usable_as_current_source": False}]})
+check("strength: a stale-flagged discussion is refused, not quoted as current",
+      _s6.get("available") is False and not _s6.get("quotes")
+      and "current" in (_s6.get("reason") or ""),
+      str(_s6))
+
+# The committed dataset must carry the block the site renders: it exists and
+# its quotes are the extractor's own output over the committed archive.
+try:
+    with io.open(os.path.join(ROOT, "data", "landlord.json"), encoding="utf-8") as _fh:
+        _ll_str = (((json.load(_fh).get("executive_summary") or {})
+                    .get("official_outlook") or {}).get("enso_strength"))
+    _ll_enso = json.load(io.open(os.path.join(ROOT, "data", "enso.json"), encoding="utf-8"))
+    _expect_str = enso_strength_outlook(_ll_enso)
+    _same_str = ((_ll_str or {}).get("available") == _expect_str.get("available")
+                 and sorted((q or {}).get("text") for q in (_ll_str or {}).get("quotes") or [])
+                 == sorted(q.get("text") for q in _expect_str.get("quotes") or []))
+    check("strength: the committed landlord.json block equals a fresh extraction",
+          bool(_ll_str) and _same_str,
+          "committed=%s fresh=%s" % (
+              [q.get("key") for q in ((_ll_str or {}).get("quotes") or [])],
+              [q.get("key") for q in (_expect_str.get("quotes") or [])]))
+except Exception as _e:  # noqa: BLE001
+    check("strength: the committed landlord.json block equals a fresh extraction",
           False, "raised: %s" % _e)
 
 # expected_event_days: linearity of expectation, both record shapes.

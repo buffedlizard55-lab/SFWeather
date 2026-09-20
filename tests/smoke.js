@@ -964,6 +964,46 @@ setTimeout(() => {
     }
   }
 
+  // 31. The ENSO strength outlook: CPC's own probability sentences about how
+  //     strong this El Niño gets, quoted verbatim in the official-outlook
+  //     strip.  Same contract as the caveats card, checked independently:
+  //     every dataset quote must render, the card must carry its own marker
+  //     (so the reader knows the probabilities are CPC's, not this project's)
+  //     and its own discussion link, and an unavailable block must render a
+  //     card stating its reason rather than silently dropping.
+  {
+    const stripText = text('#landlord-official');
+    let estr = null;
+    try {
+      estr = (((JSON.parse(fs.readFileSync(path.join(repo, 'data/landlord.json'), 'utf8'))
+        .executive_summary || {}).official_outlook || {}).enso_strength) || null;
+    } catch (e) { estr = null; }
+    if (!estr) {
+      if (!/official ENSO state/i.test(stripText)) {
+        problems.push('no enso_strength block and the official strip did not render at all');
+      }
+    } else if (estr.available) {
+      (estr.quotes || []).forEach(q => {
+        if (!stripText.includes(q.text || '')) {
+          problems.push('strength quote \"' + (q.key || '?') + '\" is in the dataset but not rendered: ' +
+            (q.text || '').slice(0, 90));
+        }
+      });
+      if ((estr.quotes || []).length && !/no number or date of its own/i.test(stripText)) {
+        problems.push('rendered strength quotes do not carry the \"no number or date of its own\" marker');
+      }
+      if (!/Read CPC\u2019s ENSO Diagnostic Discussion|Read CPC's ENSO Diagnostic Discussion/.test(stripText)) {
+        problems.push('the strength card does not link the ENSO Diagnostic Discussion');
+      }
+    } else {
+      if (!/How strong CPC expects/i.test(stripText)) {
+        problems.push('strength block is unavailable but no strength card rendered to say so');
+      } else if (!estr.reason || !stripText.includes(estr.reason.slice(0, 40))) {
+        problems.push('the unavailable strength card does not state its reason');
+      }
+    }
+  }
+
   if (problems.length) {
     console.error('SMOKE TEST FAILED');
     problems.forEach(p => console.error(' - ' + p));
