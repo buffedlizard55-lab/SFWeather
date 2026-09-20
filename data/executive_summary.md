@@ -25,7 +25,7 @@ Plan on about 12.79 in for Oct 1 – Jan 31. The median season is 13.26 in; the 
 
 ### Q2: Will it rain for days or weeks straight?
 
-A long wet spell is the normal case, not the exception: 96.7% of seasons had a run of 3+ consecutive wet days, 80.0% had 5+ days, 53.3% had 7+ days and 23.3% had 10+ days. The longest run averages 7.3 days and has reached 17.0 days. A week-long spell is roughly a coin flip — worth pre-emptive gutter, roof-drain and tenant-communication plans.
+A long wet spell is the normal case, not the exception: 96.7% of seasons had a run of 3+ consecutive wet days, 80.0% had 5+ days, 53.3% had 7+ days and 23.3% had 10+ days. The longest run averages 7.3 days and has reached 17.0 days. Conditioned on the phase this season is in — El Niño — 81.8% of those 11 seasons on record had a 7+ day spell, against 53.3% over all 30 (small sample: 11 seasons). A week-long spell is roughly a coin flip on the 30-season record — worth pre-emptive gutter, roof-drain and tenant-communication plans.
 
 | Figure | Value |
 | --- | --- |
@@ -34,8 +34,9 @@ A long wet spell is the normal case, not the exception: 96.7% of seasons had a r
 | Any 7+ day wet run | 53.3% of seasons |
 | Any 10+ day wet run | 23.3% of seasons |
 | Longest run | mean 7.3 d · max 17.0 d |
+| Any 7+ day wet run in El Niño seasons on record (11 of the 30) | 81.8% of those seasons (9 of 11) |
 
-**Basis:** 1991–2020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown) — wet day = ≥ 0.01 in of liquid precipitation, run counted inside Oct 1 – Jan 31 · **Confidence:** n = 30 seasons
+**Basis:** 1991–2020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown) — wet day = ≥ 0.01 in of liquid precipitation, run counted inside Oct 1 – Jan 31 · **Confidence:** n = 30 seasons; the phase split rests on 11 of them
 
 **Verify:** [NCEI GHCN-Daily USW00023272](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv)
 
@@ -149,6 +150,7 @@ _Ranked for the landlord question behind this site: what about this rainy season
 | Run of ≥7 consecutive wet days | 53.3% of seasons (16 of 30) |
 | Run of ≥10 consecutive wet days | 23.3% of seasons (7 of 30) |
 | Longest run in a season | mean 7.3 days · max 17.0 days on record |
+| Run of ≥7 consecutive wet days in El Niño seasons on record | 81.8% of the 11 such seasons (9 of 11); longest run in those seasons averaged 9.1 days, max 17.0 |
 
 **Verify:** [NCEI GHCN-Daily USW00023272 (SF downtown gauge)](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv)
 

@@ -449,3 +449,28 @@ carries current-year text. Consequences a reader should know:
   are counted separately from failures and each must name a checkable reason; a
   fetch that was supposed to work and did not is listed by URL on the status line
   and recorded as a ledger warning.
+
+## 25. Phase-conditioned rain-duration statistics rest on 7–12 seasons (added 20 Sep 2026, session 13)
+
+* **The sample is small, and it is printed.**  The site now answers "how many days
+  straight" separately for each ENSO phase.  The 30-season record splits into
+  **11 El Niño, 7 neutral and 12 La Niña** seasons, so one season moves a phase
+  percentage by roughly 8–14 points.  Every percentage is therefore published as
+  `x% (a of n)` and the bottom-line confidence line reads
+  `n = 30 seasons; the phase split rests on 11 of them`.
+* **It is an observed frequency, not a forecast for 2026-27.**  "81.8% of the 11
+  El Niño seasons on record had a 7+ day wet spell" describes those 11 seasons.
+  It does not say a 7+ day spell will happen this winter.  The site's wording and
+  the cost-driver label keep that distinction.
+* **The phase assignment is this project's, from NOAA's ONI.**  A season is
+  assigned by the 3-month ONI value centred on November, using NOAA's own ±0.5 °C
+  thresholds and its published ONI file.  PHASE-CONDITIONED WET-SPELL FIGURES
+  INHERIT ANY UNCERTAINTY IN THAT ASSIGNMENT — an ONI value near ±0.5 °C puts a
+  season near a phase boundary, and the record's 30 seasons cannot resolve that.
+* **Only the duration question has been stratified so far.**  Heavy-rain-day
+  counts, the wind+rain counters and the peak-gust record are still published for
+  the whole record; stratifying them by phase is open work (see
+  `docs/NEXT_SESSION.md` §7), and each will carry the same n-printed caveat.
+* **A phase with no seasons produces no row.**  The table cannot show a 0% for a
+  sample of zero, so absence of a row means absence of seasons, not absence of
+  storms.

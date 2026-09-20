@@ -549,6 +549,29 @@ def run_smoke(repo):
     return proc.returncode, proc.stdout + proc.stderr
 
 
+# ==========================================================================
+# Cases for render guard 32: the phase-conditioned wet-spell column.
+# ==========================================================================
+
+@case("the ENSO table rendered without the phase-conditioned spell column",
+      expect_msg="lost the phase-conditioned 7+ day wet-spell column")
+def _st1(repo):
+    patch_text(repo, "assets/js/app.js",
+               "{ label: '7+ day wet spell', num: true },"
+               " { label: 'Longest run, mean', num: true }], srows,",
+               "], srows,")
+    return repo
+
+
+@case("the phase-conditioned column rendered without its sample size",
+      expect_msg="does not print its sample size")
+def _st2(repo):
+    patch_text(repo, "assets/js/app.js",
+               "`${n(st.ge_7_days.pct, 1)}% (${st.ge_7_days.seasons} of ${st.n})`",
+               "`${n(st.ge_7_days.pct, 1)}%`")
+    return repo
+
+
 def main():
     if not pathlib.Path(NODE_PATH).exists():
         print("node_modules not installed - run: npm install")

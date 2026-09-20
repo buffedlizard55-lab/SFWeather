@@ -147,6 +147,14 @@ def record(res, expected_absent=None, **kwargs):
 
 # ------------------------------------------------------------------ helpers
 
+# Tags a browser renders *without* adding a word break.  Everything else is
+# treated as a separator (see html_to_text).
+_INLINE_TAGS = ("a", "abbr", "b", "bdi", "bdo", "big", "cite", "code", "del",
+                "dfn", "em", "i", "ins", "kbd", "mark", "q", "s", "samp",
+                "small", "span", "strike", "strong", "sub", "sup", "time",
+                "tt", "u", "var", "wbr")
+
+
 def html_to_text(html):
     """Very small HTML->text conversion (enough for NOAA's static pages).
 
@@ -157,12 +165,26 @@ def html_to_text(html):
     sentence boundaries, which chopped the verbatim quotes we store.  Everything
     returned here is therefore what a human sees in a browser, and is normalised
     to NFC so accented letters never depend on the source's encoding.
+
+    **Inline tags are removed without inserting a space** (bug 73, 20 Sep 2026).
+    The generic rule below used to replace *every* tag with a space, which is
+    right for block markup but wrong for inline markup: a browser renders
+    ``(+2.5&deg;C or more for a <a href="...">3-month RONI value</a>).`` as
+    ``(+2.5°C or more for a 3-month RONI value).``, while the old rule produced
+    ``... RONI value ).`` with a space the publisher never wrote.  That space
+    travelled into the stored verbatim quotations, so a quotation the page
+    calls verbatim was not character-for-character what NOAA published.  The
+    same sentence in CPC's own text-format product (fxus05, a ``<pre>`` block)
+    has no space there, which is how the artifact was identified.  Longest-first
+    alternation keeps ``<span>`` from matching as ``<s>``.
     """
     if not html:
         return ""
     text = re.sub(r"(?is)<(script|style).*?</\1>", " ", html)
     text = re.sub(r"(?i)<br\s*/?>", "\n", text)
     text = re.sub(r"(?i)</(p|div|tr|h[1-6]|li)>", "\n", text)
+    inline = "|".join(sorted(_INLINE_TAGS, key=len, reverse=True))
+    text = re.sub(r"(?i)</?(?:%s)(?:\s[^>]*)?/?>" % inline, "", text)
     text = re.sub(r"<[^>]+>", " ", text)
     text = html_lib.unescape(text)            # &ntilde; &#37; &deg; &nbsp; ...
     text = unicodedata.normalize("NFC", text)  # combining-mark forms -> one char

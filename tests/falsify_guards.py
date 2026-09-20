@@ -1256,6 +1256,70 @@ def _es2(tmp):
     return repo
 
 
+# --------------------------------------------------------------------------
+# Phase-conditioned wet-spell statistics (ledger check enso-streaks-recompute).
+# The whole point of the new table is that every percentage is the count over
+# the seasons in that phase; a percentage edited by hand, a denominator that no
+# longer matches the seasons, or a figure for a phase that has no seasons must
+# all fail the ledger rather than quietly reach the page.
+# --------------------------------------------------------------------------
+
+def _copy_all_with_streaks(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    return tmp
+
+
+@case("a phase-conditioned wet-spell percentage edited by hand", "fail",
+      "enso-streaks-recompute")
+def _es1(tmp):
+    _copy_all_with_streaks(tmp)
+    cal = load("calendar.json")
+    st = cal.get("enso_stratified_streaks") or {}
+    if "el_nino" not in st:
+        raise AssertionError("fixture expected a phase-conditioned streak table")
+    st["el_nino"]["ge_7_days"]["pct"] = 99.9
+    dump(tmp / "calendar.json", cal)
+    return tmp
+
+
+@case("a phase-conditioned wet-spell count moved without its percentage", "fail",
+      "enso-streaks-recompute")
+def _es2(tmp):
+    _copy_all_with_streaks(tmp)
+    cal = load("calendar.json")
+    st = cal.get("enso_stratified_streaks") or {}
+    if "la_nina" not in st:
+        raise AssertionError("fixture expected a phase-conditioned streak table")
+    st["la_nina"]["ge_7_days"]["seasons"] = 12
+    dump(tmp / "calendar.json", cal)
+    return tmp
+
+
+@case("the phase-conditioned streak table stripped from the dataset", "fail",
+      "enso-streaks-recompute")
+def _es3(tmp):
+    _copy_all_with_streaks(tmp)
+    cal = load("calendar.json")
+    if not cal.get("enso_stratified_streaks"):
+        raise AssertionError("fixture expected a phase-conditioned streak table")
+    cal.pop("enso_stratified_streaks")
+    dump(tmp / "calendar.json", cal)
+    return tmp
+
+
+@case("a phase invented with no seasons behind it", "fail",
+      "enso-streaks-recompute")
+def _es4(tmp):
+    _copy_all_with_streaks(tmp)
+    cal = load("calendar.json")
+    st = cal.get("enso_stratified_streaks") or {}
+    st["super_el_nino"] = {"n": 4, "phase_label": "Super El Ni\u00f1o",
+                           "ge_7_days": {"seasons": 4, "pct": 100.0}}
+    dump(tmp / "calendar.json", cal)
+    return tmp
+
+
 def main():
     failures = []
     for name, expect, check_id, build in CASES:

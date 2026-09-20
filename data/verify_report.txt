@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-20T00:17:56Z
+generated_utc: 2026-09-20T01:09:14Z
 
-checks: 72 passed, 0 failed, 0 warning(s)  (of 72)
+checks: 73 passed, 0 failed, 0 warning(s)  (of 73)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         189 recorded fetches (187 unique URLs)
@@ -39,12 +39,14 @@ checks: 72 passed, 0 failed, 0 warning(s)  (of 72)
         {'min': 1.71, 'p10': 6.38, 'p25': 8.5, 'median': 13.26, 'p75': 17.42, 'p90': 18.59, 'max': 22.82}
 [PASS] streak-arithmetic: Every published streak percentage equals seasons-with-a-streak / n_seasons
         ge_10_days: 7/30 = 23.3%; ge_3_days: 29/30 = 96.7%; ge_5_days: 24/30 = 80.0%; ge_7_days: 16/30 = 53.3%
+[PASS] enso-streaks-recompute: Every phase-conditioned wet-spell figure equals the seasons in that phase that produced it (recomputed from the same season rows)
+        all phases match
 [PASS] cost-drivers-structure: Every maintenance cost driver is ranked, carries evidence rows, and cites only official .gov sources
         6 drivers; all structural rules hold
 [PASS] cost-driver-expected-days-arithmetic: The published expected heavy-rain day counts equal the sum of the per-date 1991-2020 probabilities in the committed climatology table
         ge_025in_days: published 14.97 vs recomputed 14.97 over 123 season dates; ge_100in_days: published 3.19 vs recomputed 3.19 over 123 season dates
 [PASS] raw-phase-tokens-dataset: No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)
-        0 raw tokens across 22810 scanned string(s)
+        0 raw tokens across 22820 scanned string(s)
 [PASS] phase-label-present: Every ENSO phase value a renderer can reach ships with a reader-facing label (no underscore token, correct capitalisation)
         3 label(s) published
 [PASS] raw-phase-tokens: No raw ENSO data token (el_nino / la_nina) appears in any reader-facing executive-summary string

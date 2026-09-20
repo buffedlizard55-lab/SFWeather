@@ -133,6 +133,17 @@ Definition: wet day = ≥0.01 in. Streak = consecutive wet days inside Oct 1 –
 
 So a week-long wet spell is close to coin flip in any given year, and a 10-day spell happens roughly 1 year in 4. Plan roof, gutters, drainage, and tenant comms for week-long rain.
 
+**Conditioned on the ENSO phase** (the phase this season is actually in — El Niño, from the ONI in `data/enso.json`). Same record, smaller denominator, `n` always printed — an observed frequency in those seasons, **not** a forecast:
+
+| Phase | Seasons (n) | Any ≥7-day run | Longest run in those seasons |
+|---|---|---|---|
+| El Niño (this season's phase) | 11 | **81.8%** (9 of 11) | mean 9.1 d · max 17 d |
+| Neutral | 7 | 42.9% (3 of 7) | mean 6.1 d · max 10 d |
+| La Niña | 12 | 33.3% (4 of 12) | mean 6.3 d · max 11 d |
+| All 30 seasons | 30 | 53.3% (16 of 30) | mean 7.3 d · max 17 d |
+
+Read it as: *in the El Niño seasons on record, a week-plus spell happened in 9 of 11 of them* — a small sample (one season moves a phase percentage by 8–14 points), so treat it as context for planning, next to the all-seasons figure rather than instead of it. The same numbers appear on the site's season card, in bottom-line answer 2 and in cost driver 1; `pipeline/verify_claims.py` recomputes the whole table from the season rows on every run (`enso-streaks-recompute`).
+
 Source: same GHCN-Daily file.
 
 ### Wind, gusts, and wind+rain together

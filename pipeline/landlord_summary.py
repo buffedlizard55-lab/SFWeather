@@ -587,7 +587,7 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
                       severity, latest_oni, oni_when, diagnostic_status,
                       tilt, storms, days_in_horizon, horizon_last_day,
                       enso_strat=None, hourly_wind_rain=None,
-                      caveats=None, enso_strength=None):
+                      caveats=None, enso_strength=None, enso_streaks=None):
     """The landlord's questions, answered in the order they were asked.
 
     Every value is copied from an already-verified structure; nothing here is
@@ -639,6 +639,29 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
         "sources": [{"label": "NCEI GHCN-Daily USW00023272", "url": GHCN_URL}],
     })
 
+    # The same duration question, asked of the phase this season is actually in.
+    # Small sample, always published with its n, and it is an observed frequency
+    # in 11 El Nino seasons - not a forecast for 2026-27.
+    phase_streak = (enso_streaks or {}).get((latest_oni or {}).get("phase")) or {}
+    phase_streak_row = None
+    if phase_streak.get("ge_7_days") is not None and phase_streak.get("n"):
+        phase_streak_row = {
+            "label": (f"Any 7+ day wet run in {phase_streak.get('phase_label')} seasons "
+                      f"on record ({phase_streak.get('n')} of the 30)"),
+            "value": (f"{g(phase_streak.get('ge_7_days'),'pct')}% of those seasons "
+                      f"({g(phase_streak.get('ge_7_days'),'seasons')} of {phase_streak.get('n')})"),
+        }
+
+    streak_numbers = [
+        {"label": "Any 3+ day wet run", "value": f"{g(streak_prob.get('ge_3_days',{}),'pct')}% of seasons"},
+        {"label": "Any 5+ day wet run", "value": f"{g(streak_prob.get('ge_5_days',{}),'pct')}% of seasons"},
+        {"label": "Any 7+ day wet run", "value": f"{g(streak_prob.get('ge_7_days',{}),'pct')}% of seasons"},
+        {"label": "Any 10+ day wet run", "value": f"{g(streak_prob.get('ge_10_days',{}),'pct')}% of seasons"},
+        {"label": "Longest run", "value": f"mean {g(longest_streak,'mean')} d \u00b7 max {g(longest_streak,'max')} d"},
+    ]
+    if phase_streak_row:
+        streak_numbers.append(phase_streak_row)
+
     out.append({
         "n": 2,
         "key": "rain_duration",
@@ -648,17 +671,19 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
             f"seasons had a run of 3+ consecutive wet days, {g(streak_prob.get('ge_5_days',{}),'pct')}% had 5+ days, "
             f"{g(streak_prob.get('ge_7_days',{}),'pct')}% had 7+ days and {g(streak_prob.get('ge_10_days',{}),'pct')}% "
             f"had 10+ days. The longest run averages {g(longest_streak,'mean')} days and has reached "
-            f"{g(longest_streak,'max')} days. A week-long spell is roughly a coin flip \u2014 worth pre-emptive "
-            "gutter, roof-drain and tenant-communication plans."),
-        "numbers": [
-            {"label": "Any 3+ day wet run", "value": f"{g(streak_prob.get('ge_3_days',{}),'pct')}% of seasons"},
-            {"label": "Any 5+ day wet run", "value": f"{g(streak_prob.get('ge_5_days',{}),'pct')}% of seasons"},
-            {"label": "Any 7+ day wet run", "value": f"{g(streak_prob.get('ge_7_days',{}),'pct')}% of seasons"},
-            {"label": "Any 10+ day wet run", "value": f"{g(streak_prob.get('ge_10_days',{}),'pct')}% of seasons"},
-            {"label": "Longest run", "value": f"mean {g(longest_streak,'mean')} d \u00b7 max {g(longest_streak,'max')} d"},
-        ],
+            f"{g(longest_streak,'max')} days. "
+            + (f"Conditioned on the phase this season is in \u2014 {phase_streak.get('phase_label')} \u2014 "
+               f"{g(phase_streak.get('ge_7_days'),'pct')}% of those {phase_streak.get('n')} seasons on record had a "
+               f"7+ day spell, against {g(streak_prob.get('ge_7_days',{}),'pct')}% over all 30 (small sample: "
+               f"{phase_streak.get('n')} seasons). "
+               if phase_streak_row else "")
+            + "A week-long spell is roughly a coin flip on the 30-season record \u2014 worth pre-emptive "
+              "gutter, roof-drain and tenant-communication plans."),
+        "numbers": streak_numbers,
         "basis": obs + " \u2014 wet day = \u2265 0.01 in of liquid precipitation, run counted inside Oct 1 \u2013 Jan 31",
-        "confidence": f"n = {g(longest_streak,'n')} seasons",
+        "confidence": (f"n = {g(longest_streak,'n')} seasons" +
+                       (f"; the phase split rests on {phase_streak.get('n')} of them"
+                        if phase_streak_row else "")),
         "sources": [{"label": "NCEI GHCN-Daily USW00023272", "url": GHCN_URL}],
     })
 
@@ -986,9 +1011,16 @@ def build_bottom_line(*, season_total, wet_days, streak_prob, longest_streak,
 
 
 
+def g_(d, k):
+    """Tolerant nested lookup used by the cost drivers (missing key -> None)."""
+    if isinstance(d, dict):
+        return d.get(k)
+    return None
+
+
 def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
                        diagnostic_status, relevant_cpc, storms, monthly,
-                       hourly_wind_rain=None):
+                       hourly_wind_rain=None, enso_streaks=None):
     """Ranked repair & maintenance cost drivers for the 94122 rainy season.
 
     Every number in ``evidence`` is copied from the verified datasets produced
@@ -1021,6 +1053,23 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
             evidence.append({
                 "label": "Longest run in a season",
                 "value": f"mean {streak.get('mean')} days · max {streak.get('max')} days on record"})
+        # The same question for the phase this season is in.  Observed frequency
+        # in that subset of the record, with its n always shown.
+        ph = (enso_streaks or {}).get((latest_oni or {}).get("phase")) or {}
+        if ph.get("ge_7_days") and ph.get("n"):
+            evidence.append({
+                "label": (f"Run of ≥7 consecutive wet days in {ph.get('phase_label')} "
+                          f"seasons on record"),
+                "value": (f"{ph['ge_7_days'].get('pct')}% of the {ph.get('n')} such seasons "
+                          f"({ph['ge_7_days'].get('seasons')} of {ph.get('n')}); "
+                          f"longest run in those seasons averaged {g_(ph.get('longest_streak_days'),'mean')} days, "
+                          f"max {g_(ph.get('longest_streak_days'),'max')}")})
+        elif ph.get("n"):
+            evidence.append({
+                "label": (f"Run of ≥7 consecutive wet days in {ph.get('phase_label')} "
+                          f"seasons on record"),
+                "value": (f"no 7+ day run in the {ph.get('n')} such seasons; longest run in those "
+                          f"seasons averaged {g_(ph.get('longest_streak_days'),'mean')} days")})
         drivers.append({
             "driver": "Prolonged wet spells — roof, gutters & drainage",
             "why_it_costs": ("A week or more of nearly continuous rain saturates roofing and "
@@ -1315,6 +1364,7 @@ def main():
     dist = calendar.get("season_summary", {})
     streak_prob = calendar.get("streak_probability", {})
     enso_strat = calendar.get("enso_stratified", {})
+    enso_streaks = calendar.get("enso_stratified_streaks", {})
     monthly = calendar.get("monthly", [])
     days = calendar.get("days", [])
 
@@ -1557,6 +1607,7 @@ def main():
     }
     cost_drivers = build_cost_drivers(
         days=days, dist=dist, streak_prob=streak_prob, enso_strat=enso_strat,
+        enso_streaks=enso_streaks,
         latest_oni=latest_oni, diagnostic_status=diagnostic_status,
         relevant_cpc=relevant_cpc, storms=storms, monthly=monthly,
         hourly_wind_rain=hourly_wind_rain)
@@ -1728,7 +1779,8 @@ def main():
         horizon_last_day=(calendar.get("nws_window") or {}).get("last_day"),
         enso_strat=enso_strat, hourly_wind_rain=hourly_wind_rain,
         caveats=prognostic_caveats(cpc),
-        enso_strength=enso_strength_outlook(enso))
+        enso_strength=enso_strength_outlook(enso),
+        enso_streaks=enso_streaks)
 
     # Phase-aware ENSO sentence for the key finding: the tilt wording has to
     # follow the phase NOAA actually published, not a template that always
@@ -1796,6 +1848,7 @@ def main():
             "heavy_wind_and_rain": heavy_wind_rain,
             "max_gust": max_gust,
             "enso_stratified": enso_strat,
+            "enso_stratified_streaks": enso_streaks,
             "expected_days": expected_days,
             # The landlord's six questions, answered in the order asked, each
             # with the basis it rests on and the official file to check it in.

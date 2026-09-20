@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-20T00:17:56Z",
+  "generated_utc": "2026-09-20T01:09:14Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,8 +9,8 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 72,
-    "passed": 72,
+    "total": 73,
+    "passed": 73,
     "failed": 0,
     "warnings": 0,
     "failed_checks": [],
@@ -203,6 +203,13 @@
       "evidence": null
     },
     {
+      "id": "enso-streaks-recompute",
+      "title": "Every phase-conditioned wet-spell figure equals the seasons in that phase that produced it (recomputed from the same season rows)",
+      "status": "pass",
+      "detail": "all phases match",
+      "evidence": null
+    },
+    {
       "id": "cost-drivers-structure",
       "title": "Every maintenance cost driver is ranked, carries evidence rows, and cites only official .gov sources",
       "status": "pass",
@@ -234,7 +241,7 @@
       "id": "raw-phase-tokens-dataset",
       "title": "No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)",
       "status": "pass",
-      "detail": "0 raw tokens across 22810 scanned string(s)",
+      "detail": "0 raw tokens across 22820 scanned string(s)",
       "evidence": []
     },
     {
@@ -709,7 +716,7 @@
       "evidence": {
         "unmatched": [],
         "block_found": true,
-        "published_number_count": 405,
+        "published_number_count": 414,
         "allowlist": [
           0.01,
           0.1,

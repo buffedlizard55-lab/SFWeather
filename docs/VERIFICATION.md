@@ -1043,3 +1043,114 @@ committed dataset:
   `assets/js/app.js`, `tests/smoke.js`, `tests/test_parsers.py`,
   `tests/falsify_guards.py`, `tests/falsify_smoke.py`, `README.md`,
   `docs/LIMITATIONS.md`, `docs/NEXT_SESSION.md`, this file.
+
+## Session 13 — 20 September 2026 (pass 13): verbatim-quote fidelity, the duration question asked of *this* ENSO phase, live re-verification
+
+### Live re-verification against the official products (20 Sep 2026, ~01:00 UTC)
+
+Each row was fetched from the official product with the sandbox's browser-grade
+fetch tool and compared character-by-character with the committed dataset. The
+pipeline itself runs on GitHub Actions runners, which reach NOAA normally.
+
+| Product | Live official URL | Result |
+| --- | --- | --- |
+| Official ONI file | https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt | Last two rows `MJJ 2026 29.02 +1.39` and `JJA 2026 29.09 +1.80` — **exact match** with `data/enso.json` `official_oni` (including the AMJ 2026 `+0.95` the project's own derivation cross-checks at 0.98) |
+| ENSO Diagnostic Discussion (issued 10 Sep 2026) | https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml | Status `El Niño Advisory`, the synopsis and the 75%-historic-event sentence all present **verbatim**; next discussion `8 October 2026` confirmed |
+| CPC long-lead Prognostic Discussion fxus05 (issued 17 Sep 2026) | https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html | Issuance line `830 AM EDT Thu Sep 17 2026`, all three quoted caveats (negative PDO `-1.11`, "may dampen the typical impacts", "may be increased further … mid-late October") and the supersession line `Oct 15 2026` all present **verbatim** |
+| NWS gridpoint forecast, grid MTR 82,105 | https://api.weather.gov/gridpoints/MTR/82,105/forecast | `updateTime 2026-09-19T20:26:32+00:00` and `elevation 45.1104 m` — **exact match** with `data/calendar.json` `current_forecast`; period temperatures 66/58/62/58/62/58/64/57/70/58/72/59/68 °F match the committed `nws.json` periods |
+| NWS hourly product | https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly | 156 hourly periods running to **2026-09-26T05:00-07:00**, i.e. the committed `nws_window` first/last day (2026-09-19 → 2026-09-26, 8 days) is right — and note the product's own `validTimes` header (`P7DT11H`) stops *before* the periods it publishes, so deriving the window from the header instead of the hours would have dropped a day |
+| NWS alerts, forecast zone CAZ006 | https://api.weather.gov/alerts/active?zone=CAZ006 | Empty feature collection, `updated 2026-09-20T00:59:14+00:00` — matches the committed `count: 0` |
+
+**Method limitation, stated rather than glossed.** The sandbox's fetch tool
+returns **HTTP 500 for NCEI's `access/*.csv` endpoints** (both `normals-daily`
+and `normals-monthly` for `USW00023272`), although the NCEI directory indexes
+and the CPC/NWS products fetch normally. The GHCN-Daily, GSOD, ISD and normals
+files therefore could **not** be re-read live from here; they are verified by
+the pipeline's own recorded fetch (URL, HTTP status, byte count, SHA-256 in
+`data/provenance.json`) and by the ledger's re-derivation from the same bytes,
+not by an independent copy fetched in this session. That is a real gap in the
+session's verification and it is recorded here as one.
+
+### Bug 73 — a quotation the page called verbatim carried a space NOAA never wrote
+
+* **Symptom.** The ENSO strength sentence on the outlook strip read
+  `… (+2.5°C or more for a 3-month RONI value ).` — with a space before the
+  closing bracket.
+* **Root cause.** `pipeline/main.py` `html_to_text()` replaced **every** HTML tag
+  with a space, which is right for block markup and wrong for inline markup. The
+  discussion hyperlinks `3-month RONI value`, so `</a>)` became ` )`. A browser
+  renders `value).`.
+* **How it was caught.** The same sentence exists as plain text in CPC's own
+  `fxus05` product (a `<pre>` block, no inline markup), and there it reads
+  `(+2.5°C or more for a 3-month RONI value).` — no space. Two official
+  renderings of one sentence disagreed, so one of them was this project's.
+* **Fix.** Inline tags (a fixed list, longest-first alternation) are now removed
+  **without** inserting a space; block-level tags keep the space. `img` and
+  anything unrecognised still separate, so two words can never be spliced.
+* **Why it mattered.** The page's promise is that quoted sentences are what the
+  publisher wrote. A fidelity defect, not a numbers defect — and it was invisible
+  because the ledger's `quotes-plain-text` check compared the quotation with the
+  project's own extraction of the same page, which contained the same artifact.
+  The check is still worth having; the lesson is that a quotation can only be
+  checked against a second, independent rendering of the same official text.
+* **Effect.** The archived discussion text and the quotations built from it are
+  regenerated on the next pipeline run (the archive stores the converted text,
+  so the committed copies still carry the old space until that run). Five offline
+  assertions now pin the behaviour, including the prefix hazard (`<span>` must
+  not be eaten as `<s>pan`).
+
+### The rain-duration question, asked of the phase this season is actually in
+
+The site answered "how much rain" per ENSO phase but answered "how many days
+straight" only over all 30 seasons. For a season running under a strong El Niño
+that is the wrong denominator, so `climo.enso_stratified_streaks()` now publishes,
+per phase: `n`, the seasons-with-a-≥3/5/7/10-day-spell counts and percentages,
+and the longest-spell distribution. It is computed from the same `season_by_year`
+rows the other phase table uses, so the two cannot disagree about which season is
+in which phase.
+
+| Phase | Seasons (n) | Any 7+ day wet spell | Longest spell, mean (max) |
+| --- | --- | --- | --- |
+| El Niño | 11 | 9 of 11 = **81.8%** | 9.1 days (17) |
+| Neutral | 7 | 3 of 7 = 42.9% | 6.1 days (10) |
+| La Niña | 12 | 4 of 12 = 33.3% | 6.3 days (11) |
+| All 30 seasons | 30 | 16 of 30 = 53.3% | 7.3 days (17) |
+
+Where it appears: the bottom-line answer to question 2 (with `n` printed and the
+confidence line now reading `n = 30 seasons; the phase split rests on 11 of them`),
+as an evidence row in cost driver 1, as two columns in the ENSO table on the
+season card, and automatically in the printable executive summary (both places —
+Q2's table and the driver table).
+
+Guard: the ledger's new `enso-streaks-recompute` check re-derives the whole block
+from the same season rows and fails on any difference. Four falsification cases
+prove it can fail (a percentage edited by hand; a count moved without its
+percentage; the block stripped; a phase invented with no seasons behind it), and
+two render guards prove the column and its denominator reach the page and can
+disappear loudly.
+
+Regeneration note: the pipeline could not fetch NOAA from the sandbox, so
+`data/climatology.json` was given the new block by calling the pipeline's own
+function on the season rows already in that file, and every downstream dataset
+was then rebuilt by the committed offline builders (`build_calendar`,
+`landlord_summary`, `executive_summary`, `build_digest`, `build_feed`). The next
+nightly run re-derives all of it from the fetched sources; `calendar.json`
+gained exactly the one new key and nothing else changed.
+
+### Standings after this pass
+
+* `pipeline/verify_claims.py`: **73 checks pass, 0 fail, 0 warnings** (72 +
+  `enso-streaks-recompute`), 19 recorded claims. Verified by running the ledger
+  in the sandbox against the regenerated datasets.
+* `tests/test_parsers.py`: **450/450** (439 + 6 quote-fidelity + 5 phase-streak).
+  `tests/falsify_guards.py`:
+  **77 cases** behave (73 + 4). `tests/falsify_smoke.py`: **33 cases** behave
+  (31 + 2). `npm test` (jsdom render) passes with the new column present.
+* Changed files: `pipeline/main.py`, `pipeline/climo.py`,
+  `pipeline/build_calendar.py`, `pipeline/landlord_summary.py`,
+  `pipeline/verify_claims.py`, `assets/js/app.js`, `tests/smoke.js`,
+  `tests/test_parsers.py`, `tests/falsify_guards.py`, `tests/falsify_smoke.py`,
+  `README.md`, `docs/*`.
+* Still open from earlier sessions and unchanged here: multi-ZIP support, the
+  GHCNh/SSODv2 wind stitching, the CPC archive back-fill, and the two PR-15
+  follow-ups. See `docs/NEXT_SESSION.md`.

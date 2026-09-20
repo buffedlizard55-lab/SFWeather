@@ -98,6 +98,18 @@ setTimeout(() => {
     } else if (!t.includes('rain ')) {
       problems.push('forecast day cell does not label its amount "rain": ' + t);
     }
+
+    // The ENSO phase table is the only place the rain-duration question is
+    // answered for the phase the season is actually in, so the phase-conditioned
+    // column has to be there AND show the denominator it was computed over.  A
+    // bare percentage would let an 11-season sample read as settled fact.
+    const ensoText = text('#enso-strat');
+    if (!/7\+ day wet spell/.test(ensoText)) {
+      problems.push('ENSO table lost the phase-conditioned 7+ day wet-spell column');
+    }
+    if (!/\(\d+ of \d+\)/.test(ensoText)) {
+      problems.push('phase-conditioned column does not print its sample size (n of n)');
+    }
   }
 
 

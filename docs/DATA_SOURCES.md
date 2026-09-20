@@ -241,3 +241,31 @@ list, so the difference is visible where a reader might otherwise blur it.
 | CW3E / Scripps atmospheric-river products | Valuable research, but not an official NOAA operational product. |
 | IRI Data Library (`iridl.ldeo.columbia.edu`) | Academic mirror, HTTP only, and its CPC tree holds monitoring datasets rather than outlook polygons. Considered 18 Sep 2026 and rejected — see §3. |
 | Anything behind a login, paywall or CAPTCHA | Cannot be verified or reproduced. |
+
+## Why the source list is US-federal (and what that leaves out)
+
+The pipeline draws only on **NOAA / NWS / NCEI / CPC** products plus the **U.S.
+Census Bureau** for geography. That is a deliberate scope decision, and it answers
+the fair question "why not the global and other national weather agencies?":
+
+* **NWS is the official public forecaster for this location.** The product that
+  exists for ZIP 94122 — the gridded forecast this site reads at
+  `api.weather.gov/points/37.7605,-122.4839` — is NWS's. No other agency issues an
+  official point forecast for a US ZIP, so nothing else can serve as the primary
+  forecast source here.
+* **Foreign national agencies and ECMWF publish global model fields and their own
+  regions' products, not point products for California.** They are genuinely
+  useful, but reading a 0.25°-ish model grid and calling it "the forecast for
+  94122" would be this project's own derivation, not an official statement — and
+  under this project's rules that belongs in the separate, clearly-labelled
+  *model guidance* tier (which already carries NOAA's own NMME ensemble output and
+  never touches the scoreboard), not in the day-by-day data.
+* **Every published number has to be re-derivable from a fetched file.** The
+  pipeline records the URL, HTTP status, byte count and SHA-256 of each fetch in
+  `data/provenance.json`, and the ledger re-reads those bytes. A source that
+  cannot be pointed at, fetched and re-read that way cannot be published here,
+  however good it is.
+* **Commercial resellers (AccuWeather and similar) stay excluded** for the reasons
+  in the table above: paid keys, redistribution terms, and no public endpoint a
+  reviewer can check line by line. If you want their second opinion, read it at the
+  source — this project cannot vouch for it.

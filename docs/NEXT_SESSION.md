@@ -1,5 +1,84 @@
 # Next session — handoff
 
+## 1. State at the end of session 13 (20 Sep 2026 — verbatim-quote fidelity fix; rain duration conditioned on the ENSO phase; live re-verification)
+
+**Ledger:** **73 checks live**, 19 claims — all pass, 0 warnings (session 12's
+72 plus `enso-streaks-recompute`). Verified in the sandbox by running the ledger
+against the regenerated datasets; the next full proof is the CI run this push
+triggers.
+
+**Tests:** `tests/test_parsers.py` **450/450** · `tests/falsify_guards.py`
+**77 cases** · `tests/falsify_smoke.py` **33 cases** · `npm test` (jsdom smoke)
+passes with the new ENSO column present.
+
+**What session 13 changed:**
+
+1. **Bug 73 — a "verbatim" quotation carried a space NOAA never wrote.**
+   `html_to_text()` replaced *every* tag with a space, so an inline hyperlink
+   inside the ENSO strength sentence produced `… RONI value ).` where CPC
+   publishes `… RONI value).` (the same sentence is plain text in CPC's own
+   fxus05 product, which is how it was caught). Inline tags are now removed
+   without a space, block tags still separate, and six assertions pin the
+   behaviour including the `<span>`/`<s>` prefix hazard. The archived text and
+   the quotations built from it update on the next live run.
+2. **Rain duration conditioned on the ENSO phase.** `climo.enso_stratified_streaks()`
+   publishes per phase: n, the ≥3/5/7/10-day spell counts and percentages, and the
+   longest-spell distribution — computed from the same season rows as the existing
+   phase table. El Niño: **81.8% (9 of 11)** of seasons had a 7+ day wet spell
+   against 53.3% of all 30, 33.3% of La Niña and 42.9% of neutral. It appears in
+   the bottom-line answer 2 (with `n` and a confidence line), as cost-driver 1
+   evidence, as two columns on the season card, and in both places in the
+   printable summary. Ledger check + 4 falsification cases + 2 render guards +
+   5 offline assertions, all falsified before being kept.
+3. **Live re-verification (~01:00 UTC).** ONI tail (`JJA 2026 +1.80`), the
+   10 Sep 2026 ENSO discussion (status + both strength sentences, verbatim),
+   fxus05 (issuance line, all three caveats, the Oct-15 supersession line),
+   the NWS gridpoint forecast (`updateTime` and `elevation` exact), the hourly
+   product (156 periods to 2026-09-26T05:00 local — the committed 8-day window is
+   right, and the product's `validTimes` header is *shorter* than the periods it
+   publishes) and CAZ006 alerts (empty). Table in `docs/VERIFICATION.md` session 13.
+4. **A verification gap, recorded as one.** The sandbox's fetch tool returns
+   HTTP 500 on NCEI's `access/*.csv` endpoints, so the GHCN-Daily / GSOD / ISD /
+   normals files could not be re-read live in this session; they rest on the
+   pipeline's recorded, hashed fetches. Worth a second look from a machine that
+   can reach them.
+
+**Watch items for the next session:**
+
+* **8 October 2026** — next ENSO Diagnostic Discussion. Confirm the nightly run
+  picks it up; the strength card requotes from the new text the same run. Expect
+  its quotes and `not_found` list to rotate — designed behaviour (`LIMITATIONS.md` §20).
+* **Mid-late October 2026** — next long-lead outlook + prognostic discussion.
+  NOAA's own words (quoted on the site): probabilities "may be increased further".
+* **19 Oct – 19 Nov 2026** — the ubuntu-latest migration window; the workflows are
+  pinned to ubuntu-24.04, so nothing should change.
+* **First pipeline run after this merge** — check that the regenerated
+  `sources[].text` no longer carries the inline-tag space and that the strength
+  quotation reads `… RONI value).`; if CPC's markup turns out to have had
+  trailing whitespace inside the anchor, the text will be unchanged and that is
+  also a pass (the fix removes *added* whitespace either way).
+
+## Priorities for session 14 (as of 20 Sep 2026, end of session 13)
+
+1. **CPC issuance watches (8 Oct + mid-late Oct)** — low effort, time-critical.
+2. **Confirm the post-merge live run** reparses the quotes cleanly (see the watch
+   item above) and that `enso-streaks-recompute` passes on freshly fetched data.
+3. **Multi-ZIP support.** (a) a ZIP→centroid manifest from the same Census
+   Gazetteer fetch, (b) per-ZIP tiers in the nightly job, (c) a front-end picker.
+   Opened in session 8, still open.
+4. **Wind successor stitching (GHCNh/SSODv2).** The nightly probes keep recording
+   coverage; stitching moves every published 1991–2020 wind statistic, so it stays
+   a maintainer decision.
+5. **CPC back-test archive.** Next attempt: inspect the raw HTML of `llarc.ind.php`
+   or POST `llarc.php` with candidate parameter names.
+6. **The two PR-15 follow-ups**: explicit "not returned" rows for individual Census
+   geography fields, and a `failed-fetches-explained` ledger check.
+7. **Extend the phase-conditioned view.** Session 13 stratified *spells* by phase;
+   the same treatment for heavy-rain days (≥1 in) and for the wind+rain counters
+   would answer the remaining landlord questions "for this El Niño" too — worth
+   doing while the sample-size caveat machinery is fresh.
+8. **Deliberate ubuntu-26.04 migration** after the window opens.
+
 ## 1. State at the end of session 12 (19 Sep 2026 — dry-discussion seed fix; ENSO strength probabilities on the outlook strip)
 
 **Ledger:** **72 checks live**, 19 claims — all pass, 0 warnings (session 11's
