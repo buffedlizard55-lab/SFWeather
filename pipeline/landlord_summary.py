@@ -1263,11 +1263,14 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
                           f"seasons averaged {g_(ph.get('longest_streak_days'),'mean')} days")})
         drivers.append({
             "driver": "Prolonged wet spells — roof, gutters & drainage",
-            "why_it_costs": ("A week or more of nearly continuous rain saturates roofing and "
-                             "sheathing, finds failed flashing, and keeps gutters overflowing — "
-                             "the classic path to ceiling stains, rotten fascia and end-of-lease "
-                             "repair bills. Inspect roof, gutters and downspouts before the season "
-                             "and re-check after any 7+ day run."),
+            "why_it_costs": ("A week or more of nearly continuous rain saturates roofing, "
+                             "sheathing, and exterior stucco, finds failed flashing, and keeps gutters "
+                             "and lightwell drains overflowing. In the Outer Sunset's typical row-house "
+                             "construction (flat or low-slope roofs, parapet coping caps, and internal "
+                             "lightwells), prolonged saturation is the classic path to ceiling stains, "
+                             "framing rot, and crawlspace dampness. Inspect roof membrane, parapet "
+                             "flashings, gutters and lightwell drains before the season and re-check "
+                             "after any 7+ day run."),
             "evidence": evidence,
             "sources": ghcn,
         })
@@ -1317,12 +1320,28 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
                     "label": "…of those, reports carrying a recorded property-damage figure",
                     "value": (f"{flood_with_damage} of {flood_count} "
                               "(county damage entries are sparse in this database)")})
+            sunset_reports = []
+            for e in storms.get("events") or []:
+                txt = ((e.get("event_narrative") or "") + " " + (e.get("episode_narrative") or "")).lower()
+                if "outer sunset" in txt or "judah" in txt:
+                    sunset_reports.append("Judah & 30th Ave 6–12 in roadway flood")
+                elif "great highway" in txt:
+                    sunset_reports.append("Great Highway coastal flood closures")
+            if sunset_reports:
+                seen_r = set()
+                dedup_r = [x for x in sunset_reports if not (x in seen_r or seen_r.add(x))]
+                evidence.append({
+                    "label": "Storm Events reports specifically locating flooding in 94122 corridor",
+                    "value": f"{len(sunset_reports)} events on record (" + "; ".join(dedup_r) + ")"})
         drivers.append({
             "driver": "Heavy single-day rain — storm drains, entryways & low-lying units",
-            "why_it_costs": ("Short, intense rain is what overwhelms area drains, garage thresholds "
-                             "and ground-floor entryways, and it is when sewer backups and slope "
-                             "failures happen. Clear drains before the season; the heaviest days "
-                             "cluster in December and January."),
+            "why_it_costs": ("Short, intense rain is what overwhelms area drains, garage thresholds, "
+                             "and ground-floor entryways. In the Outer Sunset, street drainage and "
+                             "sewer lines can back up during sudden deluges (documented in NOAA Storm "
+                             "Events at Judah & 30th Ave with 6–12 inches of roadway flooding), driving "
+                             "water into below-grade garage basement conversions. Clear exterior drains "
+                             "and test sump pumps before the season; the heaviest days cluster in "
+                             "December and January."),
             "evidence": evidence,
             "sources": ghcn + storm_src,
         })
@@ -1363,16 +1382,18 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
                                    "Days with rain ≥ 0.50 in and a gust ≥ 35 kt")
         drivers.append({
             "driver": "Wind + rain together — wind-driven water intrusion",
-            "why_it_costs": ("Wind pushes rain sideways under shingles, laps and window seals and "
-                             "into vents, so buildings leak during storms that would stay dry in "
-                             "calm rain. These are also fence-failure and tree-limb days. Wind is "
-                             "recorded at SFO, 11.9 miles away (computed great-circle distance from the "
-                             "94122 centroid, see climatology.meta.station_distance_mi); no source "
-                             "held here establishes whether the ocean-facing Sunset is windier or "
-                             "calmer than SFO, so the counts are SFO reference values, not a bound "
-                             "for the ZIP. The headline count is the "
-                             "hour-by-hour one: rain and wind measured in the same hour, not rain "
-                             "and wind somewhere on the same day."),
+            "why_it_costs": ("Wind pushes rain sideways under shingles, laps, parapet flashings, "
+                             "and window seals and into vents, so buildings leak during storms that "
+                             "would stay dry in calm rain. In the Outer Sunset, facing the open Pacific, "
+                             "onshore coastal storm winds drive rain directly against exposed west-facing "
+                             "stucco facades and lightwells. These are also fence-failure and tree-limb "
+                             "days. Wind is recorded at SFO, 11.9 miles away (computed great-circle "
+                             "distance from the 94122 centroid, see climatology.meta.station_distance_mi); "
+                             "no source held here establishes whether the ocean-facing Sunset is "
+                             "windier or calmer than SFO, so the counts are SFO reference values, not "
+                             "a bound for the ZIP. The headline count is the hour-by-hour one: rain "
+                             "and wind measured in the same hour, not rain and wind somewhere on the "
+                             "same day."),
             "evidence": evidence,
             "sources": (hourly_src if hourly.get("available") else []) + gsod + ghcn,
         })
@@ -1398,8 +1419,10 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
         drivers.append({
             "driver": "Peak gusts — trees, fences, roofing & tenant safety",
             "why_it_costs": ("The strongest gust of the season is what breaks limbs onto roofs and "
-                             "cars and flattens fences - the storm-season liability with the "
-                             "shortest fuse. " + WIND_STATION_CAVEAT),
+                             "cars, tears perimeter siding and roofing, and flattens fences — the storm-season "
+                             "liability with the shortest fuse. In 94122's coastal environment, high winds "
+                             "also carry salt-air marine spray that accelerates corrosion of exterior fasteners, "
+                             "flashing metals, and electrical service hardware. " + WIND_STATION_CAVEAT),
             "evidence": evidence,
             "sources": gsod + storm_src,
         })
@@ -1450,12 +1473,14 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
                 "value": f"{r.get('category_label')} at {prob_txt}"})
         drivers.append({
             "driver": "Total seasonal water load — waterproofing budget & insurance",
-            "why_it_costs": ("This is the total water the envelope must shed across the season and "
+            "why_it_costs": ("This is the total water the building envelope must shed across the season and "
                              "the right baseline for repair budgets: plan for the mean, but price "
-                             "reserves off the wetter tail - the p90 season delivered about 1.5x the "
-                             "mean. El Niño tilts toward the wet end in this record, but individual "
-                             "El Niño seasons have ranged from 7.27 to 22.82 in, so the tilt is not "
-                             "a promise."),
+                             "reserves off the wetter tail — the p90 season delivered about 1.5x the "
+                             "mean. In the Outer Sunset, sandy dune subsoils allow high surface infiltration "
+                             "but can maintain prolonged subterranean hydrostatic pressure against basement "
+                             "slabs in wet winters. El Niño tilts toward the wet end in this record, but "
+                             "individual El Niño seasons have ranged from 7.27 to 22.82 in, so the tilt "
+                             "is not a promise."),
             "evidence": evidence,
             "sources": ghcn + [{"label": "NOAA CPC official ONI product", "url": ONI_URL}] + cpc_srcs,
         })
@@ -1464,7 +1489,7 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
     wd = dist.get("wet_days") or {}
     if wd:
         evidence = [
-            {"label": "Wet days per season (≥0.01 in)", 
+            {"label": "Wet days per season (≥0.01 in)",
              "value": (f"mean {wd.get('mean')} · median {wd.get('median')} · "
                        f"range {wd.get('min')}–{wd.get('max')} of 123 days")},
         ]
@@ -1478,10 +1503,11 @@ def build_cost_drivers(*, days, dist, streak_prob, enso_strat, latest_oni,
                              "value": " · ".join(month_bits)})
         drivers.append({
             "driver": "Wet-day frequency — condensation, ventilation & works scheduling",
-            "why_it_costs": ("Three to four wet days a week for months drives indoor condensation "
-                             "and mold complaints and closes windows for exterior paint, roofing "
-                             "and concrete work. October is normally the driest month of the "
-                             "window - schedule exterior jobs there, not in December."),
+            "why_it_costs": ("Three to four wet days a week for months, combined with the Outer Sunset's "
+                             "persistent marine humidity, drives indoor condensation and tenant mold complaints, "
+                             "and closes weather windows for exterior painting, stucco patching, roof work, "
+                             "and concrete repairs. October is normally the driest month of the window — "
+                             "schedule exterior repair jobs there, not in December."),
             "evidence": evidence,
             "sources": ghcn,
         })
@@ -2061,6 +2087,21 @@ def main():
                 "those 30 seasons; anything under 'Official outlook' is an official "
                 "probability for a whole period. No row is a forecast for a named day "
                 "\u2014 no official product issues one more than about a week ahead."),
+            "outer_sunset_profile": {
+                "neighborhood": "Outer Sunset / Sunset District, San Francisco (ZIP 94122)",
+                "centroid_coordinates": "37.7605N, -122.4839W (41st/42nd Ave between Irving and Judah, ~0.6 mi from Ocean Beach)",
+                "ocean_exposure": "Direct western Pacific Ocean frontage; first onshore receptor of winter maritime frontal systems and atmospheric rivers",
+                "building_stock_vulnerabilities": (
+                    "Predominantly 1920s–1950s stucco row houses with zero lot lines, flat or low-slope "
+                    "tar-and-gravel or torch-down roofs, parapet walls with coping caps, interior lightwells, "
+                    "and below-grade garage basement conversions."
+                ),
+                "soil_and_drainage": (
+                    "Historic coastal dune sand with rapid surface infiltration but high local water tables near Ocean Beach; "
+                    "vulnerable to combined sewer backpressure during peak cloudbursts (e.g. Judah & 30th Ave 6–12 in flood record)."
+                ),
+                "marine_corrosion": "Persistent salt spray accelerates oxidation of exterior metal flashing, gutter fasteners, and electrical conduits.",
+            },
             "official_outlook": official_outlook,
             "severity": severity,
             "cost_drivers": cost_drivers,

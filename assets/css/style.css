@@ -143,6 +143,8 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 table.kv { font-size: 14px; }
 table.kv th { width: 40%; background: transparent; text-transform: none; letter-spacing: 0; color: var(--ink-soft); font-weight: 500; border-bottom: 1px solid var(--line-soft); position: static; }
 table.kv td { font-weight: 600; }
+#landlord-sunset-profile table.kv th { width: 28%; font-weight: 600; color: var(--ink); vertical-align: top; }
+#landlord-sunset-profile table.kv td { font-weight: 400; line-height: 1.5; color: var(--ink); }
 
 /* ---------------- calendar ---------------- */
 .cal-controls { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 14px; }

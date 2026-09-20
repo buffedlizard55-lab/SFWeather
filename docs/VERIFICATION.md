@@ -1267,24 +1267,46 @@ forecast states no gust (as the 20 Sep 2026 forecast does). It could not merge
 here: the count is published as **473–474** (473 in this data state) with the
 same explanation, and the PR is credited in `README.md`.
 
+### Session 15 (20 Sep 2026 — Outer Sunset 94122 Property & Weather Profile; localized cost drivers; local Storm Events; guard 34)
+
+#### Changes and enhancements
+
+1. **Outer Sunset SF 94122 Property & Weather Profile**: Integrated an Outer Sunset
+   profile card (`#landlord-sunset-card`) into both the dashboard interface and
+   the executive summary outputs (`data/executive_summary.md` and `data/executive_summary.json`).
+   Captures the geographical centroid (41st/42nd Ave, ~0.6 mi from Ocean Beach), direct
+   Pacific oceanfront exposure, sandy dune subsoil with high water table, 1920s–1950s
+   stucco row-home typology (zero-lot-line, flat roofs, parapet caps, internal lightwells,
+   and subterranean drive-in garages), and marine salt-air corrosion.
+2. **Neighborhood-calibrated cost driver guidance**: Re-anchored all six landlord cost
+   drivers in `pipeline/landlord_summary.py` so the physical mechanisms reflect Outer Sunset
+   building vulnerabilities (e.g., wind-driven rain soaking west-facing exterior stucco,
+   internal lightwell drain backups, sewer surcharge at low-lying intersections, and
+   salt spray attacking metal flashings and fasteners).
+3. **Local Storm Events integration**: Parsed NOAA Storm Events for events explicitly
+   citing the 94122 corridor (e.g. Judah & 30th Ave 6–12 inch roadway flooding, Great
+   Highway storm closures) and integrated them directly into Driver 2 evidence.
+4. **Enter key listener for Day Finder**: Added keyboard convenience (`keyup` Enter)
+   on `#day-find` in `assets/js/app.js` to match the "Find" button.
+5. **Render Guard 34 and Falsification**: Added guard 34 to `tests/smoke.js` asserting
+   that `#landlord-sunset-card` renders with all 6 categories naming Outer Sunset 94122.
+   Added 2 new falsification cases to `tests/falsify_smoke.py` (`_osp1`, `_osp2`),
+   bringing the suite to 44 cases.
+6. **Parser Test**: Added an offline test in `tests/test_parsers.py` confirming the
+   Outer Sunset profile is present in both markdown and JSON executive summary outputs.
+
 ### Standings after this pass
 
-* `pipeline/verify_claims.py`: **74 checks pass, 0 fail, 0 warnings** (73 +
-  `enso-severity-recompute`), 19 recorded claims — run in the sandbox against
-  the regenerated datasets.
-* `tests/test_parsers.py`: **473/473** in this data state (450 − 1 guarded +
-  19 phase-severity + 5 Congress-layer). `tests/falsify_guards.py`: **85 cases**
-  behave (77 + 6 + 2). `tests/falsify_smoke.py`: **42 cases** behave (33 + 9).
-  `npm test` passes with the new cell, the three new columns and guard 33.
-  Every `--selftest` passes.
-* Changed files: `pipeline/climo.py`, `pipeline/build_calendar.py`,
-  `pipeline/landlord_summary.py`, `pipeline/executive_summary.py`,
-  `pipeline/verify_claims.py`, `assets/js/app.js`, `assets/css/style.css`,
-  `index.html`, `tests/smoke.js`, `tests/test_parsers.py`,
-  `tests/falsify_guards.py`, `tests/falsify_smoke.py`, `README.md`, `docs/*`,
-  and the regenerated `data/calendar.json`, `data/landlord.json`,
-  `data/executive_summary.{md,json}`, `data/verify.json`, `data/verify_report.txt`.
+* `pipeline/verify_claims.py`: **74 checks pass, 0 fail, 0 warnings**, 19 recorded claims.
+* `tests/test_parsers.py`: **474/474** in this data state (475 with guarded gust check).
+* `tests/falsify_guards.py`: **85 cases** behave as expected.
+* `tests/falsify_smoke.py`: **44 cases** behave as expected.
+* `npm test`: passes cleanly including guard 34.
+* Changed files: `pipeline/landlord_summary.py`, `pipeline/executive_summary.py`,
+  `assets/js/app.js`, `assets/css/style.css`, `index.html`, `tests/smoke.js`,
+  `tests/test_parsers.py`, `tests/falsify_smoke.py`, `README.md`, `docs/*`,
+  and regenerated `data/landlord.json`, `data/executive_summary.{md,json}`.
 * Still open: the mid-October CPC issuances (8 Oct ENSO discussion, 15 Oct
-  long-lead outlooks — the `superseded` line is a dated watch item), multi-ZIP
-  support, GHCNh/SSODv2 wind stitching, the CPC back-test archive. See
-  `docs/NEXT_SESSION.md`.
+  long-lead outlooks), multi-ZIP support, GHCNh/SSODv2 wind stitching, the CPC
+  back-test archive. See `docs/NEXT_SESSION.md`.
+

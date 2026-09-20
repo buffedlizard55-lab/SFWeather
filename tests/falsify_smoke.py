@@ -663,6 +663,22 @@ def _sv9(repo):
     return repo
 
 
+@case("the Outer Sunset profile card element removed from index.html",
+      expect_msg="#landlord-sunset-card element missing from the page")
+def _osp1(repo):
+    patch_text(repo, "index.html", 'id="landlord-sunset-card"', 'id="landlord-sunset-card-renamed"')
+    return repo
+
+
+@case("the Outer Sunset profile Pacific row dropped",
+      expect_msg="missing Pacific Ocean Exposure row")
+def _osp2(repo):
+    patch_text(repo, "assets/js/app.js",
+               "el('tr', {}, [el('th', { text: 'Pacific Ocean Exposure' }), el('td', { text: osp.ocean_exposure })]),",
+               "")
+    return repo
+
+
 def main():
     if not pathlib.Path(NODE_PATH).exists():
         print("node_modules not installed - run: npm install")

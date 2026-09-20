@@ -29,6 +29,15 @@ CPC outlooks are attached to days they cover, but only as probabilities for the 
 
 This is the anti-hallucination rule of the project, documented in `docs/METHODS.md` and enforced by the pipeline.
 
+## Outer Sunset SF 94122 Property & Weather Profile
+
+Outer Sunset (ZIP 94122) presents unique building envelope and maintenance challenges due to its Pacific coastal setting:
+
+- **Oceanfront exposure:** 94122 directly fronts Ocean Beach and the open Pacific. Winter Pacific storm fronts and atmospheric rivers make landfall here as direct onshore flow, driving horizontal rain against west-facing stucco facades and lightwells.
+- **Architectural typology:** Housing is predominantly 1920s–1950s stucco-clad row homes (Doelger, Rousseau, and standard Marina/tunnel-entry styles) built with zero lot lines, flat or low-pitch tar-and-gravel / torch-down roofs, parapet walls with metal coping caps, interior lightwells, and below-grade garage basement conversions.
+- **Dune-sand subsoil & urban drainage:** The Sunset sits on historic coastal sand dunes. While surface infiltration is rapid, coastal water tables are high and intense cloudbursts can overwhelm city sewer mains, causing street-level flooding (officially recorded in NOAA Storm Events at Judah & 30th Ave with 6–12 inches of roadway flooding) that flows down driveways into ground-floor garages.
+- **Marine salt spray:** Persistent ocean fog and salt spray accelerate oxidation of exterior metal flashing, gutter hangers, roofing fasteners, and outdoor electrical hardware.
+
 ## Current official outlook for 94122
 
 ### Where 94122 is (verified)
@@ -326,7 +335,9 @@ See `docs/LIMITATIONS.md` for full list. Key ones:
 - Storm Events is reported-events, not census
 - No bias correction/downscaling
 
-Next work: hourly ISD wind for true local day, CPC back-testing, AR awareness from AFD text, forecast verification, CSV export — see LIMITATIONS.md.
+**Completed work:** hourly ISD simultaneous wind+rain (7.9 d/season), CPC back-testing framework, NWS Area Forecast Discussion storm-pattern language scan, NWS 7-day forecast verification loop, CSV exports for scoreboard and current forecast, phase-conditioned streak & storm severity statistics, and Outer Sunset property risk profiling.
+
+**Remaining open work:** CPC archive historical back-fill, multi-ZIP support, wind successor stitching (GHCNh), and 8/15 October CPC issuance watches — see `docs/LIMITATIONS.md` and `docs/NEXT_SESSION.md`.
 
 ## Disclaimer
 

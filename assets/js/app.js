@@ -480,6 +480,26 @@ function renderBottomLine(ll) {
   if (cells.length) strip.append(...cells);
 }
 
+function renderSunsetProfile(ll) {
+  const host = $('#landlord-sunset-profile');
+  if (!host) return;
+  host.innerHTML = '';
+  const exec = (ll && ll.executive_summary) || {};
+  const osp = exec.outer_sunset_profile || {};
+  if (!osp.neighborhood) {
+    host.append(el('p', { class: 'empty', text: 'Outer Sunset profile unavailable in this run.' }));
+    return;
+  }
+  host.append(el('table', { class: 'kv' }, [
+    el('tr', {}, [el('th', { text: 'Neighborhood' }), el('td', { text: osp.neighborhood })]),
+    el('tr', {}, [el('th', { text: 'Centroid & Location' }), el('td', { text: osp.centroid_coordinates })]),
+    el('tr', {}, [el('th', { text: 'Pacific Ocean Exposure' }), el('td', { text: osp.ocean_exposure })]),
+    el('tr', {}, [el('th', { text: 'Building Stock & Vulnerabilities' }), el('td', { text: osp.building_stock_vulnerabilities })]),
+    el('tr', {}, [el('th', { text: 'Subsoil & Urban Drainage' }), el('td', { text: osp.soil_and_drainage })]),
+    el('tr', {}, [el('th', { text: 'Salt-Air Marine Environment' }), el('td', { text: osp.marine_corrosion })]),
+  ]));
+}
+
 function renderLandlord(ll, cal) {
   if (!ll || !ll.executive_summary) {
     $('#landlord').append(el('p', { class: 'empty', text: 'Landlord summary unavailable in this run.' }));
@@ -487,6 +507,7 @@ function renderLandlord(ll, cal) {
   }
   const exec = ll.executive_summary;
   $('#landlord-key-finding').textContent = exec.key_finding || '';
+  renderSunsetProfile(ll);
   renderBottomLine(ll);
 
   // Stats cards

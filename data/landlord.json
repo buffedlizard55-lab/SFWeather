@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-20T02:51:59Z",
+  "generated_utc": "2026-09-20T03:14:21Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Sunset District \u2014 Inner and Outer Sunset)",
@@ -32,13 +32,13 @@
         "census_tract_geoid": "06075032601",
         "census_block_geoid": "060750326013006",
         "congressional_district": "Congressional District 11",
-        "congressional_district_layer": "119th Congressional Districts",
+        "congressional_district_layer": "120th Congressional Districts",
         "urban_area": "San Francisco--Oakland, CA Urban Area",
         "geography_types_returned": [
-          "119th Congressional Districts",
+          "120th Congressional Districts",
           "2020 Census Blocks",
-          "2024 State Legislative Districts - Lower",
-          "2024 State Legislative Districts - Upper",
+          "2026 State Legislative Districts - Lower",
+          "2026 State Legislative Districts - Upper",
           "Census Tracts",
           "Combined Statistical Areas",
           "Counties",
@@ -51,8 +51,8 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-20T02:49:01Z",
-        "sha256": "c0e8bd8e7999e95f633daee398ecb752df669f85c7c66714c87a17c76572ef12",
+        "retrieved_utc": "2026-09-20T03:09:50Z",
+        "sha256": "d906dfc69fd302da41fe3e04b1b7a6b052957575b2388c4cd85b60c05ea8d96e",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
     }
@@ -1748,6 +1748,14 @@
       }
     ],
     "bottom_line_note": "Each answer states the basis it rests on. Anything labelled 1991\u20132020 observed record is an observation or an expectation over those 30 seasons; anything under 'Official outlook' is an official probability for a whole period. No row is a forecast for a named day \u2014 no official product issues one more than about a week ahead.",
+    "outer_sunset_profile": {
+      "neighborhood": "Outer Sunset / Sunset District, San Francisco (ZIP 94122)",
+      "centroid_coordinates": "37.7605N, -122.4839W (41st/42nd Ave between Irving and Judah, ~0.6 mi from Ocean Beach)",
+      "ocean_exposure": "Direct western Pacific Ocean frontage; first onshore receptor of winter maritime frontal systems and atmospheric rivers",
+      "building_stock_vulnerabilities": "Predominantly 1920s\u20131950s stucco row houses with zero lot lines, flat or low-slope tar-and-gravel or torch-down roofs, parapet walls with coping caps, interior lightwells, and below-grade garage basement conversions.",
+      "soil_and_drainage": "Historic coastal dune sand with rapid surface infiltration but high local water tables near Ocean Beach; vulnerable to combined sewer backpressure during peak cloudbursts (e.g. Judah & 30th Ave 6\u201312 in flood record).",
+      "marine_corrosion": "Persistent salt spray accelerates oxidation of exterior metal flashing, gutter fasteners, and electrical conduits."
+    },
     "official_outlook": {
       "enso": {
         "state": "El Ni\u00f1o (+1.80 \u00b0C, JJA 2026)",
@@ -2382,7 +2390,7 @@
     "cost_drivers": [
       {
         "driver": "Prolonged wet spells \u2014 roof, gutters & drainage",
-        "why_it_costs": "A week or more of nearly continuous rain saturates roofing and sheathing, finds failed flashing, and keeps gutters overflowing \u2014 the classic path to ceiling stains, rotten fascia and end-of-lease repair bills. Inspect roof, gutters and downspouts before the season and re-check after any 7+ day run.",
+        "why_it_costs": "A week or more of nearly continuous rain saturates roofing, sheathing, and exterior stucco, finds failed flashing, and keeps gutters and lightwell drains overflowing. In the Outer Sunset's typical row-house construction (flat or low-slope roofs, parapet coping caps, and internal lightwells), prolonged saturation is the classic path to ceiling stains, framing rot, and crawlspace dampness. Inspect roof membrane, parapet flashings, gutters and lightwell drains before the season and re-check after any 7+ day run.",
         "evidence": [
           {
             "label": "Run of \u22653 consecutive wet days",
@@ -2419,7 +2427,7 @@
       },
       {
         "driver": "Heavy single-day rain \u2014 storm drains, entryways & low-lying units",
-        "why_it_costs": "Short, intense rain is what overwhelms area drains, garage thresholds and ground-floor entryways, and it is when sewer backups and slope failures happen. Clear drains before the season; the heaviest days cluster in December and January.",
+        "why_it_costs": "Short, intense rain is what overwhelms area drains, garage thresholds, and ground-floor entryways. In the Outer Sunset, street drainage and sewer lines can back up during sudden deluges (documented in NOAA Storm Events at Judah & 30th Ave with 6\u201312 inches of roadway flooding), driving water into below-grade garage basement conversions. Clear exterior drains and test sump pumps before the season; the heaviest days cluster in December and January.",
         "evidence": [
           {
             "label": "Days \u2265 0.25 in rain per season (expected count)",
@@ -2448,6 +2456,10 @@
           {
             "label": "\u2026of those, reports carrying a recorded property-damage figure",
             "value": "4 of 99 (county damage entries are sparse in this database)"
+          },
+          {
+            "label": "Storm Events reports specifically locating flooding in 94122 corridor",
+            "value": "3 events on record (Great Highway coastal flood closures; Judah & 30th Ave 6\u201312 in roadway flood)"
           }
         ],
         "sources": [
@@ -2464,7 +2476,7 @@
       },
       {
         "driver": "Wind + rain together \u2014 wind-driven water intrusion",
-        "why_it_costs": "Wind pushes rain sideways under shingles, laps and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. These are also fence-failure and tree-limb days. Wind is recorded at SFO, 11.9 miles away (computed great-circle distance from the 94122 centroid, see climatology.meta.station_distance_mi); no source held here establishes whether the ocean-facing Sunset is windier or calmer than SFO, so the counts are SFO reference values, not a bound for the ZIP. The headline count is the hour-by-hour one: rain and wind measured in the same hour, not rain and wind somewhere on the same day.",
+        "why_it_costs": "Wind pushes rain sideways under shingles, laps, parapet flashings, and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. In the Outer Sunset, facing the open Pacific, onshore coastal storm winds drive rain directly against exposed west-facing stucco facades and lightwells. These are also fence-failure and tree-limb days. Wind is recorded at SFO, 11.9 miles away (computed great-circle distance from the 94122 centroid, see climatology.meta.station_distance_mi); no source held here establishes whether the ocean-facing Sunset is windier or calmer than SFO, so the counts are SFO reference values, not a bound for the ZIP. The headline count is the hour-by-hour one: rain and wind measured in the same hour, not rain and wind somewhere on the same day.",
         "evidence": [
           {
             "label": "Days per season with a simultaneous wind \u2265 20 kt + rain hour (hour-by-hour record, SFO)",
@@ -2509,7 +2521,7 @@
       },
       {
         "driver": "Peak gusts \u2014 trees, fences, roofing & tenant safety",
-        "why_it_costs": "The strongest gust of the season is what breaks limbs onto roofs and cars and flattens fences - the storm-season liability with the shortest fuse. Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991\u20132020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO \u2014 so treat these as the SFO reference values, not as a bound for the ZIP.",
+        "why_it_costs": "The strongest gust of the season is what breaks limbs onto roofs and cars, tears perimeter siding and roofing, and flattens fences \u2014 the storm-season liability with the shortest fuse. In 94122's coastal environment, high winds also carry salt-air marine spray that accelerates corrosion of exterior fasteners, flashing metals, and electrical service hardware. Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991\u20132020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO \u2014 so treat these as the SFO reference values, not as a bound for the ZIP.",
         "evidence": [
           {
             "label": "Strongest gust of the season (SFO ASOS)",
@@ -2542,7 +2554,7 @@
       },
       {
         "driver": "Total seasonal water load \u2014 waterproofing budget & insurance",
-        "why_it_costs": "This is the total water the envelope must shed across the season and the right baseline for repair budgets: plan for the mean, but price reserves off the wetter tail - the p90 season delivered about 1.5x the mean. El Ni\u00f1o tilts toward the wet end in this record, but individual El Ni\u00f1o seasons have ranged from 7.27 to 22.82 in, so the tilt is not a promise.",
+        "why_it_costs": "This is the total water the building envelope must shed across the season and the right baseline for repair budgets: plan for the mean, but price reserves off the wetter tail \u2014 the p90 season delivered about 1.5x the mean. In the Outer Sunset, sandy dune subsoils allow high surface infiltration but can maintain prolonged subterranean hydrostatic pressure against basement slabs in wet winters. El Ni\u00f1o tilts toward the wet end in this record, but individual El Ni\u00f1o seasons have ranged from 7.27 to 22.82 in, so the tilt is not a promise.",
         "evidence": [
           {
             "label": "Season total, Oct 1 \u2013 Jan 31 (1991\u20132020)",
@@ -2607,7 +2619,7 @@
       },
       {
         "driver": "Wet-day frequency \u2014 condensation, ventilation & works scheduling",
-        "why_it_costs": "Three to four wet days a week for months drives indoor condensation and mold complaints and closes windows for exterior paint, roofing and concrete work. October is normally the driest month of the window - schedule exterior jobs there, not in December.",
+        "why_it_costs": "Three to four wet days a week for months, combined with the Outer Sunset's persistent marine humidity, drives indoor condensation and tenant mold complaints, and closes weather windows for exterior painting, stucco patching, roof work, and concrete repairs. October is normally the driest month of the window \u2014 schedule exterior repair jobs there, not in December.",
         "evidence": [
           {
             "label": "Wet days per season (\u22650.01 in)",
@@ -3616,7 +3628,7 @@
     "station_id": "USW00023272",
     "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
     "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-    "retrieved_utc": "2026-09-20T02:51:27Z",
+    "retrieved_utc": "2026-09-20T03:13:39Z",
     "dates_parsed": 366,
     "columns": {
       "normal_high_f": "DLY-TMAX-NORMAL",
