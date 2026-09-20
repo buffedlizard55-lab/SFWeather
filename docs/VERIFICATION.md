@@ -1142,7 +1142,12 @@ gained exactly the one new key and nothing else changed.
 * `pipeline/verify_claims.py`: **73 checks pass, 0 fail, 0 warnings** (72 +
   `enso-streaks-recompute`), 19 recorded claims. Verified by running the ledger
   in the sandbox against the regenerated datasets.
-* `tests/test_parsers.py`: **450/450** (439 + 6 quote-fidelity + 5 phase-streak).
+* `tests/test_parsers.py`: **449/449** in this data state (439 + 6 quote-fidelity
+  + 5 phase-streak = 450 call sites; one is guarded — "derived window gust max
+  consistent with the text forecast max" runs only when the live NWS text
+  forecast states a gust in a period overlapping the window, and on 20 Sep 2026
+  it states none, so the comparison is skipped rather than faked. The published
+  count is the count that ran).
   `tests/falsify_guards.py`:
   **77 cases** behave (73 + 4). `tests/falsify_smoke.py`: **33 cases** behave
   (31 + 2). `npm test` (jsdom render) passes with the new column present.

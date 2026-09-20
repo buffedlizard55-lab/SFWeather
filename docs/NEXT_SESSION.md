@@ -7,7 +7,10 @@
 against the regenerated datasets; the next full proof is the CI run this push
 triggers.
 
-**Tests:** `tests/test_parsers.py` **450/450** · `tests/falsify_guards.py`
+**Tests:** `tests/test_parsers.py` **449/449** on the 20 Sep 2026 data state —
+450 call sites, but the derived-vs-stated gust cross-check is guarded and is
+skipped, not faked, when the live NWS text forecast states no gust (which is the
+case here) · `tests/falsify_guards.py`
 **77 cases** · `tests/falsify_smoke.py` **33 cases** · `npm test` (jsdom smoke)
 passes with the new ENSO column present.
 
