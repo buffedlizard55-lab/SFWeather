@@ -1074,6 +1074,41 @@ setTimeout(() => {
     }
   }
 
+  // 34. The Outer Sunset property & microclimate profile card: rendered with
+  //     its neighborhood, centroid, Pacific exposure, building stock, drainage,
+  //     and marine environment rows.
+  {
+    let osp = null;
+    try {
+      osp = (((JSON.parse(fs.readFileSync(path.join(repo, 'data/landlord.json'), 'utf8'))
+        .executive_summary || {}).outer_sunset_profile) || null);
+    } catch (e) { osp = null; }
+    const sunsetCard = doc.querySelector('#landlord-sunset-card');
+    const sunsetProfile = doc.querySelector('#landlord-sunset-profile');
+    if (osp && osp.neighborhood) {
+      if (!sunsetCard) problems.push('#landlord-sunset-card element missing from the page');
+      if (!sunsetProfile) problems.push('#landlord-sunset-profile element missing from the page');
+      else {
+        const spt = sunsetProfile.textContent.replace(/\s+/g, ' ');
+        if (!spt.includes('Outer Sunset') || !spt.includes('94122')) {
+          problems.push('#landlord-sunset-profile does not name Outer Sunset 94122');
+        }
+        if (!spt.includes('Pacific Ocean Exposure')) {
+          problems.push('#landlord-sunset-profile missing Pacific Ocean Exposure row');
+        }
+        if (!spt.includes('Building Stock & Vulnerabilities')) {
+          problems.push('#landlord-sunset-profile missing Building Stock & Vulnerabilities row');
+        }
+        if (!spt.includes('Subsoil & Urban Drainage')) {
+          problems.push('#landlord-sunset-profile missing Subsoil & Urban Drainage row');
+        }
+        if (!spt.includes('Salt-Air Marine Environment')) {
+          problems.push('#landlord-sunset-profile missing Salt-Air Marine Environment row');
+        }
+      }
+    }
+  }
+
   if (problems.length) {
     console.error('SMOKE TEST FAILED');
     problems.forEach(p => console.error(' - ' + p));

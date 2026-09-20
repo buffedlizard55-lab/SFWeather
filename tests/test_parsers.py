@@ -3239,6 +3239,11 @@ check("the structured mirror carries the same drivers as the markdown",
           ((_es_landlord.get("executive_summary") or {}).get("cost_drivers") or [])],
       "driver lists compared")
 
+check("the executive summary carries the Outer Sunset profile",
+      "Outer Sunset SF 94122 Property & Weather Profile" in _es_md
+      and bool((es_structured.get("outer_sunset_profile") or {}).get("neighborhood")),
+      "outer sunset profile in markdown and structured mirror")
+
 # The generator must fail loudly rather than publish a half-built document.
 with _tempfile_es.TemporaryDirectory() as _es_empty:
     _env_es = dict(os.environ, SFWEATHER_DATA=_es_empty)

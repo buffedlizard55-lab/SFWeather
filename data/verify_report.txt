@@ -1,5 +1,5 @@
 SFWeather verification ledger
-generated_utc: 2026-09-20T02:47:44Z
+generated_utc: 2026-09-20T03:07:14Z
 
 checks: 74 passed, 0 failed, 0 warning(s)  (of 74)
 
@@ -48,7 +48,7 @@ checks: 74 passed, 0 failed, 0 warning(s)  (of 74)
 [PASS] cost-driver-expected-days-arithmetic: The published expected heavy-rain day counts equal the sum of the per-date 1991-2020 probabilities in the committed climatology table
         ge_025in_days: published 14.97 vs recomputed 14.97 over 123 season dates; ge_100in_days: published 3.19 vs recomputed 3.19 over 123 season dates
 [PASS] raw-phase-tokens-dataset: No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)
-        0 raw tokens across 23023 scanned string(s)
+        0 raw tokens across 23031 scanned string(s)
 [PASS] phase-label-present: Every ENSO phase value a renderer can reach ships with a reader-facing label (no underscore token, correct capitalisation)
         3 label(s) published
 [PASS] raw-phase-tokens: No raw ENSO data token (el_nino / la_nina) appears in any reader-facing executive-summary string

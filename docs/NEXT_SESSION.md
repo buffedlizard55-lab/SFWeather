@@ -1,5 +1,67 @@
 # Next session — handoff
 
+## 1. State at the end of session 15 (20 Sep 2026 — Outer Sunset 94122 Property & Weather Profile; localized cost drivers; local Storm Events; guard 34)
+
+**Ledger:** **74 checks live**, 19 claims — all pass, 0 warnings. Verified in
+the sandbox by running the ledger against the regenerated datasets.
+
+**Tests:** `tests/test_parsers.py` **474/474** (or 475 with the guarded gust
+cross-check) · `tests/falsify_guards.py` **85 cases** · `tests/falsify_smoke.py`
+**44 cases** · `npm test` (jsdom smoke) passes with the new Outer Sunset
+property profile card (guard 34) and day finder enter-key listener.
+
+**What session 15 changed:**
+
+1. **Outer Sunset SF 94122 Property & Weather Profile.** Added a structured
+   Outer Sunset profile card (`#landlord-sunset-card`) to `index.html` and the
+   dashboard rendering pipeline (`renderSunsetProfile` in `assets/js/app.js`),
+   as well as `data/executive_summary.md` and `data/executive_summary.json`.
+   Captures neighborhood centroid coordinates (37.760459, -122.483894 at
+   41st/42nd Ave, ~0.6 mi from Ocean Beach), direct Pacific oceanfront exposure,
+   sandy dune subsoil with shallow water table, 1920s–1950s stucco row-home
+   typology (zero-lot-line, flat roofs, parapet caps, internal lightwells,
+   and subterranean drive-in garages), and marine salt-air corrosion.
+2. **Neighborhood-calibrated cost driver guidance.** Re-anchored the physical
+   vulnerability explanations in `pipeline/landlord_summary.py` across all 6
+   cost drivers specifically for Outer Sunset building envelopes (wind-driven
+   rain soaking west-facing stucco, lightwell drain blockages, street-level sewer
+   surcharges at low-lying intersections, and salt spray attacking metal flashings).
+3. **Local Storm Events integration.** Parsed the NOAA Storm Events archive for
+   events specifically citing the 94122 corridor (e.g. Judah & 30th Ave 6–12 inch
+   roadway flooding, Great Highway storm closures) and integrated them directly
+   into Driver 2 evidence.
+4. **Day Finder keyboard listener.** Added Enter key listener (`keyup`) on
+   `#day-find` in `assets/js/app.js` so pressing Enter automatically jumps to
+   and highlights the specified date.
+5. **Render Guard 34 and Falsification.** Added guard 34 to `tests/smoke.js`
+   asserting that `#landlord-sunset-card` is rendered with all 6 categories
+   naming Outer Sunset 94122. Added 2 new falsification cases to
+   `tests/falsify_smoke.py` (`_osp1`, `_osp2`), bringing the suite to 44 cases.
+6. **Parser Test.** Added an offline unit test in `tests/test_parsers.py`
+   confirming the Outer Sunset profile is present and intact in both markdown
+   and JSON mirrors.
+
+**Watch items for the next session:**
+
+* **8 October 2026** — next ENSO Diagnostic Discussion; the strength card
+  requotes from the new text the same run (`LIMITATIONS.md` §20).
+* **15 October 2026** — the current fxus05 says it "will be superseded by the
+  issuance of the new set next month on Oct 15 2026"; the caveat card's three
+  quotes rotate that day.
+* **19 Oct – 19 Nov 2026** — the ubuntu-latest migration window; workflows are
+  pinned to ubuntu-24.04.
+
+## Priorities for session 16 (as of 20 Sep 2026, end of session 15)
+
+1. **CPC issuance watches (8 Oct + 15 Oct)** — low effort, time-critical.
+2. **A wind record nearer the ocean.** SFO is the standard 30-year long-term record,
+   but examining coastal sensors (e.g., NDBC/CO-OPS met sensors or coastal ASOS)
+   could provide additional insights.
+3. **Multi-ZIP support.** (a) ZIP→centroid manifest from the Census Gazetteer fetch,
+   (b) per-ZIP tiers in the nightly job, (c) a front-end picker.
+4. **Wind successor stitching (GHCNh/SSODv2)** — monitor NOAA/NCEI station listings.
+5. **CPC back-test archive** — inspect `llarc.ind.php` raw HTML or POST `llarc.php`.
+
 ## 1. State at the end of session 14 (20 Sep 2026 — storm severity conditioned on the ENSO phase; the "upper bound" wording withdrawn; the Congress-vintage hole; live re-verification)
 
 **Ledger:** **74 checks live**, 19 claims — all pass, 0 warnings (session 13's

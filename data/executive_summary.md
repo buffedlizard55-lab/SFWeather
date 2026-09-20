@@ -4,6 +4,15 @@
 
 > **How to read this document.** Every figure below is either an observed 1991–2020 statistic from an official NOAA station or an official CPC/NWS probability, and each carries the link to its source so a reviewer can check it line by line. No official product forecasts a named day beyond the current NWS horizon; where this document speaks about the season it speaks in observed statistics and official period probabilities, never in invented daily values. The repair-and-maintenance framing is guidance, not a weather claim.
 
+## Outer Sunset SF 94122 Property & Weather Profile
+
+- **Neighborhood:** Outer Sunset / Sunset District, San Francisco (ZIP 94122)
+- **Centroid & Location:** 37.7605N, -122.4839W (41st/42nd Ave between Irving and Judah, ~0.6 mi from Ocean Beach)
+- **Pacific Ocean Exposure:** Direct western Pacific Ocean frontage; first onshore receptor of winter maritime frontal systems and atmospheric rivers
+- **Building Typology & Vulnerabilities:** Predominantly 1920s–1950s stucco row houses with zero lot lines, flat or low-slope tar-and-gravel or torch-down roofs, parapet walls with coping caps, interior lightwells, and below-grade garage basement conversions.
+- **Subsoil & Urban Drainage:** Historic coastal dune sand with rapid surface infiltration but high local water tables near Ocean Beach; vulnerable to combined sewer backpressure during peak cloudbursts (e.g. Judah & 30th Ave 6–12 in flood record).
+- **Salt-Air Marine Environment:** Persistent salt spray accelerates oxidation of exterior metal flashing, gutter fasteners, and electrical conduits.
+
 ## 1. The landlord's six questions, answered from the record
 
 _Each answer states the basis it rests on. Anything labelled 1991–2020 observed record is an observation or an expectation over those 30 seasons; anything under 'Official outlook' is an official probability for a whole period. No row is a forecast for a named day — no official product issues one more than about a week ahead._
@@ -171,7 +180,7 @@ _Ranked for the landlord question behind this site: what about this rainy season
 
 ### Rank 1: Prolonged wet spells — roof, gutters & drainage
 
-**Why it costs (guidance, not a weather claim):** A week or more of nearly continuous rain saturates roofing and sheathing, finds failed flashing, and keeps gutters overflowing — the classic path to ceiling stains, rotten fascia and end-of-lease repair bills. Inspect roof, gutters and downspouts before the season and re-check after any 7+ day run.
+**Why it costs (guidance, not a weather claim):** A week or more of nearly continuous rain saturates roofing, sheathing, and exterior stucco, finds failed flashing, and keeps gutters and lightwell drains overflowing. In the Outer Sunset's typical row-house construction (flat or low-slope roofs, parapet coping caps, and internal lightwells), prolonged saturation is the classic path to ceiling stains, framing rot, and crawlspace dampness. Inspect roof membrane, parapet flashings, gutters and lightwell drains before the season and re-check after any 7+ day run.
 
 | Evidence | Value |
 | --- | --- |
@@ -186,7 +195,7 @@ _Ranked for the landlord question behind this site: what about this rainy season
 
 ### Rank 2: Heavy single-day rain — storm drains, entryways & low-lying units
 
-**Why it costs (guidance, not a weather claim):** Short, intense rain is what overwhelms area drains, garage thresholds and ground-floor entryways, and it is when sewer backups and slope failures happen. Clear drains before the season; the heaviest days cluster in December and January.
+**Why it costs (guidance, not a weather claim):** Short, intense rain is what overwhelms area drains, garage thresholds, and ground-floor entryways. In the Outer Sunset, street drainage and sewer lines can back up during sudden deluges (documented in NOAA Storm Events at Judah & 30th Ave with 6–12 inches of roadway flooding), driving water into below-grade garage basement conversions. Clear exterior drains and test sump pumps before the season; the heaviest days cluster in December and January.
 
 | Evidence | Value |
 | --- | --- |
@@ -197,12 +206,13 @@ _Ranked for the landlord question behind this site: what about this rainy season
 | Wettest December / January on record (1991–2020) | 12.03 in / 12.07 in |
 | Rain-related storm reports in SF County (Flood, Flash Flood, Heavy Rain, Debris Flow; 2014–2026) | 99 events in NOAA Storm Events (reported events only - under-reporting is likely) |
 | …of those, reports carrying a recorded property-damage figure | 4 of 99 (county damage entries are sparse in this database) |
+| Storm Events reports specifically locating flooding in 94122 corridor | 3 events on record (Great Highway coastal flood closures; Judah & 30th Ave 6–12 in roadway flood) |
 
 **Verify:** [NCEI GHCN-Daily USW00023272 (SF downtown gauge)](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv); [NCEI Storm Events CSV archive (SF County)](https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/)
 
 ### Rank 3: Wind + rain together — wind-driven water intrusion
 
-**Why it costs (guidance, not a weather claim):** Wind pushes rain sideways under shingles, laps and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. These are also fence-failure and tree-limb days. Wind is recorded at SFO, 11.9 miles away (computed great-circle distance from the 94122 centroid, see climatology.meta.station_distance_mi); no source held here establishes whether the ocean-facing Sunset is windier or calmer than SFO, so the counts are SFO reference values, not a bound for the ZIP. The headline count is the hour-by-hour one: rain and wind measured in the same hour, not rain and wind somewhere on the same day.
+**Why it costs (guidance, not a weather claim):** Wind pushes rain sideways under shingles, laps, parapet flashings, and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. In the Outer Sunset, facing the open Pacific, onshore coastal storm winds drive rain directly against exposed west-facing stucco facades and lightwells. These are also fence-failure and tree-limb days. Wind is recorded at SFO, 11.9 miles away (computed great-circle distance from the 94122 centroid, see climatology.meta.station_distance_mi); no source held here establishes whether the ocean-facing Sunset is windier or calmer than SFO, so the counts are SFO reference values, not a bound for the ZIP. The headline count is the hour-by-hour one: rain and wind measured in the same hour, not rain and wind somewhere on the same day.
 
 | Evidence | Value |
 | --- | --- |
@@ -217,7 +227,7 @@ _Ranked for the landlord question behind this site: what about this rainy season
 
 ### Rank 4: Peak gusts — trees, fences, roofing & tenant safety
 
-**Why it costs (guidance, not a weather claim):** The strongest gust of the season is what breaks limbs onto roofs and cars and flattens fences - the storm-season liability with the shortest fuse. Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991–2020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO — so treat these as the SFO reference values, not as a bound for the ZIP.
+**Why it costs (guidance, not a weather claim):** The strongest gust of the season is what breaks limbs onto roofs and cars, tears perimeter siding and roofing, and flattens fences — the storm-season liability with the shortest fuse. In 94122's coastal environment, high winds also carry salt-air marine spray that accelerates corrosion of exterior fasteners, flashing metals, and electrical service hardware. Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991–2020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO — so treat these as the SFO reference values, not as a bound for the ZIP.
 
 | Evidence | Value |
 | --- | --- |
@@ -230,7 +240,7 @@ _Ranked for the landlord question behind this site: what about this rainy season
 
 ### Rank 5: Total seasonal water load — waterproofing budget & insurance
 
-**Why it costs (guidance, not a weather claim):** This is the total water the envelope must shed across the season and the right baseline for repair budgets: plan for the mean, but price reserves off the wetter tail - the p90 season delivered about 1.5x the mean. El Niño tilts toward the wet end in this record, but individual El Niño seasons have ranged from 7.27 to 22.82 in, so the tilt is not a promise.
+**Why it costs (guidance, not a weather claim):** This is the total water the building envelope must shed across the season and the right baseline for repair budgets: plan for the mean, but price reserves off the wetter tail — the p90 season delivered about 1.5x the mean. In the Outer Sunset, sandy dune subsoils allow high surface infiltration but can maintain prolonged subterranean hydrostatic pressure against basement slabs in wet winters. El Niño tilts toward the wet end in this record, but individual El Niño seasons have ranged from 7.27 to 22.82 in, so the tilt is not a promise.
 
 | Evidence | Value |
 | --- | --- |
@@ -248,7 +258,7 @@ _Ranked for the landlord question behind this site: what about this rainy season
 
 ### Rank 6: Wet-day frequency — condensation, ventilation & works scheduling
 
-**Why it costs (guidance, not a weather claim):** Three to four wet days a week for months drives indoor condensation and mold complaints and closes windows for exterior paint, roofing and concrete work. October is normally the driest month of the window - schedule exterior jobs there, not in December.
+**Why it costs (guidance, not a weather claim):** Three to four wet days a week for months, combined with the Outer Sunset's persistent marine humidity, drives indoor condensation and tenant mold complaints, and closes weather windows for exterior painting, stucco patching, roof work, and concrete repairs. October is normally the driest month of the window — schedule exterior repair jobs there, not in December.
 
 | Evidence | Value |
 | --- | --- |

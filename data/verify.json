@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-20T02:47:44Z",
+  "generated_utc": "2026-09-20T03:07:14Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -248,7 +248,7 @@
       "id": "raw-phase-tokens-dataset",
       "title": "No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)",
       "status": "pass",
-      "detail": "0 raw tokens across 23023 scanned string(s)",
+      "detail": "0 raw tokens across 23031 scanned string(s)",
       "evidence": []
     },
     {

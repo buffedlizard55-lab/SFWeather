@@ -112,6 +112,23 @@ def build_markdown():
               "The repair-and-maintenance framing is guidance, not a weather claim.")
     md.append("")
 
+    # ------------------------------------------------- Outer Sunset profile
+    osp = es.get("outer_sunset_profile") or {}
+    if osp:
+        md.append("## Outer Sunset SF 94122 Property & Weather Profile")
+        md.append("")
+        for k, label in (
+            ("neighborhood", "Neighborhood"),
+            ("centroid_coordinates", "Centroid & Location"),
+            ("ocean_exposure", "Pacific Ocean Exposure"),
+            ("building_stock_vulnerabilities", "Building Typology & Vulnerabilities"),
+            ("soil_and_drainage", "Subsoil & Urban Drainage"),
+            ("marine_corrosion", "Salt-Air Marine Environment"),
+        ):
+            if osp.get(k):
+                md.append(f"- **{label}:** {esc(osp[k])}")
+        md.append("")
+
     # ------------------------------------------------- the six questions
     md.append("## 1. The landlord's six questions, answered from the record")
     md.append("")
@@ -345,6 +362,7 @@ def build_markdown():
         "generated_utc": generated,
         "location": location,
         "season_window": window,
+        "outer_sunset_profile": osp,
         "questions": es.get("bottom_line"),
         "cost_drivers": es.get("cost_drivers"),
         "official_outlook": outlook,
