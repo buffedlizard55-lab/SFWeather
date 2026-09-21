@@ -195,19 +195,43 @@ DISTANCE_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:mi|miles)\b[^.]{0,100}?94122")
 THRESHOLD_KEY_RE = re.compile(r"^gale_days_ge_(\d+)kt$")
 
 
+#: An internal field path leaking into a published sentence would read as
+#: machine furniture on a landlord-facing page, so a sentence that carries one is
+#: only published when the dataset offers nothing else.
+INTERNAL_PATH_RE = re.compile(r"[a-z_]+\.[a-z_]{3,}")
+
+
 def derived_distance(landlord: dict):
-    """(miles, sentence) for the SFO-to-94122 distance, read from the dataset."""
+    """(miles, sentence) for the SFO-to-94122 distance, read from the dataset.
+
+    Every sentence in the dataset that states the distance is collected, and the
+    one published is chosen by preference (no internal field path, then shortest) -
+    the tier still publishes only words the dataset wrote.
+    """
+    found = []
     for text in all_strings(landlord):
         m = DISTANCE_RE.search(text)
         if not m:
             continue
         flat = collapse_ws(text)
         i = flat.find(m.group(0))
-        start = flat.rfind(". ", 0, i) + 2 if i > 0 else 0
+        # A sentence with no ". " before the match starts at 0 - rfind() returns
+        # -1 and adding 2 to it would silently chop the first letter.
+        j = flat.rfind(". ", 0, i)
+        start = j + 2 if j > -1 else 0
         end = flat.find(". ", i + len(m.group(0)))
         sentence = flat[start:(end + 1 if end > -1 else len(flat))].strip()
-        return float(m.group(1)), sentence
-    return None, None
+        found.append((float(m.group(1)), sentence))
+    if not found:
+        return None, None
+    miles = found[0][0]
+    if len({f[0] for f in found}) != 1:
+        raise RepairTierError(
+            "the datasets state more than one SFO-to-ZIP distance "
+            f"({sorted({f[0] for f in found})}); refusing to choose for the reader")
+    clean = [f for f in found if not INTERNAL_PATH_RE.search(f[1])]
+    pool = clean or found
+    return miles, sorted(pool, key=lambda f: len(f[1]))[0][1]
 
 
 def derived_gale_threshold(ocean: dict):
@@ -969,7 +993,8 @@ def render_markdown(summary: dict) -> str:
         f"({fmt(pg.get('station_id'))}): mean {fmt(pg.get('mean_mph'))} mph \u00b7 median "
         f"{fmt(pg.get('median_mph'))} \u00b7 lowest {fmt(pg.get('min_mph'))} \u00b7 record "
         f"{fmt(pg.get('max_mph'))} mph (n = {fmt(pg.get('n_seasons'))} seasons)")
-    add(f"  - Distance from the ZIP centroid, in the dataset's own words: "
+    add(f"  - Distance from the ZIP centroid \u2014 the dataset's own sentence, "
+        f"published whole so the number is never separated from its caveat: "
         f"\u201c{fmt(pg.get('distance_sentence'))}\u201d")
     ow = s.get("ocean_wind") or {}
     if ow.get("available"):
@@ -1039,8 +1064,10 @@ def render_markdown(summary: dict) -> str:
     for item in s.get("sources_list") or []:
         add(f"- **{item.get('label')}** \u2014 {item.get('url')}")
     add("")
-    add(f"- **Built from:** {', '.join((s.get('built_from') or {}).get('datasets') or [])} "
-        f"with inputs {json.dumps({k: v.get('build_stamp') for k, v in (s.get('sources_read') or {}).items()}, default=str)}")
+    add(f"- **Built from:** {', '.join((s.get('built_from') or {}).get('datasets') or [])}.")
+    add("  - Input stamps: " + " \u00b7 ".join(
+        f"{k} {v.get('build_stamp') or 'no build stamp (per-fetch retrieval times)'}"
+        for k, v in (s.get('sources_read') or {}).items()))
     add(f"- **Claim ledger:** `data/verify_report.txt` and `data/verify.json` "
         f"re-derive every number above from its source file on every pipeline run.")
     add("")

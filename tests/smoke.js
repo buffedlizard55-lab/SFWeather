@@ -1222,6 +1222,7 @@ setTimeout(() => {
       ['#repair-executive', doc.querySelector('#repair-executive')],
       ['#repair-headline', doc.querySelector('#repair-headline')],
       ['#repair-hero-grid', doc.querySelector('#repair-hero-grid')],
+      ['#repair-currency', doc.querySelector('#repair-currency')],
       ['#repair-watch', doc.querySelector('#repair-watch')],
       ['#repair-drivers-compact', doc.querySelector('#repair-drivers-compact')],
       ['#repair-forecast-body', doc.querySelector('#repair-forecast-body')],
@@ -1279,6 +1280,16 @@ setTimeout(() => {
             problems.push('the repair hero grid omits the published ' + label);
           }
         });
+        // How current the block is: the currency line must carry the dataset's
+        // own stamp, and it must say so out loud when the inputs disagree.
+        const curText = flat(doc.querySelector('#repair-currency'));
+        if (!curText.includes(String(rep.generated_utc))) {
+          problems.push('the repair currency line does not print the dataset stamp');
+        }
+        const agree = (rep.currency || {}).sources_agree;
+        if (agree === false && !/not current|different runs/i.test(curText)) {
+          problems.push('the repair currency line does not warn that its inputs disagree');
+        }
         const items = doc.querySelectorAll('#repair-watch .watch-item');
         const want = (rep.next_issuances || []).length;
         if (items.length !== want) {

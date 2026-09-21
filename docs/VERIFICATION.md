@@ -1401,7 +1401,7 @@ taken from a dataset. This pass closes those holes.
   `next_issuances` (each with URL + SHA-256), `cost_drivers_ranked` with the
   severity rule published beside the severity, `definitions` taken from
   `calendar.json`, and basis strings taken from `record_coverage`.
-* `pipeline/selftest_repair_tier.py` — 44 offline checks: severity is a function of
+* `pipeline/selftest_repair_tier.py` — 47 offline checks: severity is a function of
   rank and a broken permutation stops the build; a missing `why_it_costs` or source
   URL stops the build; the stamp is never the wall clock and disagreement is
   published rather than hidden; absent ocean data is labelled, never `null`; three
@@ -1414,7 +1414,7 @@ taken from a dataset. This pass closes those holes.
   `-quotes-verbatim`, `-currency-honest`, `-render-contract`,
   `-printable-page-generated`, `-links-official`, `-absence-labelled`) and two
   claims (`repair-season-total-mean`, `repair-wind-rain-hourly`).
-* `tests/falsify_guards.py` — nine repair cases: a hand-edited season mean, a
+* `tests/falsify_guards.py` — ten repair cases: a hand-edited season mean, a
   severity flipped away from its rank, a paraphrased NOAA sentence, a stamp older
   than its datasets, a non-official link, a renamed payload field, a typed-in
   number on the printable page, a stripped absence note, and the not-published
@@ -1426,7 +1426,7 @@ taken from a dataset. This pass closes those holes.
   a driver list that drops a row, its severity, its key metric or its source link,
   a missing verbatim NOAA sentence, a CPC row the table forgot, a source link off
   the official hosts, or (with the payload absent) a section that does not say so.
-* `tests/falsify_smoke.py` — five render cases for guard 36.
+* `tests/falsify_smoke.py` — six render cases for guard 36.
 * `.github/workflows/update-data.yml` + `site-test.yml` — the tier runs nightly
   before the ledger; its offline self-test runs in the parsers job.
 * `pipeline/repair_maintenance_summary.py --selftest` — the gate used locally,
@@ -1440,12 +1440,12 @@ taken from a dataset. This pass closes those holes.
   quoted in bug-history prose; they are not forecast-horizon claims and the check
   is deliberately a warning.
 * `tests/test_parsers.py`: **485/485**.
-* `tests/falsify_guards.py`: **105 cases** behave as expected.
-* `tests/falsify_smoke.py`: **56 cases** (CI-only here: jsdom cannot be installed
+* `tests/falsify_guards.py`: **106 cases** behave as expected.
+* `tests/falsify_smoke.py`: **57 cases** (CI-only here: jsdom cannot be installed
   offline in this sandbox).
 * `npm test`: CI-only for the same reason; the JavaScript was checked with
   `node --check` and by diffing the renderer's key set against the payload.
-* `pipeline/repair_maintenance_summary.py --selftest`: **44/44**.
+* `pipeline/repair_maintenance_summary.py --selftest`: **47/47**.
 * Reproducibility: `data/repair_maintenance_summary.json` (62,284 B), its printable
   page and the byte-identical `docs/` copy are regenerated from the committed
   datasets with stamp 2026-09-21T14:20:21Z.

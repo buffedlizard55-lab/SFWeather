@@ -3360,6 +3360,17 @@ def main() -> int:
         for pub_path, src_path in num_pairs:
             same(pub_path, src_path)
 
+        # Prose this tier republishes from a dataset (the station-distance
+        # sentence) must be that dataset's own words, not a hand-written line.
+        landlord_strings = [climo_lib.collapse_ws(x)
+                            for x in repair_lib.all_strings(landlord)]
+        dist_sentence = _get(r_now, "peak_gusts/distance_sentence")
+        if dist_sentence:
+            flat = climo_lib.collapse_ws(dist_sentence)
+            if not any(flat in x for x in landlord_strings):
+                num_problems.append(
+                    "peak_gusts.distance_sentence is not a sentence landlord.json wrote")
+
         # Phase-conditioned streak figures live in a phase-keyed sub-dictionary.
         _phase = _get(r_now, "rain_duration/phase_conditioned/phase")
         _phs = _get(es_rep, f"enso_stratified_streaks/{_phase}") or {}

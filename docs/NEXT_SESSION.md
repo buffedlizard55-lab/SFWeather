@@ -4,7 +4,7 @@
 
 **Ledger:** 88 checks, 21 claims — all pass (1 standing warning: `docs-current-dates-traceable`
 flags two September dates in bug-history prose that were never forecast-window dates; benign). `tests/test_parsers.py` 485/485.
-`tests/falsify_guards.py` 105/105. `pipeline/repair_maintenance_summary.py --selftest` 44/44.
+`tests/falsify_guards.py` 106/106. `pipeline/repair_maintenance_summary.py --selftest` 47/47.
 
 **What session 18 changed:**
 
@@ -25,7 +25,7 @@ flags two September dates in bug-history prose that were never forecast-window d
    with the payload and every container it writes with the page — the em-dash defect it exists for.
 3. **Render guard 36** in `tests/smoke.js` (hero grid, watch list, drivers, outlook table, sunset
    table, source links, and the "not published" fallback when the payload is absent), with five
-   falsification cases in `tests/falsify_smoke.py`. Nine new ledger falsification cases in
+   falsification cases in `tests/falsify_smoke.py`. Ten new ledger falsification cases in
    `tests/falsify_guards.py`.
 4. **Tier wired into CI.** `update-data.yml` now runs the tier after `landlord_summary.py`,
    before the ledger (so a stale artifact can never be committed), and `site-test.yml` runs its

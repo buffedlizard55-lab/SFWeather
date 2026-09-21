@@ -815,6 +815,13 @@ def _rp4(repo):
     return repo
 
 
+@case("the repair currency line removed from the page",
+      expect_msg="repair executive section is missing")
+def _rp6(repo):
+    return patch_text(repo, "index.html",
+                      '<p class="fine repair-currency" id="repair-currency"></p>', '')
+
+
 @case("the repair watch list rendering one of its verbatim sentences",
       expect_msg="the repair watch list rendered")
 def _rp5(repo):

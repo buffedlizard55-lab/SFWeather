@@ -1698,6 +1698,15 @@ def _rp8(tmp):
     return with_repair(tmp, mutate)
 
 
+@case("the station-distance sentence rewritten out of the dataset's words", "fail",
+      "repair-numbers-traceable")
+def _rp10(tmp):
+    def mutate(obj):
+        obj["peak_gusts"]["distance_sentence"] = (
+            "The station is roughly a dozen miles from the ZIP centroid.")
+    return with_repair(tmp, mutate)
+
+
 @case("the repair summary not published at all: a warning state, not a silent pass",
       "warn", "repair-artifact-published")
 def _rp9(tmp):

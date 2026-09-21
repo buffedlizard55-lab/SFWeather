@@ -477,6 +477,36 @@ def run() -> int:
           s["peak_gusts"]["distance_mi"] is None
           and "No dataset read by this tier states" in s["peak_gusts"]["distance_note"],
           s["peak_gusts"].get("distance_note"))
+    # The distance sentence must survive being the first sentence in its string,
+    # prefer a candidate that does not leak an internal field path, and refuse a
+    # dataset that states two different distances.
+    first_sentence = synthetic_datasets()
+    first_sentence["landlord.json"]["action_items"] = [
+        {"detail": "Wind is recorded at SFO, 11.9 miles away from 94122."}]
+    s5 = rt.build_summary(first_sentence)
+    check("a distance sentence that starts its string keeps its first character",
+          s5["peak_gusts"]["distance_sentence"].startswith("Wind is recorded at SFO"),
+          s5["peak_gusts"]["distance_sentence"])
+    both = synthetic_datasets()
+    both["landlord.json"]["caveats"] = [
+        "Wind is recorded at SFO, 11.9 miles away, see climatology.meta.station_distance_mi."]
+    both["landlord.json"]["action_items"] = [
+        {"detail": "Wind at SFO ASOS (11.9 mi away; an SFO reference value, not a bound for 94122)."}]
+    s6 = rt.build_summary(both)
+    check("a distance sentence leaking an internal field path is not preferred",
+          "climatology.meta" not in (s6["peak_gusts"]["distance_sentence"] or "")
+          and "not a bound for 94122" in (s6["peak_gusts"]["distance_sentence"] or ""),
+          s6["peak_gusts"]["distance_sentence"])
+    clash = synthetic_datasets()
+    clash["landlord.json"]["caveats"] = [
+        "Wind is recorded at SFO, 11.9 miles away from 94122.",
+        "The station sits 12.4 miles from 94122."]
+    try:
+        rt.build_summary(clash)
+        check("two different distances in the data stop the build", False, "no error raised")
+    except rt.RepairTierError as exc:
+        check("two different distances in the data stop the build", "more than one" in str(exc), str(exc))
+
     check("the gale threshold is read from the dataset's counter key",
           s["ocean_wind"]["gale_threshold_kt"] == 34
           and s["ocean_wind"]["gale_counter_key"] == "gale_days_ge_34kt",

@@ -364,7 +364,7 @@
     "station_id": "72494023234",
     "station_name": "SAN FRANCISCO INTERNATIONAL AIRPORT (KSFO)",
     "distance_mi": 11.9,
-    "distance_sentence": "Wind is recorded at SFO, 11.9 miles away (computed great-circle distance from the 94122 centroid, see climatology.meta.station_distance_mi); no source held here establishes whether the ocean-facing Sunset is windier or calmer than SFO, so the counts are SFO reference values, not a bound for the ZIP.",
+    "distance_sentence": "Hour-by-hour NCEI ISD record at SFO ASOS (11.9 mi away; an SFO reference value, not a bound for 94122): mean 7.9, median 7.0, max 16.0 local dates per Oct-Jan season carrying at least one hour with rain AND sustained wind ≥ 20 kt, over 30 seasons.",
     "distance_note": "Read out of the verified dataset's own sentence (published above word for word); a distance this tier cannot find in the data is left empty rather than remembered.",
     "mean_mph": 53.8,
     "median_mph": 54.1,
