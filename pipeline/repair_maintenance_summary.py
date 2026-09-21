@@ -846,6 +846,18 @@ def render_markdown(summary: dict) -> str:
     add(f"**In one paragraph.** {fmt(s.get('executive_headline'), 0)}")
     add("")
 
+    # The landlord's own six questions, answered in the order asked.  The text is
+    # landlord.json's verified bottom line, copied - not summarised here.
+    add("## The six landlord questions, answered")
+    add("")
+    for entry in s.get("bottom_line") or []:
+        add(f"**{fmt(entry.get('n'), 0)}. {fmt(entry.get('question'), 0)}**")
+        add("")
+        add(fmt(entry.get("answer"), 0))
+        add("")
+        add(f"  - *Basis:* {fmt(entry.get('basis'), 0)}")
+        add("")
+
     sb = s.get("scoreboard") or {}
     add("## Where the numbers come from, and how current they are")
     add("")

@@ -6,6 +6,44 @@
 
 **In one paragraph.** Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 7.9 days per season on average at SFO on the hour-by-hour record (SFO reference value, not a bound for the Sunset); pairing whole days instead gives 11.1 days. Current ENSO: El Niño (official ONI +1.80 °C, JJA 2026) - in this record El Niño seasons averaged wetter than La Niña (14.23 in vs 11.16 in), with a wide spread in both; CPC status "El Niño Advisory". The CPC outlooks attached to each day show the official probabilities for this window.
 
+## The six landlord questions, answered
+
+**1. How much rain should I expect over the season?**
+
+Plan on about 12.79 in for Oct 1 – Jan 31. The median season is 13.26 in; the record range across 30 seasons is 1.71–22.82 in, and the driest 10% of seasons were at or below 6.38 in while the wettest 10% were at or above 18.59 in. Budget off the mean, hold reserves against the p90.
+
+  - *Basis:* 1991–2020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown)
+
+**2. Will it rain for days or weeks straight?**
+
+A long wet spell is the normal case, not the exception: 96.7% of seasons had a run of 3+ consecutive wet days, 80.0% had 5+ days, 53.3% had 7+ days and 23.3% had 10+ days. The longest run averages 7.3 days and has reached 17.0 days. Conditioned on the phase this season is in — El Niño — 81.8% of those 11 seasons on record had a 7+ day spell, against 53.3% over all 30 (small sample: 11 seasons). A week-long spell is roughly a coin flip on the 30-season record — worth pre-emptive gutter, roof-drain and tenant-communication plans.
+
+  - *Basis:* 1991–2020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown) — wet day = ≥ 0.01 in of liquid precipitation, run counted inside Oct 1 – Jan 31
+
+**3. How many hard-rain days will there be?**
+
+Expect about 14.97 days with ≥ 0.25 in and about 3.19 days with ≥ 1.00 in per season. Those are the days that overwhelm area drains, garage thresholds and ground-floor entryways. The counts are sums of the per-date observed probabilities, so they are an expectation over the 30-season record. NOAA's own published per-date probabilities give 14.9 and 3.26 days. The two independent methods agree to within 0.06 day(s) per season across 4 thresholds. In the 11 El Niño seasons on record, days at ≥ 1.00 in averaged 3.7 against 3.2 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). 
+
+  - *Basis:* 1991–2020 observed record — an expectation over those 30 seasons, not a prediction for 2026-27
+
+**4. How windy will it get?**
+
+The strongest gust of the season averages 53.8 mph at SFO and has reached 70.0 mph in this record. In the 11 El Niño seasons on record, days with a gust ≥ 40 kt averaged 3.2 against 2.4 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991–2020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO — so treat these as the SFO reference values, not as a bound for the ZIP. The strongest gusts are a tree-limb, fence and loose-material risk with the shortest warning.
+
+  - *Basis:* 1991–2020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away)
+
+**5. Will wind and rain hit at the same time?**
+
+On the hour-by-hour record at SFO, rain and sustained wind ≥ 20 kt coincide on about 7.9 days a season (median 7.0, range 1.0–16.0 over 30 seasons, 1991-1992 .. 2020-2021), which is about 29.5 simultaneous hours a season. Pairing a whole day’s rain with a whole day’s wind maximum — a method that cannot tell rain in the morning from wind at night — gives 11.1 days on that same station and 11.1 days when the downtown rain gauge is paired with SFO wind (the figure this page published before the hourly record was used). The two whole-day constructions agree, so the gap to the hourly count is the pairing rule, not the change of rain gauge. In the 11 El Niño seasons on record, whole-day wind + rain days averaged 11.5 against 11.1 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). Those are the days water is driven sideways under shingles, laps and window seals, and the days fences fail. Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991–2020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO — so treat these as the SFO reference values, not as a bound for the ZIP.
+
+  - *Basis:* 1991–2020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown); 1991–2020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away); hour-by-hour observed record, NOAA NCEI ISD hourly station 72494023234 (SFO ASLO, 11.9 mi away) — an hour counts when a single observation carries wind ≥ 20 kt and precipitation > 0
+
+**6. How severe have the storms actually been here?**
+
+On the station record, the season averages 3.2 days a season at ≥ 1.00 in of rain, 2.4 days with a gust ≥ 40 kt, 0.5 days that are both. In the 11 El Niño seasons on record, days that are both ≥ 1.00 in and a ≥ 40 kt gust averaged 0.5 against 0.5 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). NOAA's Storm Events Database holds 119 records for San Francisco County over 2014–2026, of which 99 are rain-related (Flood, Flash Flood, Heavy Rain, Debris Flow). Its damage column is not usable as a cost estimate — every non-zero value NCEI holds for this county is a token amount (12 of 119 records carry one) — so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. No named warning category (Advisory / Warning / High Wind) is applied: those criteria are written per forecast zone and this project does not restate them.
+
+  - *Basis:* NOAA NCEI Storm Events Database, reported events only — under-reporting is likely
+
 ## Where the numbers come from, and how current they are
 
 - **Datasets read:** landlord.json, calendar.json, run.json, cpc.json, enso.json, nws.json, with the newest content fetched into them at 2026-09-21T14:19:52Z; build-stamped inputs: landlord.json 2026-09-21T14:20:21Z; calendar.json 2026-09-21T14:20:21Z; run.json 2026-09-21T14:20:21Z; no build stamp of their own (per-fetch retrieval times are recorded in the file): cpc.json, enso.json, nws.json.

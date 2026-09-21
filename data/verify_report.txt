@@ -1,5 +1,5 @@
 SFWeather verification ledger
-generated_utc: 2026-09-21T23:04:47Z
+generated_utc: 2026-09-21T23:07:23Z
 
 checks: 88 passed, 0 failed, 1 warning(s)  (of 89)
 
@@ -176,7 +176,7 @@ checks: 88 passed, 0 failed, 1 warning(s)  (of 89)
 [PASS] repair-render-contract: Every field the repair renderer reads exists in the published payload, and every container it writes exists in the page
         renderer and payload agree field by field
 [PASS] repair-printable-page-generated: The printable repair summary and its docs copy are generated from the payload: same stamp, same driver titles, and no number or URL that is not in a dataset
-        213 lines, every figure and link traced to the payload
+        251 lines, every figure and link traced to the payload
 [PASS] repair-links-official: Every link the repair summary publishes points at a vetted official host (no commercial provider, no unvetted domain)
         18 URL(s) across the summary and its source ledger, all official
 [PASS] repair-absence-labelled: A tier missing from this snapshot is published as absent with a note, so an empty card can never read as 'no risk'

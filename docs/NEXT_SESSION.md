@@ -4,7 +4,7 @@
 
 **Ledger:** 88 checks, 21 claims — all pass (1 standing warning: `docs-current-dates-traceable`
 flags two September dates in bug-history prose that were never forecast-window dates; benign). `tests/test_parsers.py` 485/485.
-`tests/falsify_guards.py` 106/106. `pipeline/repair_maintenance_summary.py --selftest` 47/47.
+`tests/falsify_guards.py` 107/107. `pipeline/repair_maintenance_summary.py --selftest` 47/47.
 
 **What session 18 changed:**
 
@@ -25,7 +25,7 @@ flags two September dates in bug-history prose that were never forecast-window d
    with the payload and every container it writes with the page — the em-dash defect it exists for.
 3. **Render guard 36** in `tests/smoke.js` (hero grid, watch list, drivers, outlook table, sunset
    table, source links, and the "not published" fallback when the payload is absent), with five
-   falsification cases in `tests/falsify_smoke.py`. Ten new ledger falsification cases in
+   falsification cases in `tests/falsify_smoke.py`. Eleven new ledger falsification cases in
    `tests/falsify_guards.py`.
 4. **Tier wired into CI.** `update-data.yml` now runs the tier after `landlord_summary.py`,
    before the ledger (so a stale artifact can never be committed), and `site-test.yml` runs its
@@ -33,7 +33,13 @@ flags two September dates in bug-history prose that were never forecast-window d
    nothing ran it.
 5. **Printable page formatting.** The printable md now prints numbers **as published** (no
    re-rounding a 7.37 to 7.4, which would be a value in no dataset) and generates its definition
-   sentences and basis text from the datasets' own `definitions` / `record_coverage` blocks.
+   sentences and basis text from the datasets' own `definitions` / `record_coverage` blocks. It
+   also carries the landlord's six questions — rain amount, rain duration, heavy-rain days, wind,
+   wind + rain together, storm severity — answered in the order asked, copied from
+   `landlord.json`'s verified bottom line, and the ledger fails if a page drops one of them.
+   The station-distance sentence it republishes is now chosen from the dataset's own sentences
+   (preferring one with no internal field path), and `repair-numbers-traceable` checks that the
+   sentence is one `landlord.json` actually wrote.
 
 **Remaining / Limitations:** see the section below and `docs/LIMITATIONS.md` §28. The open items
 are the NCEI successor archives (GHCNh/SSODv2 — a maintainer decision that moves every published

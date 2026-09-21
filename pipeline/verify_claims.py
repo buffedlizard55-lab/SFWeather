@@ -3640,6 +3640,15 @@ def main() -> int:
             for d in drv_pub:
                 if str(d.get("driver") or "") not in md_text:
                     md_problems.append(f"driver title missing from the printable page: {d.get('driver')}")
+            # The landlord's six questions must each reach the printable page with
+            # their answer - a page that quietly drops one is not the summary.
+            for entry in r_now.get("bottom_line") or []:
+                if str(entry.get("question") or "") not in md_text:
+                    md_problems.append(
+                        f"landlord question missing from the printable page: {entry.get('question')}")
+                elif str(entry.get("answer") or "")[:60] not in md_text:
+                    md_problems.append(
+                        f"the answer to '{entry.get('question')}' is not on the printable page")
             json_text = json.dumps(r_now, ensure_ascii=False, default=str)
             md_urls = sorted(set(_re.findall(r"https?://[^\s)\]\"]+", md_text)))
             invented = [u for u in md_urls if u not in json_text]

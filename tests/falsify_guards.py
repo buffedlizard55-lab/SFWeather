@@ -1707,6 +1707,14 @@ def _rp10(tmp):
     return with_repair(tmp, mutate)
 
 
+@case("a landlord question quietly dropped from the printable page", "fail",
+      "repair-printable-page-generated")
+def _rp11(tmp):
+    question = (load("repair_maintenance_summary.json").get("bottom_line")
+                or [{}])[0].get("question")
+    return with_repair(tmp, md_mutate=lambda md: md.replace(str(question), "Question removed"))
+
+
 @case("the repair summary not published at all: a warning state, not a silent pass",
       "warn", "repair-artifact-published")
 def _rp9(tmp):

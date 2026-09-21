@@ -1414,7 +1414,7 @@ taken from a dataset. This pass closes those holes.
   `-quotes-verbatim`, `-currency-honest`, `-render-contract`,
   `-printable-page-generated`, `-links-official`, `-absence-labelled`) and two
   claims (`repair-season-total-mean`, `repair-wind-rain-hourly`).
-* `tests/falsify_guards.py` — ten repair cases: a hand-edited season mean, a
+* `tests/falsify_guards.py` — eleven repair cases: a hand-edited season mean, a
   severity flipped away from its rank, a paraphrased NOAA sentence, a stamp older
   than its datasets, a non-official link, a renamed payload field, a typed-in
   number on the printable page, a stripped absence note, and the not-published
@@ -1429,6 +1429,11 @@ taken from a dataset. This pass closes those holes.
 * `tests/falsify_smoke.py` — six render cases for guard 36.
 * `.github/workflows/update-data.yml` + `site-test.yml` — the tier runs nightly
   before the ledger; its offline self-test runs in the parsers job.
+* The printable page carries the landlord's six questions (rain amount, rain
+  duration, hard-rain days, wind, wind + rain together, storm severity) answered
+  in the order asked, copied from `landlord.json`'s verified bottom line. The
+  ledger fails when a page drops a question or the start of its answer
+  (`repair-printable-page-generated`), and a falsification case removes one.
 * `pipeline/repair_maintenance_summary.py --selftest` — the gate used locally,
   because the development sandbox has no network and no jsdom (see the
   environment note at the top of this file).
@@ -1440,7 +1445,7 @@ taken from a dataset. This pass closes those holes.
   quoted in bug-history prose; they are not forecast-horizon claims and the check
   is deliberately a warning.
 * `tests/test_parsers.py`: **485/485**.
-* `tests/falsify_guards.py`: **106 cases** behave as expected.
+* `tests/falsify_guards.py`: **107 cases** behave as expected.
 * `tests/falsify_smoke.py`: **57 cases** (CI-only here: jsdom cannot be installed
   offline in this sandbox).
 * `npm test`: CI-only for the same reason; the JavaScript was checked with
