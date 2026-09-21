@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-21T14:26:28Z",
+  "generated_utc": "2026-09-21T23:03:08Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,8 +9,8 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 81,
-    "passed": 80,
+    "total": 89,
+    "passed": 88,
     "failed": 0,
     "warnings": 1,
     "failed_checks": [],
@@ -1244,6 +1244,102 @@
           }
         ]
       }
+    },
+    {
+      "id": "repair-numbers-traceable",
+      "title": "Every number in the repair executive summary is re-derived from the dataset it claims to come from (no value appears in the summary that is not in its source)",
+      "status": "pass",
+      "detail": "6 drivers and the rain, duration, wind+rain, gust, ocean and outlook blocks all match their source datasets",
+      "evidence": {
+        "problems": [],
+        "checked": 82,
+        "published_drivers": 6
+      }
+    },
+    {
+      "id": "repair-severity-and-rank-rule",
+      "title": "Repair-cost drivers are ranked 1..N exactly once each and carry the published, rank-derived severity rule - not an undocumented guess",
+      "status": "pass",
+      "detail": "6 drivers; severity is a pure function of rank (1-3 high, 4-5 medium, 6+ low)",
+      "evidence": {
+        "problems": []
+      }
+    },
+    {
+      "id": "repair-quotes-verbatim",
+      "title": "Every sentence the repair summary attributes to NOAA is a whitespace-collapsed substring of the file it names, and a sentence CPC rewrote is reported as not found rather than paraphrased",
+      "status": "pass",
+      "detail": "3 scheduled-issuance sentence(s), 3 caveat(s), 2 strength sentence(s) verified verbatim; not found: none",
+      "evidence": {
+        "problems": [],
+        "patterns_watched_for": [
+          "next_enso_discussion",
+          "next_long_lead_issuance",
+          "next_long_lead_may_rise"
+        ],
+        "not_found": []
+      }
+    },
+    {
+      "id": "repair-currency-honest",
+      "title": "The repair summary is stamped with its source dataset's stamp (never a wall clock), names the inputs that carry no build stamp, and is refused when it is older than the data it summarises",
+      "status": "pass",
+      "detail": "stamp 2026-09-21T14:20:21Z; build-stamped inputs all agree; ['cpc.json', 'enso.json', 'nws.json'] input(s) listed as stamp-less",
+      "evidence": {
+        "problems": [],
+        "build_stamps": [
+          "2026-09-21T14:20:21Z"
+        ],
+        "unstamped": [
+          "cpc.json",
+          "enso.json",
+          "nws.json"
+        ]
+      }
+    },
+    {
+      "id": "repair-render-contract",
+      "title": "Every field the repair renderer reads exists in the published payload, and every container it writes exists in the page",
+      "status": "pass",
+      "detail": "renderer and payload agree field by field",
+      "evidence": {
+        "problems": []
+      }
+    },
+    {
+      "id": "repair-printable-page-generated",
+      "title": "The printable repair summary and its docs copy are generated from the payload: same stamp, same driver titles, and no number or URL that is not in a dataset",
+      "status": "pass",
+      "detail": "212 lines, every figure and link traced to the payload",
+      "evidence": {
+        "problems": []
+      }
+    },
+    {
+      "id": "repair-links-official",
+      "title": "Every link the repair summary publishes points at a vetted official host (no commercial provider, no unvetted domain)",
+      "status": "pass",
+      "detail": "18 URL(s) across the summary and its source ledger, all official",
+      "evidence": {
+        "hosts": [
+          "api.weather.gov",
+          "ftp.cpc.ncep.noaa.gov",
+          "www.cpc.ncep.noaa.gov",
+          "www.ncdc.noaa.gov",
+          "www.ncei.noaa.gov",
+          "www.ndbc.noaa.gov",
+          "www2.census.gov"
+        ]
+      }
+    },
+    {
+      "id": "repair-absence-labelled",
+      "title": "A tier missing from this snapshot is published as absent with a note, so an empty card can never read as 'no risk'",
+      "status": "pass",
+      "detail": "every optional block either carries figures or an explicit absence note",
+      "evidence": {
+        "problems": []
+      }
     }
   ],
   "claims": [
@@ -1782,6 +1878,40 @@
         "host": "www.ncei.noaa.gov"
       },
       "verified": true
+    },
+    {
+      "id": "repair-season-total-mean",
+      "statement": "The expected rain total the repair summary leads with is the observed 1991-2020 mean for the SF downtown gauge, not a forecast for 2026-27",
+      "value": 12.79,
+      "unit": "in",
+      "method": "Copied from landlord.json executive_summary.season_total_prcp.mean, which the pipeline derives from NCEI GHCN-Daily USW00023272 over the 30 seasons 1991-2020 (Oct 1 - Jan 31)",
+      "source": {
+        "label": "NCEI GHCN-Daily USW00023272 (rain, daily high/low)",
+        "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
+        "host": "www.ncei.noaa.gov"
+      },
+      "verified": true,
+      "cross_check": {
+        "landlord.json": 12.79,
+        "n_seasons": 30
+      }
+    },
+    {
+      "id": "repair-wind-rain-hourly",
+      "statement": "The wind + rain figure the repair summary leads with counts hours, not days, and is an SFO reference value",
+      "value": 7.9,
+      "unit": "days/season",
+      "method": "Copied from landlord.json executive_summary.wind_and_rain_hourly, which the pipeline counts from NCEI ISD hourly observations at 72494023234 (KSFO): an hour counts when one observation carries wind >= 20 kt and measurable precipitation",
+      "source": {
+        "label": "NCEI ISD hourly 72494023234 (hour-by-hour wind + rain)",
+        "url": "https://www.ncei.noaa.gov/data/global-hourly/access/",
+        "host": "www.ncei.noaa.gov"
+      },
+      "verified": true,
+      "cross_check": {
+        "station": "72494023234",
+        "threshold_kt": 20.0
+      }
     }
   ],
   "open_irregularities": [

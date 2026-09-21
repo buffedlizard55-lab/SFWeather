@@ -1376,3 +1376,80 @@ appear in the mean.
   multi-ZIP support, GHCNh/SSODv2 wind stitching, the CPC back-test archive. See
   `docs/NEXT_SESSION.md`.
 
+## Session 18 — 21 September 2026 (pass 18): the repair tier made checkable end to end
+
+Session 17 published the repair & maintenance executive summary as the first block
+on the page. It was built from verified datasets and the ledger counted 81 checks,
+but nothing read the generator and the renderer *against each other*, nothing ran
+the tier in CI, and two of its numbers were typed into the module rather than
+taken from a dataset. This pass closes those holes.
+
+### Defects found and fixed
+
+| # | Symptom | Root cause | Fix |
+| --- | --- | --- | --- |
+| 79 | The repair hero rendered as a column of em dashes (a blank card reads as "no risk", not "no data") | The renderer asked for `season_total_mean`, `cpc_outlook`, `ge_7d_pct`, `whole_day_mean`, `gale_mean`, `headline_value` while the generated payload published `season_total_mean_in`, `cpc_tilt`/`official_outlook`, `ge_7_days_pct`, `whole_day_mean_days`, `gale_mean_days`, `key_metric` — and no test read both files | The renderer was rewritten against the published schema, and the schema itself became a checked contract: ledger check `repair-render-contract` extracts every `alias.field` the renderer reads and fails if the payload does not publish it, and checks the containers it writes (`#repair-hero-grid`, `#repair-watch`, `#repair-drivers-compact`, `#repair-forecast-body`, `#repair-sunset-body`, `#repair-sources`) against `index.html`. Falsified by renaming a payload field (case 6 of the nine) |
+| 80 | The published repair artifact carried a stamp a day older than every dataset it summarised | Nothing in `update-data.yml` or `main.py` ran `pipeline/repair_maintenance_summary.py`; it had been run by hand | The tier is now a pipeline step, ordered after `landlord_summary.py` (which writes `landlord.json`) and before the ledger, so a stale artifact cannot be committed. The ledger refuses a summary whose stamp is not `landlord.json`'s or whose build-stamped inputs disagree (`repair-currency-honest`), and warns when the tier is absent |
+| 81 | The printable page printed numbers that exist in no dataset (`7.4` gale days where the dataset says `7.37`, `14.0` where the file says `14`) | The page formatter re-rounded every value to a fixed number of decimals | `fmt()` prints values **as published**; the self-test now requires every numeric token on the printable page to be a substring of the JSON it was generated from (value-compared, so `11.10` still counts as `11.1`) |
+| 82 | Two figures were typed into the generator: the SFO station distance (`11.9`) and the ocean gale threshold (`34 kt`) | The generator held a constant where the datasets already carried the fact | Both are now **parsed**: the distance from the dataset's own sentence ("…, 11.9 miles south-east of 94122 …", published beside the page with that sentence quoted), the threshold from the dataset's own counter key name (`gale_days_ge_34kt`). A dataset that stops stating either makes the tier publish the absence |
+
+### What was added, and how it is verified
+
+* `pipeline/repair_maintenance_summary.py` — rewritten to schema 2 (see
+  `docs/NEXT_SESSION.md` §1): `schema_version`, `sources_read`, `currency`
+  (`is_current`, `sources_agree`, which inputs carry no build stamp), `scoreboard`,
+  `next_issuances` (each with URL + SHA-256), `cost_drivers_ranked` with the
+  severity rule published beside the severity, `definitions` taken from
+  `calendar.json`, and basis strings taken from `record_coverage`.
+* `pipeline/selftest_repair_tier.py` — 44 offline checks: severity is a function of
+  rank and a broken permutation stops the build; a missing `why_it_costs` or source
+  URL stops the build; the stamp is never the wall clock and disagreement is
+  published rather than hidden; absent ocean data is labelled, never `null`; three
+  NOAA sentences are found in wrapped text and a rewritten one moves to
+  `not_found`; every number on the printable page exists in the JSON; two builds
+  are byte-identical; `main()` writes all three artifacts and a missing
+  `executive_summary` exits 1 without writing anything.
+* `pipeline/verify_claims.py` §12m — nine checks (`repair-artifact-published`
+  warning when absent, `-numbers-traceable`, `-severity-and-rank-rule`,
+  `-quotes-verbatim`, `-currency-honest`, `-render-contract`,
+  `-printable-page-generated`, `-links-official`, `-absence-labelled`) and two
+  claims (`repair-season-total-mean`, `repair-wind-rain-hourly`).
+* `tests/falsify_guards.py` — nine repair cases: a hand-edited season mean, a
+  severity flipped away from its rank, a paraphrased NOAA sentence, a stamp older
+  than its datasets, a non-official link, a renamed payload field, a typed-in
+  number on the printable page, a stripped absence note, and the not-published
+  warning state. Without the repair tier in the fixture the harness reports a
+  warning, not a silent pass.
+* `tests/smoke.js` guard 36 — renders the block and fails on a missing container,
+  a hero grid without six cards or with an em dash / `undefined` / `NaN` where a
+  published value belongs, a watch list that drops a sentence or its source link,
+  a driver list that drops a row, its severity, its key metric or its source link,
+  a missing verbatim NOAA sentence, a CPC row the table forgot, a source link off
+  the official hosts, or (with the payload absent) a section that does not say so.
+* `tests/falsify_smoke.py` — five render cases for guard 36.
+* `.github/workflows/update-data.yml` + `site-test.yml` — the tier runs nightly
+  before the ledger; its offline self-test runs in the parsers job.
+* `pipeline/repair_maintenance_summary.py --selftest` — the gate used locally,
+  because the development sandbox has no network and no jsdom (see the
+  environment note at the top of this file).
+
+### Standings after this pass
+
+* `pipeline/verify_claims.py`: **88 checks pass, 0 fail, 1 standing warning**, 21
+  claims. The warning is `docs-current-dates-traceable` on two September dates
+  quoted in bug-history prose; they are not forecast-horizon claims and the check
+  is deliberately a warning.
+* `tests/test_parsers.py`: **485/485**.
+* `tests/falsify_guards.py`: **105 cases** behave as expected.
+* `tests/falsify_smoke.py`: **56 cases** (CI-only here: jsdom cannot be installed
+  offline in this sandbox).
+* `npm test`: CI-only for the same reason; the JavaScript was checked with
+  `node --check` and by diffing the renderer's key set against the payload.
+* `pipeline/repair_maintenance_summary.py --selftest`: **44/44**.
+* Reproducibility: `data/repair_maintenance_summary.json` (62,284 B), its printable
+  page and the byte-identical `docs/` copy are regenerated from the committed
+  datasets with stamp 2026-09-21T14:20:21Z.
+* Still open: the NCEI successor archives (GHCNh/SSODv2 — a maintainer decision
+  that would move every published wind statistic), the CPC back-test pending its
+  per-issuance backfill, multi-ZIP support (front-end only; the pipeline is already
+  coordinate-parameterised), and the first nightly run of the newly wired tier.

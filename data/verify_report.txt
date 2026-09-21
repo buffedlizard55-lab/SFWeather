@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-21T14:26:28Z
+generated_utc: 2026-09-21T23:03:08Z
 
-checks: 80 passed, 0 failed, 1 warning(s)  (of 81)
+checks: 88 passed, 0 failed, 1 warning(s)  (of 89)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         189 recorded fetches (187 unique URLs)
@@ -165,8 +165,24 @@ checks: 80 passed, 0 failed, 1 warning(s)  (of 81)
         266 entries (+13 undated) across 12 dates; 253 verified against a recorded fetch
 [PASS] feed-provenance: Every feed entry whose content comes from a fetch points at a URL that was fetched successfully; entries that do not are labelled, not trusted
         253 of 266 entries trace to a recorded fetch; 8 labelled as pointers only
+[PASS] repair-numbers-traceable: Every number in the repair executive summary is re-derived from the dataset it claims to come from (no value appears in the summary that is not in its source)
+        6 drivers and the rain, duration, wind+rain, gust, ocean and outlook blocks all match their source datasets
+[PASS] repair-severity-and-rank-rule: Repair-cost drivers are ranked 1..N exactly once each and carry the published, rank-derived severity rule - not an undocumented guess
+        6 drivers; severity is a pure function of rank (1-3 high, 4-5 medium, 6+ low)
+[PASS] repair-quotes-verbatim: Every sentence the repair summary attributes to NOAA is a whitespace-collapsed substring of the file it names, and a sentence CPC rewrote is reported as not found rather than paraphrased
+        3 scheduled-issuance sentence(s), 3 caveat(s), 2 strength sentence(s) verified verbatim; not found: none
+[PASS] repair-currency-honest: The repair summary is stamped with its source dataset's stamp (never a wall clock), names the inputs that carry no build stamp, and is refused when it is older than the data it summarises
+        stamp 2026-09-21T14:20:21Z; build-stamped inputs all agree; ['cpc.json', 'enso.json', 'nws.json'] input(s) listed as stamp-less
+[PASS] repair-render-contract: Every field the repair renderer reads exists in the published payload, and every container it writes exists in the page
+        renderer and payload agree field by field
+[PASS] repair-printable-page-generated: The printable repair summary and its docs copy are generated from the payload: same stamp, same driver titles, and no number or URL that is not in a dataset
+        212 lines, every figure and link traced to the payload
+[PASS] repair-links-official: Every link the repair summary publishes points at a vetted official host (no commercial provider, no unvetted domain)
+        18 URL(s) across the summary and its source ledger, all official
+[PASS] repair-absence-labelled: A tier missing from this snapshot is published as absent with a note, so an empty card can never read as 'no risk'
+        every optional block either carries figures or an explicit absence note
 
-claims recorded: 19
+claims recorded: 21
 
 - zip-centroid: ZIP 94122 centroid used for every sample point
     value: {"lat": 37.760459, "lon": -122.483894, "land_area_sqmi": 3.257} degrees / sq mi
@@ -273,3 +289,15 @@ claims recorded: 19
     source: NCEI ISD hourly 2025 (72494023234) <https://www.ncei.noaa.gov/data/global-hourly/access/2025/72494023234.csv>
             http 200, 4903856 bytes, sha256 1221e6eb7256be93..., retrieved 2026-09-21T14:19:22Z
     method: Newest date present in the fetched annual files; every published statistic is a 1991-2020 statistic and does not depend on it.
+- repair-season-total-mean: The expected rain total the repair summary leads with is the observed 1991-2020 mean for the SF downtown gauge, not a forecast for 2026-27
+    value: 12.79 in
+    source: NCEI GHCN-Daily USW00023272 (rain, daily high/low) <https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv>
+            http None, None bytes, sha256 None..., retrieved None
+    method: Copied from landlord.json executive_summary.season_total_prcp.mean, which the pipeline derives from NCEI GHCN-Daily USW00023272 over the 30 seasons 1991-2020 (Oct 1 - Jan 31)
+    cross-check: {"landlord.json": 12.79, "n_seasons": 30}
+- repair-wind-rain-hourly: The wind + rain figure the repair summary leads with counts hours, not days, and is an SFO reference value
+    value: 7.9 days/season
+    source: NCEI ISD hourly 72494023234 (hour-by-hour wind + rain) <https://www.ncei.noaa.gov/data/global-hourly/access/>
+            http None, None bytes, sha256 None..., retrieved None
+    method: Copied from landlord.json executive_summary.wind_and_rain_hourly, which the pipeline counts from NCEI ISD hourly observations at 72494023234 (KSFO): an hour counts when one observation carries wind >= 20 kt and measurable precipitation
+    cross-check: {"station": "72494023234", "threshold_kt": 20.0}

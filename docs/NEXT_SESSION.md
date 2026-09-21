@@ -1,5 +1,45 @@
 # Next session — handoff
 
+## 1. State at the end of session 18 (21 Sep 2026 — repair tier schema v2, render guard 36, tier wired into CI)
+
+**Ledger:** 88 checks, 21 claims — all pass (1 standing warning: `docs-current-dates-traceable`
+flags two September dates in bug-history prose that were never forecast-window dates; benign). `tests/test_parsers.py` 485/485.
+`tests/falsify_guards.py` 105/105. `pipeline/repair_maintenance_summary.py --selftest` 44/44.
+
+**What session 18 changed:**
+
+1. **Repair & maintenance tier (schema v2).** `pipeline/repair_maintenance_summary.py` rewritten; `data/repair_maintenance_summary.json` (62,284 B) now publishes `schema_version`,
+   `generated_utc` (= `landlord.json`'s stamp, never a wall clock), `sources_read`, `currency`
+   (`is_current`, `sources_agree`, which inputs carry no build stamp, newest fetched content),
+   `scoreboard`, `current_enso`, `official_enso`, `cpc_tilt`, `caveats`, `next_issuances`
+   (three NOAA sentences, each with URL + SHA-256), `expected_rain`, `rain_duration`
+   (incl. `phase_conditioned`), `wind_rain`, `peak_gusts`, `ocean_wind`, `cost_drivers_ranked`
+   (severity = f(rank): 1-3 high, 4-5 medium, 6+ low, rule published), `outer_sunset_profile`,
+   `sources` + `sources_list`. Two values are **parsed, not typed**: the SFO-to-centroid distance
+   (read from a `landlord.json` sentence) and the gale threshold (read from the dataset key name).
+2. **Claim ledger section 12m — nine checks** (`repair-artifact-published` warns when the tier is
+   absent, `repair-numbers-traceable`, `repair-severity-and-rank-rule`, `repair-quotes-verbatim`,
+   `repair-currency-honest`, `repair-render-contract`, `repair-printable-page-generated`,
+   `repair-links-official`, `repair-absence-labelled`) plus the claims `repair-season-total-mean`
+   and `repair-wind-rain-hourly`. `repair-render-contract` compares every field the renderer reads
+   with the payload and every container it writes with the page — the em-dash defect it exists for.
+3. **Render guard 36** in `tests/smoke.js` (hero grid, watch list, drivers, outlook table, sunset
+   table, source links, and the "not published" fallback when the payload is absent), with five
+   falsification cases in `tests/falsify_smoke.py`. Nine new ledger falsification cases in
+   `tests/falsify_guards.py`.
+4. **Tier wired into CI.** `update-data.yml` now runs the tier after `landlord_summary.py`,
+   before the ledger (so a stale artifact can never be committed), and `site-test.yml` runs its
+   offline self-test beside the other tier self-tests. The artifact had been a day stale because
+   nothing ran it.
+5. **Printable page formatting.** The printable md now prints numbers **as published** (no
+   re-rounding a 7.37 to 7.4, which would be a value in no dataset) and generates its definition
+   sentences and basis text from the datasets' own `definitions` / `record_coverage` blocks.
+
+**Remaining / Limitations:** see the section below and `docs/LIMITATIONS.md` §28. The open items
+are the NCEI successor archives (GHCNh/SSODv2 — a maintainer decision that moves every published
+wind statistic), the CPC back-test pending per-issuance backfill, and multi-ZIP support
+(front-end work; the pipeline is already coordinate-parameterised).
+
 ## 1. State at the end of session 17 (21 Sep 2026 — Repair & Maintenance Cost Impact Executive Summary)
 
 **Ledger:** 81 checks, 19 claims — all pass. `tests/test_parsers.py` 485/485. New artifact: `pipeline/repair_maintenance_summary.py` + `data/repair_maintenance_summary.json` (57K) + printable md copies in `data/` and `docs/`.
@@ -7,7 +47,8 @@
 **What session 17 changed:**
 
 1. **Repair & Maintenance Cost Impact Executive Summary (top of page).** New pipeline `pipeline/repair_maintenance_summary.py` reads only verified datasets (landlord.json, calendar.json, run.json, cpc.json, enso.json, nws.json) — no invented numbers. Outputs:
-   - `data/repair_maintenance_summary.json` with keys: executive_headline, current_enso (phase_label, oni_c_fmt, strength_quotes verbatim), cpc_tilt (periods_with_a_tilt, highest DJF 40% Above / JFM 50% Above, baseline 33%, OND EC), expected_rain (season_total_mean 12.79in median, oct/nov/dec/jan means), rain_duration (ge_7 53.3% — 81.8% El Niño — longest mean, ge_10), wind_rain (hourly_mean_days 7.9 median max hourly_mean_hours 29.5 whole_day 11.1), peak_gusts (mean 53.8 mph max 70 mph SFO 72494023234 11.9mi), ocean_wind (46026 19.4mi gale_mean), cost_drivers_ranked 6 with severity HIGH rank1-3 MEDIUM 4-5 LOW 6, official_outlook verbatim quotes, sources ledger.
+   - *(Superseded in session 18 — the published key names are in section 1 above; the tier
+     now publishes schema 2 and the ledger re-derives every number.)* `data/repair_maintenance_summary.json` with keys: executive_headline, current_enso (phase_label, oni_c_fmt, strength_quotes verbatim), cpc_tilt (periods_with_a_tilt, highest DJF 40% Above / JFM 50% Above, baseline 33%, OND EC), expected_rain (season_total_mean 12.79in median, oct/nov/dec/jan means), rain_duration (ge_7 53.3% — 81.8% El Niño — longest mean, ge_10), wind_rain (hourly_mean_days 7.9 median max hourly_mean_hours 29.5 whole_day 11.1), peak_gusts (mean 53.8 mph max 70 mph SFO 72494023234 11.9mi), ocean_wind (46026 19.4mi gale_mean), cost_drivers_ranked 6 with severity HIGH rank1-3 MEDIUM 4-5 LOW 6, official_outlook verbatim quotes, sources ledger.
    - `data/repair_maintenance_executive.md` (164 lines) and `docs/REPAIR_MAINTENANCE_EXECUTIVE_SUMMARY.md` printable copy with verification URLs for ghcn_daily, gsod, isd, cpc_gis, cpc_discussion, enso_discussion, oni, nws_api, census, storm_events, ndbc_46026.
 2. **UI overhaul for landlord focus.** `assets/css/style.css`: sticky header backdrop-filter blur, enhanced .site-nav primary-nav styling (12.5px 600 weight, transition), hero-executive (left 6px accent border, hero-kicker uppercase badge), hero-grid, hero-stat with severity left-border (high/medium/low/enso), repair-cost-hero dark gradient #0f2f52 to #14497a, repair-driver-compact with rdc-rank white circle, severity-badge high #fdeaea #c0392b / medium #fff8e6 #8a6d00 / low #e3f5ea #0f7b3f, section h2 21px 800 weight with .section-icon, card padding 20px 22px hover shadow-lg, grid-4.
 3. **index.html top hero.** New `<section id="repair-executive">` as first content section: hero-executive with headline + hero-grid (ENSO, CPC tilt, expected rain, duration, wind+rain hourly, peak gusts + ocean), repair-cost-hero with ranked drivers compact list, current official forecast card + Outer Sunset profile card. Nav: primary-nav Repair Risk Summary link first.

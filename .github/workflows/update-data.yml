@@ -102,6 +102,14 @@ jobs:
           echo "LANDLORD_EXIT=$code" >> data/run_diagnostics.txt
           exit $code
 
+      - name: Build the repair & maintenance executive summary (top of the page)
+        run: |
+          set +e
+          python3 -u pipeline/repair_maintenance_summary.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "REPAIR_SUMMARY_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
+
       - name: Build the printable executive summary (machine-generated, drift-proof)
         run: |
           set +e
