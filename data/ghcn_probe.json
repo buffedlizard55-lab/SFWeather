@@ -4,13 +4,13 @@
       "sid": "USW00023272",
       "ok": true,
       "status": 200,
-      "bytes": 7488824,
+      "bytes": 7489028,
       "format": "wide",
-      "n_lines": 38575,
-      "n_parsed_days": 38574,
+      "n_lines": 38576,
+      "n_parsed_days": 38575,
       "date_range": [
         "1921-01-01",
-        "2026-09-17"
+        "2026-09-18"
       ],
       "first_lines_raw": [
         "\"STATION\",\"DATE\",\"LATITUDE\",\"LONGITUDE\",\"ELEVATION\",\"NAME\",\"PRCP\",\"PRCP_ATTRIBUTES\",\"SNOW\",\"SNOW_ATTRIBUTES\",\"SNWD\",\"SNWD_ATTRIBUTES\",\"TMAX\",\"TMAX_ATTRIBUTES\",\"",

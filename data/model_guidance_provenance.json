@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-21T04:17:08Z",
+  "generated_utc": "2026-09-21T14:26:27Z",
   "area": "model_guidance",
   "note": "Fetches made by pipeline/model_guidance.py (model-guidance tier; not an official forecast).",
   "entries": [
@@ -10,8 +10,8 @@
       "bytes": 1972,
       "sha256": "addb38b92d993b83b83413ade5e2e6073712452f56b5036f80c91f24d4b3328f",
       "content_type": "text/html; charset=utf-8",
-      "retrieved_utc": "2026-09-21T04:17:01Z",
-      "elapsed_s": 0.251,
+      "retrieved_utc": "2026-09-21T14:26:22Z",
+      "elapsed_s": 0.316,
       "note": "NMME model-guidance page: NMME probability forecasts (index)"
     },
     {
@@ -21,8 +21,8 @@
       "bytes": 4233,
       "sha256": "41a69d9ce9422e23a3ff35428c240e8e04dccbff390cdddf4c186f79ce5ff648",
       "content_type": "text/html; charset=utf-8",
-      "retrieved_utc": "2026-09-21T04:17:01Z",
-      "elapsed_s": 0.321,
+      "retrieved_utc": "2026-09-21T14:26:22Z",
+      "elapsed_s": 0.318,
       "note": "NMME model-guidance page: Description of the NMME probability forecasts"
     },
     {
@@ -32,8 +32,8 @@
       "bytes": 1531,
       "sha256": "cab7367eaf1469e6dcdf87179b8da417ed85e4755881b838cba18eb47d97aa08",
       "content_type": "text/html; charset=utf-8",
-      "retrieved_utc": "2026-09-21T04:17:01Z",
-      "elapsed_s": 0.245,
+      "retrieved_utc": "2026-09-21T14:26:22Z",
+      "elapsed_s": 0.242,
       "note": "NMME model-guidance page: NMME seasonal precipitation-rate probability (North America)"
     },
     {
@@ -43,8 +43,8 @@
       "bytes": 1533,
       "sha256": "03c65f557ba408b3af1add65716d43e8440ebd5262e16c501b0fae1f128b7562",
       "content_type": "text/html; charset=utf-8",
-      "retrieved_utc": "2026-09-21T04:17:02Z",
-      "elapsed_s": 0.247,
+      "retrieved_utc": "2026-09-21T14:26:23Z",
+      "elapsed_s": 0.316,
       "note": "NMME model-guidance page: NMME seasonal 2m-temperature probability (North America)"
     },
     {
@@ -54,8 +54,8 @@
       "bytes": 1260,
       "sha256": "903830e5da4ce514ad45c05a4f2ce081fe105ce08bc0c25f59fab632e644248c",
       "content_type": "text/html; charset=utf-8",
-      "retrieved_utc": "2026-09-21T04:17:02Z",
-      "elapsed_s": 0.253,
+      "retrieved_utc": "2026-09-21T14:26:23Z",
+      "elapsed_s": 0.318,
       "note": "NMME model-guidance page: NMME Ranked Probability Skill Score maps"
     },
     {
@@ -65,8 +65,8 @@
       "bytes": 1027,
       "sha256": "8a885722d40128c8ed1c9bf7c8ae499f0dfbccbac6f47ca316f3a1e521d07984",
       "content_type": "text/html; charset=utf-8",
-      "retrieved_utc": "2026-09-21T04:17:02Z",
-      "elapsed_s": 0.247,
+      "retrieved_utc": "2026-09-21T14:26:23Z",
+      "elapsed_s": 0.245,
       "note": "NMME model-guidance page: NMME real-time verification (preliminary)"
     },
     {
@@ -76,8 +76,8 @@
       "bytes": 32319,
       "sha256": "0c9b8096d5dcdb2e8fed46706e7420f6b477a7ee46ca80912ed676e2ed8104bc",
       "content_type": "text/html; charset=utf-8",
-      "retrieved_utc": "2026-09-21T04:17:02Z",
-      "elapsed_s": 0.3,
+      "retrieved_utc": "2026-09-21T14:26:23Z",
+      "elapsed_s": 0.37,
       "note": "NMME model-guidance page: NMME real-time forecast archive"
     },
     {
@@ -87,7 +87,7 @@
       "bytes": 31998,
       "sha256": "fab7fa299872f1f256a7ad49ab962742d8e4b61d3d2d3412ab7d98dd2d062606",
       "content_type": "image/png",
-      "retrieved_utc": "2026-09-21T04:17:03Z",
+      "retrieved_utc": "2026-09-21T14:26:24Z",
       "elapsed_s": 0.3,
       "note": "NMME model-guidance image: prate season 1"
     },
@@ -98,8 +98,8 @@
       "bytes": 31341,
       "sha256": "5b3f3e43109276a5b5ebe12b2653e33c4ad85286b5424f21b95f784c685584b1",
       "content_type": "image/png",
-      "retrieved_utc": "2026-09-21T04:17:03Z",
-      "elapsed_s": 0.301,
+      "retrieved_utc": "2026-09-21T14:26:24Z",
+      "elapsed_s": 0.296,
       "note": "NMME model-guidance image: prate season 2"
     },
     {
@@ -109,8 +109,8 @@
       "bytes": 31535,
       "sha256": "f2c8b356786560a5b1c2db9a6fc51eb1af74f772a30c3c45f55d0b2e8ff5a478",
       "content_type": "image/png",
-      "retrieved_utc": "2026-09-21T04:17:03Z",
-      "elapsed_s": 0.31,
+      "retrieved_utc": "2026-09-21T14:26:24Z",
+      "elapsed_s": 0.3,
       "note": "NMME model-guidance image: prate season 3"
     },
     {
@@ -120,8 +120,8 @@
       "bytes": 31610,
       "sha256": "2eeb0a5f03b62aa7975bc0bfbe41719ae8716004042a2fa74ebb44be7cb9fb4c",
       "content_type": "image/png",
-      "retrieved_utc": "2026-09-21T04:17:04Z",
-      "elapsed_s": 0.299,
+      "retrieved_utc": "2026-09-21T14:26:25Z",
+      "elapsed_s": 0.297,
       "note": "NMME model-guidance image: prate season 4"
     },
     {
@@ -131,8 +131,8 @@
       "bytes": 31623,
       "sha256": "69a167de9252d9100515f900e557412fccb1b26c196e1ac3951b5fea8d785487",
       "content_type": "image/png",
-      "retrieved_utc": "2026-09-21T04:17:04Z",
-      "elapsed_s": 0.302,
+      "retrieved_utc": "2026-09-21T14:26:25Z",
+      "elapsed_s": 0.298,
       "note": "NMME model-guidance image: prate season 5"
     },
     {
@@ -142,8 +142,8 @@
       "bytes": 30357,
       "sha256": "0bdc74148b5481800e3db3f6b0e50733d1ca18927e39a1b82302e9e214ab5cd9",
       "content_type": "image/png",
-      "retrieved_utc": "2026-09-21T04:17:04Z",
-      "elapsed_s": 0.318,
+      "retrieved_utc": "2026-09-21T14:26:25Z",
+      "elapsed_s": 0.304,
       "note": "NMME model-guidance image: tmp2m season 1"
     },
     {
@@ -153,8 +153,8 @@
       "bytes": 30641,
       "sha256": "09f0dbf3467238592c59efbaf5dfe027040d9458f42cac187c5cd9ed87023a6f",
       "content_type": "image/png",
-      "retrieved_utc": "2026-09-21T04:17:05Z",
-      "elapsed_s": 0.301,
+      "retrieved_utc": "2026-09-21T14:26:26Z",
+      "elapsed_s": 0.3,
       "note": "NMME model-guidance image: tmp2m season 2"
     },
     {
@@ -164,8 +164,8 @@
       "bytes": 31651,
       "sha256": "83af0773082826c59968a483eab19d0c42d3d8b467ba8c2d7ae7a8099cfba3d9",
       "content_type": "image/png",
-      "retrieved_utc": "2026-09-21T04:17:05Z",
-      "elapsed_s": 0.301,
+      "retrieved_utc": "2026-09-21T14:26:26Z",
+      "elapsed_s": 0.3,
       "note": "NMME model-guidance image: tmp2m season 3"
     },
     {
@@ -175,7 +175,7 @@
       "bytes": 31974,
       "sha256": "0a44b13c08a35179e8da55addc03ebdfea25df212957f3b8ec908f273fb8318a",
       "content_type": "image/png",
-      "retrieved_utc": "2026-09-21T04:17:05Z",
+      "retrieved_utc": "2026-09-21T14:26:26Z",
       "elapsed_s": 0.301,
       "note": "NMME model-guidance image: tmp2m season 4"
     },
@@ -186,8 +186,8 @@
       "bytes": 31556,
       "sha256": "f08983b4dd06e39ba40b3368a37d5ca845f003d93da5ae48fd701b6a04effbbe",
       "content_type": "image/png",
-      "retrieved_utc": "2026-09-21T04:17:06Z",
-      "elapsed_s": 0.301,
+      "retrieved_utc": "2026-09-21T14:26:26Z",
+      "elapsed_s": 0.297,
       "note": "NMME model-guidance image: tmp2m season 5"
     },
     {
@@ -195,21 +195,21 @@
       "http_status": 200,
       "ok": true,
       "bytes": 3258,
-      "sha256": "e38823d9d601be45fe4024ff45d9a9e9667242f4b29476e484aee597089ca4b7",
+      "sha256": "7d2d24788cb4d5eab69e97033031a98ca30e052eef40d5a406b41579d67bd003",
       "content_type": "text/html;charset=ISO-8859-1",
-      "retrieved_utc": "2026-09-21T04:17:06Z",
-      "elapsed_s": 0.386,
+      "retrieved_utc": "2026-09-21T14:26:27Z",
+      "elapsed_s": 0.26,
       "note": "model-guidance availability probe: NOMADS CFSv2 production directory"
     },
     {
       "url": "https://ftp.cpc.ncep.noaa.gov/NMME/archive/2026080800",
       "http_status": 200,
       "ok": true,
-      "bytes": 8695,
-      "sha256": "e123b1bc9acdef48428cb479d6a79e2b1d0d35561a1d30651012e69acf400f0d",
-      "content_type": "text/html;charset=UTF-8",
-      "retrieved_utc": "2026-09-21T04:17:08Z",
-      "elapsed_s": 1.662,
+      "bytes": 3173,
+      "sha256": "f659cd67740b33fd248fa626aa8caa0aef2d56a34dda15e600735cf73f1e1710",
+      "content_type": "text/html; charset=utf-8",
+      "retrieved_utc": "2026-09-21T14:26:27Z",
+      "elapsed_s": 0.597,
       "note": "model-guidance availability probe: Latest NMME archived run directory"
     }
   ]

@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-21T04:10:55Z",
+  "generated_utc": "2026-09-21T14:20:21Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Sunset District \u2014 Inner and Outer Sunset)",
@@ -32,13 +32,13 @@
         "census_tract_geoid": "06075032601",
         "census_block_geoid": "060750326013006",
         "congressional_district": "Congressional District 11",
-        "congressional_district_layer": "119th Congressional Districts",
+        "congressional_district_layer": "120th Congressional Districts",
         "urban_area": "San Francisco--Oakland, CA Urban Area",
         "geography_types_returned": [
-          "119th Congressional Districts",
+          "120th Congressional Districts",
           "2020 Census Blocks",
-          "2024 State Legislative Districts - Lower",
-          "2024 State Legislative Districts - Upper",
+          "2026 State Legislative Districts - Lower",
+          "2026 State Legislative Districts - Upper",
           "Census Tracts",
           "Combined Statistical Areas",
           "Counties",
@@ -51,8 +51,8 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-21T04:05:44Z",
-        "sha256": "b7b8df03b1365a8463fe07a95913f07e23627f52eff60daece1b6a8ea4f65fb7",
+        "retrieved_utc": "2026-09-21T14:14:46Z",
+        "sha256": "407ce6bb637e8c512b1ad551ad96a709d1be46102e3ab5ed9d2dc8120cb517c0",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
     }
@@ -713,8 +713,8 @@
         {
           "area": "rain_temp",
           "label": "GHCN-Daily USW00023272 (rain, daily high/low)",
-          "last_date": "2026-09-17",
-          "age_days": 4,
+          "last_date": "2026-09-18",
+          "age_days": 3,
           "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
           "note": "Daily summaries, so this is the most current of the three archives."
         },
@@ -3716,7 +3716,7 @@
     "station_id": "USW00023272",
     "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
     "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-    "retrieved_utc": "2026-09-21T04:10:12Z",
+    "retrieved_utc": "2026-09-21T14:19:36Z",
     "dates_parsed": 366,
     "columns": {
       "normal_high_f": "DLY-TMAX-NORMAL",
