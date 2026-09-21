@@ -229,43 +229,43 @@
   },
   {
     "issuance_date": "2026-09-21",
-    "generated_utc": "2026-09-21T14:14:47+00:00",
-    "forecast_updated": "2026-09-21T09:36:39+00:00",
+    "generated_utc": "2026-09-21T23:08:53+00:00",
+    "forecast_updated": "2026-09-21T20:26:08+00:00",
     "days": [
       {
         "target_date": "2026-09-21",
         "high_f": 61,
-        "low_f": 57,
-        "pop_pct": 15,
+        "low_f": 58,
+        "pop_pct": 2,
         "qpf_in": 0.0,
         "wind_max_mph": 12.0,
         "gust_max_mph": 16.1
       },
       {
         "target_date": "2026-09-22",
-        "high_f": 64,
+        "high_f": 63,
         "low_f": 58,
-        "pop_pct": 1,
+        "pop_pct": 2,
         "qpf_in": 0.0,
         "wind_max_mph": 12.0,
         "gust_max_mph": 16.1
       },
       {
         "target_date": "2026-09-23",
-        "high_f": 69,
+        "high_f": 70,
         "low_f": 57,
         "pop_pct": 0,
         "qpf_in": 0.0,
         "wind_max_mph": 10.0,
-        "gust_max_mph": 15.0
+        "gust_max_mph": 13.8
       },
       {
         "target_date": "2026-09-24",
-        "high_f": 68,
+        "high_f": 67,
         "low_f": 58,
         "pop_pct": 0,
         "qpf_in": 0.0,
-        "wind_max_mph": 14.0,
+        "wind_max_mph": 13.0,
         "gust_max_mph": 18.4
       },
       {
@@ -279,8 +279,8 @@
       },
       {
         "target_date": "2026-09-26",
-        "high_f": 66,
-        "low_f": 58,
+        "high_f": 64,
+        "low_f": 57,
         "pop_pct": 0,
         "qpf_in": 0.0,
         "wind_max_mph": 13.0,
@@ -288,11 +288,20 @@
       },
       {
         "target_date": "2026-09-27",
-        "high_f": 64,
+        "high_f": 63,
         "low_f": 57,
-        "pop_pct": 1,
+        "pop_pct": 0,
         "qpf_in": 0.0,
-        "wind_max_mph": 12.0,
+        "wind_max_mph": 13.0,
+        "gust_max_mph": 18.4
+      },
+      {
+        "target_date": "2026-09-28",
+        "high_f": 59,
+        "low_f": 58,
+        "pop_pct": 0,
+        "qpf_in": 0.0,
+        "wind_max_mph": 7.0,
         "gust_max_mph": 16.1
       }
     ]
