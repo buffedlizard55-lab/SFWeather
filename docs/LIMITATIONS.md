@@ -540,3 +540,11 @@ carries current-year text. Consequences a reader should know:
   no longer assumes a Congress number; the layer it was given is published
   beside the district name, and a layer returned with no district published
   fails the ledger.
+
+## 28. Repair & Maintenance Cost Impact tier is ranked likelihood, not dollars (added 21 Sep 2026, session 17)
+
+* **No dollar figure is computed.** The tier publishes *ranked cost drivers* (most to least likely to drive maintenance cost in 94122 Outer Sunset) from observed weather statistics only: expected rain totals, week-long rain frequency, wind+rain hourly co-occurrence, peak gusts, ocean buoy gale days, heavy-rain days. Why it matters is *guidance* (e.g., flat roofs, lightwell drains, salt-air corrosion), not a weather claim, and is labelled as such.
+* **Severity HIGH/MEDIUM/LOW is derived from impact, not from a dollar threshold.** HIGH = prolonged rain / water intrusion (ranks 1-3), MEDIUM = wind+rain and gusts (4-5), LOW = ocean gale proxy (6). No official source publishes repair cost vs weather for 94122, so no cost model is attempted.
+* **All numbers are copied verbatim from verified datasets.** `data/repair_maintenance_summary.json` is built by `pipeline/repair_maintenance_summary.py` reading landlord.json, calendar.json, run.json, cpc.json, enso.json, nws.json — no invented values. The printable md carries the same ledger URLs as the main site (ghcn_daily, gsod, isd, cpc_gis, cpc_discussion, enso_discussion, oni, nws_api, census, storm_events, ndbc_46026).
+* **The tier does not replace the landlord dashboard.** It is a condensed executive summary at the top of the page for quick triage; the full landlord dashboard, day-by-day calendar, duration, wind, storm, and source tables remain the authoritative detail.
+* **Outer Sunset specificity.** Building stock (1920s-1950s stucco row-homes, zero-lot-line, flat roofs, parapet caps, lightwells, subterranean garages), sandy dune subsoil, shallow water table, direct Pacific exposure, salt-air corrosion — all from `executive_summary.outer_sunset_profile`, not typed in the tier.
