@@ -1,5 +1,36 @@
 # Next session — handoff
 
+## 1. State at the end of session 17 (21 Sep 2026 — Repair & Maintenance Cost Impact Executive Summary)
+
+**Ledger:** 81 checks, 19 claims — all pass. `tests/test_parsers.py` 485/485. New artifact: `pipeline/repair_maintenance_summary.py` + `data/repair_maintenance_summary.json` (57K) + printable md copies in `data/` and `docs/`.
+
+**What session 17 changed:**
+
+1. **Repair & Maintenance Cost Impact Executive Summary (top of page).** New pipeline `pipeline/repair_maintenance_summary.py` reads only verified datasets (landlord.json, calendar.json, run.json, cpc.json, enso.json, nws.json) — no invented numbers. Outputs:
+   - `data/repair_maintenance_summary.json` with keys: executive_headline, current_enso (phase_label, oni_c_fmt, strength_quotes verbatim), cpc_tilt (periods_with_a_tilt, highest DJF 40% Above / JFM 50% Above, baseline 33%, OND EC), expected_rain (season_total_mean 12.79in median, oct/nov/dec/jan means), rain_duration (ge_7 53.3% — 81.8% El Niño — longest mean, ge_10), wind_rain (hourly_mean_days 7.9 median max hourly_mean_hours 29.5 whole_day 11.1), peak_gusts (mean 53.8 mph max 70 mph SFO 72494023234 11.9mi), ocean_wind (46026 19.4mi gale_mean), cost_drivers_ranked 6 with severity HIGH rank1-3 MEDIUM 4-5 LOW 6, official_outlook verbatim quotes, sources ledger.
+   - `data/repair_maintenance_executive.md` (164 lines) and `docs/REPAIR_MAINTENANCE_EXECUTIVE_SUMMARY.md` printable copy with verification URLs for ghcn_daily, gsod, isd, cpc_gis, cpc_discussion, enso_discussion, oni, nws_api, census, storm_events, ndbc_46026.
+2. **UI overhaul for landlord focus.** `assets/css/style.css`: sticky header backdrop-filter blur, enhanced .site-nav primary-nav styling (12.5px 600 weight, transition), hero-executive (left 6px accent border, hero-kicker uppercase badge), hero-grid, hero-stat with severity left-border (high/medium/low/enso), repair-cost-hero dark gradient #0f2f52 to #14497a, repair-driver-compact with rdc-rank white circle, severity-badge high #fdeaea #c0392b / medium #fff8e6 #8a6d00 / low #e3f5ea #0f7b3f, section h2 21px 800 weight with .section-icon, card padding 20px 22px hover shadow-lg, grid-4.
+3. **index.html top hero.** New `<section id="repair-executive">` as first content section: hero-executive with headline + hero-grid (ENSO, CPC tilt, expected rain, duration, wind+rain hourly, peak gusts + ocean), repair-cost-hero with ranked drivers compact list, current official forecast card + Outer Sunset profile card. Nav: primary-nav Repair Risk Summary link first.
+4. **app.js rendering.** FILES.repair added, `renderRepairExecutive()` renders headline, hero-grid stats, compact drivers with severity badges, official outlook verbatim, Outer Sunset profile. Boot loads repair.json alongside others.
+5. **PR #28 merged to main.** Commit `1c27f8d` feat: repair & maintenance executive summary, merged as `4a11f39`.
+
+**Verified:** parser tests 485/485, claim checks 81 passed, no hallucinations, all numbers traceable.
+
+**Remaining / Limitations:**
+
+- The repair summary currently re-uses landlord.json evidence strings; future work could derive cost estimates from external contractor datasets (not official weather, so would need separate tier with clear non-weather disclaimer).
+- No dollar figure is computed — only ranked likelihood and physical mechanism — because no official source publishes repair cost vs weather for 94122.
+- Ocean wind 46026 still provisional in some seasons; thin-season flagging already in ocean_wind.json.
+- CPC back-test still pending-backfill until per-issuance URLs found in llarc.ind.php.
+- Multi-ZIP front-end picker still open; pipeline already coordinate-parameterised.
+
+**Priorities for session 18:**
+
+1. Watch first live run with repair tier in nightly workflow (add step to .github/workflows).
+2. CPC issuance watches 8 Oct + 15 Oct.
+3. Add repair tier to nightly workflow publish gate.
+4. Multi-ZIP support, GHCNh/SSODv2 wind stitching, CPC back-test archive.
+
 ## 1. State at the end of session 16 (20 Sep 2026 — the ocean-side wind record; NDBC station 46026)
 
 **Ledger:** **76 checks live** in the committed data state, **81** once
