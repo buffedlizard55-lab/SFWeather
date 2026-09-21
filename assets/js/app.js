@@ -349,8 +349,8 @@ function renderRepairExecutive() {
       title: 'CPC precipitation tilt for Oct-Jan',
       value: `${n(tilt.periods_with_a_tilt)} of ${n(tilt.periods_covering_this_season)} periods carry a tilt`,
       sub: hp.period
-        ? `Strongest: ${hp.period} — ${hp.category_label} at ${n(hp.probability_pct, 1)}% (baseline ${n(tilt.baseline_pct, 1)}%), issued ${hp.issued} · ${n(tilt.periods_at_climatological_baseline)} periods at equal chances`
-        : `Baseline ${n(tilt.baseline_pct, 1)}% (equal chances) — no tilt published`
+        ? `Strongest: ${hp.period}: ${hp.category_label} at ${n(hp.probability_pct, 1)}% (baseline ${n(tilt.baseline_pct, 1)}%), issued ${hp.issued} · ${n(tilt.periods_at_climatological_baseline)} periods at equal chances`
+        : `Baseline ${n(tilt.baseline_pct, 1)}% (equal chances); no period carries a tilt`
     });
 
     cards.push({
@@ -461,11 +461,11 @@ function renderRepairExecutive() {
     rows.push(['CPC precipitation outlooks covering this season',
       `${n(tilt.periods_with_a_tilt)} of ${n(tilt.periods_covering_this_season)} carry a tilt above the ${n(tilt.baseline_pct, 1)}% baseline; ${n(tilt.periods_at_climatological_baseline)} at equal chances`]);
     if (hp.period) {
-      rows.push(['Strongest tilt', `${hp.period} — ${hp.category_label} ${n(hp.probability_pct, 1)}% (issued ${hp.issued})`]);
+      rows.push(['Strongest tilt', `${hp.period}: ${hp.category_label} ${n(hp.probability_pct, 1)}% (issued ${hp.issued})`]);
     }
     (tilt.rows || []).forEach(r => {
       rows.push([`  · ${r.period} (${r.variable || 'prcp'}, issued ${r.issued})`,
-        `${r.category_label || r.category_raw || DASH} — ${n(r.probability_pct, 1)}%`]);
+        `${r.category_label || r.category_raw || DASH}: ${n(r.probability_pct, 1)}%`]);
     });
     if (cond.seasons_in_phase) {
       rows.push([`What ${cond.phase_label || 'this'} seasons delivered in the record`,

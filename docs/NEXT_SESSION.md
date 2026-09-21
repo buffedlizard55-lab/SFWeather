@@ -27,6 +27,13 @@ flags two September dates in bug-history prose that were never forecast-window d
    table, source links, and the "not published" fallback when the payload is absent), with five
    falsification cases in `tests/falsify_smoke.py`. Eleven new ledger falsification cases in
    `tests/falsify_guards.py`.
+3b. **Two harness defects fixed.** The falsification case that guards the scoreboard grid
+   against model-guidance tokens had become a silent no-op (its `grid.innerHTML` anchor matched
+   the repair hero's grid, so it passed on `main` while guarding nothing — main's Tests workflow
+   was red for the wrong reason); it now anchors on the calendar renderer. And the repair hero
+   used an em dash as prose punctuation while the section uses it to mean "no value published";
+   the separator is now `:`, so "renders an em dash" keeps one meaning. Both harnesses run
+   locally: this sandbox cannot reach NOAA, but `npm ci` works.
 4. **Tier wired into CI.** `update-data.yml` now runs the tier after `landlord_summary.py`,
    before the ledger (so a stale artifact can never be committed), and `site-test.yml` runs its
    offline self-test beside the other tier self-tests. The artifact had been a day stale because

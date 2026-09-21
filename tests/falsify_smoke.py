@@ -361,10 +361,17 @@ def _mg_paraphrase(repo):
       expect_msg="scoreboard grid mentions the model-guidance tier")
 def _mg_leak(repo):
     # The renderer clears the grid, so the leak has to come from the renderer
-    # itself - which is exactly how a real regression would happen.
+    # itself - which is exactly how a real regression would happen.  The anchor
+    # must be the *calendar* renderer's own line: the repair hero clears a grid
+    # with the same statement, and patching the first match made this case a
+    # silent no-op (it passed on main while claiming to guard the grid).
     patch_text(repo, "assets/js/app.js",
-               "    grid.innerHTML = '';",
-               "    grid.innerHTML = 'NMME guidance below';")
+               """  function drawMonth() {
+    const grid = $('#calendar-grid');
+    grid.innerHTML = '';""",
+               """  function drawMonth() {
+    const grid = $('#calendar-grid');
+    grid.innerHTML = 'NMME guidance below';""")
     write_data(repo, "model_guidance.json", mg_fixture())
     return repo
 

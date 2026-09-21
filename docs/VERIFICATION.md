@@ -1342,6 +1342,13 @@ ledger does not know how to re-derive fails). The tier's self-test asserts both
 halves: the unobserved season still publishes 0 in its own row, and it does not
 appear in the mean.
 
+The render guard also fired on a real inconsistency while the ledger asked for it
+to be run: the repair hero used an em dash as *prose punctuation* ("JFM 2027 —
+Above median"), and this section uses the em dash exclusively to mean "the dataset
+does not publish this value" (`DASH`). The separator is now `:`, so the character
+keeps one meaning on the page and the guard's rule — no em dash where a published
+value belongs — holds.
+
 ### What was added, and how it is verified
 
 * `pipeline/ocean_wind.py` (tier) and `pipeline/selftest_ocean_wind.py` (46 offline
@@ -1391,6 +1398,7 @@ taken from a dataset. This pass closes those holes.
 | 79 | The repair hero rendered as a column of em dashes (a blank card reads as "no risk", not "no data") | The renderer asked for `season_total_mean`, `cpc_outlook`, `ge_7d_pct`, `whole_day_mean`, `gale_mean`, `headline_value` while the generated payload published `season_total_mean_in`, `cpc_tilt`/`official_outlook`, `ge_7_days_pct`, `whole_day_mean_days`, `gale_mean_days`, `key_metric` — and no test read both files | The renderer was rewritten against the published schema, and the schema itself became a checked contract: ledger check `repair-render-contract` extracts every `alias.field` the renderer reads and fails if the payload does not publish it, and checks the containers it writes (`#repair-hero-grid`, `#repair-watch`, `#repair-drivers-compact`, `#repair-forecast-body`, `#repair-sunset-body`, `#repair-sources`) against `index.html`. Falsified by renaming a payload field (case 6 of the nine) |
 | 80 | The published repair artifact carried a stamp a day older than every dataset it summarised | Nothing in `update-data.yml` or `main.py` ran `pipeline/repair_maintenance_summary.py`; it had been run by hand | The tier is now a pipeline step, ordered after `landlord_summary.py` (which writes `landlord.json`) and before the ledger, so a stale artifact cannot be committed. The ledger refuses a summary whose stamp is not `landlord.json`'s or whose build-stamped inputs disagree (`repair-currency-honest`), and warns when the tier is absent |
 | 81 | The printable page printed numbers that exist in no dataset (`7.4` gale days where the dataset says `7.37`, `14.0` where the file says `14`) | The page formatter re-rounded every value to a fixed number of decimals | `fmt()` prints values **as published**; the self-test now requires every numeric token on the printable page to be a substring of the JSON it was generated from (value-compared, so `11.10` still counts as `11.1`) |
+| 83 | The falsification case that guards the scoreboard grid against model-guidance tokens had become a **silent no-op** — it passed on `main` while claiming to guard the grid, so the Tests workflow was red for the wrong reason | The case patched `grid.innerHTML = '';` by first match, and the repair hero clears its own grid with the same statement, so the mutation landed on the wrong renderer | The case now anchors on the calendar renderer's own `drawMonth()` block; it fails as intended and the whole harness is green again (57/57) |
 | 82 | Two figures were typed into the generator: the SFO station distance (`11.9`) and the ocean gale threshold (`34 kt`) | The generator held a constant where the datasets already carried the fact | Both are now **parsed**: the distance from the dataset's own sentence ("…, 11.9 miles south-east of 94122 …", published beside the page with that sentence quoted), the threshold from the dataset's own counter key name (`gale_days_ge_34kt`). A dataset that stops stating either makes the tier publish the absence |
 
 ### What was added, and how it is verified
@@ -1434,9 +1442,11 @@ taken from a dataset. This pass closes those holes.
   in the order asked, copied from `landlord.json`'s verified bottom line. The
   ledger fails when a page drops a question or the start of its answer
   (`repair-printable-page-generated`), and a falsification case removes one.
-* `pipeline/repair_maintenance_summary.py --selftest` — the gate used locally,
-  because the development sandbox has no network and no jsdom (see the
-  environment note at the top of this file).
+* `pipeline/repair_maintenance_summary.py --selftest` — the gate used locally
+  (the sandbox still has no NOAA access, so the live fetch tiers are exercised on
+  CI), alongside `npm test`, `python3 tests/falsify_smoke.py`,
+  `python3 tests/falsify_guards.py` and `python3 tests/test_parsers.py`, all of
+  which run here.
 
 ### Standings after this pass
 
@@ -1446,10 +1456,12 @@ taken from a dataset. This pass closes those holes.
   is deliberately a warning.
 * `tests/test_parsers.py`: **485/485**.
 * `tests/falsify_guards.py`: **107 cases** behave as expected.
-* `tests/falsify_smoke.py`: **57 cases** (CI-only here: jsdom cannot be installed
-  offline in this sandbox).
-* `npm test`: CI-only for the same reason; the JavaScript was checked with
-  `node --check` and by diffing the renderer's key set against the payload.
+* `tests/falsify_smoke.py`: **57 cases** behave as expected. (An earlier note in
+  this file said jsdom could not be installed here; that was wrong — the sandbox
+  cannot reach NOAA, but `registry.npmjs.org` is reachable, so `npm ci` works and
+  both render harnesses run locally. The ledger asked for the smoke test to be
+  run here, and it caught defect 83 and the em-dash regression below.)
+* `npm test`: passes locally and in CI.
 * `pipeline/repair_maintenance_summary.py --selftest`: **47/47**.
 * Reproducibility: `data/repair_maintenance_summary.json` (62,284 B), its printable
   page and the byte-identical `docs/` copy are regenerated from the committed
