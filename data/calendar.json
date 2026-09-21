@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-20T17:23:44Z",
+  "generated_utc": "2026-09-21T04:10:55Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Sunset District \u2014 Inner and Outer Sunset)",
@@ -32,13 +32,13 @@
         "census_tract_geoid": "06075032601",
         "census_block_geoid": "060750326013006",
         "congressional_district": "Congressional District 11",
-        "congressional_district_layer": "120th Congressional Districts",
+        "congressional_district_layer": "119th Congressional Districts",
         "urban_area": "San Francisco--Oakland, CA Urban Area",
         "geography_types_returned": [
-          "120th Congressional Districts",
+          "119th Congressional Districts",
           "2020 Census Blocks",
-          "2026 State Legislative Districts - Lower",
-          "2026 State Legislative Districts - Upper",
+          "2024 State Legislative Districts - Lower",
+          "2024 State Legislative Districts - Upper",
           "Census Tracts",
           "Combined Statistical Areas",
           "Counties",
@@ -51,8 +51,8 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-20T17:19:57Z",
-        "sha256": "407ce6bb637e8c512b1ad551ad96a709d1be46102e3ab5ed9d2dc8120cb517c0",
+        "retrieved_utc": "2026-09-21T04:05:44Z",
+        "sha256": "b7b8df03b1365a8463fe07a95913f07e23627f52eff60daece1b6a8ea4f65fb7",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
     }
@@ -81,10 +81,10 @@
   },
   "nws_window": {
     "first_day": "2026-09-20",
-    "last_day": "2026-09-26",
+    "last_day": "2026-09-27",
     "scoreboard_days_in_horizon": 0,
-    "horizon_days": 7,
-    "forecast_updated": "2026-09-20T16:46:51+00:00",
+    "horizon_days": 8,
+    "forecast_updated": "2026-09-20T20:25:56+00:00",
     "hourly_url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
     "daily_url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast",
     "human_url": "https://forecast.weather.gov/MapClick.php?lat=37.760459&lon=-122.483894&unit=0&lg=english&FcstType=text&TextType=1"
@@ -95,21 +95,21 @@
         "label": "6-10 Day Temperature Outlook",
         "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/610temp_latest.zip",
         "stem": "610temp_latest",
-        "polygon_index": 7,
+        "polygon_index": 1,
         "polygon_bbox_lon_lat": [
-          -123.5282,
-          37.1163,
-          -111.065,
-          49.0007
+          -124.5162,
+          36.2638,
+          -110.0602,
+          49.0015
         ],
-        "polygon_rings": 24,
-        "polygon_vertices": 2855,
+        "polygon_rings": 34,
+        "polygon_vertices": 5296,
         "raw_dbf_row": {
-          "Fcst_Date": "20260919",
-          "Start_Date": "20260925",
-          "End_Date": "20260929",
-          "Prob": 33.0,
-          "Cat": "Above"
+          "Fcst_Date": "20260920",
+          "Start_Date": "20260926",
+          "End_Date": "20260930",
+          "Prob": 36.0,
+          "Cat": "Normal"
         },
         "lead": null,
         "abbrev": null,
@@ -117,16 +117,15 @@
         "valid_season": null,
         "kind": null,
         "covers": null,
-        "start_date": "2026-09-25",
-        "end_date": "2026-09-29",
-        "prob": 33.0,
-        "category": "Above",
-        "fcst_date": "20260919",
+        "start_date": "2026-09-26",
+        "end_date": "2026-09-30",
+        "prob": 36.0,
+        "category": "Normal",
+        "fcst_date": "20260920",
         "used_nearest_polygon": false,
-        "category_label": "Above normal",
-        "probability_at_climatological_baseline": true,
-        "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
-        "issued": "2026-09-19"
+        "category_label": "Normal",
+        "probability_at_climatological_baseline": false,
+        "issued": "2026-09-20"
       },
       {
         "label": "6-10 Day Precipitation Outlook",
@@ -135,16 +134,16 @@
         "polygon_index": 0,
         "polygon_bbox_lon_lat": [
           -124.5661,
-          35.6486,
-          -119.3037,
-          43.2138
+          35.3758,
+          -118.2016,
+          43.3083
         ],
-        "polygon_rings": 37,
-        "polygon_vertices": 5480,
+        "polygon_rings": 36,
+        "polygon_vertices": 5590,
         "raw_dbf_row": {
-          "Fcst_Date": "20260919",
-          "Start_Date": "20260925",
-          "End_Date": "20260929",
+          "Fcst_Date": "20260920",
+          "Start_Date": "20260926",
+          "End_Date": "20260930",
           "Prob": 36.0,
           "Cat": "Normal"
         },
@@ -154,33 +153,33 @@
         "valid_season": null,
         "kind": null,
         "covers": null,
-        "start_date": "2026-09-25",
-        "end_date": "2026-09-29",
+        "start_date": "2026-09-26",
+        "end_date": "2026-09-30",
         "prob": 36.0,
         "category": "Normal",
-        "fcst_date": "20260919",
+        "fcst_date": "20260920",
         "used_nearest_polygon": false,
         "category_label": "Normal",
         "probability_at_climatological_baseline": false,
-        "issued": "2026-09-19"
+        "issued": "2026-09-20"
       },
       {
         "label": "8-14 Day Temperature Outlook",
         "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/814temp_latest.zip",
         "stem": "814temp_latest",
-        "polygon_index": 6,
+        "polygon_index": 4,
         "polygon_bbox_lon_lat": [
-          -123.8236,
-          37.0171,
-          -113.0539,
+          -123.3115,
+          36.2205,
+          -94.2777,
           49.0015
         ],
         "polygon_rings": 23,
-        "polygon_vertices": 3281,
+        "polygon_vertices": 3966,
         "raw_dbf_row": {
-          "Fcst_Date": "20260919",
-          "Start_Date": "20260927",
-          "End_Date": "20261003",
+          "Fcst_Date": "20260920",
+          "Start_Date": "20260928",
+          "End_Date": "20261004",
           "Prob": 33.0,
           "Cat": "Above"
         },
@@ -190,34 +189,34 @@
         "valid_season": null,
         "kind": null,
         "covers": null,
-        "start_date": "2026-09-27",
-        "end_date": "2026-10-03",
+        "start_date": "2026-09-28",
+        "end_date": "2026-10-04",
         "prob": 33.0,
         "category": "Above",
-        "fcst_date": "20260919",
+        "fcst_date": "20260920",
         "used_nearest_polygon": false,
         "category_label": "Above normal",
         "probability_at_climatological_baseline": true,
         "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
-        "issued": "2026-09-19"
+        "issued": "2026-09-20"
       },
       {
         "label": "8-14 Day Precipitation Outlook",
         "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/814prcp_latest.zip",
         "stem": "814prcp_latest",
-        "polygon_index": 8,
+        "polygon_index": 6,
         "polygon_bbox_lon_lat": [
           -124.7628,
-          33.8958,
-          -101.6037,
-          49.0034
+          24.5232,
+          -67.9576,
+          49.3833
         ],
-        "polygon_rings": 207,
-        "polygon_vertices": 21147,
+        "polygon_rings": 3252,
+        "polygon_vertices": 135341,
         "raw_dbf_row": {
-          "Fcst_Date": "20260919",
-          "Start_Date": "20260927",
-          "End_Date": "20261003",
+          "Fcst_Date": "20260920",
+          "Start_Date": "20260928",
+          "End_Date": "20261004",
           "Prob": 33.0,
           "Cat": "Above"
         },
@@ -227,16 +226,16 @@
         "valid_season": null,
         "kind": null,
         "covers": null,
-        "start_date": "2026-09-27",
-        "end_date": "2026-10-03",
+        "start_date": "2026-09-28",
+        "end_date": "2026-10-04",
         "prob": 33.0,
         "category": "Above",
-        "fcst_date": "20260919",
+        "fcst_date": "20260920",
         "used_nearest_polygon": false,
         "category_label": "Above median",
         "probability_at_climatological_baseline": true,
         "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
-        "issued": "2026-09-19"
+        "issued": "2026-09-20"
       },
       {
         "label": "Week 3-4 Temperature Outlook",
@@ -1561,13 +1560,13 @@
     ],
     "valid_periods": {
       "610day": {
-        "valid": "September 25 to 29, 2026",
-        "issued": "19 Sep 2026",
+        "valid": "September 26 to 30, 2026",
+        "issued": "20 Sep 2026",
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/610day/"
       },
       "814day": {
-        "valid": "September 27 to October 03, 2026",
-        "issued": "19 Sep 2026",
+        "valid": "September 28 to October 04, 2026",
+        "issued": "20 Sep 2026",
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/814day/"
       },
       "30day": {
@@ -1583,8 +1582,8 @@
     },
     "span_610day": null,
     "span_814day": [
-      "2026-09-27",
-      "2026-10-03"
+      "2026-09-28",
+      "2026-10-04"
     ],
     "maps": {
       "610day_temp": {
@@ -1594,9 +1593,9 @@
           "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610temp.new.gif"
         ],
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610temp.new.gif",
-        "sha256": "715c4233348a5aa34e9126d38b5bb4bfd611ab9af2efde44ed0f07fe0dc76212",
-        "bytes": 281840,
-        "retrieved_utc": "2026-09-20T17:21:41Z",
+        "sha256": "bd46f36074b258d4927bbce4b719fc08f9fc12c9630f8e14e7f9855f752df66b",
+        "bytes": 279762,
+        "retrieved_utc": "2026-09-21T04:08:14Z",
         "ok": true,
         "local_path": "assets/cpc/610day_temp.gif"
       },
@@ -1607,9 +1606,9 @@
           "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610prcp.new.gif"
         ],
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/610day/610prcp.new.gif",
-        "sha256": "b9b519410659f77ce01fdaf68b18c572e170c88b48f9afd08c53b5b063153398",
-        "bytes": 290105,
-        "retrieved_utc": "2026-09-20T17:21:42Z",
+        "sha256": "52d280204f9131f285f469f3030881c21d9fef44f5583df627918618641beb97",
+        "bytes": 291629,
+        "retrieved_utc": "2026-09-21T04:08:15Z",
         "ok": true,
         "local_path": "assets/cpc/610day_prcp.gif"
       },
@@ -1620,9 +1619,9 @@
           "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814temp.new.gif"
         ],
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814temp.new.gif",
-        "sha256": "42b870bca2441e3b2b5ae9fd582601d257297ad9df7209a0ca243792fcd2c649",
-        "bytes": 268292,
-        "retrieved_utc": "2026-09-20T17:21:42Z",
+        "sha256": "0cd9d852f103c7b6cffda581450fffebaac86184fb0a3c18be6ff69773c18e22",
+        "bytes": 263561,
+        "retrieved_utc": "2026-09-21T04:08:15Z",
         "ok": true,
         "local_path": "assets/cpc/814day_temp.gif"
       },
@@ -1633,9 +1632,9 @@
           "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814prcp.new.gif"
         ],
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/814day/814prcp.new.gif",
-        "sha256": "d0147b8b561e17e103adc15fd4d45d0cb9118744156843a23e0c7f72be875ec3",
-        "bytes": 264029,
-        "retrieved_utc": "2026-09-20T17:21:43Z",
+        "sha256": "e6754b10a68e9563316953bda40ad79c3ecfc112fce9b134765835e675632d45",
+        "bytes": 259563,
+        "retrieved_utc": "2026-09-21T04:08:16Z",
         "ok": true,
         "local_path": "assets/cpc/814day_prcp.gif"
       },
@@ -1648,7 +1647,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34temp.gif",
         "sha256": "85ffe90963e4aa3079dd2b0d4930eaf3ed665abed5a9757316d472f0af8b99e9",
         "bytes": 256477,
-        "retrieved_utc": "2026-09-20T17:21:43Z",
+        "retrieved_utc": "2026-09-21T04:08:16Z",
         "ok": true,
         "local_path": "assets/cpc/wk34_temp.gif"
       },
@@ -1661,7 +1660,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/WK34/gifs/WK34prcp.gif",
         "sha256": "89318b732ebe39affa76ad19a4b1eaa4a242ddb2d3467c1b3e797cd4a9d45e89",
         "bytes": 253178,
-        "retrieved_utc": "2026-09-20T17:21:44Z",
+        "retrieved_utc": "2026-09-21T04:08:17Z",
         "ok": true,
         "local_path": "assets/cpc/wk34_prcp.gif"
       },
@@ -1675,7 +1674,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/30day/off15_temp.gif",
         "sha256": "40177cb325e4b902940c5c1fba1388abc17071f85645f5a04b1edf9e5a4a3bae",
         "bytes": 246338,
-        "retrieved_utc": "2026-09-20T17:21:44Z",
+        "retrieved_utc": "2026-09-21T04:08:17Z",
         "ok": true,
         "local_path": "assets/cpc/30day_temp.gif"
       },
@@ -1689,7 +1688,7 @@
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/30day/off15_prcp.gif",
         "sha256": "4c138aa986dfe3a0933327f68c65ddfc63109d536ce2bb0480d3306a184d78f1",
         "bytes": 248509,
-        "retrieved_utc": "2026-09-20T17:21:44Z",
+        "retrieved_utc": "2026-09-21T04:08:18Z",
         "ok": true,
         "local_path": "assets/cpc/30day_prcp.gif"
       }
@@ -1725,7 +1724,7 @@
     "official": {
       "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
       "sha256": "93f8c86c7a660f46318abe33b38c0479d184812d95a479a1fe869c0c2363a9e4",
-      "retrieved_utc": "2026-09-20T17:21:47Z",
+      "retrieved_utc": "2026-09-21T04:08:21Z",
       "definition": "ONI = 3-month running mean of ERSSTv5 sea-surface temperature anomalies in the Nino 3.4 region; NOAA declares El Nino at >= +0.5 C and La Nina at <= -0.5 C.",
       "seasons": [
         {
@@ -2081,7 +2080,7 @@
         "label": "CPC ENSO Diagnostic Discussion (monthly status + Alert System Status)",
         "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml",
         "sha256": "eacaf2fa573069c599ad95006be54a1f363384d2fea7b6ef25abdc8c654af575",
-        "retrieved_utc": "2026-09-20T17:21:47Z",
+        "retrieved_utc": "2026-09-21T04:08:32Z",
         "characters": 3440,
         "mentions_current_year": true,
         "usable_as_current_source": true,
@@ -2105,7 +2104,7 @@
         "label": "CPC long-lead (monthly/seasonal) outlook discussion",
         "url": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
         "sha256": "c6307e499e46cf2c0047f87de6a3169ed484923b62755f5e4350d786589ea781",
-        "retrieved_utc": "2026-09-20T17:21:48Z",
+        "retrieved_utc": "2026-09-21T04:08:36Z",
         "characters": 16882,
         "mentions_current_year": true,
         "usable_as_current_source": true,
@@ -2133,7 +2132,7 @@
         "label": "CPC ONI_v5 page (interactive; not machine-readable)",
         "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php",
         "sha256": "7e9cef7ebf78acaede6847bc2134751811b0807d263f43bc11023f0b6d0a6815",
-        "retrieved_utc": "2026-09-20T17:21:50Z",
+        "retrieved_utc": "2026-09-21T04:08:40Z",
         "characters": 1665,
         "mentions_current_year": false,
         "usable_as_current_source": false,
@@ -2152,7 +2151,7 @@
     "station_name": "SAN FRANCISCO INTL AP, CA US",
     "url": "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv",
     "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
-    "retrieved_utc": "2026-09-20T17:23:16Z",
+    "retrieved_utc": "2026-09-21T04:10:23Z",
     "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (hourly, by station)",
     "method": "mean of hourly relative humidity computed from the official hourly temperature and dew-point normals with the Magnus formula",
     "month_rh_pct": {
@@ -2788,7 +2787,7 @@
     "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
     "url": "https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv",
     "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-    "retrieved_utc": "2026-09-20T17:23:05Z",
+    "retrieved_utc": "2026-09-21T04:10:12Z",
     "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (monthly, by station)"
   },
   "daily_normals_official": {
@@ -2797,7 +2796,7 @@
     "url": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv",
     "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
     "bytes": 462174,
-    "retrieved_utc": "2026-09-20T17:23:05Z",
+    "retrieved_utc": "2026-09-21T04:10:12Z",
     "source": "NOAA NCEI U.S. Climate Normals 1991-2020 (daily, by station)",
     "units": {
       "normal_high_f": "degrees Fahrenheit (DLY-TMAX-NORMAL, as published)",
@@ -6222,12 +6221,12 @@
     }
   },
   "current_forecast": {
-    "generated_utc": "2026-09-20T17:09:54+00:00",
-    "forecast_updated": "2026-09-20T16:46:51+00:00",
+    "generated_utc": "2026-09-21T04:05:35+00:00",
+    "forecast_updated": "2026-09-20T20:25:56+00:00",
     "elevation_m": 45.1104,
-    "horizon_days": 7,
+    "horizon_days": 8,
     "first_day": "2026-09-20",
-    "last_day": "2026-09-26",
+    "last_day": "2026-09-27",
     "inside_season_window": false,
     "aggregation": {
       "timezone": "America/Los_Angeles",
@@ -6258,7 +6257,7 @@
       "count": 0,
       "test_count": 0,
       "count_including_tests": 0,
-      "updated": "2026-09-20T17:19:37+00:00",
+      "updated": "2026-09-21T04:05:08+00:00",
       "events": [],
       "source_url": "https://api.weather.gov/alerts/active?zone=CAZ006",
       "human_url": "https://www.weather.gov/mtr"
@@ -6270,10 +6269,10 @@
         "elevation_m": 45.72,
         "distance_m": 5900.9262123232,
         "observation": {
-          "timestamp": "2026-09-20T16:43:00+00:00",
-          "temperature_c": 13.64,
-          "dewpoint_c": 13.64,
-          "relative_humidity_pct": 100,
+          "timestamp": "2026-09-21T02:43:00+00:00",
+          "temperature_c": 13.87,
+          "dewpoint_c": 12.08,
+          "relative_humidity_pct": 88.959752618552,
           "wind_speed_kmh": null,
           "wind_gust_kmh": null,
           "wind_direction_deg": null,
@@ -6290,14 +6289,14 @@
         "elevation_m": 62.419992,
         "distance_m": 17818.193337506,
         "observation": {
-          "timestamp": "2026-09-20T16:45:00+00:00",
+          "timestamp": "2026-09-21T03:30:00+00:00",
           "temperature_c": null,
           "dewpoint_c": null,
           "relative_humidity_pct": null,
           "wind_speed_kmh": null,
           "wind_gust_kmh": null,
           "wind_direction_deg": null,
-          "barometric_pressure_pa": 101310,
+          "barometric_pressure_pa": 101190,
           "precipitation_last_hour_mm": null,
           "precipitation_last_3_hours_mm": null,
           "text_description": ""
@@ -6310,17 +6309,17 @@
         "elevation_m": 3.048,
         "distance_m": 19117.58413345,
         "observation": {
-          "timestamp": "2026-09-20T17:05:00+00:00",
-          "temperature_c": 14,
+          "timestamp": "2026-09-21T03:40:00+00:00",
+          "temperature_c": 15,
           "dewpoint_c": 12,
-          "relative_humidity_pct": 87.749358083507,
+          "relative_humidity_pct": 82.261352957573,
           "wind_speed_kmh": null,
           "wind_gust_kmh": null,
           "wind_direction_deg": null,
-          "barometric_pressure_pa": 101523.93,
+          "barometric_pressure_pa": 101388.48,
           "precipitation_last_hour_mm": null,
           "precipitation_last_3_hours_mm": null,
-          "text_description": "Mostly Cloudy"
+          "text_description": "Cloudy"
         },
         "observation_url": "https://api.weather.gov/stations/KSFO/observations/latest"
       },
@@ -6330,13 +6329,13 @@
         "elevation_m": 712.9272,
         "distance_m": 20512.547709146,
         "observation": {
-          "timestamp": "2026-09-20T16:36:00+00:00",
+          "timestamp": "2026-09-21T03:36:00+00:00",
           "temperature_c": null,
-          "dewpoint_c": -0.44,
+          "dewpoint_c": 3.52,
           "relative_humidity_pct": null,
-          "wind_speed_kmh": 3.204,
-          "wind_gust_kmh": 4.824,
-          "wind_direction_deg": 338,
+          "wind_speed_kmh": 12.888,
+          "wind_gust_kmh": 16.092,
+          "wind_direction_deg": 190,
           "barometric_pressure_pa": null,
           "precipitation_last_hour_mm": null,
           "precipitation_last_3_hours_mm": null,
@@ -6358,14 +6357,14 @@
         "elevation_m": 29.410152,
         "distance_m": 22798.124785519,
         "observation": {
-          "timestamp": "2026-09-20T16:56:00+00:00",
-          "temperature_c": null,
-          "dewpoint_c": null,
-          "relative_humidity_pct": null,
-          "wind_speed_kmh": null,
-          "wind_gust_kmh": 0,
-          "wind_direction_deg": null,
-          "barometric_pressure_pa": null,
+          "timestamp": "2026-09-21T03:34:00+00:00",
+          "temperature_c": 14.44,
+          "dewpoint_c": 12.64,
+          "relative_humidity_pct": 88.947651463453,
+          "wind_speed_kmh": 0,
+          "wind_gust_kmh": 1.62,
+          "wind_direction_deg": 184,
+          "barometric_pressure_pa": 101330,
           "precipitation_last_hour_mm": null,
           "precipitation_last_3_hours_mm": null,
           "text_description": ""
@@ -6377,33 +6376,23 @@
       {
         "date": "2026-09-20",
         "weekday": "Sunday",
-        "high_f": 61,
+        "high_f": 58,
         "low_f": 58,
-        "humidity_pct": 95.6,
-        "humidity_min_pct": 92,
-        "humidity_max_pct": 100,
-        "rain_chance_pct": 2,
+        "humidity_pct": 95.7,
+        "humidity_min_pct": 95,
+        "humidity_max_pct": 96,
+        "rain_chance_pct": 0,
         "rain_amount_in": 0.0,
         "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
         "wind_max_mph": 10.0,
         "gust_max_mph": 15.0,
         "gust_basis": "NWS gridpoint windGust series (max over the local day)",
-        "temp_basis": "NWS hourly gridded forecast temperature: highest and lowest of the 14 grid hour(s) falling in this local day",
-        "humidity_basis": "NWS hourly gridded forecast relative humidity: mean over the 14 grid hour(s) falling in this local day",
+        "temp_basis": "NWS hourly gridded forecast temperature: highest and lowest of the 3 grid hour(s) falling in this local day",
+        "humidity_basis": "NWS hourly gridded forecast relative humidity: mean over the 3 grid hour(s) falling in this local day",
         "wind_basis": "NWS hourly gridded forecast wind speed, taking the upper end of each hour's published range: highest of the hours falling in this local day",
         "rain_chance_basis": "NWS hourly gridded probability of precipitation: highest of the hours falling in this local day",
-        "hours_covered": 14,
+        "hours_covered": 3,
         "periods": [
-          {
-            "name": "Today",
-            "is_daytime": true,
-            "temperature_f": 62,
-            "wind_speed": "10 mph",
-            "wind_direction": "W",
-            "pop_pct": 2,
-            "short_forecast": "Mostly Cloudy",
-            "detailed_forecast": "Mostly cloudy. High near 62, with temperatures falling to around 60 in the afternoon. West wind around 10 mph."
-          },
           {
             "name": "Tonight",
             "is_daytime": false,
@@ -6496,7 +6485,7 @@
             "wind_direction": "WSW",
             "pop_pct": 0,
             "short_forecast": "Partly Cloudy",
-            "detailed_forecast": "Partly cloudy, with a low around 57."
+            "detailed_forecast": "Partly cloudy, with a low around 57. West southwest wind 5 to 12 mph."
           }
         ]
       },
@@ -6505,8 +6494,8 @@
         "weekday": "Wednesday",
         "high_f": 69,
         "low_f": 57,
-        "humidity_pct": 85.8,
-        "humidity_min_pct": 75,
+        "humidity_pct": 85.7,
+        "humidity_min_pct": 74,
         "humidity_max_pct": 97,
         "rain_chance_pct": 0,
         "rain_amount_in": 0.0,
@@ -6545,10 +6534,10 @@
       {
         "date": "2026-09-24",
         "weekday": "Thursday",
-        "high_f": 68,
+        "high_f": 69,
         "low_f": 58,
-        "humidity_pct": 81.5,
-        "humidity_min_pct": 72,
+        "humidity_pct": 80.0,
+        "humidity_min_pct": 68,
         "humidity_max_pct": 92,
         "rain_chance_pct": 0,
         "rain_amount_in": 0.0,
@@ -6569,18 +6558,18 @@
             "wind_speed": "3 to 14 mph",
             "wind_direction": "W",
             "pop_pct": 0,
-            "short_forecast": "Mostly Sunny",
-            "detailed_forecast": "Mostly sunny, with a high near 71."
+            "short_forecast": "Partly Sunny",
+            "detailed_forecast": "Partly sunny, with a high near 71."
           },
           {
             "name": "Thursday Night",
             "is_daytime": false,
-            "temperature_f": 59,
+            "temperature_f": 58,
             "wind_speed": "9 to 14 mph",
             "wind_direction": "W",
             "pop_pct": 0,
             "short_forecast": "Mostly Cloudy",
-            "detailed_forecast": "Mostly cloudy, with a low around 59."
+            "detailed_forecast": "Mostly cloudy, with a low around 58."
           }
         ]
       },
@@ -6588,10 +6577,10 @@
         "date": "2026-09-25",
         "weekday": "Friday",
         "high_f": 67,
-        "low_f": 59,
-        "humidity_pct": 82.6,
-        "humidity_min_pct": 76,
-        "humidity_max_pct": 89,
+        "low_f": 58,
+        "humidity_pct": 82.0,
+        "humidity_min_pct": 73,
+        "humidity_max_pct": 91,
         "rain_chance_pct": 0,
         "rain_amount_in": 0.0,
         "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
@@ -6630,21 +6619,21 @@
         "date": "2026-09-26",
         "weekday": "Saturday",
         "high_f": 64,
-        "low_f": 57,
-        "humidity_pct": 83.7,
-        "humidity_min_pct": 77,
+        "low_f": 58,
+        "humidity_pct": 82.7,
+        "humidity_min_pct": 75,
         "humidity_max_pct": 88,
         "rain_chance_pct": 0,
         "rain_amount_in": 0.0,
         "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
         "wind_max_mph": 13.0,
-        "gust_max_mph": 17.3,
+        "gust_max_mph": 18.4,
         "gust_basis": "NWS gridpoint windGust series (max over the local day)",
-        "temp_basis": "NWS hourly gridded forecast temperature: highest and lowest of the 22 grid hour(s) falling in this local day",
-        "humidity_basis": "NWS hourly gridded forecast relative humidity: mean over the 22 grid hour(s) falling in this local day",
+        "temp_basis": "NWS hourly gridded forecast temperature: highest and lowest of the 24 grid hour(s) falling in this local day",
+        "humidity_basis": "NWS hourly gridded forecast relative humidity: mean over the 24 grid hour(s) falling in this local day",
         "wind_basis": "NWS hourly gridded forecast wind speed, taking the upper end of each hour's published range: highest of the hours falling in this local day",
         "rain_chance_basis": "NWS hourly gridded probability of precipitation: highest of the hours falling in this local day",
-        "hours_covered": 22,
+        "hours_covered": 24,
         "periods": [
           {
             "name": "Saturday",
@@ -6659,12 +6648,44 @@
           {
             "name": "Saturday Night",
             "is_daytime": false,
-            "temperature_f": 57,
+            "temperature_f": 56,
             "wind_speed": "8 to 13 mph",
             "wind_direction": "W",
             "pop_pct": 0,
             "short_forecast": "Partly Cloudy",
-            "detailed_forecast": "Partly cloudy, with a low around 57."
+            "detailed_forecast": "Partly cloudy, with a low around 56."
+          }
+        ]
+      },
+      {
+        "date": "2026-09-27",
+        "weekday": "Sunday",
+        "high_f": 58,
+        "low_f": 56,
+        "humidity_pct": 88.6,
+        "humidity_min_pct": 87,
+        "humidity_max_pct": 91,
+        "rain_chance_pct": 0,
+        "rain_amount_in": 0.0,
+        "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
+        "wind_max_mph": 9.0,
+        "gust_max_mph": 16.1,
+        "gust_basis": "NWS gridpoint windGust series (max over the local day)",
+        "temp_basis": "NWS hourly gridded forecast temperature: highest and lowest of the 9 grid hour(s) falling in this local day",
+        "humidity_basis": "NWS hourly gridded forecast relative humidity: mean over the 9 grid hour(s) falling in this local day",
+        "wind_basis": "NWS hourly gridded forecast wind speed, taking the upper end of each hour's published range: highest of the hours falling in this local day",
+        "rain_chance_basis": "NWS hourly gridded probability of precipitation: highest of the hours falling in this local day",
+        "hours_covered": 9,
+        "periods": [
+          {
+            "name": "Sunday",
+            "is_daytime": true,
+            "temperature_f": 65,
+            "wind_speed": "7 to 12 mph",
+            "wind_direction": "W",
+            "pop_pct": 1,
+            "short_forecast": "Mostly Sunny",
+            "detailed_forecast": "Mostly sunny, with a high near 65."
           }
         ]
       }
@@ -6673,10 +6694,10 @@
   "afd_language": {
     "product": "Area Forecast Discussion",
     "product_type": "AFD",
-    "product_id": "7bef27f6-4f58-4084-8632-664e866cc024",
-    "issuance_time": "2026-09-20T11:19:00+00:00",
-    "source_url": "https://api.weather.gov/products/7bef27f6-4f58-4084-8632-664e866cc024",
-    "text_chars": 4410,
+    "product_id": "9ab0c470-4bfb-45ce-8e6d-4777686e4c1a",
+    "issuance_time": "2026-09-21T00:04:00+00:00",
+    "source_url": "https://api.weather.gov/products/9ab0c470-4bfb-45ce-8e6d-4777686e4c1a",
+    "text_chars": 6867,
     "excluded_sections": [
       "AVIATION",
       "FIRE WEATHER",
@@ -6689,7 +6710,7 @@
     "sources": [
       {
         "label": "NWS Area Forecast Discussion (api.weather.gov)",
-        "url": "https://api.weather.gov/products/7bef27f6-4f58-4084-8632-664e866cc024"
+        "url": "https://api.weather.gov/products/9ab0c470-4bfb-45ce-8e6d-4777686e4c1a"
       }
     ],
     "scanned": true,
@@ -6706,7 +6727,7 @@
       "FIRE WEATHER"
     ],
     "preamble_excluded": "(preamble)",
-    "furniture_sentences_dropped": 5,
+    "furniture_sentences_dropped": 6,
     "categories": [
       {
         "id": "atmospheric_river",
@@ -6820,10 +6841,10 @@
       }
     ],
     "any_language_found": false,
-    "sentences_scanned": 16,
-    "none_found_statement": "The Area Forecast Discussion issued 2026-09-20T11:19:00+00:00 contains none of the 50 listed phrases in its 4 land-forecast sections (16 sentences scanned). That is a statement about this discussion only. It is not evidence that the season will be dry.",
+    "sentences_scanned": 39,
+    "none_found_statement": "The Area Forecast Discussion issued 2026-09-21T00:04:00+00:00 contains none of the 50 listed phrases in its 4 land-forecast sections (39 sentences scanned). That is a statement about this discussion only. It is not evidence that the season will be dry.",
     "history": {
-      "n_issuances": 9,
+      "n_issuances": 10,
       "history_file": "data/afd_history.json",
       "last_mention": {
         "atmospheric_river": {
@@ -7010,19 +7031,19 @@
           "label": "8-14 Day Temperature Outlook",
           "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/814temp_latest.zip",
           "stem": "814temp_latest",
-          "polygon_index": 6,
+          "polygon_index": 4,
           "polygon_bbox_lon_lat": [
-            -123.8236,
-            37.0171,
-            -113.0539,
+            -123.3115,
+            36.2205,
+            -94.2777,
             49.0015
           ],
           "polygon_rings": 23,
-          "polygon_vertices": 3281,
+          "polygon_vertices": 3966,
           "raw_dbf_row": {
-            "Fcst_Date": "20260919",
-            "Start_Date": "20260927",
-            "End_Date": "20261003",
+            "Fcst_Date": "20260920",
+            "Start_Date": "20260928",
+            "End_Date": "20261004",
             "Prob": 33.0,
             "Cat": "Above"
           },
@@ -7032,34 +7053,34 @@
           "valid_season": null,
           "kind": null,
           "covers": null,
-          "start_date": "2026-09-27",
-          "end_date": "2026-10-03",
+          "start_date": "2026-09-28",
+          "end_date": "2026-10-04",
           "prob": 33.0,
           "category": "Above",
-          "fcst_date": "20260919",
+          "fcst_date": "20260920",
           "used_nearest_polygon": false,
           "category_label": "Above normal",
           "probability_at_climatological_baseline": true,
           "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
-          "issued": "2026-09-19"
+          "issued": "2026-09-20"
         },
         {
           "label": "8-14 Day Precipitation Outlook",
           "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/814prcp_latest.zip",
           "stem": "814prcp_latest",
-          "polygon_index": 8,
+          "polygon_index": 6,
           "polygon_bbox_lon_lat": [
             -124.7628,
-            33.8958,
-            -101.6037,
-            49.0034
+            24.5232,
+            -67.9576,
+            49.3833
           ],
-          "polygon_rings": 207,
-          "polygon_vertices": 21147,
+          "polygon_rings": 3252,
+          "polygon_vertices": 135341,
           "raw_dbf_row": {
-            "Fcst_Date": "20260919",
-            "Start_Date": "20260927",
-            "End_Date": "20261003",
+            "Fcst_Date": "20260920",
+            "Start_Date": "20260928",
+            "End_Date": "20261004",
             "Prob": 33.0,
             "Cat": "Above"
           },
@@ -7069,16 +7090,16 @@
           "valid_season": null,
           "kind": null,
           "covers": null,
-          "start_date": "2026-09-27",
-          "end_date": "2026-10-03",
+          "start_date": "2026-09-28",
+          "end_date": "2026-10-04",
           "prob": 33.0,
           "category": "Above",
-          "fcst_date": "20260919",
+          "fcst_date": "20260920",
           "used_nearest_polygon": false,
           "category_label": "Above median",
           "probability_at_climatological_baseline": true,
           "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
-          "issued": "2026-09-19"
+          "issued": "2026-09-20"
         },
         {
           "label": "Latest Monthly Update - Precipitation",
@@ -7500,19 +7521,19 @@
           "label": "8-14 Day Temperature Outlook",
           "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/814temp_latest.zip",
           "stem": "814temp_latest",
-          "polygon_index": 6,
+          "polygon_index": 4,
           "polygon_bbox_lon_lat": [
-            -123.8236,
-            37.0171,
-            -113.0539,
+            -123.3115,
+            36.2205,
+            -94.2777,
             49.0015
           ],
           "polygon_rings": 23,
-          "polygon_vertices": 3281,
+          "polygon_vertices": 3966,
           "raw_dbf_row": {
-            "Fcst_Date": "20260919",
-            "Start_Date": "20260927",
-            "End_Date": "20261003",
+            "Fcst_Date": "20260920",
+            "Start_Date": "20260928",
+            "End_Date": "20261004",
             "Prob": 33.0,
             "Cat": "Above"
           },
@@ -7522,34 +7543,34 @@
           "valid_season": null,
           "kind": null,
           "covers": null,
-          "start_date": "2026-09-27",
-          "end_date": "2026-10-03",
+          "start_date": "2026-09-28",
+          "end_date": "2026-10-04",
           "prob": 33.0,
           "category": "Above",
-          "fcst_date": "20260919",
+          "fcst_date": "20260920",
           "used_nearest_polygon": false,
           "category_label": "Above normal",
           "probability_at_climatological_baseline": true,
           "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
-          "issued": "2026-09-19"
+          "issued": "2026-09-20"
         },
         {
           "label": "8-14 Day Precipitation Outlook",
           "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/814prcp_latest.zip",
           "stem": "814prcp_latest",
-          "polygon_index": 8,
+          "polygon_index": 6,
           "polygon_bbox_lon_lat": [
             -124.7628,
-            33.8958,
-            -101.6037,
-            49.0034
+            24.5232,
+            -67.9576,
+            49.3833
           ],
-          "polygon_rings": 207,
-          "polygon_vertices": 21147,
+          "polygon_rings": 3252,
+          "polygon_vertices": 135341,
           "raw_dbf_row": {
-            "Fcst_Date": "20260919",
-            "Start_Date": "20260927",
-            "End_Date": "20261003",
+            "Fcst_Date": "20260920",
+            "Start_Date": "20260928",
+            "End_Date": "20261004",
             "Prob": 33.0,
             "Cat": "Above"
           },
@@ -7559,16 +7580,16 @@
           "valid_season": null,
           "kind": null,
           "covers": null,
-          "start_date": "2026-09-27",
-          "end_date": "2026-10-03",
+          "start_date": "2026-09-28",
+          "end_date": "2026-10-04",
           "prob": 33.0,
           "category": "Above",
-          "fcst_date": "20260919",
+          "fcst_date": "20260920",
           "used_nearest_polygon": false,
           "category_label": "Above median",
           "probability_at_climatological_baseline": true,
           "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
-          "issued": "2026-09-19"
+          "issued": "2026-09-20"
         },
         {
           "label": "Latest Monthly Update - Precipitation",
@@ -7990,19 +8011,19 @@
           "label": "8-14 Day Temperature Outlook",
           "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/814temp_latest.zip",
           "stem": "814temp_latest",
-          "polygon_index": 6,
+          "polygon_index": 4,
           "polygon_bbox_lon_lat": [
-            -123.8236,
-            37.0171,
-            -113.0539,
+            -123.3115,
+            36.2205,
+            -94.2777,
             49.0015
           ],
           "polygon_rings": 23,
-          "polygon_vertices": 3281,
+          "polygon_vertices": 3966,
           "raw_dbf_row": {
-            "Fcst_Date": "20260919",
-            "Start_Date": "20260927",
-            "End_Date": "20261003",
+            "Fcst_Date": "20260920",
+            "Start_Date": "20260928",
+            "End_Date": "20261004",
             "Prob": 33.0,
             "Cat": "Above"
           },
@@ -8012,34 +8033,34 @@
           "valid_season": null,
           "kind": null,
           "covers": null,
-          "start_date": "2026-09-27",
-          "end_date": "2026-10-03",
+          "start_date": "2026-09-28",
+          "end_date": "2026-10-04",
           "prob": 33.0,
           "category": "Above",
-          "fcst_date": "20260919",
+          "fcst_date": "20260920",
           "used_nearest_polygon": false,
           "category_label": "Above normal",
           "probability_at_climatological_baseline": true,
           "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
-          "issued": "2026-09-19"
+          "issued": "2026-09-20"
         },
         {
           "label": "8-14 Day Precipitation Outlook",
           "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/814prcp_latest.zip",
           "stem": "814prcp_latest",
-          "polygon_index": 8,
+          "polygon_index": 6,
           "polygon_bbox_lon_lat": [
             -124.7628,
-            33.8958,
-            -101.6037,
-            49.0034
+            24.5232,
+            -67.9576,
+            49.3833
           ],
-          "polygon_rings": 207,
-          "polygon_vertices": 21147,
+          "polygon_rings": 3252,
+          "polygon_vertices": 135341,
           "raw_dbf_row": {
-            "Fcst_Date": "20260919",
-            "Start_Date": "20260927",
-            "End_Date": "20261003",
+            "Fcst_Date": "20260920",
+            "Start_Date": "20260928",
+            "End_Date": "20261004",
             "Prob": 33.0,
             "Cat": "Above"
           },
@@ -8049,16 +8070,16 @@
           "valid_season": null,
           "kind": null,
           "covers": null,
-          "start_date": "2026-09-27",
-          "end_date": "2026-10-03",
+          "start_date": "2026-09-28",
+          "end_date": "2026-10-04",
           "prob": 33.0,
           "category": "Above",
-          "fcst_date": "20260919",
+          "fcst_date": "20260920",
           "used_nearest_polygon": false,
           "category_label": "Above median",
           "probability_at_climatological_baseline": true,
           "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
-          "issued": "2026-09-19"
+          "issued": "2026-09-20"
         },
         {
           "label": "Week 3-4 Temperature Outlook",
@@ -8548,6 +8569,80 @@
         }
       },
       "cpc": [
+        {
+          "label": "8-14 Day Temperature Outlook",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/814temp_latest.zip",
+          "stem": "814temp_latest",
+          "polygon_index": 4,
+          "polygon_bbox_lon_lat": [
+            -123.3115,
+            36.2205,
+            -94.2777,
+            49.0015
+          ],
+          "polygon_rings": 23,
+          "polygon_vertices": 3966,
+          "raw_dbf_row": {
+            "Fcst_Date": "20260920",
+            "Start_Date": "20260928",
+            "End_Date": "20261004",
+            "Prob": 33.0,
+            "Cat": "Above"
+          },
+          "lead": null,
+          "abbrev": null,
+          "variable": "temp",
+          "valid_season": null,
+          "kind": null,
+          "covers": null,
+          "start_date": "2026-09-28",
+          "end_date": "2026-10-04",
+          "prob": 33.0,
+          "category": "Above",
+          "fcst_date": "20260920",
+          "used_nearest_polygon": false,
+          "category_label": "Above normal",
+          "probability_at_climatological_baseline": true,
+          "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
+          "issued": "2026-09-20"
+        },
+        {
+          "label": "8-14 Day Precipitation Outlook",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/814prcp_latest.zip",
+          "stem": "814prcp_latest",
+          "polygon_index": 6,
+          "polygon_bbox_lon_lat": [
+            -124.7628,
+            24.5232,
+            -67.9576,
+            49.3833
+          ],
+          "polygon_rings": 3252,
+          "polygon_vertices": 135341,
+          "raw_dbf_row": {
+            "Fcst_Date": "20260920",
+            "Start_Date": "20260928",
+            "End_Date": "20261004",
+            "Prob": 33.0,
+            "Cat": "Above"
+          },
+          "lead": null,
+          "abbrev": null,
+          "variable": "prcp",
+          "valid_season": null,
+          "kind": null,
+          "covers": null,
+          "start_date": "2026-09-28",
+          "end_date": "2026-10-04",
+          "prob": 33.0,
+          "category": "Above",
+          "fcst_date": "20260920",
+          "used_nearest_polygon": false,
+          "category_label": "Above median",
+          "probability_at_climatological_baseline": true,
+          "baseline_note": "CPC's category field for this polygon is 'Above' but the probability it carries is 33.0%. A three-way split has a climatological baseline of 33.3%, so this value sits on the baseline and is not a tilt. Both the raw category and the probability are shown exactly as CPC published them; this note is this project's reading of the two, and the raw DBF row is published next to it for checking.",
+          "issued": "2026-09-20"
+        },
         {
           "label": "Week 3-4 Temperature Outlook",
           "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/wk34temp_latest.zip",

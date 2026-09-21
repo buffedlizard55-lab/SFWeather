@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-20T17:29:23Z",
+  "generated_utc": "2026-09-21T04:16:51Z",
   "counts": {
     "total": 7,
     "errors": 0,
@@ -83,13 +83,13 @@
           {
             "area": "wind",
             "last_date": "2025-08-27",
-            "age_days": 389,
+            "age_days": 390,
             "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
           },
           {
             "area": "isd_hourly",
             "last_date": "2025-08-27",
-            "age_days": 389,
+            "age_days": 390,
             "url": "https://www.ncei.noaa.gov/data/global-hourly/access/"
           }
         ]
