@@ -17,7 +17,8 @@ const FILES = {
   landlord: 'data/landlord.json',
   oceanWind: 'data/ocean_wind.json',
   verify: 'data/verify.json',
-  digest: 'data/digest.json'
+  digest: 'data/digest.json',
+  repair: 'data/repair_maintenance_summary.json'
 };
 
 const state = { data: {}, month: '2026-10', dialogDay: null };
@@ -251,6 +252,152 @@ function renderDataStatus(cal, quality, prov, verify) {
     el('span', { class: 'data-status-detail', text: detail }),
     el('span', { class: 'data-status-meta', text: summary })
   ]));
+}
+
+/* ------------------------------------------------- repair executive hero */
+
+function renderRepairExecutive() {
+  const rep = state.data.repair;
+  if (!rep) return;
+  const headline = $('#repair-headline');
+  if (headline) headline.textContent = rep.executive_headline || '';
+
+  // Hero stats
+  const grid = $('#repair-hero-grid');
+  if (grid) {
+    grid.innerHTML = '';
+    const cards = [];
+
+    // Current ENSO
+    const enso = rep.current_enso || {};
+    const cpc = rep.cpc_outlook || {};
+    const highest = (cpc && cpc.highest_probability) || {};
+    cards.push({
+      cls: 'enso',
+      title: 'Current official ENSO',
+      value: `${enso.phase_label || phaseLabel(enso.phase) || DASH} ${enso.oni_c_fmt || ''}`.trim(),
+      sub: `${enso.alert_status || ''}${enso.strength_quotes && enso.strength_quotes.length ? ' · ' + enso.strength_quotes.slice(0,1).map(q=>q.text.slice(0,120)).join('') : ''}`
+    });
+
+    // CPC tilt summary
+    cards.push({
+      cls: enso.phase === 'el_nino' ? 'high' : 'medium',
+      title: 'CPC seasonal tilt for this season',
+      value: `${cpc.periods_with_a_tilt || DASH} of ${cpc.periods_covering_this_season || DASH} periods tilt`,
+      sub: highest.valid_season ? `Strongest: ${highest.valid_season} — ${highest.category_label} ${highest.probability_pct}% (baseline ${cpc.baseline_pct}%) · DJF 40% Above / JFM 50% Above / OND EC baseline`
+                   : (cpc.periods_at_climatological_baseline != null ? `${cpc.periods_at_climatological_baseline} at baseline (EC)` : '')
+    });
+
+    const er = rep.expected_rain || {};
+    cards.push({
+      cls: 'high',
+      title: 'Expected rain Oct-Jan (1991-2020 observed)',
+      value: er.season_total_mean != null ? `${n(er.season_total_mean,2)} in mean · ${n(er.season_total_median,2)} median` : DASH,
+      sub: `Range ${n(er.season_total_min,2)} – ${n(er.season_total_max,2)} in · Oct ${n(er.oct_mean,2)} Nov ${n(er.nov_mean,2)} Dec ${n(er.dec_mean,2)} Jan ${n(er.jan_mean,2)}`
+    });
+
+    const rd = rep.rain_duration || {};
+    cards.push({
+      cls: 'high',
+      title: 'Week-long rain (repair bottleneck)',
+      value: rd.ge_7d_pct != null ? `${n(rd.ge_7d_pct,1)}% seasons ≥7 days straight` : DASH,
+      sub: `Mean longest ${n(rd.longest_mean,1)}d · max ${n(rd.longest_max,0)}d · El Niño mean ${n(rd.enso_el_nino_mean,1)}d · ${n(rd.ge_10d_pct,1)}% ≥10d`
+    });
+
+    const wr = rep.wind_rain || {};
+    cards.push({
+      cls: 'medium',
+      title: 'Wind+rain together — hourly co-occurrence',
+      value: wr.hourly_mean_days != null ? `${n(wr.hourly_mean_days,1)} days/season same hour` : DASH,
+      sub: `Median ${n(wr.hourly_median_days,0)} · max ${n(wr.hourly_max_days,0)} · ${n(wr.hourly_mean_hours,1)} simultaneous hours mean (${n(wr.hourly_max_hours,0)} max) · whole-day ${n(wr.whole_day_mean,1)}d`
+    });
+
+    const pg = rep.peak_gusts || {};
+    const ow = rep.ocean_wind || {};
+    cards.push({
+      cls: 'medium',
+      title: 'Peak gusts + ocean exposure',
+      value: pg.mean_mph != null ? `${n(pg.mean_mph,0)} mph mean max · ${n(pg.max_mph,0)} max` : DASH,
+      sub: `SFO ${pg.station_id} ${n(pg.distance_mi,1)}mi · buoy ${ow.station_id||'46026'} ${n(ow.distance_mi,1)}mi · gale mean ${n(ow.gale_mean,1)}d`
+    });
+
+    grid.append(...cards.map(c => el('div', { class: 'hero-stat ' + (c.cls || '') }, [
+      el('h4', { text: c.title }),
+      el('div', { class: 'value', text: c.value }),
+      el('div', { class: 'sub', text: c.sub })
+    ])));
+  }
+
+  // Ranked drivers compact
+  const driversHost = $('#repair-drivers-compact');
+  if (driversHost) {
+    driversHost.innerHTML = '';
+    const drivers = rep.cost_drivers_ranked || [];
+    driversHost.append(...drivers.map(d => {
+      const sev = (d.severity || 'medium').toLowerCase();
+      return el('div', { class: 'repair-driver-compact-item' }, [
+        el('span', { class: 'rdc-rank', text: String(d.rank || '?') }),
+        el('div', { class: 'rdc-body' }, [
+          el('div', { class: 'rdc-title' }, [
+            el('span', { text: d.driver || DASH }),
+            el('span', { class: 'severity-badge ' + sev, text: sev.toUpperCase() })
+          ]),
+          el('div', { class: 'rdc-why', text: d.why_it_costs || '' }),
+          el('div', { class: 'rdc-ev' }, [
+            el('strong', { text: d.headline_value || '' }),
+            document.createTextNode(d.headline_value && d.method_note ? ' · ' : ''),
+            el('span', { class: 'fine', text: d.method_note || '' })
+          ])
+        ])
+      ]);
+    }));
+  }
+
+  // Current official forecast card
+  const fcBody = $('#repair-forecast-body');
+  if (fcBody) {
+    fcBody.innerHTML = '';
+    const off = rep.official_outlook || {};
+    const ensoQ = (rep.current_enso && rep.current_enso.strength_quotes) || [];
+    const rows = [];
+    rows.push(['ENSO state', `${rep.current_enso?.phase_label || phaseLabel(rep.current_enso?.phase)} ${rep.current_enso?.oni_c_fmt || ''} · Alert ${rep.current_enso?.alert_status || DASH}`]);
+    if (ensoQ.length) rows.push(['CPC on El Niño strength', ensoQ.map(q => `"${q.text}"`).join(' · ')]);
+    rows.push(['CPC precipitation outlooks covering Oct-Jan', `${off.periods_with_a_tilt || DASH} of ${off.periods_covering_this_season || DASH} with tilt above ${off.baseline_pct || 33}% baseline`]);
+    if (off.highest_probability) rows.push(['Strongest tilt', `${off.highest_probability.period} — ${off.highest_probability.category_label} ${off.highest_probability.probability_pct}% (issued ${off.highest_probability.issued})`]);
+    rows.push(['Baseline periods (EC)', `${off.periods_at_climatological_baseline || 0} at ${off.baseline_pct || 33}% — read as no tilt`]);
+    rows.push(['What past El Niño seasons delivered', `Mean ${n(rep.enso_conditioned?.mean_in,2)} in · ${rep.enso_conditioned?.seasons_in_phase || DASH} seasons · range ${n(rep.enso_conditioned?.min_in,2)}–${n(rep.enso_conditioned?.max_in,2)} in`]);
+    fcBody.append(el('table', { class: 'kv' }, rows.map(([k,v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
+    if (off.caveats) {
+      const cav = off.caveats;
+      const qbox = el('div', { class: 'fine' });
+      (cav.quotes || []).forEach(q => {
+        qbox.append(el('blockquote', { class: 'off-quote', text: `"${q.text}"` }));
+      });
+      if (cav.not_found && cav.not_found.length) qbox.append(el('div', { text: 'Not stated in this discussion: ' + cav.not_found.join(', ') }));
+      fcBody.append(qbox);
+    }
+    const srcs = rep.sources || [];
+    if (srcs.length) {
+      fcBody.append(el('p', { class: 'fine' }, [
+        el('strong', { text: 'Sources: ' }),
+        ...srcs.slice(0,6).flatMap((s,i)=>[i?document.createTextNode(' · '):null, link(s.url, s.label||s.url)].filter(Boolean))
+      ]));
+    }
+  }
+
+  const sunsetBody = $('#repair-sunset-body');
+  if (sunsetBody) {
+    sunsetBody.innerHTML = '';
+    const osp = rep.outer_sunset_profile || {};
+    sunsetBody.append(el('table', { class: 'kv' }, [
+      ['Neighborhood', osp.neighborhood || DASH],
+      ['Centroid', osp.centroid || DASH],
+      ['Ocean exposure', osp.ocean_exposure || DASH],
+      ['Building stock', osp.building_stock || DASH],
+      ['Subsoil & drainage', osp.soil_drainage || DASH],
+      ['Salt-air marine', osp.marine_corrosion || DASH]
+    ].map(([k,v])=> el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
+  }
 }
 
 /* --------------------------------------------------------------- landlord */
@@ -3008,21 +3155,23 @@ async function boot() {
   if (state.booted) return;
   state.booted = true;
   try {
-    const [run, calendar, nws, prov, quality, storms, landlord, oceanWind, verify, digest] = await Promise.all([
+    const [run, calendar, nws, prov, quality, storms, landlord, oceanWind, verify, digest, repair] = await Promise.all([
       loadJSON('run'), loadJSON('calendar'), loadJSON('nws'),
       loadJSON('provenance'), loadJSON('quality'),
       loadJSON('storms').catch(() => null),
       loadJSON('landlord').catch(() => null),
       loadJSON('oceanWind').catch(() => null),
       loadJSON('verify').catch(() => null),
-      loadJSON('digest').catch(() => null)
+      loadJSON('digest').catch(() => null),
+      loadJSON('repair').catch(() => null)
     ]);
-    Object.assign(state.data, { run, calendar, nws, prov, quality, storms, landlord, oceanWind, verify, digest });
+    Object.assign(state.data, { run, calendar, nws, prov, quality, storms, landlord, oceanWind, verify, digest, repair });
 
     const idx = MONTHS.findIndex(m => (calendar.days || []).some(d => d.date.startsWith(m.key) && d.tier === 'nws'));
     state.month = idx >= 0 ? MONTHS[idx].key : MONTHS[0].key;
 
     renderDataStatus(calendar, quality, prov, verify);
+    if (repair) renderRepairExecutive();
     if (landlord) renderLandlord(landlord, calendar);
     renderReality(calendar);
     renderLocation(run);

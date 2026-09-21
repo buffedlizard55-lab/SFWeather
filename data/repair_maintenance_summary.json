@@ -1,0 +1,1222 @@
+{
+  "generated_utc": "2026-09-20T17:23:44Z",
+  "location": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset) - 37.7605N, -122.4839W",
+  "season_window": "October 1, 2026 - January 31, 2027 (123 days)",
+  "verified_coordinate_source": "U.S. Census Bureau 2024 Gazetteer ZCTA file",
+  "coordinate_source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip",
+  "executive_headline": "Over 1991-2020, Oct-Jan averaged 12.79 in rain across 34.5 wet days. 53.3% of seasons had a 7+ day wet streak, 23.3% had 10+ days. Wind+rain together occurred 7.9 days per season on average at SFO on the hour-by-hour record (SFO reference value, not a bound for the Sunset); pairing whole days instead gives 11.1 days. Current ENSO: El Ni\u00f1o (official ONI +1.80 \u00b0C, JJA 2026) - in this record El Ni\u00f1o seasons averaged wetter than La Ni\u00f1a (14.23 in vs 11.16 in), with a wide spread in both; CPC status \"El Ni\u00f1o Advisory\". The CPC outlooks attached to each day show the official probabilities for this window.",
+  "current_enso": {
+    "label": "JJA 2026",
+    "season": "JJA",
+    "year": 2026,
+    "oni_c": 1.8,
+    "oni_c_fmt": "+1.80 \u00b0C",
+    "phase": "el_nino",
+    "phase_label": "El Ni\u00f1o",
+    "strength": "strong",
+    "strength_label": "strong"
+  },
+  "enso_strength_quotes": [
+    {
+      "key": "very_strong_event_probability",
+      "label": "CPC's stated chance of a very strong event this fall and winter",
+      "text": "El Ni\u00f1o is strengthening, with a greater than 90% chance of a very strong event during the Northern Hemisphere fall and winter 2026-27."
+    },
+    {
+      "key": "historic_event_probability",
+      "label": "CPC's stated chance of a historic-strength event this season",
+      "text": "During the October-December 2026 season, there is a 75% chance of a historic event that would exceed the strength of previous El Ni\u00f1o events dating back to 1950 (+2.5\u00b0C or more for a 3-month RONI value)."
+    }
+  ],
+  "cpc_tilt": {
+    "periods_covering_this_season": 6,
+    "periods_with_a_tilt": 2,
+    "periods_at_climatological_baseline": 4,
+    "highest_probability": {
+      "period": "JFM 2027",
+      "issued": "2026-09-17",
+      "category_label": "Above median",
+      "category_raw": "Above",
+      "probability_pct": 50.0,
+      "at_baseline": false,
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+    },
+    "rows": [
+      {
+        "period": "DJF 2026-2027",
+        "issued": "2026-09-17",
+        "variable": "prcp",
+        "category_label": "Above median",
+        "category_raw": "Above",
+        "probability_pct": 40.0
+      },
+      {
+        "period": "JFM 2027",
+        "issued": "2026-09-17",
+        "variable": "prcp",
+        "category_label": "Above median",
+        "category_raw": "Above",
+        "probability_pct": 50.0
+      },
+      {
+        "period": "NDJ 2026-2027",
+        "issued": "2026-09-17",
+        "variable": "prcp",
+        "category_label": "Above median",
+        "category_raw": "Above",
+        "probability_pct": 33.0
+      },
+      {
+        "period": "OND 2026",
+        "issued": "2026-09-17",
+        "variable": "prcp",
+        "category_label": "Equal chances",
+        "category_raw": "EC",
+        "probability_pct": 33.0
+      },
+      {
+        "period": "Oct 2026",
+        "issued": "2026-09-17",
+        "variable": "prcp",
+        "category_label": "Equal chances",
+        "category_raw": "EC",
+        "probability_pct": 33.0
+      },
+      {
+        "period": "SON 2026",
+        "issued": "2026-08-20",
+        "variable": "prcp",
+        "category_label": "Equal chances",
+        "category_raw": "EC",
+        "probability_pct": 33.0
+      }
+    ],
+    "baseline_pct": 33.3,
+    "method": "Counted from the CPC long-lead polygons this project sampled at the 94122 point. CPC publishes whole percentages, so a probability that rounds to 33% is counted as sitting on the climatological baseline (100/3 = 33.3%) and is not reported as a tilt, even when CPC's category field says Above/Below.",
+    "source_url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/"
+  },
+  "caveats": [
+    {
+      "key": "pdo_state",
+      "label": "The state of the Pacific Decadal Oscillation, in NOAA's own words",
+      "text": "The first factor is the presence of a fairly strong, negatively phased Pacific Decadal Oscillation (PDO), with the August PDO index value of -1.11 ."
+    },
+    {
+      "key": "pdo_dampening",
+      "label": "NOAA's forecasters stating, in their own words, that this El Ni\u00f1o may not behave like the classic strong ones",
+      "text": "This time, however, the PDO phase is negative and may dampen the typical impacts of a strong El Ni\u00f1o in certain areas."
+    },
+    {
+      "key": "next_issuance_may_revise",
+      "label": "NOAA's forecasters saying the probabilities themselves may move at the next issuance",
+      "text": "These probabilities may be increased further in the next set of seasonal outlooks, to be released in mid-late October, pending reassessment of the latest model forecasts."
+    }
+  ],
+  "expected_rain": {
+    "season_total_mean_in": 12.79,
+    "season_total_median_in": 13.26,
+    "season_total_p10_p90_in": [
+      6.38,
+      18.59
+    ],
+    "season_total_range_in": [
+      1.71,
+      22.82
+    ],
+    "oct_mean_in": 0.94,
+    "nov_mean_in": 2.6,
+    "dec_mean_in": 4.78,
+    "jan_mean_in": 4.47,
+    "basis": "1991-2020 observed record, NOAA NCEI GHCN-Daily USW00023272",
+    "source_url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+  },
+  "rain_duration": {
+    "ge_3_days_pct": 96.7,
+    "ge_5_days_pct": 80.0,
+    "ge_7_days_pct": 53.3,
+    "ge_10_days_pct": 23.3,
+    "longest_mean_days": 7.3,
+    "longest_max_days": 17.0,
+    "el_nino_ge_7_pct": 81.8,
+    "basis": "1991-2020 observed record, wet day >=0.01 in, run counted inside Oct 1 - Jan 31",
+    "source_url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+  },
+  "wind_rain": {
+    "hourly_mean_days": 7.9,
+    "hourly_median_days": 7.0,
+    "hourly_max_days": 16.0,
+    "hourly_mean_hours": 29.5,
+    "whole_day_mean_days": 11.1,
+    "heavy_mean_days": 2.2,
+    "basis": "NCEI ISD hourly 72494023234 (hourly) + GSOD 72494023234 + GHCN-Daily USW00023272",
+    "source_urls": [
+      "https://www.ncei.noaa.gov/data/global-hourly/access/",
+      "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
+      "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+    ],
+    "caveat": "Wind measured at SFO, 11.9 mi away, bay shore, SFO reference value not a bound for 94122"
+  },
+  "peak_gusts": {
+    "mean_mph": 53.8,
+    "median_mph": 54.1,
+    "max_mph": 70.0,
+    "basis": "1991-2020 observed record, NCEI GSOD 72494023234 (KSFO)",
+    "source_url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+  },
+  "ocean_wind": {
+    "available": true,
+    "station_id": "46026",
+    "distance_mi": 19.4,
+    "gale_mean_days": 7.37,
+    "max_gust_mean_mph": 50.86,
+    "max_gust_max_mph": 62.0,
+    "caveat": "NOT A LAND STATION and NOT A MEASUREMENT INSIDE ZIP 94122: this is a moored buoy in the open Pacific, and its open-water wind is NOT a bound on what buildings in the Sunset experience \u2014 neither an upper nor a lower one. NDBC's own description of station IDs (quoted verbatim with this dataset) warns that an ID can be reassigned to a future deployment in the same one-degree square, so this record describes the station site over time rather than one specific hull. Read it as the nearest official ocean-side reference, standing alongside the SFO reference \u2014 neither is the neighbourhood."
+  },
+  "cost_drivers_ranked": [
+    {
+      "driver": "Prolonged wet spells \u2014 roof, gutters & drainage",
+      "why_it_costs": "A week or more of nearly continuous rain saturates roofing, sheathing, and exterior stucco, finds failed flashing, and keeps gutters and lightwell drains overflowing. In the Outer Sunset's typical row-house construction (flat or low-slope roofs, parapet coping caps, and internal lightwells), prolonged saturation is the classic path to ceiling stains, framing rot, and crawlspace dampness. Inspect roof membrane, parapet flashings, gutters and lightwell drains before the season and re-check after any 7+ day run.",
+      "evidence": [
+        {
+          "label": "Run of \u22653 consecutive wet days",
+          "value": "96.7% of seasons (29 of 30)"
+        },
+        {
+          "label": "Run of \u22655 consecutive wet days",
+          "value": "80.0% of seasons (24 of 30)"
+        },
+        {
+          "label": "Run of \u22657 consecutive wet days",
+          "value": "53.3% of seasons (16 of 30)"
+        },
+        {
+          "label": "Run of \u226510 consecutive wet days",
+          "value": "23.3% of seasons (7 of 30)"
+        },
+        {
+          "label": "Longest run in a season",
+          "value": "mean 7.3 days \u00b7 max 17.0 days on record"
+        },
+        {
+          "label": "Run of \u22657 consecutive wet days in El Ni\u00f1o seasons on record",
+          "value": "81.8% of the 11 such seasons (9 of 11); longest run in those seasons averaged 9.1 days, max 17.0"
+        }
+      ],
+      "sources": [
+        {
+          "label": "NCEI GHCN-Daily USW00023272 (SF downtown gauge)",
+          "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+        }
+      ],
+      "rank": 1,
+      "severity": "high",
+      "key_metric": "96.7% of seasons (29 of 30)"
+    },
+    {
+      "driver": "Heavy single-day rain \u2014 storm drains, entryways & low-lying units",
+      "why_it_costs": "Short, intense rain is what overwhelms area drains, garage thresholds, and ground-floor entryways. In the Outer Sunset, street drainage and sewer lines can back up during sudden deluges (documented in NOAA Storm Events at Judah & 30th Ave with 6\u201312 inches of roadway flooding), driving water into below-grade garage basement conversions. Clear exterior drains and test sump pumps before the season; the heaviest days cluster in December and January.",
+      "evidence": [
+        {
+          "label": "Days \u2265 0.25 in rain per season (expected count)",
+          "value": "14.97 days"
+        },
+        {
+          "label": "Days \u2265 1.00 in rain per season (expected count)",
+          "value": "3.19 days"
+        },
+        {
+          "label": "Days \u2265 1.00 in rain per season in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 3.7 \u00b7 median 4.0 \u00b7 max 6.0 \u2014 all 30 seasons: mean 3.2"
+        },
+        {
+          "label": "Wettest single day of the season (in) in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 2.38 \u00b7 median 2.32 \u00b7 max 5.54 \u2014 all 30 seasons: mean 2.03"
+        },
+        {
+          "label": "Wettest December / January on record (1991\u20132020)",
+          "value": "12.03 in / 12.07 in"
+        },
+        {
+          "label": "Rain-related storm reports in SF County (Flood, Flash Flood, Heavy Rain, Debris Flow; 2014\u20132026)",
+          "value": "99 events in NOAA Storm Events (reported events only - under-reporting is likely)"
+        },
+        {
+          "label": "\u2026of those, reports carrying a recorded property-damage figure",
+          "value": "4 of 99 (county damage entries are sparse in this database)"
+        },
+        {
+          "label": "Storm Events reports specifically locating flooding in 94122 corridor",
+          "value": "3 events on record (Great Highway coastal flood closures; Judah & 30th Ave 6\u201312 in roadway flood)"
+        }
+      ],
+      "sources": [
+        {
+          "label": "NCEI GHCN-Daily USW00023272 (SF downtown gauge)",
+          "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+        },
+        {
+          "label": "NCEI Storm Events CSV archive (SF County)",
+          "url": "https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/"
+        }
+      ],
+      "rank": 2,
+      "severity": "high",
+      "key_metric": "14.97 days"
+    },
+    {
+      "driver": "Wind + rain together \u2014 wind-driven water intrusion",
+      "why_it_costs": "Wind pushes rain sideways under shingles, laps, parapet flashings, and window seals and into vents, so buildings leak during storms that would stay dry in calm rain. In the Outer Sunset, facing the open Pacific, onshore coastal storm winds drive rain directly against exposed west-facing stucco facades and lightwells. These are also fence-failure and tree-limb days. Wind is recorded at SFO, 11.9 miles away (computed great-circle distance from the 94122 centroid, see climatology.meta.station_distance_mi); no source held here establishes whether the ocean-facing Sunset is windier or calmer than SFO, so the counts are SFO reference values, not a bound for the ZIP. The headline count is the hour-by-hour one: rain and wind measured in the same hour, not rain and wind somewhere on the same day.",
+      "evidence": [
+        {
+          "label": "Days per season with a simultaneous wind \u2265 20 kt + rain hour (hour-by-hour record, SFO)",
+          "value": "mean 7.9 \u00b7 median 7.0 \u00b7 max 16.0 over 30 seasons"
+        },
+        {
+          "label": "Days per season, whole-day pairing at the same station (for comparison)",
+          "value": "mean 11.1 \u00b7 median 10.5 \u00b7 max 21.0"
+        },
+        {
+          "label": "Days with rain \u2265 0.01 in and sustained wind \u2265 20 kt (whole-day pairing, downtown gauge + SFO wind)",
+          "value": "mean 11.1 \u00b7 median 10.0 \u00b7 max 24.0 per season"
+        },
+        {
+          "label": "Days with rain \u2265 0.50 in and a gust \u2265 35 kt",
+          "value": "mean 2.2 \u00b7 median 2.0 \u00b7 max 8.0 per season"
+        },
+        {
+          "label": "Wind + rain days per season (whole-day pairing) in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 11.5 \u00b7 median 11.0 \u00b7 max 21.0 \u2014 all 30 seasons: mean 11.1"
+        },
+        {
+          "label": "Days with rain \u2265 0.50 in and a gust \u2265 35 kt in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 2.2 \u00b7 median 2.0 \u00b7 max 5.0 \u2014 all 30 seasons: mean 2.2"
+        }
+      ],
+      "sources": [
+        {
+          "label": "NCEI ISD hourly archive (station 72494023234, SFO)",
+          "url": "https://www.ncei.noaa.gov/data/global-hourly/access/"
+        },
+        {
+          "label": "NCEI GSOD 72494023234 (KSFO wind)",
+          "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+        },
+        {
+          "label": "NCEI GHCN-Daily USW00023272 (SF downtown gauge)",
+          "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+        }
+      ],
+      "rank": 3,
+      "severity": "high",
+      "key_metric": "mean 7.9 \u00b7 median 7.0 \u00b7 max 16.0 over 30 seasons"
+    },
+    {
+      "driver": "Peak gusts \u2014 trees, fences, roofing & tenant safety",
+      "why_it_costs": "The strongest gust of the season is what breaks limbs onto roofs and cars, tears perimeter siding and roofing, and flattens fences \u2014 the storm-season liability with the shortest fuse. In 94122's coastal environment, high winds also carry salt-air marine spray that accelerates corrosion of exterior fasteners, flashing metals, and electrical service hardware. Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991\u20132020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO \u2014 so treat these as the SFO reference values, not as a bound for the ZIP.",
+      "evidence": [
+        {
+          "label": "Strongest gust of the season (SFO ASOS)",
+          "value": "mean 53.8 mph \u00b7 median 54.1 mph \u00b7 record 70.0 mph"
+        },
+        {
+          "label": "Strongest gust of the season (mph) in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 53.7 \u00b7 median 56.4 \u00b7 max 64.3 \u2014 all 30 seasons: mean 53.8"
+        },
+        {
+          "label": "Days per season with a gust \u2265 40 kt in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 3.2 \u00b7 median 3.0 \u00b7 max 7.0 \u2014 all 30 seasons: mean 2.4"
+        },
+        {
+          "label": "Thunderstorm-wind reports in SF County (2014\u20132026)",
+          "value": "4 events in NOAA Storm Events"
+        }
+      ],
+      "sources": [
+        {
+          "label": "NCEI GSOD 72494023234 (KSFO wind)",
+          "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+        },
+        {
+          "label": "NCEI Storm Events CSV archive (SF County)",
+          "url": "https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/"
+        }
+      ],
+      "rank": 4,
+      "severity": "medium",
+      "key_metric": "mean 53.8 mph \u00b7 median 54.1 mph \u00b7 record 70.0 mph"
+    },
+    {
+      "driver": "Total seasonal water load \u2014 waterproofing budget & insurance",
+      "why_it_costs": "This is the total water the building envelope must shed across the season and the right baseline for repair budgets: plan for the mean, but price reserves off the wetter tail \u2014 the p90 season delivered about 1.5x the mean. In the Outer Sunset, sandy dune subsoils allow high surface infiltration but can maintain prolonged subterranean hydrostatic pressure against basement slabs in wet winters. El Ni\u00f1o tilts toward the wet end in this record, but individual El Ni\u00f1o seasons have ranged from 7.27 to 22.82 in, so the tilt is not a promise.",
+      "evidence": [
+        {
+          "label": "Season total, Oct 1 \u2013 Jan 31 (1991\u20132020)",
+          "value": "mean 12.79 in \u00b7 median 13.26 in \u00b7 range 1.71\u201322.82 in \u00b7 p10\u2013p90 6.38\u201318.59 in"
+        },
+        {
+          "label": "Current ENSO state (NOAA's published ONI product)",
+          "value": "JJA 2026: +1.80 \u00b0C = El Ni\u00f1o (strong); CPC Alert System Status: El Ni\u00f1o Advisory"
+        },
+        {
+          "label": "Season total by ENSO phase (1991\u20132020; small samples)",
+          "value": "El Ni\u00f1o 14.23 in (n=11) \u00b7 La Ni\u00f1a 11.16 in (n=12)"
+        },
+        {
+          "label": "CPC DJF 2026-2027 precipitation outlook (issued 2026-09-17)",
+          "value": "Above median at 40.0% probability"
+        },
+        {
+          "label": "CPC JFM 2027 precipitation outlook (issued 2026-09-17)",
+          "value": "Above median at 50.0% probability"
+        },
+        {
+          "label": "CPC NDJ 2026-2027 precipitation outlook (issued 2026-09-17)",
+          "value": "Above median at 33.0% probability"
+        },
+        {
+          "label": "CPC OND 2026 precipitation outlook (issued 2026-09-17)",
+          "value": "Equal chances at 33.0% probability"
+        },
+        {
+          "label": "CPC Oct 2026 precipitation outlook (issued 2026-09-17)",
+          "value": "Equal chances at 33.0% probability"
+        },
+        {
+          "label": "CPC SON 2026 precipitation outlook (issued 2026-08-20)",
+          "value": "Equal chances at 33.0% probability"
+        }
+      ],
+      "sources": [
+        {
+          "label": "NCEI GHCN-Daily USW00023272 (SF downtown gauge)",
+          "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+        },
+        {
+          "label": "NOAA CPC official ONI product",
+          "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
+        },
+        {
+          "label": "CPC DJF 2026-2027 shapefile",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+        },
+        {
+          "label": "CPC Oct 2026 shapefile",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/monthlyupdate/monthupd_prcp_latest.zip"
+        },
+        {
+          "label": "CPC SON 2026 shapefile",
+          "url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202608.zip"
+        }
+      ],
+      "rank": 5,
+      "severity": "medium",
+      "key_metric": "mean 12.79 in \u00b7 median 13.26 in \u00b7 range 1.71\u201322.82 in \u00b7 p10\u2013p90 6.38\u201318.59 in"
+    },
+    {
+      "driver": "Wet-day frequency \u2014 condensation, ventilation & works scheduling",
+      "why_it_costs": "Three to four wet days a week for months, combined with the Outer Sunset's persistent marine humidity, drives indoor condensation and tenant mold complaints, and closes weather windows for exterior painting, stucco patching, roof work, and concrete repairs. October is normally the driest month of the window \u2014 schedule exterior repair jobs there, not in December.",
+      "evidence": [
+        {
+          "label": "Wet days per season (\u22650.01 in)",
+          "value": "mean 34.5 \u00b7 median 35.0 \u00b7 range 7.0\u201355.0 of 123 days"
+        },
+        {
+          "label": "Expected wet days by month",
+          "value": "October 2026: 3.5 \u00b7 November 2026: 7.9 \u00b7 December 2026: 11.7 \u00b7 January 2027: 11.4"
+        }
+      ],
+      "sources": [
+        {
+          "label": "NCEI GHCN-Daily USW00023272 (SF downtown gauge)",
+          "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+        }
+      ],
+      "rank": 6,
+      "severity": "low",
+      "key_metric": "mean 34.5 \u00b7 median 35.0 \u00b7 range 7.0\u201355.0 of 123 days"
+    }
+  ],
+  "cost_drivers_note": "Ranked for the landlord question behind this site: what about this rainy season plausibly drives repair and maintenance cost. The 'Why it matters' sentence under each driver is maintenance guidance about cost mechanisms \u2014 it is not a weather claim. Every number is computed from, and links to, the official sources shown. Expected-day counts are sums of the per-date 1991\u20132020 observed probabilities (linearity of expectation): an expectation over the distribution, not a prediction for 2026-27.",
+  "outer_sunset_profile": {
+    "neighborhood": "Outer Sunset / Sunset District, San Francisco (ZIP 94122)",
+    "centroid_coordinates": "37.7605N, -122.4839W (41st/42nd Ave between Irving and Judah, ~0.6 mi from Ocean Beach)",
+    "ocean_exposure": "Direct western Pacific Ocean frontage; first onshore receptor of winter maritime frontal systems and atmospheric rivers",
+    "building_stock_vulnerabilities": "Predominantly 1920s\u20131950s stucco row houses with zero lot lines, flat or low-slope tar-and-gravel or torch-down roofs, parapet walls with coping caps, interior lightwells, and below-grade garage basement conversions.",
+    "soil_and_drainage": "Historic coastal dune sand with rapid surface infiltration but high local water tables near Ocean Beach; vulnerable to combined sewer backpressure during peak cloudbursts (e.g. Judah & 30th Ave 6\u201312 in flood record).",
+    "marine_corrosion": "Persistent salt spray accelerates oxidation of exterior metal flashing, gutter fasteners, and electrical conduits."
+  },
+  "bottom_line": [
+    {
+      "n": 1,
+      "key": "rain_amount",
+      "question": "How much rain should I expect over the season?",
+      "answer": "Plan on about 12.79 in for Oct 1 \u2013 Jan 31. The median season is 13.26 in; the record range across 30 seasons is 1.71\u201322.82 in, and the driest 10% of seasons were at or below 6.38 in while the wettest 10% were at or above 18.59 in. Budget off the mean, hold reserves against the p90.",
+      "numbers": [
+        {
+          "label": "Season total, mean",
+          "value": "12.79 in"
+        },
+        {
+          "label": "Season total, median",
+          "value": "13.26 in"
+        },
+        {
+          "label": "p10 \u2013 p90",
+          "value": "6.38 \u2013 18.59 in"
+        },
+        {
+          "label": "Wettest / driest",
+          "value": "22.82 in / 1.71 in"
+        }
+      ],
+      "basis": "1991\u20132020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown)",
+      "confidence": "n = 30 seasons",
+      "sources": [
+        {
+          "label": "NCEI GHCN-Daily USW00023272",
+          "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "key": "rain_duration",
+      "question": "Will it rain for days or weeks straight?",
+      "answer": "A long wet spell is the normal case, not the exception: 96.7% of seasons had a run of 3+ consecutive wet days, 80.0% had 5+ days, 53.3% had 7+ days and 23.3% had 10+ days. The longest run averages 7.3 days and has reached 17.0 days. Conditioned on the phase this season is in \u2014 El Ni\u00f1o \u2014 81.8% of those 11 seasons on record had a 7+ day spell, against 53.3% over all 30 (small sample: 11 seasons). A week-long spell is roughly a coin flip on the 30-season record \u2014 worth pre-emptive gutter, roof-drain and tenant-communication plans.",
+      "numbers": [
+        {
+          "label": "Any 3+ day wet run",
+          "value": "96.7% of seasons"
+        },
+        {
+          "label": "Any 5+ day wet run",
+          "value": "80.0% of seasons"
+        },
+        {
+          "label": "Any 7+ day wet run",
+          "value": "53.3% of seasons"
+        },
+        {
+          "label": "Any 10+ day wet run",
+          "value": "23.3% of seasons"
+        },
+        {
+          "label": "Longest run",
+          "value": "mean 7.3 d \u00b7 max 17.0 d"
+        },
+        {
+          "label": "Any 7+ day wet run in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "81.8% of those seasons (9 of 11)"
+        }
+      ],
+      "basis": "1991\u20132020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown) \u2014 wet day = \u2265 0.01 in of liquid precipitation, run counted inside Oct 1 \u2013 Jan 31",
+      "confidence": "n = 30 seasons; the phase split rests on 11 of them",
+      "sources": [
+        {
+          "label": "NCEI GHCN-Daily USW00023272",
+          "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "key": "heavy_rain_days",
+      "question": "How many hard-rain days will there be?",
+      "answer": "Expect about 14.97 days with \u2265 0.25 in and about 3.19 days with \u2265 1.00 in per season. Those are the days that overwhelm area drains, garage thresholds and ground-floor entryways. The counts are sums of the per-date observed probabilities, so they are an expectation over the 30-season record. NOAA's own published per-date probabilities give 14.9 and 3.26 days. The two independent methods agree to within 0.06 day(s) per season across 4 thresholds. In the 11 El Ni\u00f1o seasons on record, days at \u2265 1.00 in averaged 3.7 against 3.2 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). ",
+      "numbers": [
+        {
+          "label": "Days \u2265 0.25 in per season, method A (sum of this project's per-date probabilities)",
+          "value": "14.97 days"
+        },
+        {
+          "label": "Days \u2265 1.00 in per season, method A",
+          "value": "3.19 days"
+        },
+        {
+          "label": "Days \u2265 0.25 in / \u2265 1.00 in, method B (NOAA's published probabilities)",
+          "value": "14.9 / 3.26 days"
+        },
+        {
+          "label": "Wettest single day on record in the window",
+          "value": "5.54 in (1994-1995)"
+        },
+        {
+          "label": "Days \u2265 0.50 in per season, method A (counted) vs method B (NOAA published)",
+          "value": "8.4 vs 8.39"
+        },
+        {
+          "label": "Days \u2265 1.00 in per season, method A (counted) vs method B (NOAA published)",
+          "value": "3.2 vs 3.26"
+        },
+        {
+          "label": "Days \u2265 2.00 in per season, method A (counted) vs method B (NOAA published)",
+          "value": "0.5 vs 0.51"
+        },
+        {
+          "label": "Days \u2265 4.00 in per season, method A (counted) vs method B (NOAA published)",
+          "value": "0.0 vs 0.02"
+        },
+        {
+          "label": "Days \u2265 0.50 in per season in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 9.4 \u00b7 median 9.0 \u00b7 max 17.0 \u2014 all 30 seasons: mean 8.4"
+        },
+        {
+          "label": "Days \u2265 1.00 in per season in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 3.7 \u00b7 median 4.0 \u00b7 max 6.0 \u2014 all 30 seasons: mean 3.2"
+        },
+        {
+          "label": "Wettest single day of the season (in) in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 2.38 \u00b7 median 2.32 \u00b7 max 5.54 \u2014 all 30 seasons: mean 2.03"
+        }
+      ],
+      "basis": "1991\u20132020 observed record \u2014 an expectation over those 30 seasons, not a prediction for 2026-27",
+      "confidence": "linearity of expectation over 123 dates; the El Ni\u00f1o rows rest on 11 of the 30 seasons",
+      "sources": [
+        {
+          "label": "NCEI GHCN-Daily USW00023272",
+          "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+        },
+        {
+          "label": "NCEI 1991\u20132020 daily normals (NOAA's own probabilities)",
+          "url": "https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv"
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "key": "wind",
+      "question": "How windy will it get?",
+      "answer": "The strongest gust of the season averages 53.8 mph at SFO and has reached 70.0 mph in this record. In the 11 El Ni\u00f1o seasons on record, days with a gust \u2265 40 kt averaged 3.2 against 2.4 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991\u20132020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO \u2014 so treat these as the SFO reference values, not as a bound for the ZIP. The strongest gusts are a tree-limb, fence and loose-material risk with the shortest warning.",
+      "numbers": [
+        {
+          "label": "Season max gust, mean",
+          "value": "53.8 mph"
+        },
+        {
+          "label": "Season max gust, record",
+          "value": "70.0 mph"
+        },
+        {
+          "label": "Days with sustained wind \u2265 30 kt",
+          "value": "mean 2.4 per season"
+        },
+        {
+          "label": "Days with a gust \u2265 50 kt",
+          "value": "mean 0.3 per season"
+        },
+        {
+          "label": "Strongest gust of the season (mph) in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 53.7 \u00b7 median 56.4 \u00b7 max 64.3 \u2014 all 30 seasons: mean 53.8"
+        },
+        {
+          "label": "Days with a gust \u2265 40 kt per season in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 3.2 \u00b7 median 3.0 \u00b7 max 7.0 \u2014 all 30 seasons: mean 2.4"
+        }
+      ],
+      "basis": "1991\u20132020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away)",
+      "confidence": "n = 30 seasons; SFO reference value, not a bound for 94122; the El Ni\u00f1o rows rest on 11 of the 30 seasons",
+      "sources": [
+        {
+          "label": "NCEI GSOD 72494023234 (KSFO)",
+          "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+        },
+        {
+          "label": "GSOD units README",
+          "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt"
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "key": "wind_and_rain",
+      "question": "Will wind and rain hit at the same time?",
+      "answer": "On the hour-by-hour record at SFO, rain and sustained wind \u2265 20 kt coincide on about 7.9 days a season (median 7.0, range 1.0\u201316.0 over 30 seasons, 1991-1992 .. 2020-2021), which is about 29.5 simultaneous hours a season. Pairing a whole day\u2019s rain with a whole day\u2019s wind maximum \u2014 a method that cannot tell rain in the morning from wind at night \u2014 gives 11.1 days on that same station and 11.1 days when the downtown rain gauge is paired with SFO wind (the figure this page published before the hourly record was used). The two whole-day constructions agree, so the gap to the hourly count is the pairing rule, not the change of rain gauge. In the 11 El Ni\u00f1o seasons on record, whole-day wind + rain days averaged 11.5 against 11.1 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). Those are the days water is driven sideways under shingles, laps and window seals, and the days fences fail. Wind is measured at SFO, 11.9 mi away on the bay shore, the nearest official station with a complete 1991\u20132020 wind record. No official station inside 94122 holds a long wind record, and this project holds no source that establishes whether the ocean-facing Sunset is windier or calmer than SFO \u2014 so treat these as the SFO reference values, not as a bound for the ZIP.",
+      "numbers": [
+        {
+          "label": "Days per season with a simultaneous wind+rain hour (hourly record)",
+          "value": "mean 7.9 \u00b7 median 7.0 \u00b7 min 1.0 \u00b7 max 16.0"
+        },
+        {
+          "label": "Simultaneous wind+rain hours per season",
+          "value": "mean 29.5 \u00b7 median 29.0 \u00b7 max 82.0"
+        },
+        {
+          "label": "Days per season, same station, whole-day pairing (for comparison)",
+          "value": "mean 11.1 \u00b7 median 10.5 \u00b7 max 21.0"
+        },
+        {
+          "label": "Days per season, whole-day pairing, downtown rain gauge + SFO wind",
+          "value": "mean 11.1 \u00b7 max 24.0"
+        },
+        {
+          "label": "Heavy wind+rain days per season (\u2265 0.50 in and a gust \u2265 35 kt, whole-day pairing)",
+          "value": "mean 2.2 \u00b7 max 8.0"
+        },
+        {
+          "label": "Wind+rain days per season (whole-day pairing) in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 11.5 \u00b7 median 11.0 \u00b7 max 21.0 \u2014 all 30 seasons: mean 11.1"
+        },
+        {
+          "label": "Heavy wind+rain days per season (\u2265 0.50 in and a gust \u2265 35 kt) in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 2.2 \u00b7 median 2.0 \u00b7 max 5.0 \u2014 all 30 seasons: mean 2.2"
+        }
+      ],
+      "basis": "1991\u20132020 observed record, NOAA NCEI station USW00023272 (San Francisco downtown); 1991\u20132020 observed record, NOAA NCEI GSOD station 72494023234 (SFO ASLO, 11.9 mi away); hour-by-hour observed record, NOAA NCEI ISD hourly station 72494023234 (SFO ASLO, 11.9 mi away) \u2014 an hour counts when a single observation carries wind \u2265 20 kt and precipitation > 0",
+      "confidence": "n = 30 seasons; thinnest season covers 96.7% of the 123 Oct\u2013Jan dates; 86 of the 1029 counted hours came from reports whose precipitation period was longer than one hour, so those are multi-hour accumulations rather than hour-by-hour measurements; the whole-day method pairs a local-day rain total with a UTC-day wind figure (00\u201324Z), which is why it counts more days; the El Ni\u00f1o rows rest on 11 of the 30 seasons",
+      "sources": [
+        {
+          "label": "NCEI ISD hourly archive (station 72494023234, SFO)",
+          "url": "https://www.ncei.noaa.gov/data/global-hourly/access/"
+        },
+        {
+          "label": "NCEI GSOD 72494023234 (KSFO)",
+          "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+        },
+        {
+          "label": "NCEI GHCN-Daily USW00023272",
+          "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "key": "storm_severity",
+      "question": "How severe have the storms actually been here?",
+      "answer": "On the station record, the season averages 3.2 days a season at \u2265 1.00 in of rain, 2.4 days with a gust \u2265 40 kt, 0.5 days that are both. In the 11 El Ni\u00f1o seasons on record, days that are both \u2265 1.00 in and a \u2265 40 kt gust averaged 0.5 against 0.5 over all 30 (small sample: 11 seasons; an observed frequency, not a forecast). NOAA's Storm Events Database holds 119 records for San Francisco County over 2014\u20132026, of which 99 are rain-related (Flood, Flash Flood, Heavy Rain, Debris Flow). Its damage column is not usable as a cost estimate \u2014 every non-zero value NCEI holds for this county is a token amount (12 of 119 records carry one) \u2014 so severity here is stated as counts of days at a plain threshold rather than as a dollar figure. No named warning category (Advisory / Warning / High Wind) is applied: those criteria are written per forecast zone and this project does not restate them.",
+      "numbers": [
+        {
+          "label": "Storm Events records, SF County",
+          "value": "119 (2014\u20132026)"
+        },
+        {
+          "label": "Rain-related records (Flood, Flash Flood, Heavy Rain, Debris Flow)",
+          "value": "99 of 119"
+        },
+        {
+          "label": "Records with a non-zero damage figure",
+          "value": "12 of 119 \u2014 no dollar total published"
+        },
+        {
+          "label": "Days per season at \u2265 1.00 in",
+          "value": "mean 3.2 \u00b7 peak 7 in 1996-1997"
+        },
+        {
+          "label": "Days per season with a gust \u2265 40 kt",
+          "value": "mean 2.4"
+        },
+        {
+          "label": "Days per season both \u2265 1.00 in and a gust \u2265 40 kt",
+          "value": "mean 0.5 \u00b7 peak 2"
+        },
+        {
+          "label": "Days per season at \u2265 1.00 in in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 3.7 \u00b7 median 4.0 \u00b7 max 6.0 \u2014 all 30 seasons: mean 3.2"
+        },
+        {
+          "label": "Days per season with a gust \u2265 40 kt in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 3.2 \u00b7 median 3.0 \u00b7 max 7.0 \u2014 all 30 seasons: mean 2.4"
+        },
+        {
+          "label": "Days per season both \u2265 1.00 in and a gust \u2265 40 kt in El Ni\u00f1o seasons on record (11 of the 30)",
+          "value": "mean 0.5 \u00b7 median 0.0 \u00b7 max 2.0 \u2014 all 30 seasons: mean 0.5"
+        }
+      ],
+      "basis": "NOAA NCEI Storm Events Database, reported events only \u2014 under-reporting is likely",
+      "confidence": "counts derived from the station record; no dollar estimate is made; the El Ni\u00f1o rows rest on 11 of the 30 seasons",
+      "sources": [
+        {
+          "label": "NCEI Storm Events Database",
+          "url": "https://www.ncdc.noaa.gov/stormevents/"
+        },
+        {
+          "label": "NCEI Storm Events CSV files",
+          "url": "https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/"
+        },
+        {
+          "label": "NCEI GSOD 72494023234 (KSFO wind)",
+          "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+        }
+      ]
+    }
+  ],
+  "official_outlook": {
+    "enso": {
+      "state": "El Ni\u00f1o (+1.80 \u00b0C, JJA 2026)",
+      "alert_status": "El Ni\u00f1o Advisory",
+      "source_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml"
+    },
+    "cpc_tilt": {
+      "periods_covering_this_season": 6,
+      "periods_with_a_tilt": 2,
+      "periods_at_climatological_baseline": 4,
+      "highest_probability": {
+        "period": "JFM 2027",
+        "issued": "2026-09-17",
+        "category_label": "Above median",
+        "category_raw": "Above",
+        "probability_pct": 50.0,
+        "at_baseline": false,
+        "source_url": "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip"
+      },
+      "rows": [
+        {
+          "period": "DJF 2026-2027",
+          "issued": "2026-09-17",
+          "variable": "prcp",
+          "category_label": "Above median",
+          "category_raw": "Above",
+          "probability_pct": 40.0
+        },
+        {
+          "period": "JFM 2027",
+          "issued": "2026-09-17",
+          "variable": "prcp",
+          "category_label": "Above median",
+          "category_raw": "Above",
+          "probability_pct": 50.0
+        },
+        {
+          "period": "NDJ 2026-2027",
+          "issued": "2026-09-17",
+          "variable": "prcp",
+          "category_label": "Above median",
+          "category_raw": "Above",
+          "probability_pct": 33.0
+        },
+        {
+          "period": "OND 2026",
+          "issued": "2026-09-17",
+          "variable": "prcp",
+          "category_label": "Equal chances",
+          "category_raw": "EC",
+          "probability_pct": 33.0
+        },
+        {
+          "period": "Oct 2026",
+          "issued": "2026-09-17",
+          "variable": "prcp",
+          "category_label": "Equal chances",
+          "category_raw": "EC",
+          "probability_pct": 33.0
+        },
+        {
+          "period": "SON 2026",
+          "issued": "2026-08-20",
+          "variable": "prcp",
+          "category_label": "Equal chances",
+          "category_raw": "EC",
+          "probability_pct": 33.0
+        }
+      ],
+      "baseline_pct": 33.3,
+      "method": "Counted from the CPC long-lead polygons this project sampled at the 94122 point. CPC publishes whole percentages, so a probability that rounds to 33% is counted as sitting on the climatological baseline (100/3 = 33.3%) and is not reported as a tilt, even when CPC's category field says Above/Below.",
+      "source_url": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/"
+    },
+    "daily_forecast": {
+      "days_in_this_scoreboard_with_a_real_forecast": 0,
+      "official_horizon_ends": "2026-09-26"
+    },
+    "prognostic_caveats": {
+      "available": true,
+      "issued_line": "830 AM EDT Thu Sep 17 2026",
+      "quotes": [
+        {
+          "key": "pdo_state",
+          "label": "The state of the Pacific Decadal Oscillation, in NOAA's own words",
+          "text": "The first factor is the presence of a fairly strong, negatively phased Pacific Decadal Oscillation (PDO), with the August PDO index value of -1.11 ."
+        },
+        {
+          "key": "pdo_dampening",
+          "label": "NOAA's forecasters stating, in their own words, that this El Ni\u00f1o may not behave like the classic strong ones",
+          "text": "This time, however, the PDO phase is negative and may dampen the typical impacts of a strong El Ni\u00f1o in certain areas."
+        },
+        {
+          "key": "next_issuance_may_revise",
+          "label": "NOAA's forecasters saying the probabilities themselves may move at the next issuance",
+          "text": "These probabilities may be increased further in the next set of seasonal outlooks, to be released in mid-late October, pending reassessment of the latest model forecasts."
+        }
+      ],
+      "not_found": [],
+      "patterns_watched_for": [
+        "pdo_state",
+        "pdo_dampening",
+        "next_issuance_may_revise"
+      ],
+      "source_url": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
+      "discussion_sha256": "c6307e499e46cf2c0047f87de6a3169ed484923b62755f5e4350d786589ea781",
+      "discussion_characters": 16882,
+      "how_to_read": "Sentences copied verbatim from the long-lead Prognostic Discussion CPC issued with the seasonal outlook, located by pattern in the text the pipeline fetched and hashed. They are NOAA's forecasters qualifying their own outlook; no number or date has been attached by this project. When a later discussion no longer contains a sentence, it stops appearing here and is listed under not_found."
+    },
+    "enso_strength": {
+      "available": true,
+      "issued_line": "10 September 2026",
+      "quotes": [
+        {
+          "key": "very_strong_event_probability",
+          "label": "CPC's stated chance of a very strong event this fall and winter",
+          "text": "El Ni\u00f1o is strengthening, with a greater than 90% chance of a very strong event during the Northern Hemisphere fall and winter 2026-27."
+        },
+        {
+          "key": "historic_event_probability",
+          "label": "CPC's stated chance of a historic-strength event this season",
+          "text": "During the October-December 2026 season, there is a 75% chance of a historic event that would exceed the strength of previous El Ni\u00f1o events dating back to 1950 (+2.5\u00b0C or more for a 3-month RONI value)."
+        }
+      ],
+      "not_found": [],
+      "patterns_watched_for": [
+        "very_strong_event_probability",
+        "historic_event_probability"
+      ],
+      "source_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml",
+      "discussion_sha256": "eacaf2fa573069c599ad95006be54a1f363384d2fea7b6ef25abdc8c654af575",
+      "discussion_characters": 3440,
+      "how_to_read": "Sentences copied verbatim from the ENSO Diagnostic Discussion CPC issued with its monthly ENSO assessment, located by pattern in the text the pipeline fetched and hashed. They are CPC's own probability statements about this El Ni\u00f1o's strength; no number or date has been attached by this project. When a later discussion no longer contains a sentence, it stops appearing here and is listed under not_found."
+    },
+    "enso_conditioned_record": {
+      "phase": "el_nino",
+      "phase_label": "El Ni\u00f1o",
+      "seasons_in_phase": 11,
+      "mean_in": 14.23,
+      "median_in": 13.56,
+      "min_in": 7.27,
+      "max_in": 22.82,
+      "how_to_read": "Mean Oct 1 \u2013 Jan 31 precipitation over the seasons in the 1991-2020 record whose published CPC ONI placed them in this same phase. This is a conditional average of what happened, NOT a forecast for 2026-27, and the spread inside the phase is as informative as the mean.",
+      "contrast": [
+        {
+          "phase": "neutral",
+          "phase_label": "Neutral",
+          "seasons": 7,
+          "mean_in": 13.31
+        },
+        {
+          "phase": "la_nina",
+          "phase_label": "La Ni\u00f1a",
+          "seasons": 12,
+          "mean_in": 11.16
+        }
+      ],
+      "source_url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+      "phase_source_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml"
+    },
+    "enso_conditioned_severity": {
+      "phase": "el_nino",
+      "phase_label": "El Ni\u00f1o",
+      "seasons_in_phase": 11,
+      "seasons_total": 30,
+      "seasons": [
+        "1991-1992",
+        "1994-1995",
+        "1997-1998",
+        "2002-2003",
+        "2004-2005",
+        "2006-2007",
+        "2009-2010",
+        "2014-2015",
+        "2015-2016",
+        "2018-2019",
+        "2019-2020"
+      ],
+      "rows": [
+        {
+          "key": "wet_days_ge_050in",
+          "label": "Days with \u2265 0.50 in of rain per season",
+          "phase_n": 11,
+          "phase_mean": 9.4,
+          "phase_median": 9.0,
+          "phase_min": 5.0,
+          "phase_max": 17.0,
+          "phase_seasons_with_any": 11,
+          "all_n": 30,
+          "all_mean": 8.4,
+          "all_max": 17.0
+        },
+        {
+          "key": "wet_days_ge_1in",
+          "label": "Days with \u2265 1.00 in of rain per season",
+          "phase_n": 11,
+          "phase_mean": 3.7,
+          "phase_median": 4.0,
+          "phase_min": 1.0,
+          "phase_max": 6.0,
+          "phase_seasons_with_any": 11,
+          "all_n": 30,
+          "all_mean": 3.2,
+          "all_max": 7.0
+        },
+        {
+          "key": "wet_days_ge_2in",
+          "label": "Days with \u2265 2.00 in of rain per season",
+          "phase_n": 11,
+          "phase_mean": 0.5,
+          "phase_median": 1.0,
+          "phase_min": 0.0,
+          "phase_max": 1.0,
+          "phase_seasons_with_any": 6,
+          "all_n": 30,
+          "all_mean": 0.5,
+          "all_max": 2.0
+        },
+        {
+          "key": "max_daily_prcp_in",
+          "label": "Wettest single day of the season (in)",
+          "phase_n": 11,
+          "phase_mean": 2.38,
+          "phase_median": 2.32,
+          "phase_min": 1.24,
+          "phase_max": 5.54,
+          "phase_seasons_with_any": 11,
+          "all_n": 30,
+          "all_mean": 2.03,
+          "all_max": 5.54
+        },
+        {
+          "key": "wind_and_rain_days",
+          "label": "Wind + rain days per season (\u2265 0.01 in and sustained \u2265 20 kt, whole-day pairing)",
+          "phase_n": 11,
+          "phase_mean": 11.5,
+          "phase_median": 11.0,
+          "phase_min": 6.0,
+          "phase_max": 21.0,
+          "phase_seasons_with_any": 11,
+          "all_n": 30,
+          "all_mean": 11.1,
+          "all_max": 24.0
+        },
+        {
+          "key": "heavy_wind_and_rain_days",
+          "label": "Heavy wind + rain days per season (\u2265 0.50 in and a gust \u2265 35 kt)",
+          "phase_n": 11,
+          "phase_mean": 2.2,
+          "phase_median": 2.0,
+          "phase_min": 0.0,
+          "phase_max": 5.0,
+          "phase_seasons_with_any": 8,
+          "all_n": 30,
+          "all_mean": 2.2,
+          "all_max": 8.0
+        },
+        {
+          "key": "severe_wind_and_rain_days",
+          "label": "Days per season both \u2265 1.00 in and a gust \u2265 40 kt",
+          "phase_n": 11,
+          "phase_mean": 0.5,
+          "phase_median": 0.0,
+          "phase_min": 0.0,
+          "phase_max": 2.0,
+          "phase_seasons_with_any": 5,
+          "all_n": 30,
+          "all_mean": 0.5,
+          "all_max": 2.0
+        },
+        {
+          "key": "gust_days_ge_40kt",
+          "label": "Days per season with a gust \u2265 40 kt",
+          "phase_n": 11,
+          "phase_mean": 3.2,
+          "phase_median": 3.0,
+          "phase_min": 0.0,
+          "phase_max": 7.0,
+          "phase_seasons_with_any": 9,
+          "all_n": 30,
+          "all_mean": 2.4,
+          "all_max": 7.0
+        },
+        {
+          "key": "wind_days_ge_30kt",
+          "label": "Days per season with sustained wind \u2265 30 kt",
+          "phase_n": 11,
+          "phase_mean": 2.6,
+          "phase_median": 2.0,
+          "phase_min": 0.0,
+          "phase_max": 7.0,
+          "phase_seasons_with_any": 10,
+          "all_n": 30,
+          "all_mean": 2.4,
+          "all_max": 7.0
+        },
+        {
+          "key": "max_gust_mph",
+          "label": "Strongest gust of the season (mph)",
+          "phase_n": 11,
+          "phase_mean": 53.7,
+          "phase_median": 56.4,
+          "phase_min": 41.3,
+          "phase_max": 64.3,
+          "phase_seasons_with_any": 11,
+          "all_n": 30,
+          "all_mean": 53.8,
+          "all_max": 70.0
+        }
+      ],
+      "other_phases": [
+        {
+          "phase": "la_nina",
+          "phase_label": "La Ni\u00f1a",
+          "n": 12,
+          "metrics": {
+            "wet_days_ge_050in": {
+              "mean": 6.9,
+              "max": 15.0
+            },
+            "wet_days_ge_1in": {
+              "mean": 2.2,
+              "max": 5.0
+            },
+            "wet_days_ge_2in": {
+              "mean": 0.5,
+              "max": 2.0
+            },
+            "max_daily_prcp_in": {
+              "mean": 1.87,
+              "max": 3.61
+            },
+            "wind_and_rain_days": {
+              "mean": 10.2,
+              "max": 16.0
+            },
+            "heavy_wind_and_rain_days": {
+              "mean": 2.1,
+              "max": 8.0
+            },
+            "severe_wind_and_rain_days": {
+              "mean": 0.6,
+              "max": 2.0
+            },
+            "gust_days_ge_40kt": {
+              "mean": 1.8,
+              "max": 6.0
+            },
+            "wind_days_ge_30kt": {
+              "mean": 2.2,
+              "max": 6.0
+            },
+            "max_gust_mph": {
+              "mean": 55.0,
+              "max": 70.0
+            }
+          }
+        },
+        {
+          "phase": "neutral",
+          "phase_label": "Neutral",
+          "n": 7,
+          "metrics": {
+            "wet_days_ge_050in": {
+              "mean": 9.3,
+              "max": 15.0
+            },
+            "wet_days_ge_1in": {
+              "mean": 4.0,
+              "max": 7.0
+            },
+            "wet_days_ge_2in": {
+              "mean": 0.4,
+              "max": 1.0
+            },
+            "max_daily_prcp_in": {
+              "mean": 1.74,
+              "max": 2.77
+            },
+            "wind_and_rain_days": {
+              "mean": 12.1,
+              "max": 24.0
+            },
+            "heavy_wind_and_rain_days": {
+              "mean": 2.6,
+              "max": 7.0
+            },
+            "severe_wind_and_rain_days": {
+              "mean": 0.4,
+              "max": 2.0
+            },
+            "gust_days_ge_40kt": {
+              "mean": 2.4,
+              "max": 6.0
+            },
+            "wind_days_ge_30kt": {
+              "mean": 2.6,
+              "max": 5.0
+            },
+            "max_gust_mph": {
+              "mean": 51.7,
+              "max": 55.2
+            }
+          }
+        }
+      ],
+      "how_to_read": "Each figure is the El Ni\u00f1o seasons in the 1991-2020 record (n = 11), whose published CPC ONI placed them in the same phase this season is in, summarised beside all 30 seasons. Rain counters come from the downtown gauge (GHCN-Daily USW00023272); wind and the whole-day wind + rain pairings from SFO (GSOD 72494023234). An observed conditional frequency in a small sample, not a forecast for 2026-27: the spread inside the phase is as informative as the mean.",
+      "source_urls": [
+        "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
+        "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
+        "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
+      ],
+      "sources": [
+        {
+          "label": "NCEI GHCN-Daily USW00023272 (rain counters)",
+          "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv"
+        },
+        {
+          "label": "NCEI GSOD 72494023234 (KSFO wind)",
+          "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+        },
+        {
+          "label": "NOAA CPC official ONI product (phase assignment)",
+          "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
+        }
+      ]
+    }
+  },
+  "record_coverage": {
+    "as_of": "2026-09-20",
+    "normals_period": [
+      1991,
+      2020
+    ],
+    "archives": [
+      {
+        "area": "rain_temp",
+        "label": "GHCN-Daily USW00023272 (rain, daily high/low)",
+        "last_date": "2026-09-17",
+        "age_days": 3,
+        "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
+        "note": "Daily summaries, so this is the most current of the three archives."
+      },
+      {
+        "area": "wind",
+        "label": "GSOD 72494023234 (daily wind and gusts, 00-24Z)",
+        "last_date": "2025-08-27",
+        "age_days": 389,
+        "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
+        "note": "RETIRED 2025-08-29 (NCEI); successor is SSODv2. Annual files; GSOD cannot be more current than the ISD hourly file it is derived from."
+      },
+      {
+        "area": "isd_hourly",
+        "label": "ISD hourly 72494023234 (hour-by-hour wind and precipitation)",
+        "last_date": "2025-08-27",
+        "age_days": 389,
+        "url": "https://www.ncei.noaa.gov/data/global-hourly/access/",
+        "note": "RETIRED 2025-08-29 (NCEI); successor is GHCNh. Annual files of hourly observations."
+      }
+    ],
+    "stale_archives": [
+      "wind",
+      "isd_hourly"
+    ],
+    "recent_enough_for_current_conditions": false
+  },
+  "sources": {
+    "ghcn_daily": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
+    "gsod": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
+    "isd": "https://www.ncei.noaa.gov/data/global-hourly/access/",
+    "cpc_gis": "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/",
+    "cpc_discussion": "https://www.cpc.ncep.noaa.gov/products/predictions/90day/fxus05.html",
+    "enso_discussion": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml",
+    "oni": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+    "nws_api": "https://api.weather.gov/points/37.7605,-122.4839",
+    "census": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip",
+    "storm_events": "https://www.ncdc.noaa.gov/stormevents/",
+    "ndbc_46026": "https://www.ndbc.noaa.gov/station_page.php?station=46026"
+  },
+  "disclaimer": "Independent hobby project. Not affiliated with NOAA/NWS/NCEI/CPC. For life-safety decisions use weather.gov and weather.gov/mtr directly. Daily forecast beyond 7 days does not exist; climatology shown is not a forecast.",
+  "verification_note": "Every number traces to a URL in data/provenance.json. All hosts verified as official .gov. No commercial providers (AccuWeather etc.) used because they require paid keys and are not independently verifiable line by line."
+}
