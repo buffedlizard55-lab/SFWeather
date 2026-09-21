@@ -34,6 +34,13 @@ flags two September dates in bug-history prose that were never forecast-window d
    used an em dash as prose punctuation while the section uses it to mean "no value published";
    the separator is now `:`, so "renders an em dash" keeps one meaning. Both harnesses run
    locally: this sandbox cannot reach NOAA, but `npm ci` works.
+3c. **First live nightly run (23:24 UTC) and defect 84.** The tier ran in the real pipeline and
+   published a fresh artifact (stamp = `landlord.json`'s, schema 2, currency current, 6 drivers,
+   3/3 watch-list sentences, ledger verdict pass). That run also exposed a staging bug: the
+   nightly commit staged `data/` and `assets/` but not the tier's generated copy in `docs/`, so
+   the tracked printable page kept the previous stamp. The commit step now stages
+   `docs/REPAIR_MAINTENANCE_EXECUTIVE_SUMMARY.md` — the ledger check that caught it
+   (byte-equality of the two copies) was right.
 4. **Tier wired into CI.** `update-data.yml` now runs the tier after `landlord_summary.py`,
    before the ledger (so a stale artifact can never be committed), and `site-test.yml` runs its
    offline self-test beside the other tier self-tests. The artifact had been a day stale because

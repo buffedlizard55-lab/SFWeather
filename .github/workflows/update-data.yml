@@ -230,7 +230,12 @@ jobs:
           echo "PIPELINE_STEPS_OK=$STEPS_OK"
 
           if [ "$VERDICT" = "pass" ] && [ "$STEPS_OK" = "yes" ]; then
-            git add -A data assets/cpc assets/model_guidance
+            # The repair tier also writes the printable summary into docs/ (the
+            # repository shows it without a build step), so that generated copy is
+            # part of the data commit.  Without it the tracked copy keeps the
+            # previous run's stamp while data/ moves - exactly the drift the
+            # ledger's repair-printable-page-generated check fails on.
+            git add -A data assets/cpc assets/model_guidance docs/REPAIR_MAINTENANCE_EXECUTIVE_SUMMARY.md
             MSG="data: refresh NOAA/NWS/NCEI/CPC sources [skip ci]"
           else
             git add -f data/pipeline.log data/run_diagnostics.txt data/quality_report.json \
