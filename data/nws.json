@@ -25,7 +25,7 @@
   },
   "forecast_daily": {
     "updated": "2026-09-21T20:26:08+00:00",
-    "generated_at": "2026-09-21T23:08:53+00:00",
+    "generated_at": "2026-09-21T23:43:08+00:00",
     "valid_times": "2026-09-21T14:00:00+00:00/P7DT11H",
     "elevation_m": 45.1104,
     "periods": [
@@ -273,7 +273,7 @@
   },
   "forecast_hourly": {
     "updated": "2026-09-21T20:26:08+00:00",
-    "generated_at": "2026-09-21T23:08:53+00:00",
+    "generated_at": "2026-09-21T23:43:09+00:00",
     "elevation_m": 45.1104,
     "periods": [
       {
@@ -4950,8 +4950,8 @@
       "observation": {
         "timestamp": "2026-09-21T22:43:00+00:00",
         "temperature_c": 15.75,
-        "dewpoint_c": 12.15,
-        "relative_humidity_pct": 79.175276173123,
+        "dewpoint_c": 12.11,
+        "relative_humidity_pct": 78.967198284416,
         "wind_speed_kmh": null,
         "wind_gust_kmh": null,
         "wind_direction_deg": null,
@@ -4968,14 +4968,14 @@
       "elevation_m": 62.419992,
       "distance_m": 17818.193337506,
       "observation": {
-        "timestamp": "2026-09-21T23:15:00+00:00",
+        "timestamp": "2026-09-21T23:30:00+00:00",
         "temperature_c": null,
         "dewpoint_c": null,
         "relative_humidity_pct": null,
         "wind_speed_kmh": null,
         "wind_gust_kmh": null,
         "wind_direction_deg": null,
-        "barometric_pressure_pa": 101180,
+        "barometric_pressure_pa": 101150,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
         "text_description": ""
@@ -4988,10 +4988,10 @@
       "elevation_m": 3.048,
       "distance_m": 19117.58413345,
       "observation": {
-        "timestamp": "2026-09-21T23:10:00+00:00",
+        "timestamp": "2026-09-21T23:20:00+00:00",
         "temperature_c": 19,
-        "dewpoint_c": 12,
-        "relative_humidity_pct": 63.847544203513,
+        "dewpoint_c": 13,
+        "relative_humidity_pct": 68.176241889352,
         "wind_speed_kmh": null,
         "wind_gust_kmh": null,
         "wind_direction_deg": null,
@@ -5036,13 +5036,13 @@
       "elevation_m": 29.410152,
       "distance_m": 22798.124785519,
       "observation": {
-        "timestamp": "2026-09-21T22:52:00+00:00",
-        "temperature_c": 17.78,
-        "dewpoint_c": 13.94,
-        "relative_humidity_pct": 78.238120353853,
+        "timestamp": "2026-09-21T23:23:00+00:00",
+        "temperature_c": 17.22,
+        "dewpoint_c": 13.78,
+        "relative_humidity_pct": 80.215002773551,
         "wind_speed_kmh": 0,
         "wind_gust_kmh": 1.62,
-        "wind_direction_deg": 155,
+        "wind_direction_deg": 136,
         "barometric_pressure_pa": 101340,
         "precipitation_last_hour_mm": null,
         "precipitation_last_3_hours_mm": null,
@@ -5056,7 +5056,7 @@
     "count": 0,
     "test_count": 0,
     "count_including_tests": 0,
-    "updated": "2026-09-21T23:31:54+00:00",
+    "updated": "2026-09-21T23:43:13+00:00",
     "events": [],
     "source_url": "https://api.weather.gov/alerts/active?zone=CAZ006",
     "human_url": "https://www.weather.gov/mtr"
