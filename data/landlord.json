@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-21T14:20:21Z",
+  "generated_utc": "2026-09-21T23:36:15Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Sunset District \u2014 Inner and Outer Sunset)",
@@ -51,7 +51,7 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-21T14:14:46Z",
+        "retrieved_utc": "2026-09-21T23:31:50Z",
         "sha256": "407ce6bb637e8c512b1ad551ad96a709d1be46102e3ab5ed9d2dc8120cb517c0",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
@@ -1919,7 +1919,7 @@
       },
       "daily_forecast": {
         "days_in_this_scoreboard_with_a_real_forecast": 0,
-        "official_horizon_ends": "2026-09-27"
+        "official_horizon_ends": "2026-09-28"
       },
       "prognostic_caveats": {
         "available": true,
@@ -3716,7 +3716,7 @@
     "station_id": "USW00023272",
     "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
     "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-    "retrieved_utc": "2026-09-21T14:19:36Z",
+    "retrieved_utc": "2026-09-21T23:35:38Z",
     "dates_parsed": 366,
     "columns": {
       "normal_high_f": "DLY-TMAX-NORMAL",

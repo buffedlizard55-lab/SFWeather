@@ -3231,6 +3231,523 @@ def main() -> int:
                      evidence={"unverified": [{"kind": e.get("kind"), "url": e.get("url")}
                                               for e in unverified][:6]})
 
+    # ------------- 12m. repair & maintenance executive summary (top of page) --
+    # The section at the top of the page republishes numbers from landlord.json /
+    # calendar.json / cpc.json / enso.json and quotes CPC verbatim.  It is checked
+    # here the same way as the rest of the site, with one addition: because the
+    # defect that made this block render as em dashes was a renderer/schema
+    # mismatch (the renderer read key names the generator had stopped emitting),
+    # the *render contract* itself is checked - every field the renderer reads
+    # must exist in the payload, and every container it writes must exist in the
+    # page.  A number that cannot be re-derived, a quote that is not a substring
+    # of the fetched file it names, or a stamp older than the data it summarises
+    # fails the build instead of being published.
+    import repair_maintenance_summary as repair_lib  # noqa: E402
+    _re = re
+
+    repair = load("repair_maintenance_summary.json")
+    if not repair:
+        ledger.check(
+            "repair-artifact-published",
+            "The repair & maintenance executive summary is published or explicitly "
+            "reported as absent",
+            False,
+            "data/repair_maintenance_summary.json is not published by this run, so "
+            "the site renders its 'not published in this snapshot' notice",
+            severity="warning")
+    else:
+        def _get(obj, path, default=None):
+            # Paths are written either "a/b" (nested keys) or "a.b" (dotted key
+            # names); no key in this tier contains a slash or a dot.
+            cur = obj
+            for part in _re.split(r"[./]", path):
+                if isinstance(cur, dict):
+                    cur = cur.get(part)
+                elif isinstance(cur, list):
+                    try:
+                        cur = cur[int(part)]
+                    except (ValueError, IndexError):
+                        return default
+                else:
+                    return default
+                if cur is None:
+                    return default
+            return cur
+
+        es_rep = (landlord.get("executive_summary") or {})
+        r_now = repair
+        num_problems = []
+
+        def same(pub_path, src_path, root=es_rep, root_name="landlord.json executive_summary"):
+            pub = _get(r_now, pub_path)
+            want = _get(root, src_path)
+            if pub != want:
+                num_problems.append(f"{pub_path} = {pub!r} but {root_name}.{src_path} = {want!r}")
+
+        num_pairs = [
+            ("expected_rain.n_seasons", "season_total_prcp/n"),
+            ("expected_rain.season_total_mean_in", "season_total_prcp/mean"),
+            ("expected_rain.season_total_median_in", "season_total_prcp/median"),
+            ("expected_rain.season_total_min_in", "season_total_prcp/min"),
+            ("expected_rain.season_total_max_in", "season_total_prcp/max"),
+            ("expected_rain.season_total_p10_in", "season_total_prcp/p10"),
+            ("expected_rain.season_total_p90_in", "season_total_prcp/p90"),
+            ("expected_rain.oct_mean_in", "oct_total/mean"),
+            ("expected_rain.nov_mean_in", "nov_total/mean"),
+            ("expected_rain.dec_mean_in", "dec_total/mean"),
+            ("expected_rain.jan_mean_in", "jan_total/mean"),
+            ("rain_duration.ge_3_days_pct", "streak_probability/ge_3_days/pct"),
+            ("rain_duration.ge_3_days_n", "streak_probability/ge_3_days/seasons"),
+            ("rain_duration.ge_5_days_pct", "streak_probability/ge_5_days/pct"),
+            ("rain_duration.ge_5_days_n", "streak_probability/ge_5_days/seasons"),
+            ("rain_duration.ge_7_days_pct", "streak_probability/ge_7_days/pct"),
+            ("rain_duration.ge_7_days_n", "streak_probability/ge_7_days/seasons"),
+            ("rain_duration.ge_10_days_pct", "streak_probability/ge_10_days/pct"),
+            ("rain_duration.ge_10_days_n", "streak_probability/ge_10_days/seasons"),
+            ("rain_duration.longest_mean_days", "longest_streak/mean"),
+            ("rain_duration.longest_median_days", "longest_streak/median"),
+            ("rain_duration.longest_max_days", "longest_streak/max"),
+            ("rain_duration.n_seasons", "longest_streak/n"),
+            ("wind_rain.hourly_available", "wind_and_rain_hourly/available"),
+            ("wind_rain.hourly_mean_days", "wind_and_rain_hourly/days_with_a_simultaneous_hour/mean"),
+            ("wind_rain.hourly_median_days", "wind_and_rain_hourly/days_with_a_simultaneous_hour/median"),
+            ("wind_rain.hourly_max_days", "wind_and_rain_hourly/days_with_a_simultaneous_hour/max"),
+            ("wind_rain.hourly_mean_hours", "wind_and_rain_hourly/simultaneous_hours_per_season/mean"),
+            ("wind_rain.hourly_median_hours", "wind_and_rain_hourly/simultaneous_hours_per_season/median"),
+            ("wind_rain.hourly_max_hours", "wind_and_rain_hourly/simultaneous_hours_per_season/max"),
+            ("wind_rain.hourly_station_id", "wind_and_rain_hourly/station_id"),
+            ("wind_rain.hourly_wind_threshold_kt", "wind_and_rain_hourly/wind_threshold_kt"),
+            ("wind_rain.whole_day_mean_days", "wind_and_rain/mean"),
+            ("wind_rain.whole_day_median_days", "wind_and_rain/median"),
+            ("wind_rain.whole_day_max_days", "wind_and_rain/max"),
+            ("wind_rain.heavy_mean_days", "heavy_wind_and_rain/mean"),
+            ("wind_rain.heavy_median_days", "heavy_wind_and_rain/median"),
+            ("wind_rain.heavy_max_days", "heavy_wind_and_rain/max"),
+            ("peak_gusts.mean_mph", "max_gust/mean"),
+            ("peak_gusts.median_mph", "max_gust/median"),
+            ("peak_gusts.max_mph", "max_gust/max"),
+            ("peak_gusts.min_mph", "max_gust/min"),
+            ("peak_gusts.n_seasons", "max_gust/n"),
+            ("ocean_wind.available", "ocean_wind/available"),
+            ("ocean_wind.station_id", "ocean_wind/station_id"),
+            ("ocean_wind.distance_mi", "ocean_wind/distance_mi_from_centroid"),
+            ("ocean_wind.gale_mean_days", "ocean_wind/gale_days_ge_34kt/mean"),
+            ("ocean_wind.gale_max_days", "ocean_wind/gale_days_ge_34kt/max"),
+            ("ocean_wind.max_gust_mean_mph", "ocean_wind/max_gust_mph/mean"),
+            ("ocean_wind.max_gust_max_mph", "ocean_wind/max_gust_mph/max"),
+            ("ocean_wind.caveat_is_bound", "ocean_wind/is_a_bound_for_94122"),
+            ("enso_conditioned.seasons_in_phase",
+             "official_outlook/enso_conditioned_record/seasons_in_phase"),
+            ("enso_conditioned.mean_in", "official_outlook/enso_conditioned_record/mean_in"),
+            ("enso_conditioned.median_in", "official_outlook/enso_conditioned_record/median_in"),
+            ("enso_conditioned.min_in", "official_outlook/enso_conditioned_record/min_in"),
+            ("enso_conditioned.max_in", "official_outlook/enso_conditioned_record/max_in"),
+            ("current_enso.oni_c", "current_enso/oni_c"),
+            ("current_enso.oni_c_fmt", "current_enso/oni_c_fmt"),
+            ("current_enso.phase", "current_enso/phase"),
+            ("current_enso.alert_status", "official_outlook/enso/alert_status"),
+            ("official_enso.alert_status", "official_outlook/enso/alert_status"),
+            ("official_enso.state", "official_outlook/enso/state"),
+            ("cpc_tilt", "official_outlook/cpc_tilt"),
+            ("caveats", "official_outlook/prognostic_caveats/quotes"),
+            ("enso_strength_quotes", "official_outlook/enso_strength/quotes"),
+            ("bottom_line", "bottom_line"),
+            ("record_coverage", "record_coverage"),
+            ("executive_headline", "key_finding"),
+            ("season_window", "season_window"),
+            ("location", "location"),
+        ]
+        for pub_path, src_path in num_pairs:
+            same(pub_path, src_path)
+
+        # Prose this tier republishes from a dataset (the station-distance
+        # sentence) must be that dataset's own words, not a hand-written line.
+        landlord_strings = [climo_lib.collapse_ws(x)
+                            for x in repair_lib.all_strings(landlord)]
+        dist_sentence = _get(r_now, "peak_gusts/distance_sentence")
+        if dist_sentence:
+            flat = climo_lib.collapse_ws(dist_sentence)
+            if not any(flat in x for x in landlord_strings):
+                num_problems.append(
+                    "peak_gusts.distance_sentence is not a sentence landlord.json wrote")
+
+        # Phase-conditioned streak figures live in a phase-keyed sub-dictionary.
+        _phase = _get(r_now, "rain_duration/phase_conditioned/phase")
+        _phs = _get(es_rep, f"enso_stratified_streaks/{_phase}") or {}
+        same("rain_duration.phase_conditioned.n", "n", _phs, "landlord.json enso_stratified_streaks.<phase>")
+        same("rain_duration.phase_conditioned.ge_7_days_pct", "ge_7_days/pct", _phs,
+             "landlord.json enso_stratified_streaks.<phase>")
+        same("rain_duration.phase_conditioned.ge_10_days_pct", "ge_10_days/pct", _phs,
+             "landlord.json enso_stratified_streaks.<phase>")
+        same("rain_duration.phase_conditioned.longest_mean_days", "longest_streak_days/mean", _phs,
+             "landlord.json enso_stratified_streaks.<phase>")
+        same("rain_duration.phase_conditioned.longest_max_days", "longest_streak_days/max", _phs,
+             "landlord.json enso_stratified_streaks.<phase>")
+
+        # Scoreboard geometry comes from calendar.json and the official-horizon block.
+        cal_days = cal.get("days") or []
+        sb = r_now.get("scoreboard") or {}
+        if sb.get("days_total") != len(cal_days):
+            num_problems.append(f"scoreboard.days_total {sb.get('days_total')} != {len(cal_days)} days in calendar.json")
+        fields = sb.get("fields") or []
+        want_complete = sum(1 for d in cal_days if all(d.get(k) is not None for k in fields))
+        if sb.get("days_with_all_seven_fields") != want_complete:
+            num_problems.append(
+                f"scoreboard.days_with_all_seven_fields {sb.get('days_with_all_seven_fields')} "
+                f"!= {want_complete} days carrying all of {fields}")
+        if sb.get("days_with_a_real_official_forecast_now") != _get(
+                es_rep, "official_outlook/daily_forecast/days_in_this_scoreboard_with_a_real_forecast"):
+            num_problems.append("scoreboard.days_with_a_real_official_forecast_now does not match landlord.json")
+        if sb.get("official_horizon_ends") != _get(es_rep, "official_outlook/daily_forecast/official_horizon_ends"):
+            num_problems.append("scoreboard.official_horizon_ends does not match landlord.json")
+        if len(fields) != 7:
+            num_problems.append(f"scoreboard publishes {len(fields)} field names, not the seven asked for")
+
+        # Cost drivers: rank, text, evidence, sources and the severity rule.
+        drv_pub = r_now.get("cost_drivers_ranked") or []
+        drv_src = sorted(es_rep.get("cost_drivers") or [], key=lambda d: d.get("rank") or 0)
+        if len(drv_pub) != len(drv_src):
+            num_problems.append(f"{len(drv_pub)} published drivers vs {len(drv_src)} in landlord.json")
+        for pub, src in zip(drv_pub, drv_src):
+            if pub.get("driver") != src.get("driver"):
+                num_problems.append(f"driver #{pub.get('rank')} title differs from landlord.json")
+            if pub.get("why_it_costs") != src.get("why_it_costs"):
+                num_problems.append(f"driver #{pub.get('rank')} guidance sentence differs from landlord.json")
+            if pub.get("evidence") != (src.get("evidence") or []):
+                num_problems.append(f"driver #{pub.get('rank')} evidence rows differ from landlord.json")
+            if pub.get("sources") != (src.get("sources") or []):
+                num_problems.append(f"driver #{pub.get('rank')} source list differs from landlord.json")
+            want_sev = repair_lib.severity_for_rank(src.get("rank"))
+            if pub.get("severity") != want_sev:
+                num_problems.append(
+                    f"driver #{src.get('rank')} severity {pub.get('severity')!r} != rule value {want_sev!r}")
+        ledger.check(
+            "repair-numbers-traceable",
+            "Every number in the repair executive summary is re-derived from the "
+            "dataset it claims to come from (no value appears in the summary that "
+            "is not in its source)",
+            not num_problems,
+            (f"{len(drv_pub)} drivers and the rain, duration, wind+rain, gust, ocean "
+             f"and outlook blocks all match their source datasets"
+             if not num_problems else "; ".join(num_problems[:6])),
+            evidence={"problems": num_problems[:10], "checked": len(num_pairs) + 12,
+                      "published_drivers": len(drv_pub)})
+
+        # ---- severity and rank rule ----------------------------------------
+        rank_problems = []
+        ranks = [d.get("rank") for d in drv_pub]
+        if sorted(r for r in ranks if isinstance(r, int)) != list(range(1, len(ranks) + 1)):
+            rank_problems.append(f"ranks are not a 1..{len(ranks)} permutation: {ranks}")
+        for d in drv_pub:
+            if not isinstance(d.get("rank"), int):
+                rank_problems.append(f"driver {d.get('driver')!r} has no integer rank")
+            elif d.get("severity") != repair_lib.severity_for_rank(d["rank"]):
+                rank_problems.append(f"driver #{d['rank']} severity is not the rank rule's value")
+            if d.get("severity_rule") != repair_lib.SEVERITY_RULE:
+                rank_problems.append(f"driver #{d.get('rank')} does not publish the severity rule")
+            if any((s.get("url") or "") and host_of(s["url"]) not in OFFICIAL_HOSTS
+                   for s in (d.get("sources") or [])):
+                rank_problems.append(f"driver #{d.get('rank')} cites a non-official source")
+        ledger.check(
+            "repair-severity-and-rank-rule",
+            "Repair-cost drivers are ranked 1..N exactly once each and carry the "
+            "published, rank-derived severity rule - not an undocumented guess",
+            not rank_problems,
+            (f"{len(drv_pub)} drivers; severity is a pure function of rank "
+             f"(1-3 high, 4-5 medium, 6+ low)" if not rank_problems
+             else "; ".join(rank_problems[:6])),
+            evidence={"problems": rank_problems[:8]})
+
+        # ---- verbatim quotations -------------------------------------------
+        # Each quote must be a whitespace-collapsed substring of the fetched file
+        # whose URL it names, using the same collapsing rule the pipeline used.
+        def _page_text(url_contains, dataset):
+            for item in (dataset.get("sources") or []) + (dataset.get("discussions") or []):
+                if url_contains in str(item.get("url") or ""):
+                    return climo_lib.collapse_ws(item.get("text") or "")
+            return ""
+
+        enso_page = _page_text("ensodisc", enso)
+        cpc_90 = _page_text("90day/fxus05", cpc) or _page_text("fxus05", cpc)
+        q_problems = []
+        declared = set(r_now.get("next_issuances_patterns_watched_for") or [])
+        if not declared:
+            q_problems.append("next_issuances_patterns_watched_for is empty - the quote-key contract is missing")
+        for item in r_now.get("next_issuances") or []:
+            key = item.get("key") or "?"
+            text = climo_lib.collapse_ws(item.get("text") or "")
+            if key not in declared:
+                q_problems.append(f"{key}: key not in next_issuances_patterns_watched_for")
+            if not text:
+                q_problems.append(f"{key}: empty quote")
+                continue
+            page = enso_page if "ensodisc" in str(item.get("source_url") or "") else cpc_90
+            if not page:
+                q_problems.append(f"{key}: no fetched page to verify against")
+            elif text not in page:
+                q_problems.append(f"{key}: not a verbatim substring of the fetched page")
+            if any(ord(ch) < 32 or ord(ch) in (127, 0xFFFD) for ch in text):
+                q_problems.append(f"{key}: contains control or replacement characters")
+            if not str(item.get("source_sha256") or ""):
+                q_problems.append(f"{key}: the file it quotes carries no SHA-256")
+        for q in r_now.get("caveats") or []:
+            text = climo_lib.collapse_ws(q.get("text") or "")
+            if not text:
+                q_problems.append(f"caveat {q.get('key')}: empty quote")
+            elif cpc_90 and text not in cpc_90:
+                q_problems.append(f"caveat {q.get('key')}: not a substring of the fetched 90-day discussion")
+        for q in r_now.get("enso_strength_quotes") or []:
+            text = climo_lib.collapse_ws(q.get("text") or "")
+            if not text:
+                q_problems.append(f"strength quote {q.get('key')}: empty quote")
+            elif enso_page and text not in enso_page:
+                q_problems.append(f"strength quote {q.get('key')}: not a substring of the fetched ENSO discussion")
+        not_found = r_now.get("next_issuances_not_found") or []
+        if set(not_found) - declared:
+            q_problems.append("a not-found key is not one this project watches for")
+        ledger.check(
+            "repair-quotes-verbatim",
+            "Every sentence the repair summary attributes to NOAA is a "
+            "whitespace-collapsed substring of the file it names, and a sentence "
+            "CPC rewrote is reported as not found rather than paraphrased",
+            not q_problems,
+            (f"{len(r_now.get('next_issuances') or [])} scheduled-issuance sentence(s), "
+             f"{len(r_now.get('caveats') or [])} caveat(s), "
+             f"{len(r_now.get('enso_strength_quotes') or [])} strength sentence(s) "
+             f"verified verbatim; not found: {not_found or 'none'}"
+             if not q_problems else "; ".join(q_problems[:6])),
+            evidence={"problems": q_problems[:8], "patterns_watched_for": sorted(declared),
+                      "not_found": not_found})
+
+        # ---- currency: the stamp is the dataset's own, never the wall clock --
+        cur_problems = []
+        rentry = repair_lib
+        if r_now.get("generated_utc") != landlord.get("generated_utc"):
+            cur_problems.append(
+                f"artifact stamp {r_now.get('generated_utc')} != landlord.json stamp "
+                f"{landlord.get('generated_utc')}")
+        want_unstamped = sorted(
+            n for n in rentry.SOURCE_FILES if not (load(n) or {}).get("generated_utc"))
+        got_unstamped = sorted((r_now.get("currency") or {}).get("sources_without_a_build_stamp") or [])
+        if got_unstamped != want_unstamped:
+            cur_problems.append(f"unstamped inputs {got_unstamped} != datasets actually unstamped {want_unstamped}")
+        build_stamps = sorted({(load(n) or {}).get("generated_utc")
+                               for n in rentry.SOURCE_FILES if (load(n) or {}).get("generated_utc")})
+        sources_read = r_now.get("sources_read") or {}
+        for name in rentry.SOURCE_FILES:
+            want = (load(name) or {}).get("generated_utc")
+            got = (sources_read.get(name) or {}).get("build_stamp")
+            if got != want:
+                cur_problems.append(f"sources_read[{name}].build_stamp {got!r} != dataset value {want!r}")
+        c = r_now.get("currency") or {}
+        if c.get("sources_agree") != (len(build_stamps) == 1):
+            cur_problems.append("currency.sources_agree does not match the datasets' stamps")
+        if c.get("is_current") != c.get("sources_agree"):
+            cur_problems.append("currency.is_current disagrees with currency.sources_agree")
+        if len(build_stamps) != 1:
+            cur_problems.append(
+                "the datasets this summary reads were written by different runs "
+                f"({build_stamps}) - the summary is stale and must be regenerated "
+                "before publication")
+        if (c.get("content_newer_than_the_artifact") or []):
+            cur_problems.append(f"content newer than the artifact: {c['content_newer_than_the_artifact']}")
+        ledger.check(
+            "repair-currency-honest",
+            "The repair summary is stamped with its source dataset's stamp (never a "
+            "wall clock), names the inputs that carry no build stamp, and is refused "
+            "when it is older than the data it summarises",
+            not cur_problems,
+            (f"stamp {r_now.get('generated_utc')}; build-stamped inputs all agree; "
+             f"{got_unstamped or 'no'} input(s) listed as stamp-less"
+             if not cur_problems else "; ".join(cur_problems[:6])),
+            evidence={"problems": cur_problems[:8], "build_stamps": build_stamps,
+                      "unstamped": got_unstamped})
+
+        # ---- the render contract -------------------------------------------
+        # The renderer must read names that exist, and write into containers that
+        # exist.  This is the check that catches the em-dash defect: the old
+        # renderer asked for season_total_mean while the payload published
+        # season_total_mean_in, and nothing noticed because no test read both.
+        rc_problems = []
+        renderer = ROOT / "assets" / "js" / "app.js"
+        app_src = renderer.read_text(encoding="utf-8") if renderer.exists() else None
+        if app_src is None:
+            rc_problems.append("assets/js/app.js is not present in this checkout, so "
+                               "the render contract could not be checked here")
+        m = _re.search(r"\nfunction renderRepairExecutive\(\)\s*\{", app_src or "")
+        if app_src is None:
+            pass
+        elif not m:
+            rc_problems.append("renderRepairExecutive() is gone from assets/js/app.js")
+        else:
+            tail = app_src[m.end():]
+            end = _re.search(r"\nfunction ", tail)
+            body = tail[:end.start()] if end else tail
+            aliases = {
+                "rep": "", "er": "expected_rain", "rd": "rain_duration",
+                "wr": "wind_rain", "pg": "peak_gusts", "ow": "ocean_wind",
+                "cur": "current_enso", "off": "official_enso", "tilt": "cpc_tilt",
+                "hp": "cpc_tilt/highest_probability", "sb": "scoreboard",
+                "cond": "enso_conditioned", "ph": "rain_duration/phase_conditioned",
+                "cx": "currency", "osp": "outer_sunset_profile",
+                "coordinate": "coordinates",
+            }
+            unresolved = []
+            for am in _re.finditer(r"\b([A-Za-z_][\w]*)\.([A-Za-z_][\w.]*)", body):
+                alias, rest = am.group(1), am.group(2)
+                if alias not in aliases:
+                    continue
+                root_path = aliases[alias]
+                head = rest.split(".")[0]
+                container = _get(r_now, root_path) if root_path else r_now
+                if container is None:
+                    # A subtree this snapshot does not publish (an unavailable
+                    # tier) is skipped here - the renderer's own fallback for it
+                    # is checked by the "absent data is labelled" rule below.
+                    continue
+                if not isinstance(container, dict) or head not in container:
+                    unresolved.append(f"{alias}.{rest} (no '{head}' under '{root_path or 'root'}')")
+            if unresolved:
+                rc_problems.append("renderer reads names the payload does not publish: "
+                                   + "; ".join(sorted(set(unresolved))[:6]))
+            html = ((ROOT / "index.html").read_text(encoding="utf-8")
+                    if (ROOT / "index.html").exists() else "")
+            ids = sorted(set(_re.findall(r"\$\('#(repair-[\w-]+)'\)", body)))
+            for i in ids:
+                if f'id="{i}"' not in html:
+                    rc_problems.append(f"renderer writes into #{i}, which index.html does not contain")
+            if not any(i == "repair-hero-grid" for i in ids):
+                rc_problems.append("the renderer no longer fills the hero grid")
+        ledger.check(
+            "repair-render-contract",
+            "Every field the repair renderer reads exists in the published payload, "
+            "and every container it writes exists in the page",
+            not rc_problems,
+            ("renderer and payload agree field by field"
+             if not rc_problems else "; ".join(rc_problems[:6])),
+            evidence={"problems": rc_problems[:8]})
+
+        # ---- printable page is generated, not retyped -----------------------
+        md_path = DATA / "repair_maintenance_executive.md"
+        md_problems = []
+        if not md_path.exists():
+            md_problems.append("data/repair_maintenance_executive.md is not published")
+            md_text = ""
+        else:
+            md_text = md_path.read_text(encoding="utf-8")
+            if str(r_now.get("generated_utc") or "") not in md_text:
+                md_problems.append("the printable page does not carry the artifact stamp")
+            for d in drv_pub:
+                if str(d.get("driver") or "") not in md_text:
+                    md_problems.append(f"driver title missing from the printable page: {d.get('driver')}")
+            # The landlord's six questions must each reach the printable page with
+            # their answer - a page that quietly drops one is not the summary.
+            for entry in r_now.get("bottom_line") or []:
+                if str(entry.get("question") or "") not in md_text:
+                    md_problems.append(
+                        f"landlord question missing from the printable page: {entry.get('question')}")
+                elif str(entry.get("answer") or "")[:60] not in md_text:
+                    md_problems.append(
+                        f"the answer to '{entry.get('question')}' is not on the printable page")
+            json_text = json.dumps(r_now, ensure_ascii=False, default=str)
+            md_urls = sorted(set(_re.findall(r"https?://[^\s)\]\"]+", md_text)))
+            invented = [u for u in md_urls if u not in json_text]
+            if invented:
+                md_problems.append(f"URL(s) on the printable page appear in no dataset: {invented[:4]}")
+            number = r"(?<![\d.])-?\d+(?:\.\d+)?"
+            json_values = {float(t) for t in _re.findall(number, json_text)}
+            md_plain = _re.sub(r"(?<=\d),(?=\d{3}\b)", "", md_text)
+            orphan = sorted({float(t) for t in _re.findall(number, md_plain)} - json_values)
+            if orphan:
+                md_problems.append(f"number(s) on the printable page appear in no dataset: {orphan[:6]}")
+            docs_copy = ROOT / "docs" / "REPAIR_MAINTENANCE_EXECUTIVE_SUMMARY.md"
+            if docs_copy.exists() and docs_copy.read_text(encoding="utf-8") != md_text:
+                md_problems.append("the docs copy differs from the generated printable page")
+        ledger.check(
+            "repair-printable-page-generated",
+            "The printable repair summary and its docs copy are generated from the "
+            "payload: same stamp, same driver titles, and no number or URL that is "
+            "not in a dataset",
+            not md_problems,
+            (f"{len(md_text.splitlines())} lines, every figure and link traced to the payload"
+             if not md_problems else "; ".join(md_problems[:6])),
+            evidence={"problems": md_problems[:8]})
+
+        # ---- official links only -------------------------------------------
+        all_urls = set()
+
+        def _collect_urls(node):
+            if isinstance(node, dict):
+                for v in node.values():
+                    _collect_urls(v)
+            elif isinstance(node, list):
+                for v in node:
+                    _collect_urls(v)
+            elif isinstance(node, str) and node.startswith("http"):
+                all_urls.add(node)
+
+        _collect_urls(r_now)
+        bad_hosts = sorted({host_of(u) for u in all_urls if host_of(u) not in OFFICIAL_HOSTS})
+        ledger.check(
+            "repair-links-official",
+            "Every link the repair summary publishes points at a vetted official "
+            "host (no commercial provider, no unvetted domain)",
+            not bad_hosts,
+            (f"{len(all_urls)} URL(s) across the summary and its source ledger, all official"
+             if not bad_hosts else f"non-official host(s): {bad_hosts}"),
+            evidence={"hosts": sorted({host_of(u) for u in all_urls})})
+
+        # ---- absent data is labelled, not blank -----------------------------
+        absence_problems = []
+        ow = r_now.get("ocean_wind") or {}
+        if not ow.get("available"):
+            if not ow.get("unavailable_note"):
+                absence_problems.append("the ocean-wind tier is unpublished but carries no note")
+            if ow.get("status") != "not published in this snapshot":
+                absence_problems.append("the ocean-wind tier is unpublished but is not labelled as such")
+        if not (r_now.get("caveats_note") or ""):
+            absence_problems.append("the caveat block carries no how-to-read note")
+        if (r_now.get("caveats_not_found") or r_now.get("next_issuances_not_found")):
+            if not (r_now.get("next_issuances_patterns_watched_for") or []):
+                absence_problems.append("not-found keys are published without the watched-for list")
+        ledger.check(
+            "repair-absence-labelled",
+            "A tier missing from this snapshot is published as absent with a note, "
+            "so an empty card can never read as 'no risk'",
+            not absence_problems,
+            ("every optional block either carries figures or an explicit absence note"
+             if not absence_problems else "; ".join(absence_problems[:4])),
+            evidence={"problems": absence_problems[:6]})
+
+        # ---- the claim ledger carries the headline figures too --------------
+        _gauges = (r_now.get("sources_detail") or {}).get("ghcn_daily") or {}
+        _isd = (r_now.get("sources_detail") or {}).get("isd") or {}
+        ledger.claim(
+            "repair-season-total-mean",
+            "The expected rain total the repair summary leads with is the observed "
+            "1991-2020 mean for the SF downtown gauge, not a forecast for 2026-27",
+            r_now.get("expected_rain", {}).get("season_total_mean_in"), "in",
+            source={"label": _gauges.get("label"), "url": _gauges.get("url")},
+            method=("Copied from landlord.json executive_summary.season_total_prcp.mean, which "
+                    "the pipeline derives from NCEI GHCN-Daily USW00023272 over the 30 seasons "
+                    "1991-2020 (Oct 1 - Jan 31)"),
+            verified=True,
+            cross_check={"landlord.json": _get(es_rep, "season_total_prcp/mean"),
+                         "n_seasons": _get(es_rep, "season_total_prcp/n")})
+        ledger.claim(
+            "repair-wind-rain-hourly",
+            "The wind + rain figure the repair summary leads with counts hours, not days, "
+            "and is an SFO reference value",
+            r_now.get("wind_rain", {}).get("hourly_mean_days"), "days/season",
+            source={"label": _isd.get("label"), "url": _isd.get("url")},
+            method=("Copied from landlord.json executive_summary.wind_and_rain_hourly, which "
+                    "the pipeline counts from NCEI ISD hourly observations at 72494023234 "
+                    "(KSFO): an hour counts when one observation carries wind >= 20 kt and "
+                    "measurable precipitation"),
+            verified=True,
+            cross_check={"station": _get(es_rep, "wind_and_rain_hourly/station_id"),
+                         "threshold_kt": _get(es_rep, "wind_and_rain_hourly/wind_threshold_kt")})
+
     # ------------------------------------------------------------- write out
     summary = ledger.summary()
     payload = {

@@ -223,6 +223,23 @@ main { padding: 24px 0 60px; }
 .repair-cost-hero .severity-medium { background: #ffe08a; color: #6b4a00; }
 .repair-cost-hero .severity-low { background: rgba(255,255,255,.2); color: #fff; border-color: rgba(255,255,255,.3); }
 
+/* ---------------- repair executive: currency, watch list, sources -------- */
+
+.repair-currency {
+  background: rgba(20, 73, 122, .06);
+  border-left: 3px solid var(--nws);
+  padding: 8px 12px;
+  border-radius: 6px;
+  line-height: 1.55;
+}
+#repair-watch-card { border-left: 4px solid var(--accent-dark); }
+#repair-watch h4 { margin: 0 0 10px; font-size: 15px; }
+.watch-item { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--line); }
+.watch-item:last-child { border-bottom: 0; margin-bottom: 0; padding-bottom: 0; }
+.watch-item blockquote { margin: 4px 0 4px 0; }
+#repair-source-card .fine { line-height: 1.7; }
+#repair-sources a { word-break: break-word; }
+
 /* ---------------- callouts ---------------- */
 .callout {
   border-radius: var(--radius);

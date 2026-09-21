@@ -1207,6 +1207,162 @@ setTimeout(() => {
     }
   }
 
+  // 36. The repair & maintenance executive hero: the block the page leads with,
+  //     built only from data/repair_maintenance_summary.json.  The defect this
+  //     guards was a renderer reading key names the generator had stopped
+  //     emitting, which turned the whole block into em dashes that read as "no
+  //     risk".  So: every container must exist, every hero card must print a
+  //     published value (never an em dash), every ranked driver must render with
+  //     its rule-derived severity, its key metric and a link to the file that
+  //     metric came from, the verbatim NOAA sentences must reach the page with
+  //     their source links, every source link must stay on an official host, and
+  //     an absent payload must say so instead of rendering blank.
+  {
+    const containers = [
+      ['#repair-executive', doc.querySelector('#repair-executive')],
+      ['#repair-headline', doc.querySelector('#repair-headline')],
+      ['#repair-hero-grid', doc.querySelector('#repair-hero-grid')],
+      ['#repair-currency', doc.querySelector('#repair-currency')],
+      ['#repair-watch', doc.querySelector('#repair-watch')],
+      ['#repair-drivers-compact', doc.querySelector('#repair-drivers-compact')],
+      ['#repair-forecast-body', doc.querySelector('#repair-forecast-body')],
+      ['#repair-sunset-body', doc.querySelector('#repair-sunset-body')],
+      ['#repair-sources', doc.querySelector('#repair-sources')]
+    ];
+    const missing = containers.filter(([, node]) => !node).map(([id]) => id);
+    if (missing.length) {
+      problems.push('the repair executive section is missing: ' + missing.join(', '));
+    } else {
+      let rep = null;
+      try {
+        rep = JSON.parse(fs.readFileSync(
+          path.join(repo, 'data/repair_maintenance_summary.json'), 'utf8'));
+      } catch (e) { rep = null; }
+      const flat = node => (node.textContent || '').replace(/\s+/g, ' ');
+      const headline = doc.querySelector('#repair-headline');
+      const grid = doc.querySelector('#repair-hero-grid');
+      const watch = doc.querySelector('#repair-watch');
+      const driversHost = doc.querySelector('#repair-drivers-compact');
+      const fcBody = doc.querySelector('#repair-forecast-body');
+      const sunsetBody = doc.querySelector('#repair-sunset-body');
+      const sourcesHost = doc.querySelector('#repair-sources');
+      const published = !!(rep && rep.executive_headline && rep.expected_rain);
+      if (!published) {
+        if (!/not published in this snapshot/i.test(flat(headline))) {
+          problems.push('the repair section is empty but does not say the summary is unpublished');
+        }
+      } else {
+        if (!flat(headline).includes(rep.executive_headline)) {
+          problems.push('#repair-headline does not print the published headline');
+        }
+        const cards = doc.querySelectorAll('#repair-hero-grid .hero-stat');
+        if (cards.length !== 6) {
+          problems.push('the repair hero grid rendered ' + cards.length + ' card(s), not 6');
+        }
+        const gridText = flat(grid);
+        ['\u2014', 'undefined', 'NaN', 'null'].forEach(tok => {
+          if (gridText.includes(tok)) {
+            problems.push('the repair hero grid renders "' + tok +
+              '" where a published value belongs');
+          }
+        });
+        const er = rep.expected_rain || {};
+        const rd = rep.rain_duration || {};
+        const wr = rep.wind_rain || {};
+        const pg = rep.peak_gusts || {};
+        [['season-total mean', er.season_total_mean_in, 2],
+         ['week-long rain share', rd.ge_7_days_pct, 1],
+         ['peak-gust mean', pg.mean_mph, 1],
+         ['wind+rain hourly days', wr.hourly_available ? wr.hourly_mean_days : null, 1]
+        ].forEach(([label, value, dp]) => {
+          if (value === null || value === undefined) return;
+          if (!gridText.includes(Number(value).toFixed(dp))) {
+            problems.push('the repair hero grid omits the published ' + label);
+          }
+        });
+        // How current the block is: the currency line must carry the dataset's
+        // own stamp, and it must say so out loud when the inputs disagree.
+        const curText = flat(doc.querySelector('#repair-currency'));
+        if (!curText.includes(String(rep.generated_utc))) {
+          problems.push('the repair currency line does not print the dataset stamp');
+        }
+        const agree = (rep.currency || {}).sources_agree;
+        if (agree === false && !/not current|different runs/i.test(curText)) {
+          problems.push('the repair currency line does not warn that its inputs disagree');
+        }
+        const items = doc.querySelectorAll('#repair-watch .watch-item');
+        const want = (rep.next_issuances || []).length;
+        if (items.length !== want) {
+          problems.push('the repair watch list rendered ' + items.length +
+            ' item(s) for ' + want + ' published sentence(s)');
+        }
+        (rep.next_issuances || []).forEach(item => {
+          if (!flat(watch).includes(item.text)) {
+            problems.push('the repair watch list omits a published NOAA sentence');
+          }
+          if (!Array.from(watch.querySelectorAll('a[href]'))
+            .some(a => a.getAttribute('href') === item.source_url)) {
+            problems.push('a repair watch-list sentence has no link to its source file');
+          }
+        });
+        const drivers = rep.cost_drivers_ranked || [];
+        const rendered = doc.querySelectorAll('#repair-drivers-compact .repair-driver-compact');
+        if (rendered.length !== drivers.length) {
+          problems.push('the repair driver list rendered ' + rendered.length +
+            ' of ' + drivers.length + ' ranked driver(s)');
+        }
+        const driverText = flat(driversHost);
+        const badges = Array.from(doc.querySelectorAll('#repair-drivers-compact .severity-badge'))
+          .map(b => (b.textContent || '').trim());
+        const driverLinks = Array.from(doc.querySelectorAll('#repair-drivers-compact a[href]'))
+          .map(a => a.getAttribute('href'));
+        drivers.forEach(d => {
+          if (!driverText.includes(d.driver)) {
+            problems.push('the repair driver list omits a ranked driver');
+          }
+          if (!badges.includes(String(d.severity || '').toUpperCase())) {
+            problems.push('the repair driver list does not print the severity of a ranked driver');
+          }
+          if (d.key_metric && !driverText.includes(String(d.key_metric))) {
+            problems.push('the repair driver list omits the published key metric of a ranked driver');
+          }
+          const src = (d.sources || [])[0];
+          if (src && src.url && !driverLinks.includes(src.url)) {
+            problems.push('a ranked repair driver carries no link to the file its metric came from');
+          }
+        });
+        const fcText = flat(fcBody);
+        ((rep.caveats || []).map(c => c.text)
+          .concat((rep.enso_strength_quotes || []).map(q => q.text))).forEach(s => {
+          if (s && !fcText.includes(s)) {
+            problems.push('the repair outlook block omits a verbatim NOAA sentence');
+          }
+        });
+        (((rep.cpc_tilt || {}).rows) || []).forEach(r => {
+          if (!fcText.includes(r.period)) {
+            problems.push('the repair outlook table omits a CPC period it counted (' + r.period + ')');
+          }
+        });
+        const osp = rep.outer_sunset_profile || {};
+        if (osp.neighborhood && !flat(sunsetBody).includes(osp.neighborhood)) {
+          problems.push('the repair sunset table does not name the neighborhood');
+        }
+        const links = Array.from(sourcesHost.querySelectorAll('a[href]'));
+        const wanted = (rep.sources_list || []).length || Object.keys(rep.sources || {}).length;
+        if (links.length !== wanted) {
+          problems.push('the repair source list rendered ' + links.length +
+            ' link(s) for ' + wanted + ' source file(s)');
+        }
+        links.forEach(a => {
+          const href = a.getAttribute('href') || '';
+          if (!/^https:\/\/[^/]*(noaa\.gov|weather\.gov|census\.gov)(\/|$)/.test(href)) {
+            problems.push('the repair source list links to a host that is not an official source: ' + href);
+          }
+        });
+      }
+    }
+  }
+
   if (problems.length) {
     console.error('SMOKE TEST FAILED');
     problems.forEach(p => console.error(' - ' + p));

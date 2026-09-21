@@ -349,7 +349,8 @@ def _repo_copy_with(mutate_readme=None, mutate_data=None):
     """Copy the repository so documentation checks can be falsified too."""
     def build(tmp):
         repo = tmp / "repo"
-        for item in ("pipeline", "docs", "README.md"):
+        for item in ("pipeline", "docs", "README.md", "index.html",
+                     "assets/js/app.js"):
             src = REPO / item
             if src.is_dir():
                 shutil.copytree(src, repo / item)
@@ -1596,6 +1597,131 @@ def _ow11(tmp):
     (tmp / "ocean_wind.json").unlink(missing_ok=True)
     return tmp
 
+
+
+# --------------------------------------------------------------------------- #
+# Repair & maintenance executive summary (the tier at the top of the page)
+#
+# The tier republishes numbers from landlord.json and quotes CPC verbatim, so its
+# checks must fail when a number is edited by hand, when a quote is paraphrased,
+# when the artifact goes stale, when a link leaves the official hosts, when the
+# renderer and the payload disagree (the defect that made the block render as em
+# dashes), and when an absent tier stops saying it is absent.
+# --------------------------------------------------------------------------- #
+
+def with_repair(tmp, mutate=None, md_mutate=None):
+    """Stage data/ with the repair artifacts, then mutate payload and/or page."""
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    for name in ("repair_maintenance_executive.md",):
+        src = DATA / name
+        if src.exists():
+            shutil.copy2(src, tmp / name)
+    obj = load("repair_maintenance_summary.json")
+    if mutate:
+        mutate(obj)
+    dump(tmp / "repair_maintenance_summary.json", obj)
+    if md_mutate:
+        md = (tmp / "repair_maintenance_executive.md")
+        md.write_text(md_mutate(md.read_text(encoding="utf-8")), encoding="utf-8")
+    return tmp
+
+
+@case("a season-mean figure hand-edited in the repair summary", "fail",
+      "repair-numbers-traceable")
+def _rp1(tmp):
+    def mutate(obj):
+        obj["expected_rain"]["season_total_mean_in"] = 13.5
+    return with_repair(tmp, mutate)
+
+
+@case("a repair-cost driver's severity flipped away from the rank rule", "fail",
+      "repair-severity-and-rank-rule")
+def _rp2(tmp):
+    def mutate(obj):
+        obj["cost_drivers_ranked"][0]["severity"] = "low"
+    return with_repair(tmp, mutate)
+
+
+@case("a sentence attributed to NOAA paraphrased instead of quoted", "fail",
+      "repair-quotes-verbatim")
+def _rp3(tmp):
+    def mutate(obj):
+        obj["next_issuances"][0]["text"] = ("The next ENSO Diagnostics Discussion is "
+                                            "expected in early October 2026.")
+    return with_repair(tmp, mutate)
+
+
+@case("the repair summary republished with a stamp older than its datasets", "fail",
+      "repair-currency-honest")
+def _rp4(tmp):
+    def mutate(obj):
+        obj["generated_utc"] = "2026-09-20T17:23:44Z"
+        obj["currency"]["artifact_generated_utc"] = "2026-09-20T17:23:44Z"
+        obj["currency"]["is_current"] = True
+    return with_repair(tmp, mutate)
+
+
+@case("a repair-summary source link pointed at a non-official host", "fail",
+      "repair-links-official")
+def _rp5(tmp):
+    def mutate(obj):
+        obj["sources"]["ghcn_daily"] = "https://example.com/rain.csv"
+        obj["sources_detail"]["ghcn_daily"]["url"] = "https://example.com/rain.csv"
+    return with_repair(tmp, mutate)
+
+
+@case("the payload renaming a field the renderer still reads (the em-dash defect)",
+      "fail", "repair-render-contract")
+def _rp6(tmp):
+    def mutate(obj):
+        obj["expected_rain"]["season_total_mean_in_v2"] = obj["expected_rain"].pop(
+            "season_total_mean_in")
+    return with_repair(tmp, mutate)
+
+
+@case("a typed-in number appearing only on the printable page", "fail",
+      "repair-printable-page-generated")
+def _rp7(tmp):
+    return with_repair(tmp, md_mutate=lambda md: md.replace(
+        "## Expected Rain Amounts", "## Expected Rain Amounts (plan for 13.37 in)"))
+
+
+@case("an unpublished ocean-wind tier with its absence note stripped", "fail",
+      "repair-absence-labelled")
+def _rp8(tmp):
+    def mutate(obj):
+        obj["ocean_wind"]["available"] = False
+        obj["ocean_wind"]["unavailable_note"] = None
+        obj["ocean_wind"]["status"] = ""
+        obj["ocean_wind"]["gale_mean_days"] = None
+    return with_repair(tmp, mutate)
+
+
+@case("the station-distance sentence rewritten out of the dataset's words", "fail",
+      "repair-numbers-traceable")
+def _rp10(tmp):
+    def mutate(obj):
+        obj["peak_gusts"]["distance_sentence"] = (
+            "The station is roughly a dozen miles from the ZIP centroid.")
+    return with_repair(tmp, mutate)
+
+
+@case("a landlord question quietly dropped from the printable page", "fail",
+      "repair-printable-page-generated")
+def _rp11(tmp):
+    question = (load("repair_maintenance_summary.json").get("bottom_line")
+                or [{}])[0].get("question")
+    return with_repair(tmp, md_mutate=lambda md: md.replace(str(question), "Question removed"))
+
+
+@case("the repair summary not published at all: a warning state, not a silent pass",
+      "warn", "repair-artifact-published")
+def _rp9(tmp):
+    _copy_all(tmp)
+    (tmp / "repair_maintenance_summary.json").unlink()
+    (tmp / "repair_maintenance_executive.md").unlink(missing_ok=True)
+    return tmp
 
 
 def main():

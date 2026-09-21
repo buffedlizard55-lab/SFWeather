@@ -105,6 +105,14 @@ function link(url, label) {
   return el('a', { href: url, target: '_blank', rel: 'noopener', text: label || url });
 }
 
+/** The host of a URL, for a link whose label would otherwise be the whole URL.
+ *  Used where the surrounding sentence already says what the link is. */
+function shortHost(url) {
+  if (!url) return DASH;
+  const m = String(url).match(/^https?:\/\/([^/]+)/);
+  return m ? m[1] : String(url);
+}
+
 function linkShort(url, max = 62) {
   if (!url) return el('span', { text: DASH });
   let txt = url.replace(/^https?:\/\//, '');
@@ -258,67 +266,127 @@ function renderDataStatus(cal, quality, prov, verify) {
 
 function renderRepairExecutive() {
   const rep = state.data.repair;
-  if (!rep) return;
-  const headline = $('#repair-headline');
-  if (headline) headline.textContent = rep.executive_headline || '';
+  const sec = $('#repair-executive');
+  if (!sec) return;
 
-  // Hero stats
+  const headline = $('#repair-headline');
   const grid = $('#repair-hero-grid');
+  const currency = $('#repair-currency');
+  const watch = $('#repair-watch');
+  const driversHost = $('#repair-drivers-compact');
+  const fcBody = $('#repair-forecast-body');
+  const sunsetBody = $('#repair-sunset-body');
+  const sourcesHost = $('#repair-sources');
+
+  // A payload that is missing, or built by an older schema, must say so on the
+  // page.  Rendering a column of em dashes instead is the defect this section
+  // was rewritten for: an empty card reads as "no risk" when it means "no data".
+  if (!rep || !rep.executive_headline || !rep.expected_rain) {
+    const msg = 'The repair & maintenance executive summary is not published in ' +
+      'this snapshot, so nothing is shown here. No value is substituted for a ' +
+      'missing dataset - the printable summary, the datasets and the claim ' +
+      'ledger are unaffected.';
+    [headline, currency, watch, driversHost, fcBody, sunsetBody, sourcesHost]
+      .forEach(h => { if (h) h.textContent = msg; });
+    if (grid) grid.innerHTML = '';
+    return;
+  }
+
+  if (headline) headline.textContent = rep.executive_headline;
+
+  const er = rep.expected_rain || {};
+  const rd = rep.rain_duration || {};
+  const wr = rep.wind_rain || {};
+  const pg = rep.peak_gusts || {};
+  const ow = rep.ocean_wind || {};
+  const cur = rep.current_enso || {};
+  const off = rep.official_enso || {};
+  const tilt = rep.cpc_tilt || {};
+  const hp = tilt.highest_probability || {};
+  const sb = rep.scoreboard || {};
+  const cond = rep.enso_conditioned || {};
+  const ph = rd.phase_conditioned || {};
+  const cx = rep.currency || {};
+
+  // ---- how current this block is -----------------------------------------
+  // The stamp is the dataset's own stamp, never a rendering-time date, and the
+  // page says which inputs carried one (the raw CPC/NWS containers record the
+  // retrieval time of each fetch instead).
+  if (currency) {
+    currency.innerHTML = '';
+    currency.append(el('span', {}, [
+      el('strong', { text: 'Built from the verified datasets stamped ' }),
+      el('span', { text: String(rep.generated_utc || DASH) }),
+      document.createTextNode(
+        ' (schema ' + String(rep.schema_version || '?') + '). ' +
+        (cx.sources_agree
+          ? 'Every build-stamped input carries that stamp'
+          : 'WARNING: the inputs were written by different runs, so this block is not current - it says so on purpose instead of looking fresh') +
+        (cx.newest_fetched_content_utc ? '; newest content fetched into them ' + cx.newest_fetched_content_utc + '. ' : '. ') +
+        (cx.sources_without_a_build_stamp && cx.sources_without_a_build_stamp.length
+          ? 'Inputs that carry no build stamp of their own (they record the retrieval time of each fetch): ' +
+            cx.sources_without_a_build_stamp.join(', ') + '. '
+          : '') +
+        'The claim ledger re-derives every number below from its source file on every run.')
+    ]));
+  }
+
+  // ---- hero grid ----------------------------------------------------------
   if (grid) {
     grid.innerHTML = '';
     const cards = [];
 
-    // Current ENSO
-    const enso = rep.current_enso || {};
-    const cpc = rep.cpc_outlook || {};
-    const highest = (cpc && cpc.highest_probability) || {};
     cards.push({
       cls: 'enso',
       title: 'Current official ENSO',
-      value: `${enso.phase_label || phaseLabel(enso.phase) || DASH} ${enso.oni_c_fmt || ''}`.trim(),
-      sub: `${enso.alert_status || ''}${enso.strength_quotes && enso.strength_quotes.length ? ' · ' + enso.strength_quotes.slice(0,1).map(q=>q.text.slice(0,120)).join('') : ''}`
+      value: `${cur.phase_label || phaseLabel(cur.phase)} ${cur.oni_c_fmt || ''}`.trim(),
+      sub: `${off.alert_status || cur.alert_status || DASH} · latest published ONI ${cur.label || DASH}` +
+        (cur.strength_label ? ` · ${cur.strength_label}` : '')
     });
 
-    // CPC tilt summary
     cards.push({
-      cls: enso.phase === 'el_nino' ? 'high' : 'medium',
-      title: 'CPC seasonal tilt for this season',
-      value: `${cpc.periods_with_a_tilt || DASH} of ${cpc.periods_covering_this_season || DASH} periods tilt`,
-      sub: highest.valid_season ? `Strongest: ${highest.valid_season} — ${highest.category_label} ${highest.probability_pct}% (baseline ${cpc.baseline_pct}%) · DJF 40% Above / JFM 50% Above / OND EC baseline`
-                   : (cpc.periods_at_climatological_baseline != null ? `${cpc.periods_at_climatological_baseline} at baseline (EC)` : '')
+      cls: tilt.periods_with_a_tilt ? 'high' : 'medium',
+      title: 'CPC precipitation tilt for Oct-Jan',
+      value: `${n(tilt.periods_with_a_tilt)} of ${n(tilt.periods_covering_this_season)} periods carry a tilt`,
+      sub: hp.period
+        ? `Strongest: ${hp.period}: ${hp.category_label} at ${n(hp.probability_pct, 1)}% (baseline ${n(tilt.baseline_pct, 1)}%), issued ${hp.issued} · ${n(tilt.periods_at_climatological_baseline)} periods at equal chances`
+        : `Baseline ${n(tilt.baseline_pct, 1)}% (equal chances); no period carries a tilt`
     });
 
-    const er = rep.expected_rain || {};
-    cards.push({
-      cls: 'high',
-      title: 'Expected rain Oct-Jan (1991-2020 observed)',
-      value: er.season_total_mean != null ? `${n(er.season_total_mean,2)} in mean · ${n(er.season_total_median,2)} median` : DASH,
-      sub: `Range ${n(er.season_total_min,2)} – ${n(er.season_total_max,2)} in · Oct ${n(er.oct_mean,2)} Nov ${n(er.nov_mean,2)} Dec ${n(er.dec_mean,2)} Jan ${n(er.jan_mean,2)}`
-    });
-
-    const rd = rep.rain_duration || {};
     cards.push({
       cls: 'high',
-      title: 'Week-long rain (repair bottleneck)',
-      value: rd.ge_7d_pct != null ? `${n(rd.ge_7d_pct,1)}% seasons ≥7 days straight` : DASH,
-      sub: `Mean longest ${n(rd.longest_mean,1)}d · max ${n(rd.longest_max,0)}d · El Niño mean ${n(rd.enso_el_nino_mean,1)}d · ${n(rd.ge_10d_pct,1)}% ≥10d`
+      title: 'Expected rain Oct 1 – Jan 31 (1991-2020 observed)',
+      value: `${n(er.season_total_mean_in, 2)} in mean · ${n(er.season_total_median_in, 2)} in median`,
+      sub: `Range ${n(er.season_total_min_in, 2)}–${n(er.season_total_max_in, 2)} in · p10–p90 ${n(er.season_total_p10_in, 2)}–${n(er.season_total_p90_in, 2)} in over ${n(er.n_seasons)} seasons · by month Oct ${n(er.oct_mean_in, 2)} / Nov ${n(er.nov_mean_in, 2)} / Dec ${n(er.dec_mean_in, 2)} / Jan ${n(er.jan_mean_in, 2)} in`
     });
 
-    const wr = rep.wind_rain || {};
+    cards.push({
+      cls: 'high',
+      title: 'Week-long rain (the repair bottleneck)',
+      value: `${n(rd.ge_7_days_pct, 1)}% of seasons had ≥7 wet days straight`,
+      sub: `Longest run: mean ${n(rd.longest_mean_days, 1)} days · max ${n(rd.longest_max_days, 1)} (n = ${n(rd.n_seasons)}) · ≥10 days in ${n(rd.ge_10_days_pct, 1)}%` +
+        (ph.n ? ` · in ${ph.phase_label || 'this'} seasons (n = ${n(ph.n)}): ${n(ph.ge_7_days_pct, 1)}%` : '')
+    });
+
     cards.push({
       cls: 'medium',
-      title: 'Wind+rain together — hourly co-occurrence',
-      value: wr.hourly_mean_days != null ? `${n(wr.hourly_mean_days,1)} days/season same hour` : DASH,
-      sub: `Median ${n(wr.hourly_median_days,0)} · max ${n(wr.hourly_max_days,0)} · ${n(wr.hourly_mean_hours,1)} simultaneous hours mean (${n(wr.hourly_max_hours,0)} max) · whole-day ${n(wr.whole_day_mean,1)}d`
+      title: 'Wind + rain in the same hour',
+      value: wr.hourly_available
+        ? `${n(wr.hourly_mean_days, 1)} days/season at ≥${n(wr.hourly_wind_threshold_kt)} kt (hour by hour)`
+        : 'Not published in this snapshot',
+      sub: wr.hourly_available
+        ? `${n(wr.hourly_mean_hours, 1)} simultaneous hours/season on average (max ${n(wr.hourly_max_hours, 1)}) at SFO ${wr.hourly_station_id || ''} · whole-day pairing gives ${n(wr.whole_day_mean_days, 1)} days`
+        : 'The NCEI hourly archive behind this figure was not available for this run, so no number is shown.'
     });
 
-    const pg = rep.peak_gusts || {};
-    const ow = rep.ocean_wind || {};
     cards.push({
       cls: 'medium',
       title: 'Peak gusts + ocean exposure',
-      value: pg.mean_mph != null ? `${n(pg.mean_mph,0)} mph mean max · ${n(pg.max_mph,0)} max` : DASH,
-      sub: `SFO ${pg.station_id} ${n(pg.distance_mi,1)}mi · buoy ${ow.station_id||'46026'} ${n(ow.distance_mi,1)}mi · gale mean ${n(ow.gale_mean,1)}d`
+      value: `${n(pg.mean_mph, 1)} mph mean season max · ${n(pg.max_mph, 1)} mph record`,
+      sub: `Measured at ${pg.station_name || 'KSFO'} ${pg.station_id || ''}, ${n(pg.distance_mi, 1)} mi from the ZIP centroid (SFO reference value, not a bound) · ` +
+        (ow.available
+          ? `buoy ${ow.station_id || DASH} ${n(ow.distance_mi, 1)} mi offshore: ${n(ow.gale_mean_days, 1)} gale days/season`
+          : 'ocean buoy record not published in this snapshot')
     });
 
     grid.append(...cards.map(c => el('div', { class: 'hero-stat ' + (c.cls || '') }, [
@@ -328,75 +396,146 @@ function renderRepairExecutive() {
     ])));
   }
 
-  // Ranked drivers compact
-  const driversHost = $('#repair-drivers-compact');
+  // ---- what could change, in NOAA's own words -----------------------------
+  if (watch) {
+    watch.innerHTML = '';
+    watch.append(el('h4', { text: 'What could change this outlook, and when — NOAA\u2019s own sentences' }));
+    (rep.next_issuances || []).forEach(item => {
+      watch.append(el('div', { class: 'watch-item' }, [
+        el('div', { class: 'fine', text: item.label || '' }),
+        el('blockquote', { class: 'off-quote', text: '\u201C' + (item.text || '') + '\u201D' }),
+        el('div', { class: 'fine' }, [
+          link(item.source_url, shortHost(item.source_url)),
+          document.createTextNode(item.source_sha256 ? '  ·  file SHA-256 ' + String(item.source_sha256).slice(0, 16) + '\u2026' : '')
+        ])
+      ]));
+    });
+    if (!(rep.next_issuances || []).length) {
+      watch.append(el('p', { class: 'fine', text: 'No scheduled-issuance sentence was located in the fetched CPC text this run.' }));
+    }
+    if ((rep.next_issuances_not_found || []).length) {
+      watch.append(el('p', { class: 'fine', text: 'Watched for but not found in the fetched text this run (published as absent rather than paraphrased): ' + rep.next_issuances_not_found.join(', ') + '.' }));
+    }
+  }
+
+  // ---- ranked drivers -----------------------------------------------------
   if (driversHost) {
     driversHost.innerHTML = '';
     const drivers = rep.cost_drivers_ranked || [];
+    if (!drivers.length) {
+      driversHost.append(el('p', { class: 'fine', text: 'No ranked driver is published in this snapshot.' }));
+    }
     driversHost.append(...drivers.map(d => {
-      const sev = (d.severity || 'medium').toLowerCase();
-      return el('div', { class: 'repair-driver-compact-item' }, [
+      const sev = String(d.severity || '').toLowerCase();
+      const src = (d.sources || [])[0] || {};
+      return el('div', { class: 'repair-driver-compact' }, [
         el('span', { class: 'rdc-rank', text: String(d.rank || '?') }),
         el('div', { class: 'rdc-body' }, [
           el('div', { class: 'rdc-title' }, [
             el('span', { text: d.driver || DASH }),
             el('span', { class: 'severity-badge ' + sev, text: sev.toUpperCase() })
           ]),
-          el('div', { class: 'rdc-why', text: d.why_it_costs || '' }),
-          el('div', { class: 'rdc-ev' }, [
-            el('strong', { text: d.headline_value || '' }),
-            document.createTextNode(d.headline_value && d.method_note ? ' · ' : ''),
-            el('span', { class: 'fine', text: d.method_note || '' })
+          el('div', { class: 'rdc-metric' }, [
+            el('strong', { text: d.metric_label ? d.metric_label + ': ' : '' }),
+            document.createTextNode(String(d.key_metric || DASH)),
+            document.createTextNode(d.evidence_count ? `  ·  ${d.evidence_count} evidence rows in the dataset` : '')
+          ]),
+          el('div', { class: 'fine', text: d.why_it_costs || '' }),
+          el('div', { class: 'fine' }, [
+            el('span', { text: (d.why_it_costs_label ? d.why_it_costs_label + ' · ' : '') }),
+            link(src.url, src.label || 'source'),
+            document.createTextNode(d.severity_rule ? ' · severity by rank: 1-3 high, 4-5 medium, 6+ low' : '')
           ])
         ])
       ]);
     }));
   }
 
-  // Current official forecast card
-  const fcBody = $('#repair-forecast-body');
+  // ---- official outlook ---------------------------------------------------
   if (fcBody) {
     fcBody.innerHTML = '';
-    const off = rep.official_outlook || {};
-    const ensoQ = (rep.current_enso && rep.current_enso.strength_quotes) || [];
     const rows = [];
-    rows.push(['ENSO state', `${rep.current_enso?.phase_label || phaseLabel(rep.current_enso?.phase)} ${rep.current_enso?.oni_c_fmt || ''} · Alert ${rep.current_enso?.alert_status || DASH}`]);
-    if (ensoQ.length) rows.push(['CPC on El Niño strength', ensoQ.map(q => `"${q.text}"`).join(' · ')]);
-    rows.push(['CPC precipitation outlooks covering Oct-Jan', `${off.periods_with_a_tilt || DASH} of ${off.periods_covering_this_season || DASH} with tilt above ${off.baseline_pct || 33}% baseline`]);
-    if (off.highest_probability) rows.push(['Strongest tilt', `${off.highest_probability.period} — ${off.highest_probability.category_label} ${off.highest_probability.probability_pct}% (issued ${off.highest_probability.issued})`]);
-    rows.push(['Baseline periods (EC)', `${off.periods_at_climatological_baseline || 0} at ${off.baseline_pct || 33}% — read as no tilt`]);
-    rows.push(['What past El Niño seasons delivered', `Mean ${n(rep.enso_conditioned?.mean_in,2)} in · ${rep.enso_conditioned?.seasons_in_phase || DASH} seasons · range ${n(rep.enso_conditioned?.min_in,2)}–${n(rep.enso_conditioned?.max_in,2)} in`]);
-    fcBody.append(el('table', { class: 'kv' }, rows.map(([k,v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
-    if (off.caveats) {
-      const cav = off.caveats;
-      const qbox = el('div', { class: 'fine' });
-      (cav.quotes || []).forEach(q => {
-        qbox.append(el('blockquote', { class: 'off-quote', text: `"${q.text}"` }));
-      });
-      if (cav.not_found && cav.not_found.length) qbox.append(el('div', { text: 'Not stated in this discussion: ' + cav.not_found.join(', ') }));
-      fcBody.append(qbox);
+    rows.push(['ENSO state (CPC product, not re-derived)', `${off.state || cur.phase_label || DASH}`]);
+    rows.push(['Alert System Status', `${off.alert_status || cur.alert_status || DASH}`]);
+    rows.push(['Latest published ONI', `${cur.label || DASH}: ${cur.oni_c_fmt || DASH} (${cur.strength_label || DASH})`]);
+    rows.push(['CPC precipitation outlooks covering this season',
+      `${n(tilt.periods_with_a_tilt)} of ${n(tilt.periods_covering_this_season)} carry a tilt above the ${n(tilt.baseline_pct, 1)}% baseline; ${n(tilt.periods_at_climatological_baseline)} at equal chances`]);
+    if (hp.period) {
+      rows.push(['Strongest tilt', `${hp.period}: ${hp.category_label} ${n(hp.probability_pct, 1)}% (issued ${hp.issued})`]);
     }
-    const srcs = rep.sources || [];
-    if (srcs.length) {
-      fcBody.append(el('p', { class: 'fine' }, [
-        el('strong', { text: 'Sources: ' }),
-        ...srcs.slice(0,6).flatMap((s,i)=>[i?document.createTextNode(' · '):null, link(s.url, s.label||s.url)].filter(Boolean))
-      ]));
+    (tilt.rows || []).forEach(r => {
+      rows.push([`  · ${r.period} (${r.variable || 'prcp'}, issued ${r.issued})`,
+        `${r.category_label || r.category_raw || DASH}: ${n(r.probability_pct, 1)}%`]);
+    });
+    if (cond.seasons_in_phase) {
+      rows.push([`What ${cond.phase_label || 'this'} seasons delivered in the record`,
+        `Mean ${n(cond.mean_in, 2)} in · median ${n(cond.median_in, 2)} · range ${n(cond.min_in, 2)}–${n(cond.max_in, 2)} in · n = ${n(cond.seasons_in_phase)} seasons`]);
     }
+    rows.push(['Days of the scoreboard inside the real NWS horizon today',
+      `${n(sb.days_with_a_real_official_forecast_now)} of ${n(sb.days_total)}` +
+      (sb.official_horizon_ends ? ` (the horizon ends ${sb.official_horizon_ends})` : '')]);
+    fcBody.append(el('table', { class: 'kv' }, rows.map(([k, v]) =>
+      el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
+
+    (rep.enso_strength_quotes || []).forEach(q => {
+      fcBody.append(el('blockquote', { class: 'off-quote', text: '\u201C' + (q.text || '') + '\u201D' }));
+    });
+    (rep.caveats || []).forEach(c => {
+      fcBody.append(el('blockquote', { class: 'off-quote', text: '\u201C' + (c.text || '') + '\u201D' }));
+    });
+    fcBody.append(el('p', { class: 'fine', text: rep.caveats_note || '' }));
+    if ((rep.caveats_not_found || []).length) {
+      fcBody.append(el('p', { class: 'fine', text: 'Caveat sentences this project watches for that are no longer in the fetched discussion (listed, never rewritten): ' + rep.caveats_not_found.join(', ') + '.' }));
+    }
+    if (cond.how_to_read) fcBody.append(el('p', { class: 'fine', text: cond.how_to_read }));
+
+    const nav = el('p', { class: 'fine' }, [el('strong', { text: 'Verify: ' })]);
+    [['ENSO Diagnostic Discussion', off.source_url],
+     ['CPC long-lead discussion', (rep.next_issuances || [])[0] ? (rep.next_issuances[0].source_url || '') : ''],
+     ['ONI table', (rep.sources || {}).oni],
+     ['CPC GIS archive', (rep.sources || {}).cpc_gis]].forEach(([label, url], i) => {
+      if (!url) return;
+      if (i) nav.append(document.createTextNode(' · '));
+      nav.append(link(url, label));
+    });
+    fcBody.append(nav);
   }
 
-  const sunsetBody = $('#repair-sunset-body');
+  // ---- why 94122 is different --------------------------------------------
   if (sunsetBody) {
     sunsetBody.innerHTML = '';
     const osp = rep.outer_sunset_profile || {};
+    const coordinate = rep.coordinates || {};
     sunsetBody.append(el('table', { class: 'kv' }, [
       ['Neighborhood', osp.neighborhood || DASH],
-      ['Centroid', osp.centroid || DASH],
+      ['Centroid', `${osp.centroid_coordinates || DASH}` +
+        (coordinate.lat !== undefined && coordinate.lat !== null ? ` (${coordinate.lat}, ${coordinate.lon})` : '')],
       ['Ocean exposure', osp.ocean_exposure || DASH],
-      ['Building stock', osp.building_stock || DASH],
-      ['Subsoil & drainage', osp.soil_drainage || DASH],
-      ['Salt-air marine', osp.marine_corrosion || DASH]
-    ].map(([k,v])=> el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
+      ['Building stock', osp.building_stock_vulnerabilities || DASH],
+      ['Subsoil & drainage', osp.soil_and_drainage || DASH],
+      ['Salt-air marine', osp.marine_corrosion || DASH],
+      ['Active storm alerts', (() => {
+        const a = (state.data.nws || {}).active_alerts;
+        const nAlerts = Array.isArray(a) ? a.length : (a && a.count) || 0;
+        return `${n(nAlerts)} active (NWS alerts API, filtered for test products)`;
+      })()]
+    ].map(([k, v]) => el('tr', {}, [el('th', { text: k }), el('td', { text: v })]))));
+  }
+
+  // ---- where to check every number ---------------------------------------
+  if (sourcesHost) {
+    sourcesHost.innerHTML = '';
+    const list = rep.sources_list && rep.sources_list.length
+      ? rep.sources_list
+      : Object.entries(rep.sources || {}).map(([key, url]) => ({ key, url, label: url }));
+    sourcesHost.append(el('p', { class: 'fine' }, [
+      el('strong', { text: 'Every figure above is checked against these official files: ' }),
+      document.createTextNode('URL, HTTP status, byte count and SHA-256 for each fetch are in the Verification section below.')
+    ]));
+    sourcesHost.append(el('p', { class: 'fine' }, list.flatMap((s, i) => [
+      i ? document.createTextNode(' · ') : null,
+      link(s.url, s.label || s.url)
+    ]).filter(Boolean)));
   }
 }
 
