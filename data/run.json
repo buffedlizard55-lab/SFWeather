@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-21T23:44:59Z",
+  "generated_utc": "2026-09-22T01:38:53Z",
   "pipeline_version": "1.0",
   "target": {
     "zip": "94122",
@@ -52,7 +52,7 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-21T23:43:08Z",
+        "retrieved_utc": "2026-09-22T01:33:54Z",
         "sha256": "407ce6bb637e8c512b1ad551ad96a709d1be46102e3ab5ed9d2dc8120cb517c0",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
@@ -67,7 +67,7 @@
     2020
   ],
   "record_coverage": {
-    "as_of": "2026-09-21",
+    "as_of": "2026-09-22",
     "normals_period": [
       1991,
       2020
@@ -77,7 +77,7 @@
         "area": "rain_temp",
         "label": "GHCN-Daily USW00023272 (rain, daily high/low)",
         "last_date": "2026-09-18",
-        "age_days": 3,
+        "age_days": 4,
         "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
         "note": "Daily summaries, so this is the most current of the three archives."
       },
@@ -85,7 +85,7 @@
         "area": "wind",
         "label": "GSOD 72494023234 (daily wind and gusts, 00-24Z)",
         "last_date": "2025-08-27",
-        "age_days": 390,
+        "age_days": 391,
         "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
         "note": "RETIRED 2025-08-29 (NCEI); successor is SSODv2. Annual files; GSOD cannot be more current than the ISD hourly file it is derived from."
       },
@@ -93,7 +93,7 @@
         "area": "isd_hourly",
         "label": "ISD hourly 72494023234 (hour-by-hour wind and precipitation)",
         "last_date": "2025-08-27",
-        "age_days": 390,
+        "age_days": 391,
         "url": "https://www.ncei.noaa.gov/data/global-hourly/access/",
         "note": "RETIRED 2025-08-29 (NCEI); successor is GHCNh. Annual files of hourly observations."
       }
