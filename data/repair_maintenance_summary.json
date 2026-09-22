@@ -1,6 +1,6 @@
 {
   "schema_version": "3",
-  "generated_utc": "2026-09-22T01:38:53Z",
+  "generated_utc": "2026-09-22T01:54:12Z",
   "built_from": {
     "datasets": [
       "landlord.json",
@@ -14,33 +14,33 @@
   },
   "sources_read": {
     "landlord.json": {
-      "build_stamp": "2026-09-22T01:38:53Z",
+      "build_stamp": "2026-09-22T01:54:12Z",
       "build_stamp_kind": "pipeline build stamp",
-      "content_as_of_utc": "2026-09-22T01:38:07Z",
+      "content_as_of_utc": "2026-09-22T01:53:32Z",
       "content_as_of_kind": "newest per-fetch retrieved_utc recorded in this file"
     },
     "calendar.json": {
-      "build_stamp": "2026-09-22T01:38:53Z",
+      "build_stamp": "2026-09-22T01:54:12Z",
       "build_stamp_kind": "pipeline build stamp",
-      "content_as_of_utc": "2026-09-22T01:38:19Z",
+      "content_as_of_utc": "2026-09-22T01:53:43Z",
       "content_as_of_kind": "newest per-fetch retrieved_utc recorded in this file"
     },
     "run.json": {
-      "build_stamp": "2026-09-22T01:38:53Z",
+      "build_stamp": "2026-09-22T01:54:12Z",
       "build_stamp_kind": "pipeline build stamp",
-      "content_as_of_utc": "2026-09-22T01:33:54Z",
+      "content_as_of_utc": "2026-09-22T01:49:26Z",
       "content_as_of_kind": "newest per-fetch retrieved_utc recorded in this file"
     },
     "cpc.json": {
       "build_stamp": null,
       "build_stamp_kind": "not carried by this file",
-      "content_as_of_utc": "2026-09-22T01:36:12Z",
+      "content_as_of_utc": "2026-09-22T01:51:43Z",
       "content_as_of_kind": "newest per-fetch retrieved_utc recorded in this file"
     },
     "enso.json": {
       "build_stamp": null,
       "build_stamp_kind": "not carried by this file",
-      "content_as_of_utc": "2026-09-22T01:36:36Z",
+      "content_as_of_utc": "2026-09-22T01:52:08Z",
       "content_as_of_kind": "newest per-fetch retrieved_utc recorded in this file"
     },
     "nws.json": {
@@ -51,20 +51,20 @@
     }
   },
   "currency": {
-    "artifact_generated_utc": "2026-09-22T01:38:53Z",
-    "oldest_source_utc": "2026-09-22T01:38:53Z",
-    "newest_source_utc": "2026-09-22T01:38:53Z",
+    "artifact_generated_utc": "2026-09-22T01:54:12Z",
+    "oldest_source_utc": "2026-09-22T01:54:12Z",
+    "newest_source_utc": "2026-09-22T01:54:12Z",
     "sources_disagreeing": [],
     "sources_without_a_build_stamp": [
       "cpc.json",
       "enso.json",
       "nws.json"
     ],
-    "newest_fetched_content_utc": "2026-09-22T01:38:19Z",
+    "newest_fetched_content_utc": "2026-09-22T01:53:43Z",
     "content_newer_than_the_artifact": [],
     "sources_agree": true,
     "is_current": true,
-    "note": "Every dataset that carries a build stamp carries the same one (2026-09-22T01:38:53Z); the newest content fetched into this tier's inputs is 2026-09-22T01:38:19Z. 3 input(s) carry no build stamp of their own (cpc.json, enso.json, nws.json) and record the retrieval time of each fetch instead, so they are listed rather than assumed. The claim ledger re-derives this and blocks publication when the summary is older than the data it summarises."
+    "note": "Every dataset that carries a build stamp carries the same one (2026-09-22T01:54:12Z); the newest content fetched into this tier's inputs is 2026-09-22T01:53:43Z. 3 input(s) carry no build stamp of their own (cpc.json, enso.json, nws.json) and record the retrieval time of each fetch instead, so they are listed rather than assumed. The claim ledger re-derives this and blocks publication when the summary is older than the data it summarises."
   },
   "location": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset) - 37.7605N, -122.4839W",
   "season_window": "October 1, 2026 - January 31, 2027 (123 days)",

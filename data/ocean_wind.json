@@ -2,7 +2,7 @@
   "area": "ocean_wind",
   "tier": "ocean-wind",
   "title": "Ocean-side wind record — NOAA NDBC station 46026",
-  "generated_utc": "2026-09-22T01:44:58Z",
+  "generated_utc": "2026-09-22T02:00:17Z",
   "available": true,
   "station": {
     "id": "46026",
@@ -1434,9 +1434,9 @@
     2025
   ],
   "latest_observation": {
-    "observation_utc": "2026-09-22T01:10:00Z",
-    "observed_label": "2026-09-22 01:10 UTC",
-    "wind_dir_deg": 270,
+    "observation_utc": "2026-09-22T01:20:00Z",
+    "observed_label": "2026-09-22 01:20 UTC",
+    "wind_dir_deg": 280,
     "wind_file_value": 3.0,
     "gust_file_value": 4.0,
     "file_wind_units": "m/s",

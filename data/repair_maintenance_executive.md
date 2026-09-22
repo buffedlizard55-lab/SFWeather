@@ -1,6 +1,6 @@
 # Repair & Maintenance Cost Impact — Executive Summary, ZIP 94122
 
-**Location:** San Francisco, CA 94122 (Inner Sunset / Outer Sunset) - 37.7605N, -122.4839W · **Season:** October 1, 2026 - January 31, 2027 (123 days) · **Built from datasets stamped:** 2026-09-22T01:38:53Z
+**Location:** San Francisco, CA 94122 (Inner Sunset / Outer Sunset) - 37.7605N, -122.4839W · **Season:** October 1, 2026 - January 31, 2027 (123 days) · **Built from datasets stamped:** 2026-09-22T01:54:12Z
 
 > Independent project. Not affiliated with NOAA / NWS / NCEI / CPC. For life-safety decisions use weather.gov and weather.gov/mtr directly. No daily forecast exists beyond about 7 days; the 1991-2020 figures here are an observed record, not a forecast.
 
@@ -67,9 +67,9 @@ On the station record, the season averages 3.2 days a season at ≥ 1.00 in of r
 
 ## Where the numbers come from, and how current they are
 
-- **Datasets read:** landlord.json, calendar.json, run.json, cpc.json, enso.json, nws.json, with the newest content fetched into them at 2026-09-22T01:38:19Z; build-stamped inputs: landlord.json 2026-09-22T01:38:53Z; calendar.json 2026-09-22T01:38:53Z; run.json 2026-09-22T01:38:53Z; no build stamp of their own (per-fetch retrieval times are recorded in the file): cpc.json, enso.json, nws.json.
+- **Datasets read:** landlord.json, calendar.json, run.json, cpc.json, enso.json, nws.json, with the newest content fetched into them at 2026-09-22T01:53:43Z; build-stamped inputs: landlord.json 2026-09-22T01:54:12Z; calendar.json 2026-09-22T01:54:12Z; run.json 2026-09-22T01:54:12Z; no build stamp of their own (per-fetch retrieval times are recorded in the file): cpc.json, enso.json, nws.json.
 - **Scoreboard:** 123 days, 123 of them carrying all seven requested fields (high, low, humidity, wind, gusts, rain chance, rain amount). 0 day(s) of this window lie inside the official NWS forecast horizon today (the horizon currently ends 2026-09-28). Every other day shows the 1991-2020 observed record for that calendar date.
-- **Currency rule:** Every dataset that carries a build stamp carries the same one (2026-09-22T01:38:53Z); the newest content fetched into this tier's inputs is 2026-09-22T01:38:19Z. 3 input(s) carry no build stamp of their own (cpc.json, enso.json, nws.json) and record the retrieval time of each fetch instead, so they are listed rather than assumed. The claim ledger re-derives this and blocks publication when the summary is older than the data it summarises. Oldest source stamp: 2026-09-22T01:38:53Z; newest: 2026-09-22T01:38:53Z.
+- **Currency rule:** Every dataset that carries a build stamp carries the same one (2026-09-22T01:54:12Z); the newest content fetched into this tier's inputs is 2026-09-22T01:53:43Z. 3 input(s) carry no build stamp of their own (cpc.json, enso.json, nws.json) and record the retrieval time of each fetch instead, so they are listed rather than assumed. The claim ledger re-derives this and blocks publication when the summary is older than the data it summarises. Oldest source stamp: 2026-09-22T01:54:12Z; newest: 2026-09-22T01:54:12Z.
 
 ## What could change this outlook, and when (NOAA's own sentences)
 
@@ -265,7 +265,7 @@ As of 2026-09-22 (published by the run, not typed here):
 - **U.S. Census Bureau Gazetteer (ZIP centroid)** — https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip
 
 - **Built from:** landlord.json, calendar.json, run.json, cpc.json, enso.json, nws.json.
-  - Input stamps: landlord.json 2026-09-22T01:38:53Z · calendar.json 2026-09-22T01:38:53Z · run.json 2026-09-22T01:38:53Z · cpc.json no build stamp (per-fetch retrieval times) · enso.json no build stamp (per-fetch retrieval times) · nws.json no build stamp (per-fetch retrieval times)
+  - Input stamps: landlord.json 2026-09-22T01:54:12Z · calendar.json 2026-09-22T01:54:12Z · run.json 2026-09-22T01:54:12Z · cpc.json no build stamp (per-fetch retrieval times) · enso.json no build stamp (per-fetch retrieval times) · nws.json no build stamp (per-fetch retrieval times)
 - **Claim ledger:** `data/verify_report.txt` and `data/verify.json` re-derive every number above from its source file on every pipeline run.
 
 _Every number above is re-derived from its source dataset and checked line by line before this page is published; every quoted sentence is re-checked as a verbatim substring of the fetched file. Sources are official NOAA / NWS / NCEI / CPC / U.S. Census hosts only - no commercial provider is used, because a number that cannot be checked against a public file is not published here._
