@@ -837,6 +837,58 @@ def _rp5(repo):
                       "(rep.next_issuances || []).slice(0, 1).forEach(item => {")
 
 
+# ==========================================================================
+# Cases for render guard 37: the near-term block (the only official
+# day-by-day forecast on the page).  The block must render every verified
+# window day, the published summary sentence and rule, and the official
+# source links - and an unavailable block must say so, never render blank.
+# ==========================================================================
+
+@case("the repair near-term table rendering only its first verified day",
+      expect_msg="the repair near-term table rendered")
+def _rp7(repo):
+    return patch_text(repo, "assets/js/app.js",
+                      "const rows = (ntf.days || []).map(d => el('tr', {}, [",
+                      "const rows = (ntf.days || []).slice(0, 1).map(d => el('tr', {}, [")
+
+
+@case("the repair near-term block dropping its published summary sentence",
+      expect_msg="omits the published window summary sentence")
+def _rp8(repo):
+    return patch_text(repo, "assets/js/app.js",
+                      "ntBody.append(el('p', { class: 'fine', text: ntf.summary_sentence || '' }));",
+                      "ntBody.append(el('p', { class: 'fine', text: '' }));")
+
+
+@case("the repair near-term card removed from the page",
+      expect_msg="repair executive section is missing")
+def _rp9(repo):
+    return patch_text(repo, "index.html",
+                      '<div id="repair-near-term-body"></div>', '')
+
+
+@case("a near-term window source link pointed at a host that is not official",
+      expect_msg="host that is not an official source")
+def _rp10(repo):
+    patch_repair(repo, lambda r: r["near_term_forecast"]["sources"][0].update(
+        {"url": "https://example.com/hourly"}))
+    return repo
+
+
+@case("the near-term block unavailable and silent about it",
+      expect_msg="does not say it is unpublished")
+def _rp11(repo):
+    patch_repair(repo, lambda r: r["near_term_forecast"].update(
+        {"available": False,
+         "unavailable_note": "The NWS window is not published in this run."}))
+    return patch_text(repo, "assets/js/app.js",
+                      "      ntBody.append(el('p', { class: 'fine', text:\n"
+                      "        (ntf.unavailable_note ||\n"
+                      "         'The near-term forecast is not published in this snapshot.') +\n"
+                      "        (ntf.season_sentence ? ' ' + ntf.season_sentence : '') }));",
+                      "      ntBody.append(el('p', { class: 'fine', text: '' }));")
+
+
 def main():
     if not pathlib.Path(NODE_PATH).exists():
         print("node_modules not installed - run: npm install")

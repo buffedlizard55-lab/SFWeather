@@ -158,6 +158,21 @@ jobs:
           echo "CLAIMS_EXIT=$code" >> data/run_diagnostics.txt
           exit $code
 
+      - name: Assert the generator output contract (staging guard)
+        # Defect 84 (21 Sep 2026) was a staging bug the ledger could only catch
+        # after the fact.  pipeline/generator_outputs.py declares, per step,
+        # every file the pipeline publishes; this fails the run if a generator
+        # stops writing a registered output or a new, undeclared file appears
+        # in the output area.  The commit step below re-asserts it after the
+        # git add (--after-stage), so a path the staging list skips is refused
+        # before the commit happens.
+        run: |
+          set +e
+          python3 -u pipeline/generator_outputs.py 2>&1 | tee -a pipeline_run.log
+          code=${PIPESTATUS[0]}
+          echo "GENERATOR_OUTPUTS_EXIT=$code" >> data/run_diagnostics.txt
+          exit $code
+
       - name: Fail loudly if the pipeline lost a critical source
         run: |
           python3 - <<'PY'
@@ -221,7 +236,8 @@ jobs:
                   "OCEAN_WIND_EXIT=0",
                   "LANDLORD_EXIT=0", "EXEC_SUMMARY_EXIT=0", "DIGEST_EXIT=0",
                   "MODEL_GUIDANCE_EXIT=0",
-                  "FEED_EXIT=0", "VERIFY_EXIT=0", "CLAIMS_EXIT=0"]
+                  "FEED_EXIT=0", "VERIFY_EXIT=0", "CLAIMS_EXIT=0",
+                  "GENERATOR_OUTPUTS_EXIT=0"]
           missing = [n for n in need if n not in lines]
           print("yes" if not missing else "no:" + ",".join(missing))
           PY
@@ -244,6 +260,19 @@ jobs:
             echo "gate blocked publish: VERDICT=$VERDICT STEPS_OK=$STEPS_OK"
           fi
           git add -A pipeline_run.log || echo "no run log to add"
+          if [ "$VERDICT" = "pass" ] && [ "$STEPS_OK" = "yes" ]; then
+            # Staging assertion (closes the defect-84 hole before the commit,
+            # not after it): the registry in pipeline/generator_outputs.py is
+            # the single list of every file the pipeline steps publish -
+            # including the repair tier's docs copy that defect 84's staging
+            # list skipped.  If anything a generator produced is not staged,
+            # the step fails and nothing is committed.
+            python3 pipeline/generator_outputs.py --after-stage
+            if [ $? -ne 0 ]; then
+              echo "STAGING ASSERTION FAILED - a generator output is not staged; refusing to commit"
+              exit 1
+            fi
+          fi
           git status --short | head -40
           if git diff --cached --quiet; then
             echo "NOTHING_TO_COMMIT"

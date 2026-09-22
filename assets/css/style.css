@@ -284,6 +284,10 @@ thead th {
 tbody tr:hover { background: #fafcfe; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .table-scroll { overflow-x: auto; }
+/* The repair executive's near-term NWS window table: compact, one row per day. */
+table.ntf-table th { text-align: left; white-space: nowrap; }
+table.ntf-table td { white-space: nowrap; }
+table.ntf-table td:first-child { white-space: normal; font-weight: 600; }
 
 table.kv { font-size: 14px; }
 table.kv th { width: 40%; background: transparent; text-transform: none; letter-spacing: 0; color: var(--ink-soft); font-weight: 500; border-bottom: 1px solid var(--line-soft); position: static; }

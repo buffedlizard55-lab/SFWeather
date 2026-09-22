@@ -275,6 +275,7 @@ function renderRepairExecutive() {
   const watch = $('#repair-watch');
   const driversHost = $('#repair-drivers-compact');
   const fcBody = $('#repair-forecast-body');
+  const ntBody = $('#repair-near-term-body');
   const sunsetBody = $('#repair-sunset-body');
   const sourcesHost = $('#repair-sources');
 
@@ -286,7 +287,7 @@ function renderRepairExecutive() {
       'this snapshot, so nothing is shown here. No value is substituted for a ' +
       'missing dataset - the printable summary, the datasets and the claim ' +
       'ledger are unaffected.';
-    [headline, currency, watch, driversHost, fcBody, sunsetBody, sourcesHost]
+    [headline, currency, watch, driversHost, fcBody, ntBody, sunsetBody, sourcesHost]
       .forEach(h => { if (h) h.textContent = msg; });
     if (grid) grid.innerHTML = '';
     return;
@@ -499,6 +500,58 @@ function renderRepairExecutive() {
       nav.append(link(url, label));
     });
     fcBody.append(nav);
+  }
+
+  // ---- the next few days: the only official day-by-day forecast -----------
+  // Every per-day value and its basis is the verified NWS window copied from
+  // the repair payload; nothing beyond the official horizon is shown here.
+  // A missing window says so instead of rendering blank (the block's ledger
+  // check and render guard both enforce that).
+  if (ntBody) {
+    ntBody.innerHTML = '';
+    const ntf = rep.near_term_forecast || {};
+    if (ntf.available) {
+      const head = ['Day', 'High (F)', 'Low (F)', 'Humidity (%)', 'Rain chance (%)',
+                    'Rain (in)', 'Wind (mph)', 'Gust (mph)', 'Grid hours']
+        .map(h => el('th', { text: h }));
+      const rows = (ntf.days || []).map(d => el('tr', {}, [
+        el('td', { text: (d.weekday ? d.weekday + ' ' : '') + (d.date || DASH) +
+          (d.hours_covered != null && Number(d.hours_covered) < 24
+             ? ` (partial, ${d.hours_covered} h)` : '') }),
+        el('td', { text: fmtOrDash(d.high_f) }),
+        el('td', { text: fmtOrDash(d.low_f) }),
+        el('td', { text: fmtOrDash(d.humidity_pct) }),
+        el('td', { text: fmtOrDash(d.rain_chance_pct) }),
+        el('td', { text: fmtOrDash(d.rain_amount_in) }),
+        el('td', { text: fmtOrDash(d.wind_max_mph) }),
+        el('td', { text: fmtOrDash(d.gust_max_mph) }),
+        el('td', { text: fmtOrDash(d.hours_covered) })
+      ]));
+      ntBody.append(el('div', { class: 'table-scroll' }, [
+        el('table', { class: 'ntf-table' }, [
+          el('thead', {}, [el('tr', {}, head)]),
+          el('tbody', {}, rows)
+        ])
+      ]));
+      ntBody.append(el('p', { class: 'fine', text: ntf.summary_sentence || '' }));
+      ntBody.append(el('p', { class: 'fine', text: ntf.season_sentence || '' }));
+      ntBody.append(el('p', { class: 'fine', text: ntf.rules_text || '' }));
+      ntBody.append(el('p', { class: 'fine', text: ntf.partial_day_note || '' }));
+      const nav2 = el('p', { class: 'fine' }, [el('strong', { text: 'Verify: ' })]);
+      let saw = false;
+      (ntf.sources || []).forEach(s => {
+        if (!s.url) return;
+        if (saw) nav2.append(document.createTextNode(' · '));
+        nav2.append(link(s.url, s.label || s.url));
+        saw = true;
+      });
+      ntBody.append(nav2);
+    } else {
+      ntBody.append(el('p', { class: 'fine', text:
+        (ntf.unavailable_note ||
+         'The near-term forecast is not published in this snapshot.') +
+        (ntf.season_sentence ? ' ' + ntf.season_sentence : '') }));
+    }
   }
 
   // ---- why 94122 is different --------------------------------------------
