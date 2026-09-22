@@ -650,5 +650,59 @@
         "sentences": []
       }
     ]
+  },
+  {
+    "issuance_time": "2026-09-22T11:50:00+00:00",
+    "product_id": "6346db44-bca9-4ee3-92a7-802c03afb272",
+    "source_url": "https://api.weather.gov/products/6346db44-bca9-4ee3-92a7-802c03afb272",
+    "text_sha256": "5f5ae2629ff7c31c131d81e70a21c687305f18dfb373e0ffed8b6088bc430cab",
+    "text_chars": 6363,
+    "sentences_scanned": 22,
+    "categories": [
+      {
+        "id": "atmospheric_river",
+        "label": "Atmospheric river / subtropical moisture plume",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "prolonged_rain",
+        "label": "Prolonged / multi-day rain",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "heavy_rain",
+        "label": "Heavy rain / flooding",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "strong_wind",
+        "label": "Strong wind / wind hazard",
+        "sentence_count": 1,
+        "sentences": [
+          {
+            "sentence": "A breezy onshore wind will develop in the afternoon and evening hours, with the strongest gusts of 20 to 30 miles per hour along the coast, through favored gaps and passes, and within the northern Salinas Valley.",
+            "section": "SHORT TERM",
+            "matched_patterns": [
+              "gusts? (?:of|to|up to|near|around) \\d"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "quoted_rainfall_amount",
+        "label": "An explicit rainfall amount in NWS's own text",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "wind_and_rain_together",
+        "label": "Wind and rain in the same sentence",
+        "sentence_count": 0,
+        "sentences": []
+      }
+    ]
   }
 ]

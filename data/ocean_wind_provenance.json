@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-22T02:00:17Z",
+  "generated_utc": "2026-09-22T12:47:32Z",
   "area": "ocean_wind",
   "note": "NDBC station 46026 ocean-side wind record: station history, station table, station page, the annual standard meteorological files, the realtime file and NDBC's units page",
   "entries": [
@@ -10,8 +10,8 @@
       "bytes": 364209,
       "sha256": "8c6a39736dfc7efd1be0c565a90b5d08df327b92af277df921027d189ab12108",
       "content_type": "text/plain; charset=ISO-8859-1",
-      "retrieved_utc": "2026-09-22T02:00:09Z",
-      "elapsed_s": 0.212,
+      "retrieved_utc": "2026-09-22T12:47:20Z",
+      "elapsed_s": 0.274,
       "note": "NDBC machine-readable station table (position, owner, hull, name)"
     },
     {
@@ -21,8 +21,8 @@
       "bytes": 40752,
       "sha256": "8b9f348929efbbd9d699d1151d8ef8668d4d2d5b3baea5544b1ec02019e23f26",
       "content_type": "text/html; charset=UTF-8",
-      "retrieved_utc": "2026-09-22T02:00:10Z",
-      "elapsed_s": 0.731,
+      "retrieved_utc": "2026-09-22T12:47:22Z",
+      "elapsed_s": 1.896,
       "note": "NDBC station history page: the annual files listed for station 46026"
     },
     {
@@ -32,8 +32,8 @@
       "bytes": 126181,
       "sha256": "82914e6e4b4bf8b6850541165648816748e035675975398dd370c0bea8af477d",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:10Z",
-      "elapsed_s": 0.07,
+      "retrieved_utc": "2026-09-22T12:47:23Z",
+      "elapsed_s": 0.242,
       "note": "NDBC historical standard meteorological file, station 46026, 1991"
     },
     {
@@ -43,8 +43,8 @@
       "bytes": 104192,
       "sha256": "99b9160bf9a0c6447afc5fa7ca6c67a93005554c623b084072a076e872023512",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:10Z",
-      "elapsed_s": 0.074,
+      "retrieved_utc": "2026-09-22T12:47:23Z",
+      "elapsed_s": 0.256,
       "note": "NDBC historical standard meteorological file, station 46026, 1992"
     },
     {
@@ -54,8 +54,8 @@
       "bytes": 130882,
       "sha256": "999d08b173dc44244b44f4ba9a6be28950a671195c3257a2fe58d29e9e77a54b",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:10Z",
-      "elapsed_s": 0.071,
+      "retrieved_utc": "2026-09-22T12:47:23Z",
+      "elapsed_s": 0.346,
       "note": "NDBC historical standard meteorological file, station 46026, 1993"
     },
     {
@@ -65,8 +65,8 @@
       "bytes": 120291,
       "sha256": "e34830279d01cda205f457efec93fe70b21109b450630b719115a6ce66f2b4aa",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:11Z",
-      "elapsed_s": 0.067,
+      "retrieved_utc": "2026-09-22T12:47:24Z",
+      "elapsed_s": 0.317,
       "note": "NDBC historical standard meteorological file, station 46026, 1994"
     },
     {
@@ -76,8 +76,8 @@
       "bytes": 120749,
       "sha256": "77f5e8f3ceb60440ba440292a7a231776d46df83feaf295008e51dab6dd532c7",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:11Z",
-      "elapsed_s": 0.071,
+      "retrieved_utc": "2026-09-22T12:47:24Z",
+      "elapsed_s": 0.266,
       "note": "NDBC historical standard meteorological file, station 46026, 1995"
     },
     {
@@ -87,8 +87,8 @@
       "bytes": 110079,
       "sha256": "c0998bae06464ace401f36f29d0775838c684f91c7442066b53618751084951d",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:11Z",
-      "elapsed_s": 0.069,
+      "retrieved_utc": "2026-09-22T12:47:24Z",
+      "elapsed_s": 0.278,
       "note": "NDBC historical standard meteorological file, station 46026, 1996"
     },
     {
@@ -98,8 +98,8 @@
       "bytes": 143721,
       "sha256": "bfbf5046cc2efbc0b058cae44c3f95fd0b0308d212003066284f20904e99c372",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:11Z",
-      "elapsed_s": 0.072,
+      "retrieved_utc": "2026-09-22T12:47:25Z",
+      "elapsed_s": 0.334,
       "note": "NDBC historical standard meteorological file, station 46026, 1997"
     },
     {
@@ -109,8 +109,8 @@
       "bytes": 75831,
       "sha256": "5555c634a147392ab22f85935c97e5c8c690b8e695a16ee085bc008df8e5d9a1",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:11Z",
-      "elapsed_s": 0.066,
+      "retrieved_utc": "2026-09-22T12:47:25Z",
+      "elapsed_s": 0.241,
       "note": "NDBC historical standard meteorological file, station 46026, 1998"
     },
     {
@@ -120,8 +120,8 @@
       "bytes": 121610,
       "sha256": "6163e7d5b57b167c93bd77bb8e723e1f216526bc4738b37f3355cbac4868eb60",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:11Z",
-      "elapsed_s": 0.072,
+      "retrieved_utc": "2026-09-22T12:47:25Z",
+      "elapsed_s": 0.306,
       "note": "NDBC historical standard meteorological file, station 46026, 1999"
     },
     {
@@ -131,8 +131,8 @@
       "bytes": 148985,
       "sha256": "77dd20bb928597b3765d62039058bd5f6339db84ab2a54e52e496659992ed53b",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:12Z",
-      "elapsed_s": 0.067,
+      "retrieved_utc": "2026-09-22T12:47:26Z",
+      "elapsed_s": 0.263,
       "note": "NDBC historical standard meteorological file, station 46026, 2000"
     },
     {
@@ -142,8 +142,8 @@
       "bytes": 148573,
       "sha256": "7410b10a46c4f6313be8a08cdc1fc821436f4f457205d3cce07236a1c4df33df",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:12Z",
-      "elapsed_s": 0.078,
+      "retrieved_utc": "2026-09-22T12:47:26Z",
+      "elapsed_s": 0.262,
       "note": "NDBC historical standard meteorological file, station 46026, 2001"
     },
     {
@@ -153,8 +153,8 @@
       "bytes": 134996,
       "sha256": "b804897a2d5a078f870db7313a35eaa6b6d350fc1f6901e993dba347c46be586",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:12Z",
-      "elapsed_s": 0.067,
+      "retrieved_utc": "2026-09-22T12:47:26Z",
+      "elapsed_s": 0.252,
       "note": "NDBC historical standard meteorological file, station 46026, 2002"
     },
     {
@@ -164,8 +164,8 @@
       "bytes": 148410,
       "sha256": "710d42a6b40ff47f0c51cf272b4e09c2977aa7aa780837d3df17c329ba1b127b",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:12Z",
-      "elapsed_s": 0.071,
+      "retrieved_utc": "2026-09-22T12:47:27Z",
+      "elapsed_s": 0.295,
       "note": "NDBC historical standard meteorological file, station 46026, 2003"
     },
     {
@@ -175,8 +175,8 @@
       "bytes": 150795,
       "sha256": "e46416c0ca24c25e3bd3580df1acb45efd13613995bfd0a17eab84f40a4a1bc3",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:12Z",
-      "elapsed_s": 0.068,
+      "retrieved_utc": "2026-09-22T12:47:27Z",
+      "elapsed_s": 0.235,
       "note": "NDBC historical standard meteorological file, station 46026, 2004"
     },
     {
@@ -186,8 +186,8 @@
       "bytes": 150321,
       "sha256": "97af469d79e22fcf32789b8d9610a8ba7365f0c066e6226b4dd1eee48d81f2d2",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:12Z",
-      "elapsed_s": 0.069,
+      "retrieved_utc": "2026-09-22T12:47:27Z",
+      "elapsed_s": 0.255,
       "note": "NDBC historical standard meteorological file, station 46026, 2005"
     },
     {
@@ -197,8 +197,8 @@
       "bytes": 151694,
       "sha256": "8fc76b535a55a9ec8c3c6b03a2bd39d7d7228ebca54b805971af1ab45b126ea9",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:13Z",
-      "elapsed_s": 0.077,
+      "retrieved_utc": "2026-09-22T12:47:28Z",
+      "elapsed_s": 0.329,
       "note": "NDBC historical standard meteorological file, station 46026, 2006"
     },
     {
@@ -208,8 +208,8 @@
       "bytes": 160115,
       "sha256": "6ba68aaefbabad490272fd51511e6012123edf3aae40cfb397140ef4ec00e550",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:13Z",
-      "elapsed_s": 0.078,
+      "retrieved_utc": "2026-09-22T12:47:28Z",
+      "elapsed_s": 0.109,
       "note": "NDBC historical standard meteorological file, station 46026, 2007"
     },
     {
@@ -219,8 +219,8 @@
       "bytes": 158850,
       "sha256": "6c7d40249a15074e6018d7685f5bcd59a36a66ea2c4a9777e6ab2e4702617989",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:13Z",
-      "elapsed_s": 0.072,
+      "retrieved_utc": "2026-09-22T12:47:28Z",
+      "elapsed_s": 0.104,
       "note": "NDBC historical standard meteorological file, station 46026, 2008"
     },
     {
@@ -230,8 +230,8 @@
       "bytes": 151687,
       "sha256": "3c9623c135ffccf1bdc62df2b88c9a36d943683073cc4839d870d5c3bab59736",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:13Z",
-      "elapsed_s": 0.068,
+      "retrieved_utc": "2026-09-22T12:47:28Z",
+      "elapsed_s": 0.094,
       "note": "NDBC historical standard meteorological file, station 46026, 2009"
     },
     {
@@ -241,8 +241,8 @@
       "bytes": 142673,
       "sha256": "0191529dab991933f4a7a93f3e73ce19d100ca1c1a2a2e53df13256db9cfcbf9",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:13Z",
-      "elapsed_s": 0.065,
+      "retrieved_utc": "2026-09-22T12:47:28Z",
+      "elapsed_s": 0.098,
       "note": "NDBC historical standard meteorological file, station 46026, 2010"
     },
     {
@@ -252,8 +252,8 @@
       "bytes": 95166,
       "sha256": "fba622e2a496eb0fd69b0c0ce8b30ebd1de6abc1a08213948eb2667fcc7f1654",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:13Z",
-      "elapsed_s": 0.068,
+      "retrieved_utc": "2026-09-22T12:47:29Z",
+      "elapsed_s": 0.091,
       "note": "NDBC historical standard meteorological file, station 46026, 2011"
     },
     {
@@ -263,8 +263,8 @@
       "bytes": 152944,
       "sha256": "dd14442b76f8fd11ac66c2045f7bd34dff0e01564138fffce58e7ebe065490ef",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:13Z",
-      "elapsed_s": 0.07,
+      "retrieved_utc": "2026-09-22T12:47:29Z",
+      "elapsed_s": 0.086,
       "note": "NDBC historical standard meteorological file, station 46026, 2012"
     },
     {
@@ -274,8 +274,8 @@
       "bytes": 150849,
       "sha256": "767897ebaa36390aed64a952267b5babd0f482cdfcd1801fc783ed800544aec3",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:13Z",
-      "elapsed_s": 0.071,
+      "retrieved_utc": "2026-09-22T12:47:29Z",
+      "elapsed_s": 0.097,
       "note": "NDBC historical standard meteorological file, station 46026, 2013"
     },
     {
@@ -285,8 +285,8 @@
       "bytes": 137670,
       "sha256": "b54ad7e9073b109b1e460b2f10d371a270066ea801bb0d41ff21a621d99b1132",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:14Z",
-      "elapsed_s": 0.075,
+      "retrieved_utc": "2026-09-22T12:47:29Z",
+      "elapsed_s": 0.088,
       "note": "NDBC historical standard meteorological file, station 46026, 2014"
     },
     {
@@ -296,8 +296,8 @@
       "bytes": 162589,
       "sha256": "18fbf5166aec3a3349b977be7d87044deb7f1aa017251ed593e9ff38270ed394",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:14Z",
-      "elapsed_s": 0.07,
+      "retrieved_utc": "2026-09-22T12:47:29Z",
+      "elapsed_s": 0.098,
       "note": "NDBC historical standard meteorological file, station 46026, 2015"
     },
     {
@@ -307,8 +307,8 @@
       "bytes": 161025,
       "sha256": "ceaba9e6aef3bdaf756180c398c673f892c7c00cfaea830ac90c408956f2f88c",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:14Z",
-      "elapsed_s": 0.073,
+      "retrieved_utc": "2026-09-22T12:47:29Z",
+      "elapsed_s": 0.099,
       "note": "NDBC historical standard meteorological file, station 46026, 2016"
     },
     {
@@ -318,8 +318,8 @@
       "bytes": 163781,
       "sha256": "b2f225eefd28ee0426001a73fa593c85bf9b0062d14e55a15e2c13149e812659",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:14Z",
-      "elapsed_s": 0.074,
+      "retrieved_utc": "2026-09-22T12:47:29Z",
+      "elapsed_s": 0.084,
       "note": "NDBC historical standard meteorological file, station 46026, 2017"
     },
     {
@@ -329,8 +329,8 @@
       "bytes": 456074,
       "sha256": "5026e7b43b3ef901988f08260a52794bf0f53fc38ce317ace38b0b057660c906",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:14Z",
-      "elapsed_s": 0.09,
+      "retrieved_utc": "2026-09-22T12:47:30Z",
+      "elapsed_s": 0.123,
       "note": "NDBC historical standard meteorological file, station 46026, 2018"
     },
     {
@@ -340,8 +340,8 @@
       "bytes": 623318,
       "sha256": "8c0ba5644f8d5f4a3e7861dabb16ce66bb8f0e7cca3ee4c1b37aadd4fcdf3c44",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:15Z",
-      "elapsed_s": 0.096,
+      "retrieved_utc": "2026-09-22T12:47:30Z",
+      "elapsed_s": 0.129,
       "note": "NDBC historical standard meteorological file, station 46026, 2019"
     },
     {
@@ -351,8 +351,8 @@
       "bytes": 613003,
       "sha256": "4d2f5b15a31dfaa228b7e878601500ae390acaa6280a8e1972ad4d5493371447",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:15Z",
-      "elapsed_s": 0.097,
+      "retrieved_utc": "2026-09-22T12:47:30Z",
+      "elapsed_s": 0.131,
       "note": "NDBC historical standard meteorological file, station 46026, 2020"
     },
     {
@@ -362,8 +362,8 @@
       "bytes": 567550,
       "sha256": "fd3b849181a0f721ffbb72b15eeee1a5f2b14d63451ff246c77fe9e72aecf6de",
       "content_type": "application/x-gzip",
-      "retrieved_utc": "2026-09-22T02:00:16Z",
-      "elapsed_s": 0.096,
+      "retrieved_utc": "2026-09-22T12:47:31Z",
+      "elapsed_s": 0.109,
       "note": "NDBC historical standard meteorological file, station 46026, 2021"
     },
     {
@@ -373,30 +373,30 @@
       "bytes": 51500,
       "sha256": "ad0526f7cce02f4dd9fa68278cbc36467484e454342cbcc36af74d5d38b79f1c",
       "content_type": "text/html; charset=ISO-8859-1",
-      "retrieved_utc": "2026-09-22T02:00:16Z",
-      "elapsed_s": 0.171,
+      "retrieved_utc": "2026-09-22T12:47:31Z",
+      "elapsed_s": 0.13,
       "note": "NDBC measurement descriptions and units"
     },
     {
       "url": "https://www.ndbc.noaa.gov/station_page.php?station=46026",
       "http_status": 200,
       "ok": true,
-      "bytes": 93005,
-      "sha256": "c16e44824efcb8d4562245ea403cbb8cbcf82193dfecc699c1e7848eeb376993",
+      "bytes": 95766,
+      "sha256": "641bb75643d43f7f732af383a1a3b298d7cc574187cb66b0a1f2318b97a2c743",
       "content_type": "text/html; charset=UTF-8",
-      "retrieved_utc": "2026-09-22T02:00:16Z",
-      "elapsed_s": 0.223,
+      "retrieved_utc": "2026-09-22T12:47:31Z",
+      "elapsed_s": 0.22,
       "note": "NDBC station page for 46026 (anemometer height, water depth)"
     },
     {
       "url": "https://www.ndbc.noaa.gov/data/realtime2/46026.txt",
       "http_status": 200,
       "ok": true,
-      "bytes": 598780,
-      "sha256": "204dd9a488520715df7300f284024fd205eef42875ab8deb5137a0bc1ea76d78",
+      "bytes": 604984,
+      "sha256": "b03fd04be7b3d214ba89fd14533950df0bfde547bfe1c57504bb8bedc290d346",
       "content_type": "text/plain; charset=ISO-8859-1",
-      "retrieved_utc": "2026-09-22T02:00:16Z",
-      "elapsed_s": 0.093,
+      "retrieved_utc": "2026-09-22T12:47:32Z",
+      "elapsed_s": 0.118,
       "note": "NDBC realtime standard meteorological file, station 46026 (latest observation)"
     }
   ]
