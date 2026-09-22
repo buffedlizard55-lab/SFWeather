@@ -44,6 +44,27 @@ On the station record, the season averages 3.2 days a season at ≥ 1.00 in of r
 
   - *Basis:* NOAA NCEI Storm Events Database, reported events only — under-reporting is likely
 
+## The next few days - the only official day-by-day forecast (NWS grid)
+
+- **Window:** 2026-09-21 through 2026-09-28 (8 local days; 156 grid hours) - NWS grid updated 2026-09-21T20:26:08+00:00. This is the only official day-by-day forecast that exists for this ZIP; nothing further out is forecast by any official product.
+
+| Day | High (F) | Low (F) | Humidity (%) | Rain chance (%) | Rain (in) | Wind (mph) | Gust (mph) | Grid hours |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Monday 2026-09-21 (partial) | 61 | 58 | 95.6 | 2 | 0.0 | 12.0 | 16.1 | 8 |
+| Tuesday 2026-09-22 | 63 | 58 | 93.9 | 2 | 0.0 | 12.0 | 16.1 | 24 |
+| Wednesday 2026-09-23 | 70 | 57 | 86.5 | 0 | 0.0 | 10.0 | 13.8 | 24 |
+| Thursday 2026-09-24 | 67 | 58 | 83.5 | 0 | 0.0 | 13.0 | 18.4 | 24 |
+| Friday 2026-09-25 | 66 | 59 | 86.2 | 0 | 0.0 | 14.0 | 19.6 | 24 |
+| Saturday 2026-09-26 | 64 | 57 | 86.4 | 0 | 0.0 | 13.0 | 17.3 | 24 |
+| Sunday 2026-09-27 | 63 | 57 | 85.8 | 0 | 0.0 | 13.0 | 18.4 | 24 |
+| Monday 2026-09-28 (partial) | 59 | 58 | 88.0 | 0 | 0.0 | 7.0 | 16.1 | 4 |
+
+- **Window counts (plain thresholds, not an NWS product):** The current NWS window covers 2026-09-21 through 2026-09-28 (8 local days; 156 grid hours published for this ZIP's cell). No day in this window carries rain >= 0.1 in, so the official forecast does not currently flag rain-driven repair work. 0 day(s) carry a peak gust >= 30 mph (peak 19.6 mph on 2026-09-25). No day has rain and strong wind on the same day. 
+- **Rule:** Plain analysis thresholds used only inside this block - not an NWS product, not a hazard rating: a day 'carries rain' when its published daily rain amount is >= 0.1 in; a day 'carries strong wind' when its published daily peak gust is >= 30 mph; 'wind and rain together' requires both on the same day. The per-day values are the NWS gridded forecast for this ZIP's grid cell, copied verbatim from the verified calendar dataset with each field's own basis string.
+- **Partial-day rule:** The first and last local days of a window are partial: the hourly grid starts and ends mid-day, so each row publishes the number of grid hours that day actually covers, and the window totals sum only those covered hours. As the horizon moves, the window shifts a few hours each issuance.
+- **Scoreboard context:** 0 of the 123 season days (October 1, 2026 - January 31, 2027 (123 days)) carry a real official forecast right now; the official horizon ends 2026-09-28. Every other day shows the 1991-2020 observed record for that calendar date - that is the limit of what an official product can say for a named day.
+- **Verify:** [NWS hourly gridded forecast (api.weather.gov)](https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly) · [NWS gridpoint data - windGust and QPF series (api.weather.gov)](https://api.weather.gov/gridpoints/MTR/82,105) · [NWS 7-day forecast for this point (weather.gov)](https://forecast.weather.gov/MapClick.php?lat=37.760459&lon=-122.483894&unit=0&lg=english&FcstType=text&TextType=1)
+
 ## Where the numbers come from, and how current they are
 
 - **Datasets read:** landlord.json, calendar.json, run.json, cpc.json, enso.json, nws.json, with the newest content fetched into them at 2026-09-21T23:44:40Z; build-stamped inputs: landlord.json 2026-09-21T23:44:59Z; calendar.json 2026-09-21T23:44:59Z; run.json 2026-09-21T23:44:59Z; no build stamp of their own (per-fetch retrieval times are recorded in the file): cpc.json, enso.json, nws.json.

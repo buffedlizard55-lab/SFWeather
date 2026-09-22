@@ -550,3 +550,69 @@ carries current-year text. Consequences a reader should know:
 * **Two values are parsed out of the datasets rather than typed in.** The SFO station's distance from the ZIP centroid is read from a sentence in `landlord.json` (and published with that sentence beside it), and the ocean buoy's gale threshold is read from the dataset's own counter key name (`gale_days_ge_34kt`). If a dataset stops stating either, the tier publishes the absence instead of a remembered value.
 * **The tier does not replace the landlord dashboard.** It is a condensed executive summary at the top of the page for quick triage; the full landlord dashboard, day-by-day calendar, duration, wind, storm, and source tables remain the authoritative detail.
 * **Outer Sunset specificity.** Building stock (1920s-1950s stucco row-homes, zero-lot-line, flat roofs, parapet caps, lightwells, subterranean garages), sandy dune subsoil, shallow water table, direct Pacific exposure, salt-air corrosion — all from `executive_summary.outer_sunset_profile`, not typed in the tier.
+
+## 29. "The next few days" reaches only as far as the NWS horizon — and the page says so (added 21 Sep 2026, session 19)
+
+The near-term block on the repair tier publishes the **only** official
+day-by-day forecast that exists for this point: the NWS gridpoint window
+(about 180 hours from the latest issuance — roughly 7–8 local days).
+Concretely:
+
+* **No day beyond the horizon appears in that block.** The October 2026 –
+  January 2027 scoreboard is the 1991–2020 observed record for each calendar
+  date, and the block's season sentence says exactly that ("0 of the 123
+  season days carry a real official forecast right now; the official horizon
+  ends …"). No model data and no climatology ever stand in for a missing
+  official day.
+* **The window moves with every NWS issuance.** The first and last local days
+  are partial (the hourly grid starts and ends mid-day), so each row
+  publishes the number of grid hours that day covers and the window totals
+  sum only covered hours. A value that changes from one nightly run to the
+  next is the horizon shifting, not a correction — the partial-day note on
+  the page says this.
+* **The counts are derived by a published plain rule, printed on the page.**
+  A day "carries rain" when its published daily rain amount is >= 0.1 in,
+  "carries strong wind" when its published daily peak gust is >= 30 mph, and
+  "together" requires both on the same day. They are **not** an NWS product
+  and not a hazard rating; they exist so the question "is the official
+  forecast asking for rain-driven repair work in the next few days?" has a
+  one-sentence answer the ledger re-derives (`repair-near-term-traceable`).
+* **An unavailable block is published as unavailable.** If the NWS fetch
+  fails, the block carries an `unavailable_note` instead of rows — never a
+  fallback to climatology, model data, or a typed-in guess. The ledger fails
+  an unavailable block that drops the note, an available block when the
+  verified window has no days, and the reverse.
+
+## 30. The staging guard covers the pipeline's output area, not the whole repository (added 21 Sep 2026, session 19)
+
+Defect 84 (the nightly commit staged `data/` and `assets/` but not the repair
+tier's generated copy in `docs/`, so the tracked printable page kept the
+previous stamp) was caught by the ledger **after** the fact. The fix is
+`pipeline/generator_outputs.py`: a registry of the twelve pipeline steps and
+every file each one writes, enforced two ways — in every ledger pass
+(`generator-outputs-declared`: a registered output missing, or an
+unregistered file in the output area, fails the build) and in the nightly
+commit path (`--after-stage`, run after `git add -A`: anything in the output
+area left unstaged refuses the publish).
+
+What it does **not** cover:
+
+* **Only files the pipeline *writes*.** The scanned area is `data/`,
+  `assets/cpc/`, `assets/model_guidance/`, the repair tier's `docs/` copy,
+  and the root `pipeline_run.log`. A hand edit to a *source* file
+  (`pipeline/*.py`, `index.html`, `assets/js/`) is ordinary git business; the
+  guard sees it only if it lands inside the output area.
+* **Two allowlisted files** are written by the nightly *shell* or maintained
+  by hand rather than by a registered generator: `data/README.md` and
+  `pipeline_run.log` (the workflow's own output redirect — present in CI,
+  absent in a dev checkout; defect 85). Allowlisting exempts them from the
+  generator contract only; the ledger's content checks still scan them.
+* **The refused-publish path.** When a fetch fails the workflow commits
+  diagnostics only, and that branch deliberately skips the after-stage
+  assertion — there is nothing to publish to guard.
+* **It cannot audit a generator that never runs.** If a pipeline step is
+  removed from the workflow without removing its registry entry, the guard
+  will fail on the missing output (loud, by design); if a step is removed
+  *with* its registry entry, the contract simply no longer mentions it —
+  that is a review decision, recorded here so the registry and the workflow
+  stay human-checked in pairs.

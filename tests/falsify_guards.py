@@ -1719,9 +1719,94 @@ def _rp11(tmp):
       "warn", "repair-artifact-published")
 def _rp9(tmp):
     _copy_all(tmp)
-    (tmp / "repair_maintenance_summary.json").unlink()
     (tmp / "repair_maintenance_executive.md").unlink(missing_ok=True)
+    (tmp / "repair_maintenance_summary.json").unlink()
     return tmp
+
+
+# --- the near-term block (the only official day-by-day forecast) ------------
+# The block republishes the verified NWS window verbatim plus counts under a
+# published rule, so each of these must fail: a day value edited, a count
+# that no longer recomposes, a rewritten sentence, a day basis dropped, a
+# window claimed when the dataset has none, an unavailable block with no
+# note, a source that leaves the official hosts, or the block renamed out
+# from under the renderer.
+
+@case("a near-term window day's rain amount hand-edited", "fail",
+      "repair-near-term-traceable")
+def _nt1(tmp):
+    def mutate(obj):
+        obj["near_term_forecast"]["days"][0]["rain_amount_in"] = 1.23
+    return with_repair(tmp, mutate)
+
+
+@case("a near-term window count that no longer recomposes from the data",
+      "fail", "repair-near-term-traceable")
+def _nt2(tmp):
+    def mutate(obj):
+        obj["near_term_forecast"]["counts"]["window_rain_total_in"] = (
+            obj["near_term_forecast"]["counts"]["window_rain_total_in"] + 5.0)
+    return with_repair(tmp, mutate)
+
+
+@case("the near-term window summary sentence rewritten by hand", "fail",
+      "repair-near-term-traceable")
+def _nt3(tmp):
+    def mutate(obj):
+        obj["near_term_forecast"]["summary_sentence"] = (
+            "Rain is expected every day of the window, plan the repairs now.")
+    return with_repair(tmp, mutate)
+
+
+@case("the near-term block claims a window the dataset no longer has", "fail",
+      "repair-near-term-traceable")
+def _nt4(tmp):
+    for f in DATA.glob("*.json"):
+        shutil.copy2(f, tmp / f.name)
+    for name in ("repair_maintenance_executive.md",):
+        if (DATA / name).exists():
+            shutil.copy2(DATA / name, tmp / name)
+    cal = load("calendar.json")
+    cf = cal.get("current_forecast") or {}
+    if not cf.get("days"):
+        raise AssertionError("fixture expected a verified NWS window with days")
+    cf["days"] = []
+    dump(tmp / "calendar.json", cal)
+    return tmp
+
+
+@case("an unavailable near-term block with its absence note stripped", "fail",
+      "repair-near-term-traceable")
+def _nt5(tmp):
+    def mutate(obj):
+        obj["near_term_forecast"]["available"] = False
+        obj["near_term_forecast"]["unavailable_note"] = ""
+    return with_repair(tmp, mutate)
+
+
+@case("a near-term day stripped of its field basis strings", "fail",
+      "repair-near-term-traceable")
+def _nt6(tmp):
+    def mutate(obj):
+        obj["near_term_forecast"]["days"][1]["gust_basis"] = None
+    return with_repair(tmp, mutate)
+
+
+@case("a near-term window source link pointed at a non-official host", "fail",
+      "repair-links-official")
+def _nt7(tmp):
+    def mutate(obj):
+        obj["near_term_forecast"]["sources"][0]["url"] = "https://example.com/hourly"
+        obj["near_term_forecast"]["source_url"] = "https://example.com/hourly"
+    return with_repair(tmp, mutate)
+
+
+@case("the payload renaming the near-term key the renderer still reads",
+      "fail", "repair-render-contract")
+def _nt8(tmp):
+    def mutate(obj):
+        obj["near_term_forecast_v2"] = obj.pop("near_term_forecast")
+    return with_repair(tmp, mutate)
 
 
 def main():

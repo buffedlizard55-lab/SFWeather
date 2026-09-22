@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-21T23:50:33Z",
+  "generated_utc": "2026-09-22T00:50:27Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -9,8 +9,8 @@
     "A failed check stops the nightly build: the site is not republished with an unverified number."
   ],
   "summary": {
-    "total": 89,
-    "passed": 88,
+    "total": 91,
+    "passed": 90,
     "failed": 0,
     "warnings": 1,
     "failed_checks": [],
@@ -1249,6 +1249,15 @@
       }
     },
     {
+      "id": "repair-near-term-traceable",
+      "title": "The near-term block is the verified NWS window verbatim, plus counts under its published rule - never a forecast beyond the horizon",
+      "status": "pass",
+      "detail": "the window matches calendar.json day for day, with basis strings, and the counts and sentence re-compose exactly",
+      "evidence": {
+        "problems": []
+      }
+    },
+    {
       "id": "repair-severity-and-rank-rule",
       "title": "Repair-cost drivers are ranked 1..N exactly once each and carry the published, rank-derived severity rule - not an undocumented guess",
       "status": "pass",
@@ -1302,7 +1311,7 @@
       "id": "repair-printable-page-generated",
       "title": "The printable repair summary and its docs copy are generated from the payload: same stamp, same driver titles, and no number or URL that is not in a dataset",
       "status": "pass",
-      "detail": "251 lines, every figure and link traced to the payload",
+      "detail": "272 lines, every figure and link traced to the payload",
       "evidence": {
         "problems": []
       }
@@ -1311,10 +1320,11 @@
       "id": "repair-links-official",
       "title": "Every link the repair summary publishes points at a vetted official host (no commercial provider, no unvetted domain)",
       "status": "pass",
-      "detail": "18 URL(s) across the summary and its source ledger, all official",
+      "detail": "21 URL(s) across the summary and its source ledger, all official",
       "evidence": {
         "hosts": [
           "api.weather.gov",
+          "forecast.weather.gov",
           "ftp.cpc.ncep.noaa.gov",
           "www.cpc.ncep.noaa.gov",
           "www.ncdc.noaa.gov",
@@ -1331,6 +1341,29 @@
       "detail": "every optional block either carries figures or an explicit absence note",
       "evidence": {
         "problems": []
+      }
+    },
+    {
+      "id": "generator-outputs-declared",
+      "title": "Every pipeline output is declared by its generator, and no undeclared file sits in the pipeline output area (the staging guard)",
+      "status": "pass",
+      "detail": "12 generators, 57 file(s) in the output area, all declared",
+      "evidence": {
+        "problems": [],
+        "generators": [
+          "build_calendar",
+          "cpc_backtest",
+          "digest",
+          "executive_summary",
+          "feed",
+          "landlord",
+          "main",
+          "model_guidance",
+          "ocean_wind",
+          "repair",
+          "verify_claims",
+          "workflow-diagnostics"
+        ]
       }
     }
   ],

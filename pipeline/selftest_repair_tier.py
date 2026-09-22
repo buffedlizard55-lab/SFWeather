@@ -96,9 +96,44 @@ def _driver(rank, name, why="A reason that is published as guidance.",
     }
 
 
+def _near_term_window(rain):
+    """A hand-computable three-day NWS window shaped like the verified one.
+
+    *rain* is the per-day rain amount list; every other field is fixed so the
+    expected counts below can be checked by hand:
+      rain >= 0.1  -> days 2 and 3 (0.15, 0.30);  gust >= 30 -> days 2 and 3
+      (32.0, 30.0);  window rain total 0.47 in;  56 grid hours.
+    """
+    def day(date, weekday, hours, high, pop, r, gust):
+        return {
+            "date": date, "weekday": weekday, "hours_covered": hours,
+            "high_f": high, "low_f": 58, "humidity_pct": 90.0,
+            "rain_chance_pct": pop, "rain_amount_in": r, "wind_max_mph": 12.0,
+            "gust_max_mph": gust,
+            "temp_basis": "synthetic temp basis",
+            "humidity_basis": "synthetic humidity basis",
+            "rain_chance_basis": "synthetic pop basis",
+            "rain_amount_basis": "synthetic rain basis",
+            "wind_basis": "synthetic wind basis",
+            "gust_basis": "synthetic gust basis",
+        }
+    return {
+        "first_day": "2026-09-21", "last_day": "2026-09-23",
+        "horizon_days": 3, "inside_season_window": False,
+        "forecast_updated": "2026-09-21T20:26:08+00:00",
+        "days": [
+            day("2026-09-21", "Monday", 8, 61, 2, rain[0], 16.1),
+            day("2026-09-22", "Tuesday", 24, 63, 30, rain[1], 32.0),
+            day("2026-09-23", "Wednesday", 24, 70, 20, rain[2], 30.0),
+        ],
+        "sources": [{"label": "NWS hourly gridded forecast (api.weather.gov)",
+                     "url": rt.SOURCES["nws_api"][1]}],
+    }
+
+
 def synthetic_datasets(stamp="2026-09-21T14:20:21Z", calendar_stamp=None,
                        ocean_available=True, rewrite_enso_sentence=False,
-                       driver_list=None):
+                       driver_list=None, near_term="absent"):
     """Build datasets shaped like the committed ones, with hand-checkable values."""
     calendar_stamp = calendar_stamp or stamp
     enso_text = ENSO_PAGE_TEXT
@@ -226,6 +261,20 @@ def synthetic_datasets(stamp="2026-09-21T14:20:21Z", calendar_stamp=None,
                   "gust_max_mph": 26.2, "rain_chance_pct": 11.0,
                   "rain_amount_in": 0.01}],
     }
+    if near_term == "days":
+        calendar["current_forecast"] = _near_term_window([0.02, 0.15, 0.30])
+    elif near_term == "dry":
+        calendar["current_forecast"] = _near_term_window([0.0, 0.0, 0.0])
+    elif near_term == "empty":
+        calendar["current_forecast"] = {
+            "first_day": "2026-09-21", "last_day": None, "horizon_days": 0,
+            "inside_season_window": False,
+            "forecast_updated": "2026-09-21T20:26:08+00:00", "days": [],
+            "sources": [{"label": "NWS hourly gridded forecast (api.weather.gov)",
+                         "url": rt.SOURCES["nws_api"][1]}],
+        }
+    # "absent" (the default) leaves the key out entirely, the way a run whose
+    # NWS fetch failed would.
     run = {"generated_utc": stamp,
            "target": {"zip": "94122", "label": "San Francisco, CA 94122",
                       "centroid": {"lat": 37.760459, "lon": -122.483894,
@@ -389,6 +438,9 @@ def run() -> int:
     # A thousands separator is stripped only between digits, so a coordinate
     # written "37.7605,-122.4839" keeps its sign.
     md_plain = re.sub(r"(?<=\d),(?=\d{3}\b)", "", md_full)
+    # URLs are checked separately below; their digit runs are coordinates or
+    # product ids, not figures (kept in step with the claim ledger's rule).
+    md_plain = re.sub(r"https?://\S+", "", md_plain)
     md_values = {float(t) for t in re.findall(number, md_plain)}
     tokens = sorted(md_values)
     orphan = [t for t in sorted(md_values) if t not in json_values]
@@ -519,6 +571,99 @@ def run() -> int:
     check("the printable page opens with the location, season and stamp",
           line[0].startswith("# Repair & Maintenance Cost Impact")
           and "94122" in line[2] and "2026-09-21" in line[2], line[2][:160])
+
+    # 12. The near-term block: the only official day-by-day forecast.  It must
+    #     copy the verified NWS window verbatim (values AND basis strings),
+    #     derive its counts under the published rule, and publish an absent
+    #     window as absent with a sentence - never as a blank card.
+    nt = s["near_term_forecast"]  # the default fixture carries no NWS window
+    check("with no NWS product the near-term block is published as absent",
+          nt["available"] is False
+          and nt["status"] == "not published in this snapshot"
+          and "not available" in (nt["unavailable_note"] or "")
+          and nt["days"] == [] and nt["counts"] is None
+          and nt["summary_sentence"] is None,
+          json.dumps(nt)[:200])
+    md_absent = rt.render_markdown(s)
+    check("with no NWS product the printable page says the block is unpublished",
+          "Not published in this snapshot" in md_absent
+          and "no near-term day-by-day forecast" in md_absent,
+          [l for l in md_absent.splitlines() if "near-term" in l][:2])
+    check("with no NWS product the season context is still stated",
+          "0 of the 2 season days" in (nt["season_sentence"] or ""),
+          nt["season_sentence"][:160])
+
+    snt = rt.build_summary(synthetic_datasets(near_term="days"))
+    nt2 = snt["near_term_forecast"]
+    cf = synthetic_datasets(near_term="days")["calendar.json"]["current_forecast"]
+    check("the near-term block copies the verified window day for day, basis strings included",
+          [d["date"] for d in nt2["days"]] == [d["date"] for d in cf["days"]]
+          and all(nt2["days"][i][k] == cf["days"][i][k] for i in range(3)
+                  for k in ("high_f", "gust_max_mph", "rain_amount_in",
+                            "gust_basis", "temp_basis", "hours_covered")),
+          json.dumps(nt2["days"][1])[:200])
+    c2 = nt2["counts"]
+    check("the near-term window counts match the hand-computed rule",
+          c2["days_total"] == 3 and c2["hours_covered_total"] == 56
+          and c2["window_rain_total_in"] == 0.47
+          and c2["days_with_rain"] == 2
+          and c2["days_with_strong_wind"] == 2
+          and c2["days_with_rain_and_strong_wind"] == 2
+          and c2["wettest_day"] == {"date": "2026-09-23", "rain_amount_in": 0.30}
+          and c2["peak_gust"] == {"date": "2026-09-22", "gust_max_mph": 32.0},
+          json.dumps(c2))
+    check("the near-term rule is published with its plain thresholds",
+          c2["rain_flag_in"] == 0.1 and c2["gust_flag_mph"] == 30
+          and ">= 0.1 in" in nt2["rules_text"]
+          and ">= 30 mph" in nt2["rules_text"]
+          and "not an NWS product" in nt2["rules_text"],
+          nt2["rules_text"][:160])
+    check("the near-term window geometry is copied from the verified dataset",
+          nt2["first_day"] == cf["first_day"] and nt2["last_day"] == cf["last_day"]
+          and nt2["horizon_days"] == 3
+          and nt2["forecast_updated"] == cf["forecast_updated"]
+          and nt2["source_url"] == cf["sources"][0]["url"]
+          and nt2["sources"] == cf["sources"],
+          json.dumps({k: nt2[k] for k in ("first_day", "source_url")}))
+    want_sentence = rt.compose_near_term_sentence(cf, c2)
+    check("the near-term summary sentence recomposes from the verified window",
+          nt2["summary_sentence"] == want_sentence
+          and "2 of 3 days carry rain >= 0.1 in" in want_sentence
+          and "wettest day 2026-09-23 at 0.3 in" in want_sentence
+          and "peak 32.0 mph on 2026-09-22" in want_sentence,
+          want_sentence[:200])
+    md_nt = rt.render_markdown(snt)
+    check("the printable page carries the near-term table, sentence and rule",
+          all(d["date"] in md_nt for d in cf["days"])
+          and want_sentence in md_nt
+          and nt2["rules_text"] in md_nt
+          and "(partial)" in md_nt,
+          f"{md_nt.count('2026-09-2')} window dates on the page")
+    tie_days = [
+        {"date": "2026-10-01", "hours_covered": 24, "rain_amount_in": 0.2,
+         "gust_max_mph": 31.0},
+        {"date": "2026-10-02", "hours_covered": 24, "rain_amount_in": 0.2,
+         "gust_max_mph": 31.0},
+    ]
+    ctie = rt.near_term_counts(tie_days)
+    check("a tie reports the earlier day, so the rule is deterministic",
+          ctie["wettest_day"] == {"date": "2026-10-01", "rain_amount_in": 0.2}
+          and ctie["peak_gust"] == {"date": "2026-10-01", "gust_max_mph": 31.0},
+          json.dumps(ctie))
+    sntd = rt.build_summary(synthetic_datasets(near_term="dry"))
+    cnd = sntd["near_term_forecast"]["counts"]
+    snd = sntd["near_term_forecast"]["summary_sentence"]
+    check("a dry window says no rain days, no wettest day, plainly",
+          cnd["days_with_rain"] == 0 and cnd["wettest_day"] is None
+          and cnd["window_rain_total_in"] == 0.0
+          and "No day in this window carries rain >= 0.1 in" in snd
+          and "No day has rain and strong wind on the same day." in snd,
+          snd[:200])
+    nte = rt.build_summary(synthetic_datasets(near_term="empty"))
+    check("a window with no daily periods is published as absent, not blank",
+          nte["near_term_forecast"]["available"] is False
+          and "returned no daily periods" in nte["near_term_forecast"]["unavailable_note"],
+          json.dumps(nte["near_term_forecast"])[:200])
 
     # ---- report
     failed = [c for c in CHECKS if not c[1]]

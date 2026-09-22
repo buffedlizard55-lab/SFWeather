@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Repair & Maintenance focused executive summary generator (schema v2).
+"""Repair & Maintenance focused executive summary generator (schema v3).
 
 Reads the verified datasets and produces three artifacts:
 
@@ -73,7 +73,7 @@ _env = os.environ.get("SFWEATHER_DATA")
 if _env:
     DATA = Path(_env)
 
-SCHEMA_VERSION = "2"
+SCHEMA_VERSION = "3"
 
 #: Files this tier reads, in the order they are stamped.  ``landlord.json`` is
 #: the dataset that carries the executive summary block; the others are read for
@@ -413,6 +413,196 @@ def next_issuance_keys() -> list:
 
 
 # --------------------------------------------------------------------------- #
+# the next few days: the only official day-by-day forecast that exists
+#
+# Beyond the NWS grid there is no official daily forecast, and this tier never
+# invents one.  The block below publishes the NWS window *exactly as the
+# verified calendar dataset carries it* - every per-day value and its basis
+# string is copied verbatim out of ``calendar.json``'s ``current_forecast``
+# (which the pipeline aggregates from the NWS hourly grid for this ZIP's cell
+# and the claim ledger re-checks) - and derives only window counts under a
+# plain, published rule.  A window the product does not carry is published as
+# absent, with a sentence, never as blank.
+# --------------------------------------------------------------------------- #
+
+#: Plain analysis thresholds used ONLY inside this block.  They are this
+#: project's reading aid, not an NWS product and not a hazard rating; the rule
+#: is published with the numbers so a reader can re-derive every count.
+NEAR_TERM_RAIN_FLAG_IN = 0.1
+NEAR_TERM_GUST_FLAG_MPH = 30
+
+NEAR_TERM_RULE_TEXT = (
+    "Plain analysis thresholds used only inside this block - not an NWS "
+    "product, not a hazard rating: a day 'carries rain' when its published "
+    "daily rain amount is >= 0.1 in; a day 'carries strong wind' when its "
+    "published daily peak gust is >= 30 mph; 'wind and rain together' requires "
+    "both on the same day. The per-day values are the NWS gridded forecast for "
+    "this ZIP's grid cell, copied verbatim from the verified calendar dataset "
+    "with each field's own basis string."
+)
+
+NEAR_TERM_PARTIAL_NOTE = (
+    "The first and last local days of a window are partial: the hourly grid "
+    "starts and ends mid-day, so each row publishes the number of grid hours "
+    "that day actually covers, and the window totals sum only those covered "
+    "hours. As the horizon moves, the window shifts a few hours each issuance."
+)
+
+NEAR_TERM_DAY_FIELDS = (
+    "date", "weekday", "hours_covered", "high_f", "low_f", "humidity_pct",
+    "rain_chance_pct", "rain_amount_in", "wind_max_mph", "gust_max_mph",
+    "temp_basis", "humidity_basis", "rain_chance_basis",
+    "rain_amount_basis", "wind_basis", "gust_basis",
+)
+
+
+def near_term_day_fields(day: dict) -> dict:
+    """Copy the published per-day fields, verbatim, from a verified window day."""
+    return {k: day.get(k) for k in NEAR_TERM_DAY_FIELDS}
+
+
+def near_term_counts(days: list[dict]) -> dict:
+    """Window counts under the published rule.  *days* are the raw verified
+    window days (``calendar.json -> current_forecast.days``), in order."""
+    total_hours = sum(int(d.get("hours_covered") or 0) for d in days)
+    rain_total = round(sum(float(d.get("rain_amount_in") or 0.0) for d in days), 3)
+
+    def _rain(d):
+        v = d.get("rain_amount_in")
+        return v is not None and float(v) >= NEAR_TERM_RAIN_FLAG_IN
+
+    def _gust(d):
+        v = d.get("gust_max_mph")
+        return v is not None and float(v) >= NEAR_TERM_GUST_FLAG_MPH
+
+    wet = [d for d in days if _rain(d)]
+    windy = [d for d in days if _gust(d)]
+    both = [d for d in days if _rain(d) and _gust(d)]
+
+    wettest = None
+    if wet:
+        best = max(wet, key=lambda d: float(d["rain_amount_in"]))
+        first_at_best = next(d for d in wet if float(d["rain_amount_in"]) == float(best["rain_amount_in"]))
+        wettest = {"date": first_at_best.get("date"),
+                   "rain_amount_in": first_at_best.get("rain_amount_in")}
+
+    peak = None
+    gusts = [d for d in days if d.get("gust_max_mph") is not None]
+    if gusts:
+        best = max(gusts, key=lambda d: float(d["gust_max_mph"]))
+        first_at_best = next(d for d in gusts if float(d["gust_max_mph"]) == float(best["gust_max_mph"]))
+        peak = {"date": first_at_best.get("date"),
+                "gust_max_mph": first_at_best.get("gust_max_mph")}
+
+    return {
+        "days_total": len(days),
+        "hours_covered_total": total_hours,
+        "window_rain_total_in": rain_total,
+        "rain_flag_in": NEAR_TERM_RAIN_FLAG_IN,
+        "gust_flag_mph": NEAR_TERM_GUST_FLAG_MPH,
+        "days_with_rain": len(wet),
+        "days_with_strong_wind": len(windy),
+        "days_with_rain_and_strong_wind": len(both),
+        "wettest_day": wettest,
+        "peak_gust": peak,
+    }
+
+
+def compose_near_term_sentence(cf: dict, c: dict) -> str:
+    """The window summary sentence, built purely from the verified window and
+    the published counts.  The claim ledger recomposes it from the same
+    verified data and requires an exact match."""
+    s = (f"The current NWS window covers {cf.get('first_day')} through "
+         f"{cf.get('last_day')} ({cf.get('horizon_days')} local days; "
+         f"{c['hours_covered_total']} grid hours published for this ZIP's cell). ")
+    if c["days_with_rain"] == 0:
+        s += (f"No day in this window carries rain >= {c['rain_flag_in']} in, "
+              "so the official forecast does not currently flag rain-driven "
+              "repair work. ")
+    else:
+        w = c["wettest_day"]
+        s += (f"{c['days_with_rain']} of {c['days_total']} days carry rain >= "
+              f"{c['rain_flag_in']} in (window total {c['window_rain_total_in']} in "
+              f"across the covered hours; wettest day {w['date']} at "
+              f"{w['rain_amount_in']} in). ")
+    if c["peak_gust"]:
+        g = c["peak_gust"]
+        s += (f"{c['days_with_strong_wind']} day(s) carry a peak gust >= "
+              f"{c['gust_flag_mph']} mph (peak {g['gust_max_mph']} mph on "
+              f"{g['date']}). ")
+    n = c["days_with_rain_and_strong_wind"]
+    s += (f"{n} of them have rain and strong wind on the same day. " if n else
+          "No day has rain and strong wind on the same day. ")
+    return s
+
+
+def build_near_term_forecast(calendar: dict, es: dict, n_season_days: int) -> dict:
+    """Assemble the near-term block from the verified datasets only.
+
+    Every per-day value is copied verbatim out of ``calendar.json``'s
+    ``current_forecast``; the only derived numbers are the window counts under
+    :data:`NEAR_TERM_RULE_TEXT`.  The claim ledger re-derives both and fails
+    the build on any drift.
+    """
+    cf = calendar.get("current_forecast") or {}
+    cf_days = cf.get("days") or []
+    daily_fc = (es.get("official_outlook") or {}).get("daily_forecast") or {}
+    season_sentence = (
+        f"{daily_fc.get('days_in_this_scoreboard_with_a_real_forecast') or 0} "
+        f"of the {n_season_days} season days ({es.get('season_window')}) carry a real "
+        f"official forecast right now"
+        + (f"; the official horizon ends {daily_fc.get('official_horizon_ends')}"
+           if daily_fc.get("official_horizon_ends") else "")
+        + ". Every other day shows the 1991-2020 observed record for that "
+          "calendar date - that is the limit of what an official product can "
+          "say for a named day."
+    )
+    base = {
+        "status": "not published in this snapshot",
+        "first_day": cf.get("first_day"),
+        "last_day": cf.get("last_day"),
+        "horizon_days": cf.get("horizon_days"),
+        "forecast_updated": cf.get("forecast_updated"),
+        "inside_season_window": cf.get("inside_season_window"),
+        "season_sentence": season_sentence,
+        "rules_text": NEAR_TERM_RULE_TEXT,
+        "partial_day_note": NEAR_TERM_PARTIAL_NOTE,
+        "source_url": None,
+        "sources": [],
+        "days": [],
+        "counts": None,
+        "summary_sentence": None,
+        "unavailable_note": None,
+    }
+    if not cf or not cf_days:
+        base["available"] = False
+        base["unavailable_note"] = (
+            "The NWS forecast product for this ZIP's grid cell was not "
+            "available in this run, so no near-term day-by-day forecast is "
+            "published in this block. Nothing is substituted; the scoreboard "
+            "below states what each day is based on."
+            if not cf else
+            "The NWS product for this ZIP's grid cell returned no daily "
+            "periods in this run, so no near-term day-by-day forecast is "
+            "published in this block. Nothing is substituted."
+        )
+        return base
+
+    counts = near_term_counts(cf_days)
+    base.update({
+        "available": True,
+        "status": "published",
+        "days": [near_term_day_fields(d) for d in cf_days],
+        "counts": counts,
+        "summary_sentence": compose_near_term_sentence(cf, counts),
+    })
+    srcs = cf.get("sources") or []
+    base["sources"] = srcs
+    base["source_url"] = (srcs[0].get("url") if srcs else None)
+    return base
+
+
+# --------------------------------------------------------------------------- #
 # the summary
 # --------------------------------------------------------------------------- #
 
@@ -635,6 +825,7 @@ def build_summary(datasets: dict) -> dict:
                      "date, labelled as such. No daily forecast is invented."),
             "source_url": sources["nws_api"]["url"],
         },
+        "near_term_forecast": build_near_term_forecast(calendar, es, len(days)),
         "current_enso": current_enso,
         "official_enso": official_enso,
         "enso_strength_quotes": strength_quotes,
@@ -857,6 +1048,44 @@ def render_markdown(summary: dict) -> str:
         add("")
         add(f"  - *Basis:* {fmt(entry.get('basis'), 0)}")
         add("")
+
+    ntf = s.get("near_term_forecast") or {}
+    add("## The next few days - the only official day-by-day forecast (NWS grid)")
+    add("")
+    if ntf.get("available"):
+        c = ntf.get("counts") or {}
+        add(f"- **Window:** {fmt(ntf.get('first_day'), 0)} through "
+            f"{fmt(ntf.get('last_day'), 0)} ({fmt(ntf.get('horizon_days'), 0)} local days; "
+            f"{fmt(c.get('hours_covered_total'), 0)} grid hours) - NWS grid updated "
+            f"{fmt(ntf.get('forecast_updated'), 0)}. This is the only official "
+            f"day-by-day forecast that exists for this ZIP; nothing further out "
+            f"is forecast by any official product.")
+        add("")
+        add("| Day | High (F) | Low (F) | Humidity (%) | Rain chance (%) | Rain (in) | "
+            "Wind (mph) | Gust (mph) | Grid hours |")
+        add("| --- | --- | --- | --- | --- | --- | --- | --- | --- |")
+        for d in ntf.get("days") or []:
+            day_label = f"{fmt(d.get('weekday'), 0)} {fmt(d.get('date'), 0)}"
+            if d.get("hours_covered") is not None and int(d.get("hours_covered")) < 24:
+                day_label += " (partial)"
+            add(f"| {day_label} | {fmt(d.get('high_f'))} | {fmt(d.get('low_f'))} | "
+                f"{fmt(d.get('humidity_pct'))} | {fmt(d.get('rain_chance_pct'))} | "
+                f"{fmt(d.get('rain_amount_in'))} | {fmt(d.get('wind_max_mph'))} | "
+                f"{fmt(d.get('gust_max_mph'))} | {fmt(d.get('hours_covered'), 0)} |")
+        add("")
+        add(f"- **Window counts (plain thresholds, not an NWS product):** "
+            f"{fmt(ntf.get('summary_sentence'), 0)}")
+        add(f"- **Rule:** {fmt(ntf.get('rules_text'), 0)}")
+        add(f"- **Partial-day rule:** {fmt(ntf.get('partial_day_note'), 0)}")
+        add(f"- **Scoreboard context:** {fmt(ntf.get('season_sentence'), 0)}")
+        srcs = " \u00b7 ".join(f"[{x.get('label')}]({x.get('url')})"
+                              for x in (ntf.get("sources") or []) if x.get("url"))
+        if srcs:
+            add(f"- **Verify:** {srcs}")
+    else:
+        add(f"- **Not published in this snapshot:** {fmt(ntf.get('unavailable_note'), 0)}")
+        add(f"- **Scoreboard context:** {fmt(ntf.get('season_sentence'), 0)}")
+    add("")
 
     sb = s.get("scoreboard") or {}
     add("## Where the numbers come from, and how current they are")

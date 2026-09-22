@@ -1,7 +1,7 @@
 SFWeather verification ledger
-generated_utc: 2026-09-21T23:50:33Z
+generated_utc: 2026-09-22T00:50:27Z
 
-checks: 88 passed, 0 failed, 1 warning(s)  (of 89)
+checks: 90 passed, 0 failed, 1 warning(s)  (of 91)
 
 [PASS] provenance-present: A provenance manifest exists with fetches
         189 recorded fetches (187 unique URLs)
@@ -167,6 +167,8 @@ checks: 88 passed, 0 failed, 1 warning(s)  (of 89)
         253 of 266 entries trace to a recorded fetch; 8 labelled as pointers only
 [PASS] repair-numbers-traceable: Every number in the repair executive summary is re-derived from the dataset it claims to come from (no value appears in the summary that is not in its source)
         6 drivers and the rain, duration, wind+rain, gust, ocean and outlook blocks all match their source datasets
+[PASS] repair-near-term-traceable: The near-term block is the verified NWS window verbatim, plus counts under its published rule - never a forecast beyond the horizon
+        the window matches calendar.json day for day, with basis strings, and the counts and sentence re-compose exactly
 [PASS] repair-severity-and-rank-rule: Repair-cost drivers are ranked 1..N exactly once each and carry the published, rank-derived severity rule - not an undocumented guess
         6 drivers; severity is a pure function of rank (1-3 high, 4-5 medium, 6+ low)
 [PASS] repair-quotes-verbatim: Every sentence the repair summary attributes to NOAA is a whitespace-collapsed substring of the file it names, and a sentence CPC rewrote is reported as not found rather than paraphrased
@@ -176,11 +178,13 @@ checks: 88 passed, 0 failed, 1 warning(s)  (of 89)
 [PASS] repair-render-contract: Every field the repair renderer reads exists in the published payload, and every container it writes exists in the page
         renderer and payload agree field by field
 [PASS] repair-printable-page-generated: The printable repair summary and its docs copy are generated from the payload: same stamp, same driver titles, and no number or URL that is not in a dataset
-        251 lines, every figure and link traced to the payload
+        272 lines, every figure and link traced to the payload
 [PASS] repair-links-official: Every link the repair summary publishes points at a vetted official host (no commercial provider, no unvetted domain)
-        18 URL(s) across the summary and its source ledger, all official
+        21 URL(s) across the summary and its source ledger, all official
 [PASS] repair-absence-labelled: A tier missing from this snapshot is published as absent with a note, so an empty card can never read as 'no risk'
         every optional block either carries figures or an explicit absence note
+[PASS] generator-outputs-declared: Every pipeline output is declared by its generator, and no undeclared file sits in the pipeline output area (the staging guard)
+        12 generators, 57 file(s) in the output area, all declared
 
 claims recorded: 21
 

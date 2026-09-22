@@ -85,3 +85,11 @@ jobs:
         run: python3 pipeline/ocean_wind.py --selftest
       - name: Repair & maintenance tier self-test (offline)
         run: python3 pipeline/repair_maintenance_summary.py --selftest
+      # The staging guard: the registry of what every pipeline step publishes
+      # must match the working tree, and its own failure modes must be
+      # falsified hermetically (defect 84 was caught by the ledger only after
+      # the fact; this makes the catch happen before the commit).
+      - name: Generator output contract (registry vs working tree)
+        run: python3 pipeline/generator_outputs.py
+      - name: Generator output contract self-test (offline, hermetic git)
+        run: python3 pipeline/generator_outputs.py --selftest

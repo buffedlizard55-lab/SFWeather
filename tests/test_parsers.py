@@ -3353,6 +3353,113 @@ check("ocean wind: the render fixture spans the declared window season by season
 
 
 
+# ---------------------------------------------------------------------------
+# The near-term window (repair tier): the only official day-by-day forecast.
+# Counts under the published plain-threshold rule, on hand-computable input.
+# ---------------------------------------------------------------------------
+import repair_maintenance_summary as rt  # noqa: E402
+import generator_outputs as genout  # noqa: E402
+
+section("near-term window counts (repair tier)")
+
+
+def _nt_day(date, hours, rain, gust):
+    return {"date": date, "weekday": "X", "hours_covered": hours, "high_f": 60,
+            "low_f": 55, "humidity_pct": 90.0, "rain_chance_pct": 10,
+            "rain_amount_in": rain, "wind_max_mph": 10.0, "gust_max_mph": gust,
+            "temp_basis": "t", "humidity_basis": "h", "rain_chance_basis": "p",
+            "rain_amount_basis": "r", "wind_basis": "w", "gust_basis": "g"}
+
+
+_wdays = [_nt_day("2026-09-21", 8, 0.02, 16.1),
+          _nt_day("2026-09-22", 24, 0.15, 32.0),
+          _nt_day("2026-09-23", 24, 0.30, 30.0)]
+_c = rt.near_term_counts(_wdays)
+check("near-term: the rain flag counts only days at/above the published 0.1 in",
+      _c["days_with_rain"] == 2, json.dumps(_c))
+check("near-term: the gust flag includes the boundary (both 32.0 and 30.0 mph)",
+      _c["days_with_strong_wind"] == 2 and _c["days_with_rain_and_strong_wind"] == 2,
+      json.dumps(_c))
+check("near-term: the window rain total is the sum of the published day values",
+      _c["window_rain_total_in"] == round(0.02 + 0.15 + 0.30, 3) == 0.47,
+      str(_c["window_rain_total_in"]))
+check("near-term: covered hours sum across the partial first day",
+      _c["hours_covered_total"] == 56, str(_c["hours_covered_total"]))
+check("near-term: wettest day and peak gust are named with their dates",
+      _c["wettest_day"] == {"date": "2026-09-23", "rain_amount_in": 0.30}
+      and _c["peak_gust"] == {"date": "2026-09-22", "gust_max_mph": 32.0}, json.dumps(_c))
+check("near-term: the thresholds are published in the rule and the counts",
+      _c["rain_flag_in"] == rt.NEAR_TERM_RAIN_FLAG_IN == 0.1
+      and _c["gust_flag_mph"] == rt.NEAR_TERM_GUST_FLAG_MPH == 30
+      and ">= 0.1 in" in rt.NEAR_TERM_RULE_TEXT
+      and ">= 30 mph" in rt.NEAR_TERM_RULE_TEXT
+      and "not an NWS product" in rt.NEAR_TERM_RULE_TEXT,
+      rt.NEAR_TERM_RULE_TEXT[:120])
+
+_cf = {"first_day": "2026-09-21", "last_day": "2026-09-23", "horizon_days": 3}
+_sent = rt.compose_near_term_sentence(_cf, _c)
+check("near-term: the sentence names the window, the counts and the joint days",
+      "2026-09-21 through 2026-09-23" in _sent
+      and "(3 local days; 56 grid hours" in _sent
+      and "2 of 3 days carry rain >= 0.1 in" in _sent
+      and "2 of them have rain and strong wind on the same day." in _sent, _sent)
+
+_dry = [_nt_day("2026-09-21", 8, 0.0, 10.0), _nt_day("2026-09-22", 24, 0.05, 12.0)]
+_cd = rt.near_term_counts(_dry)
+_sd = rt.compose_near_term_sentence(_cf, _cd)
+check("near-term: a dry window publishes no wettest day and says so plainly",
+      _cd["days_with_rain"] == 0 and _cd["wettest_day"] is None
+      and "No day in this window carries rain >= 0.1 in" in _sd
+      and "No day has rain and strong wind on the same day." in _sd, _sd)
+
+_tie = [_nt_day("2026-10-01", 24, 0.2, 31.0), _nt_day("2026-10-02", 24, 0.2, 31.0)]
+_ct = rt.near_term_counts(_tie)
+check("near-term: a tie reports the earlier day, so the rule is deterministic",
+      _ct["wettest_day"]["date"] == "2026-10-01"
+      and _ct["peak_gust"]["date"] == "2026-10-01", json.dumps(_ct))
+
+_nt_es = {"official_outlook": {"daily_forecast": {
+    "days_in_this_scoreboard_with_a_real_forecast": 0,
+    "official_horizon_ends": "2026-09-28"}},
+    "season_window": "October 1, 2026 - January 31, 2027 (123 days)"}
+for _label, _cf2, _avail in (
+        ("no product", None, False),
+        ("no daily periods",
+         {"first_day": None, "last_day": None, "horizon_days": 0, "days": []}, False),
+        ("a window",
+         dict(_cf, days=_wdays, forecast_updated="2026-09-21T20:26:08+00:00",
+              inside_season_window=False,
+              sources=[{"label": "L",
+                        "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly"}]),
+         True)):
+    _blk = rt.build_near_term_forecast(
+        ({"current_forecast": _cf2} if _cf2 is not None else {}), _nt_es, 123)
+    check("near-term (%s): the block is published %s" %
+          (_label, "with the window" if _avail else "as absent with a note"),
+          _blk["available"] is _avail
+          and _blk["days"] == ([rt.near_term_day_fields(d) for d in _wdays]
+                               if _avail else [])
+          and (_avail or bool(_blk["unavailable_note"]))
+          and (not _avail or _blk["summary_sentence"] is not None),
+          json.dumps({k: _blk[k] for k in ("available", "status")}))
+
+check("near-term (no product): the absence note says nothing is substituted",
+      "Nothing is substituted" in rt.build_near_term_forecast({}, _nt_es, 5)["unavailable_note"],
+      "")
+
+section("generator output contract (staging guard, defect-84 class)")
+_reg = genout.resolve(pathlib.Path(ROOT))
+check("generator outputs: the registry covers every pipeline step",
+      len(genout.GENERATORS) >= 11 and len(_reg[0]) >= 40,
+      "%d steps, %d resolved paths" % (len(genout.GENERATORS), len(_reg[0])))
+_gop = genout.problems(pathlib.Path(ROOT))
+check("generator outputs: the committed state satisfies the contract",
+      _gop == [], "; ".join(_gop[:3]))
+check("generator outputs: the defect-84 regression path (docs copy) is registered",
+      "docs/REPAIR_MAINTENANCE_EXECUTIVE_SUMMARY.md" in genout.GENERATORS["repair"]["outputs"],
+      str(genout.GENERATORS["repair"]["outputs"]))
+
+
 passed = sum(1 for _n, ok, _d in RESULTS if ok)
 failed = [(n, d) for n, ok, d in RESULTS if not ok]
 print("\n%d/%d checks passed" % (passed, len(RESULTS)))

@@ -77,7 +77,8 @@ const REQUIRED_SECTIONS = [
   '#streak-table', '#streak-chart', '#wind-table', '#gust-table', '#storm-summary',
   '#provenance', '#nws-verification-body', '#cpc-backtest-body', '#digest-body',
   '#model-guidance-body', '#feed-body',
-  '#verify-body', '#quality-report', '#caveats'
+  '#verify-body', '#quality-report', '#caveats',
+  '#repair-near-term', '#repair-near-term-body'
 ];
 
 setTimeout(() => {
@@ -1226,6 +1227,7 @@ setTimeout(() => {
       ['#repair-watch', doc.querySelector('#repair-watch')],
       ['#repair-drivers-compact', doc.querySelector('#repair-drivers-compact')],
       ['#repair-forecast-body', doc.querySelector('#repair-forecast-body')],
+      ['#repair-near-term-body', doc.querySelector('#repair-near-term-body')],
       ['#repair-sunset-body', doc.querySelector('#repair-sunset-body')],
       ['#repair-sources', doc.querySelector('#repair-sources')]
     ];
@@ -1244,6 +1246,7 @@ setTimeout(() => {
       const watch = doc.querySelector('#repair-watch');
       const driversHost = doc.querySelector('#repair-drivers-compact');
       const fcBody = doc.querySelector('#repair-forecast-body');
+      const ntBody = doc.querySelector('#repair-near-term-body');
       const sunsetBody = doc.querySelector('#repair-sunset-body');
       const sourcesHost = doc.querySelector('#repair-sources');
       const published = !!(rep && rep.executive_headline && rep.expected_rain);
@@ -1346,6 +1349,59 @@ setTimeout(() => {
         const osp = rep.outer_sunset_profile || {};
         if (osp.neighborhood && !flat(sunsetBody).includes(osp.neighborhood)) {
           problems.push('the repair sunset table does not name the neighborhood');
+        }
+        // 37. The near-term block: the only official day-by-day forecast on the
+        //     page.  It must render every verified window day, the published
+        //     summary sentence and rule, and its official source links - and
+        //     when the product is empty it must say the block is unpublished,
+        //     not render blank (an empty card reads as "no risk").
+        if (!rep.near_term_forecast) {
+          problems.push('the repair payload does not publish the near-term block');
+        } else {
+          const ntf = rep.near_term_forecast;
+          const ntText = flat(ntBody);
+          if (ntf.available) {
+            const rows = doc.querySelectorAll('#repair-near-term-body tbody tr');
+            if (rows.length !== (ntf.days || []).length) {
+              problems.push('the repair near-term table rendered ' + rows.length +
+                ' of ' + (ntf.days || []).length + ' verified window day(s)');
+            }
+            (ntf.days || []).forEach(d => {
+              if (d.date && !ntText.includes(String(d.date))) {
+                problems.push('the repair near-term table omits a verified window day (' +
+                  d.date + ')');
+              }
+            });
+            if (ntf.summary_sentence && !ntText.includes(ntf.summary_sentence)) {
+              problems.push('the repair near-term block omits the published window summary sentence');
+            }
+            if (ntf.rules_text && !ntText.includes(ntf.rules_text)) {
+              problems.push('the repair near-term block omits the published plain-threshold rule');
+            }
+            (ntf.sources || []).forEach(s => {
+              if (!s.url) return;
+              if (!Array.from(ntBody.querySelectorAll('a[href]'))
+                .some(a => a.getAttribute('href') === s.url)) {
+                problems.push('a near-term window source link is missing: ' + (s.label || s.url));
+              }
+            });
+            Array.from(ntBody.querySelectorAll('a[href]')).forEach(a => {
+              const href = a.getAttribute('href') || '';
+              if (!/^https:\/\/[^/]*(noaa\.gov|weather\.gov|census\.gov)(\/|$)/.test(href)) {
+                problems.push('the repair near-term block links a host that is not an official source: ' + href);
+              }
+            });
+            ['\u2014', 'undefined', 'NaN', 'null'].forEach(tok => {
+              if (ntText.includes(tok)) {
+                problems.push('the repair near-term block renders "' + tok +
+                  '" where a published value belongs');
+              }
+            });
+          } else {
+            if (!/not published|not available|no near-term day-by-day forecast/i.test(ntText)) {
+              problems.push('the repair near-term block is absent but does not say it is unpublished');
+            }
+          }
         }
         const links = Array.from(sourcesHost.querySelectorAll('a[href]'));
         const wanted = (rep.sources_list || []).length || Object.keys(rep.sources || {}).length;

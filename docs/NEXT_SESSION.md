@@ -1,5 +1,80 @@
 # Next session — handoff
 
+## 1. State at the end of session 19 (21 Sep 2026 — the near-term window, verbatim; the staging guard)
+
+**Ledger:** 90 checks, 21 claims — 90 pass, 0 fail, 1 standing warning
+(`docs-current-dates-traceable` on one September date in bug-history prose;
+benign). `tests/test_parsers.py` 501/501. `tests/falsify_guards.py` 115/115.
+`tests/falsify_smoke.py` 62/62. `pipeline/repair_maintenance_summary.py
+--selftest` 59/59. `pipeline/generator_outputs.py --selftest` 13/13.
+`npm test` passes.
+
+**What session 19 changed:**
+
+1. **Near-term window on the repair tier (schema 2 → 3).** The page now
+   publishes the *only* official day-by-day forecast that exists — the NWS
+   gridpoint window — as a "The next few days" card under the repair hero.
+   `pipeline/repair_maintenance_summary.py` publishes a
+   `near_term_forecast` block: the verified window copied verbatim from
+   `calendar.json`'s `current_forecast` (per day: high/low, humidity,
+   rain chance, rain amount, max wind, peak gust, grid hours covered, and
+   each field's own basis string), window counts under a published
+   plain-threshold rule (rain >= 0.1 in, gust >= 30 mph, "together" = both,
+   printed on the page next to the numbers), and one plain summary sentence
+   published as a unit. In the 21 Sep 2026 data state: 2026-09-21 through
+   2026-09-28, 8 local days, 156 grid hours, 0.0 in, peak gust 19.6 mph
+   (2026-09-25). First/last days are partial (the hourly grid starts and
+   ends mid-day) and the note is part of the block. If the NWS fetch fails,
+   the block is published as *unavailable with a note* — never climatology,
+   never model data, never a throw.
+   * Verified by: `verify_claims.py` §12m `repair-near-term-traceable`
+     (independent recompute of every day, the counts, the sentence, the
+     window geometry, the source links, and the printable page — incl. the
+     unavailable state and its note), the render contract's `ntf` alias,
+     `tests/smoke.js` guard 37, 8 new `tests/falsify_guards.py` cases,
+     5 new `tests/falsify_smoke.py` cases, near-term unit tests in
+     `tests/test_parsers.py`, and 12 new `selftest_repair_tier.py` checks.
+     See `docs/LIMITATIONS.md` §29 for what the block does and does not
+     reach (nothing beyond the NWS horizon; the window shifts each
+     issuance).
+2. **Generator output contract — the staging guard (the defect-84 class,
+   closed before the commit instead of after).** New
+   `pipeline/generator_outputs.py`: a registry of the twelve pipeline steps
+   and every file each writes (31 fixed outputs, 7 optional, 2 globs), plus
+   `problems(root, after_stage)`. Enforced three ways: every ledger pass
+   (`generator-outputs-declared` — a registered output missing or an
+   unregistered file in the output area **fails the build**, so a broken run
+   cannot silently shrink to a shorter green check list; verified absent
+   state = 80 pass / 1 fail / 2 warnings), the nightly workflow (hard gate
+   `GENERATOR_OUTPUTS_EXIT=0` in `STEPS_OK`, and `--after-stage` after
+   `git add -A` on the publish branch — missing, stray, or unstaged output
+   refuses the publish), and the parsers job on every push. Allowlisted as
+   shell/hand-written: `data/README.md`, `pipeline_run.log`.
+   * Two CI-only defects were found in the *new* code by its own hermetic
+     self-test, not by CI: defect 85 (the nightly shell's `pipeline_run.log`
+     is unregistered and would refuse every publish — fixed by the
+     allowlist, log still scanned by content checks) and defect 86
+     (porcelain off-by-one — index 2 is always the separating space in
+     `XY PATH`; a fully-staged nightly state was silently flagged; the
+     check now reads index 1, the Y column). `docs/VERIFICATION.md` has the
+     full table; `docs/LIMITATIONS.md` §30 has the guard's scope and its
+     edges (it covers files the pipeline *writes*, not the whole repo).
+
+**First live exercise of both is the next nightly run** (the sandbox has no
+NOAA access; everything above was run offline). When reviewing that run:
+the ledger line should read 90 pass / 0 fail / 1 warning, and the commit
+step should show `generator output contract: 12 steps, 31 fixed output(s),
+7 optional, …` followed by `contract holds` *and* the after-stage
+assertion passing after `git add -A`.
+
+**Remaining / Limitations:** see `docs/LIMITATIONS.md` §29–§30. Open items
+unchanged plus the new first-live-run check: the NCEI successor archives
+(GHCNh/SSODv2 — a maintainer decision that would move every published wind
+statistic), the CPC back-test pending its per-issuance backfill from the
+Oct-1995 archive index, multi-ZIP support (front-end only; the pipeline is
+already coordinate-parameterised), and the first live nightly run of the
+staging guard and the near-term block.
+
 ## 1. State at the end of session 18 (21 Sep 2026 — repair tier schema v2, render guard 36, tier wired into CI)
 
 **Ledger:** 88 checks, 21 claims — all pass (1 standing warning: `docs-current-dates-traceable`

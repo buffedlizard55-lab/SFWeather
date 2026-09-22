@@ -1481,3 +1481,119 @@ taken from a dataset. This pass closes those holes.
   that would move every published wind statistic), the CPC back-test pending its
   per-issuance backfill, multi-ZIP support (front-end only; the pipeline is already
   coordinate-parameterised), and the first nightly run of the newly wired tier.
+
+## Session 19 — 21 September 2026 (pass 19): the next few days, verbatim; the staging guard
+
+The request asks for the current forecast for 94122 *and* the per-day
+scoreboard for October 2026 through January 2027. The scoreboard satisfies the
+second half as the 1991–2020 observed record (no day inside that window
+carries a real forecast in the 21 Sep 2026 data state — the official NWS
+horizon ended 2026-09-28), and the site says so. But nothing on the page put
+the *only* official day-by-day forecast — the NWS grid window — into the
+executive story the landlord reads first. And the defect-84 class of bug (a
+generated file the nightly commit does not stage, so the tracked copy silently
+lags the run) was still caught by the ledger *after* the fact instead of
+refused *before* the commit. This pass fixes both.
+
+### What was added
+
+1. **The near-term block on the repair tier (schema 2 → 3).**
+   `pipeline/repair_maintenance_summary.py` now publishes a
+   `near_term_forecast` block: the verified NWS window copied verbatim from
+   `calendar.json`'s `current_forecast` — every day's high/low, humidity,
+   rain chance, rain amount, max wind, peak gust, the number of grid hours
+   that local day actually covers, and each field's own basis string — plus
+   window counts under a published plain-threshold rule (the `rules_text` is
+   printed on the page: a day "carries rain" at >= 0.1 in, "carries strong
+   wind" at >= 30 mph, "together" requires both on the same day), and one
+   plain summary sentence that is published as a unit. The first and last
+   local days are partial — the hourly grid starts and ends mid-day — and the
+   note saying so is part of the block. If the NWS fetch fails, the block is
+   published as **unavailable with a note**; the tier never substitutes
+   climatology or model data and never throws. In the 21 Sep 2026 data state
+   the window is 2026-09-21 through 2026-09-28 (8 local days, 156 grid hours,
+   0.0 in rain, peak gust 19.6 mph on 2026-09-25).
+2. **The generator output contract (the staging guard).**
+   `pipeline/generator_outputs.py` — a registry of the twelve pipeline steps
+   and every file each one writes (31 fixed outputs, 7 optional outputs a
+   step may legitimately skip, 2 glob patterns for archives whose count
+   varies per run), plus `problems(root, after_stage)`: no registered output
+   may be missing, no unregistered file may exist in the pipeline output area
+   (`data/`, `assets/cpc/`, `assets/model_guidance/`, the repair tier's
+   `docs/` copy, the root run log), and in `--after-stage` mode (run after
+   the commit step's `git add`) nothing in that area may be left unstaged.
+   Two files are allowlisted as written by the nightly *shell* rather than a
+   registered generator: `data/README.md` (hand-maintained) and
+   `pipeline_run.log` (the workflow's own output redirect — it exists in CI
+   and not in a dev checkout; see defect 85). `--selftest` runs thirteen
+   offline checks in a hermetic git tree, including a fully-staged nightly
+   state that must pass and an unstaged one that must fail.
+3. **Wiring.** `update-data.yml` runs the contract after the ledger — a hard
+   gate, `STEPS_OK` now requires `GENERATOR_OUTPUTS_EXIT=0` as well as
+   `CLAIMS_EXIT=0` — and on the publish branch runs `--after-stage` after
+   `git add -A`: a state where a generated file is missing, or an
+   ungenerated file is about to be committed, refuses the publish. The
+   refused-publish branch (bad fetch → diagnostics commit) deliberately skips
+   the assertion. `site-test.yml`'s parsers job runs the contract and its
+   self-test on every push.
+4. **The ledger.** §12m gains `repair-near-term-traceable`: it recomputes
+   every day's values from `calendar.json` (hourly aggregation, QPF interval
+   allocation to local days, basis strings included), recomputes the counts
+   and the sentence from the published rule, checks the window geometry
+   against the same anchor the calendar uses, checks the source links are the
+   NWS ones, and checks the printable page carries the section, the rules
+   text, and — when the block is unavailable — the unavailable note; the
+   block must be available exactly when the verified window has days. The
+   render contract now covers the near-term keys (alias `ntf`). And
+   `generator-outputs-declared` runs in every ledger pass, so a run that
+   failed to produce a registered output **fails the build** (verified: with
+   the repair artifact removed the ledger reports 80 passed / 1 failed /
+   2 warnings — the guard refuses the broken run instead of silently
+   shrinking to a shorter, green check list).
+5. **Front end.** A "The next few days" card under the repair hero
+   (`index.html` `#repair-near-term`): a table of the window (day, high/low,
+   humidity, rain chance, rain amount, wind, peak gust, grid hours covered)
+   with each field's basis string beside it, the rule text, the plain summary
+   sentence, the partial-day note, the season sentence, and the official
+   source links. `tests/smoke.js` guard 37 fails if the block is unpublished,
+   if a window day is missing from the table, if the summary sentence or the
+   rules text is absent, or if a source link is not on an official host.
+
+### Defects found and fixed
+
+| # | Symptom | Root cause | Fix |
+| --- | --- | --- | --- |
+| 85 | On the first CI run the staging guard would refuse **every** publish: `pipeline_run.log` — created by the nightly shell's own output redirect, not by any registered generator — sat in the repo root unregistered | The contract was written and tested against the dev checkout, where the log does not exist; the nightly shell creates it in CI, so only CI could see it | `pipeline_run.log` is allowlisted as a shell-written file (it is still *scanned* by the content checks — allowlisting a file from the generator contract does not exempt it from them); the self-test now copies the log into the tree to reproduce the nightly condition |
+| 86 | A fully-staged nightly state (`M ` / `A ` porcelain entries) was silently flagged as "staged but unregistered", so the guard would have refused every correct publish — while passing on the dev tree, where the tree is clean and there is nothing to flag | Off-by-one on `git status --porcelain` columns: the first fix checked index 2, which in the `XY PATH` format is always the separating space | The check reads index 1 (the Y, worktree, column), so `M `/`A ` pass and ` M`/`MM`/`??` fail; the hermetic self-test case that caught it stages a changed nightly state and asserts both outcomes |
+
+### What could not be run here
+
+The sandbox still has no NOAA access, so the live-fetch tiers run on CI as
+always; the staging guard's first live exercise is the next nightly run.
+Everything else ran locally: the ledger, the tier and generator-contract
+self-tests, both falsification harnesses, and `npm test`.
+
+### Standings after this pass
+
+* `pipeline/verify_claims.py`: **90 checks pass, 0 fail, 1 standing warning**,
+  21 claims. The warning is the pre-existing benign
+  `docs-current-dates-traceable` on one September date in bug-history prose.
+* `tests/test_parsers.py`: **501/501** (near-term derivation and
+  generator-contract cases added).
+* `tests/falsify_guards.py`: **115 cases** behave as expected (8 new: a
+  hand-edited window day's rain amount, a window count that no longer
+  recomposes from the data, a hand-rewritten summary sentence, a claimed
+  window the dataset no longer has, a stripped unavailable note, a day
+  stripped of its field basis strings, a window source link on a non-official
+  host, and a renamed near-term key).
+* `tests/falsify_smoke.py`: **62 cases** behave as expected (5 new, guard 37).
+* `pipeline/repair_maintenance_summary.py --selftest`: **59/59**.
+* `pipeline/generator_outputs.py --selftest`: **13/13** (hermetic git).
+* `npm test`: passes.
+* Reproducibility: `data/repair_maintenance_summary.json` (schema 3) and both
+  printable copies regenerate from the committed datasets with stamp
+  2026-09-21T23:44:59Z.
+* Still open: the NCEI successor archives (GHCNh/SSODv2 — a maintainer
+  decision that would move every published wind statistic), the CPC back-test
+  pending its per-issuance backfill, multi-ZIP support (front-end only), and
+  the first live nightly run of the staging guard.

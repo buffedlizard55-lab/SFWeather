@@ -3433,6 +3433,156 @@ def main() -> int:
             evidence={"problems": num_problems[:10], "checked": len(num_pairs) + 12,
                       "published_drivers": len(drv_pub)})
 
+        # ---- the next few days: the only official day-by-day forecast ------
+        # The block republishes the NWS window verbatim from calendar.json's
+        # current_forecast (per-day values AND each field's basis string) and
+        # adds window counts under the tier's published plain-threshold rule.
+        # Both are recomputed here independently and must match exactly; an
+        # unavailable block must say so, and it may not be unavailable when the
+        # verified window has days (nor available when it does not).
+        ntf = r_now.get("near_term_forecast")
+        nt_problems = []
+        if not isinstance(ntf, dict):
+            nt_problems.append("the near-term block is not published in the repair payload")
+        else:
+            cf = cal.get("current_forecast") or {}
+            cf_days = cf.get("days") or []
+            cf_srcs = cf.get("sources") or []
+            if ntf.get("available"):
+                if not cf_days or not cf.get("first_day"):
+                    nt_problems.append(
+                        "the near-term block claims availability but calendar.json's "
+                        "current_forecast carries no days")
+                else:
+                    pub_days = ntf.get("days") or []
+                    if [d.get("date") for d in pub_days] != [d.get("date") for d in cf_days]:
+                        nt_problems.append(
+                            "the near-term day list does not match the verified NWS "
+                            "window day for day")
+                    else:
+                        for pd, cd in zip(pub_days, cf_days):
+                            for k in ("weekday", "hours_covered", "high_f", "low_f",
+                                      "humidity_pct", "rain_chance_pct",
+                                      "rain_amount_in", "wind_max_mph",
+                                      "gust_max_mph", "temp_basis",
+                                      "humidity_basis", "rain_chance_basis",
+                                      "rain_amount_basis", "wind_basis",
+                                      "gust_basis"):
+                                if pd.get(k) != cd.get(k):
+                                    nt_problems.append(
+                                        f"near-term day {cd.get('date')}: published "
+                                        f"{k}={pd.get(k)!r} but calendar.json carries "
+                                        f"{cd.get(k)!r}")
+                                    break
+                    c = ntf.get("counts") or {}
+
+                    def _w(d):
+                        v = d.get("rain_amount_in")
+                        return v is not None and float(v) >= repair_lib.NEAR_TERM_RAIN_FLAG_IN
+
+                    def _g(d):
+                        v = d.get("gust_max_mph")
+                        return v is not None and float(v) >= repair_lib.NEAR_TERM_GUST_FLAG_MPH
+
+                    wet = [d for d in cf_days if _w(d)]
+                    gust_days = [d for d in cf_days if d.get("gust_max_mph") is not None]
+                    best_rain = max((float(d["rain_amount_in"]) for d in wet), default=None)
+                    best_gust = max((float(d["gust_max_mph"]) for d in gust_days), default=None)
+                    want = {
+                        "days_total": len(cf_days),
+                        "hours_covered_total": sum(int(d.get("hours_covered") or 0)
+                                                   for d in cf_days),
+                        "window_rain_total_in": round(
+                            sum(float(d.get("rain_amount_in") or 0.0) for d in cf_days), 3),
+                        "days_with_rain": len(wet),
+                        "days_with_strong_wind": sum(1 for d in cf_days if _g(d)),
+                        "days_with_rain_and_strong_wind":
+                            sum(1 for d in cf_days if _w(d) and _g(d)),
+                        "wettest_day": (
+                            {"date": next(x for x in wet
+                                          if float(x["rain_amount_in"]) == best_rain)["date"],
+                             "rain_amount_in":
+                             next(x for x in wet
+                                  if float(x["rain_amount_in"]) == best_rain)["rain_amount_in"]}
+                            if wet else None),
+                        "peak_gust": (
+                            {"date": next(x for x in gust_days
+                                          if float(x["gust_max_mph"]) == best_gust)["date"],
+                             "gust_max_mph":
+                             next(x for x in gust_days
+                                  if float(x["gust_max_mph"]) == best_gust)["gust_max_mph"]}
+                            if gust_days else None),
+                    }
+                    for k, v in want.items():
+                        if c.get(k) != v:
+                            nt_problems.append(
+                                f"near-term counts.{k} = {c.get(k)!r} but the verified "
+                                f"window gives {v!r}")
+                    want_sentence = repair_lib.compose_near_term_sentence(cf, {
+                        "hours_covered_total": want["hours_covered_total"],
+                        "days_total": want["days_total"],
+                        "days_with_rain": want["days_with_rain"],
+                        "window_rain_total_in": want["window_rain_total_in"],
+                        "rain_flag_in": repair_lib.NEAR_TERM_RAIN_FLAG_IN,
+                        "wettest_day": want["wettest_day"],
+                        "days_with_strong_wind": want["days_with_strong_wind"],
+                        "gust_flag_mph": repair_lib.NEAR_TERM_GUST_FLAG_MPH,
+                        "peak_gust": want["peak_gust"],
+                        "days_with_rain_and_strong_wind":
+                            want["days_with_rain_and_strong_wind"],
+                    })
+                    if ntf.get("summary_sentence") != want_sentence:
+                        nt_problems.append("the near-term summary sentence does not "
+                                            "recompose from the verified window")
+                    if (ntf.get("first_day") != cf.get("first_day")
+                            or ntf.get("last_day") != cf.get("last_day")
+                            or ntf.get("horizon_days") != cf.get("horizon_days")
+                            or ntf.get("forecast_updated") != cf.get("forecast_updated")
+                            or ntf.get("inside_season_window")
+                            != cf.get("inside_season_window")):
+                        nt_problems.append("the near-term window geometry does not "
+                                            "match calendar.json's current_forecast")
+                    if (ntf.get("source_url")
+                            != (cf_srcs[0].get("url") if cf_srcs else None)
+                            or ntf.get("sources") != cf_srcs):
+                        nt_problems.append("the near-term source links do not match "
+                                            "the verified window's recorded sources")
+                    nt_md = DATA / "repair_maintenance_executive.md"
+                    if nt_md.exists():
+                        nt_md_text = nt_md.read_text(encoding="utf-8")
+                        if any(str(d.get("date")) not in nt_md_text for d in cf_days):
+                            nt_problems.append("the printable near-term page drops a "
+                                                "window day")
+                        if ntf.get("summary_sentence") \
+                                and ntf["summary_sentence"] not in nt_md_text:
+                            nt_problems.append("the printable page does not carry the "
+                                                "near-term summary sentence")
+                        if ntf.get("rules_text") and ntf["rules_text"] not in nt_md_text:
+                            nt_problems.append("the printable page does not carry the "
+                                                "near-term rule")
+            else:
+                if cf_days:
+                    nt_problems.append(
+                        "calendar.json carries a verified NWS window but the near-term "
+                        "block says it is unavailable")
+                if not ntf.get("unavailable_note"):
+                    nt_problems.append("the near-term block is unavailable and carries "
+                                        "no note")
+                nt_md = DATA / "repair_maintenance_executive.md"
+                if nt_md.exists() and ntf.get("unavailable_note") \
+                        and ntf["unavailable_note"][:40] not in nt_md.read_text(encoding="utf-8"):
+                    nt_problems.append("the printable page does not say the near-term "
+                                        "block is unpublished")
+        ledger.check(
+            "repair-near-term-traceable",
+            "The near-term block is the verified NWS window verbatim, plus counts "
+            "under its published rule - never a forecast beyond the horizon",
+            not nt_problems,
+            ("the window matches calendar.json day for day, with basis strings, and "
+             "the counts and sentence re-compose exactly"
+             if not nt_problems else "; ".join(nt_problems[:6])),
+            evidence={"problems": nt_problems[:8]})
+
         # ---- severity and rank rule ----------------------------------------
         rank_problems = []
         ranks = [d.get("rank") for d in drv_pub]
@@ -3590,7 +3740,7 @@ def main() -> int:
                 "hp": "cpc_tilt/highest_probability", "sb": "scoreboard",
                 "cond": "enso_conditioned", "ph": "rain_duration/phase_conditioned",
                 "cx": "currency", "osp": "outer_sunset_profile",
-                "coordinate": "coordinates",
+                "coordinate": "coordinates", "ntf": "near_term_forecast",
             }
             unresolved = []
             for am in _re.finditer(r"\b([A-Za-z_][\w]*)\.([A-Za-z_][\w.]*)", body):
@@ -3657,6 +3807,11 @@ def main() -> int:
             number = r"(?<![\d.])-?\d+(?:\.\d+)?"
             json_values = {float(t) for t in _re.findall(number, json_text)}
             md_plain = _re.sub(r"(?<=\d),(?=\d{3}\b)", "", md_text)
+            # URLs are checked separately (every one must appear in a dataset);
+            # their digit runs are coordinates or product ids, not figures.
+            # Without this, "gridpoints/MTR/82,105" reads as 82105 after the
+            # thousands-separator strip and fails as an invented number.
+            md_plain = _re.sub(r"https?://\S+", "", md_plain)
             orphan = sorted({float(t) for t in _re.findall(number, md_plain)} - json_values)
             if orphan:
                 md_problems.append(f"number(s) on the printable page appear in no dataset: {orphan[:6]}")
@@ -3747,6 +3902,29 @@ def main() -> int:
             verified=True,
             cross_check={"station": _get(es_rep, "wind_and_rain_hourly/station_id"),
                          "threshold_kt": _get(es_rep, "wind_and_rain_hourly/wind_threshold_kt")})
+
+    # ------------------------------------ 12n. generator output contract ----
+    # Defect 84 (21 Sep 2026) was a *staging* bug the ledger could only catch
+    # after the fact: the nightly commit staged data/ and assets/ but not the
+    # repair tier's docs copy, so the tracked page kept the previous stamp.
+    # pipeline/generator_outputs.py declares, per step, every file the pipeline
+    # publishes, and the nightly workflow runs its check before the commit
+    # gate (and --after-stage inside the commit step itself).  This ledger
+    # check runs the same contract against the committed state, so a push that
+    # introduces an undeclared output - or deletes a registered one - fails CI
+    # before it can be served, and the Verification section shows it.
+    import generator_outputs as genout  # noqa: E402
+    genout_problems = genout.problems(ROOT)
+    ledger.check(
+        "generator-outputs-declared",
+        "Every pipeline output is declared by its generator, and no undeclared "
+        "file sits in the pipeline output area (the staging guard)",
+        not genout_problems,
+        (f"{len(genout.GENERATORS)} generators, "
+         f"{len(genout._walk_scope(ROOT))} file(s) in the output area, all declared"
+         if not genout_problems else "; ".join(genout_problems[:4])),
+        evidence={"problems": genout_problems[:8],
+                  "generators": sorted(genout.GENERATORS)})
 
     # ------------------------------------------------------------- write out
     summary = ledger.summary()
