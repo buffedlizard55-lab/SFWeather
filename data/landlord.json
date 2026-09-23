@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-22T12:41:42Z",
+  "generated_utc": "2026-09-23T12:51:12Z",
   "target": {
     "zip": "94122",
     "label": "San Francisco, CA 94122 (Sunset District \u2014 Inner and Outer Sunset)",
@@ -51,7 +51,7 @@
         "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
         "benchmark": "Public_AR_Current",
         "vintage": "Current_Current",
-        "retrieved_utc": "2026-09-22T12:38:43Z",
+        "retrieved_utc": "2026-09-23T12:46:56Z",
         "sha256": "407ce6bb637e8c512b1ad551ad96a709d1be46102e3ab5ed9d2dc8120cb517c0",
         "naming_note": "The county subdivision the Census returns for this point is its official name for the Sunset District. \"Outer Sunset\" and \"Inner Sunset\" are local names for the western and eastern halves of the district and have no federal boundary, so this project publishes the official geography and the exact coordinate instead of asserting one of them."
       }
@@ -704,7 +704,7 @@
       ]
     },
     "record_coverage": {
-      "as_of": "2026-09-22",
+      "as_of": "2026-09-23",
       "normals_period": [
         1991,
         2020
@@ -713,7 +713,7 @@
         {
           "area": "rain_temp",
           "label": "GHCN-Daily USW00023272 (rain, daily high/low)",
-          "last_date": "2026-09-19",
+          "last_date": "2026-09-20",
           "age_days": 3,
           "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
           "note": "Daily summaries, so this is the most current of the three archives."
@@ -722,7 +722,7 @@
           "area": "wind",
           "label": "GSOD 72494023234 (daily wind and gusts, 00-24Z)",
           "last_date": "2025-08-27",
-          "age_days": 391,
+          "age_days": 392,
           "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
           "note": "RETIRED 2025-08-29 (NCEI); successor is SSODv2. Annual files; GSOD cannot be more current than the ISD hourly file it is derived from."
         },
@@ -730,7 +730,7 @@
           "area": "isd_hourly",
           "label": "ISD hourly 72494023234 (hour-by-hour wind and precipitation)",
           "last_date": "2025-08-27",
-          "age_days": 391,
+          "age_days": 392,
           "url": "https://www.ncei.noaa.gov/data/global-hourly/access/",
           "note": "RETIRED 2025-08-29 (NCEI); successor is GHCNh. Annual files of hourly observations."
         }
@@ -1919,7 +1919,7 @@
       },
       "daily_forecast": {
         "days_in_this_scoreboard_with_a_real_forecast": 0,
-        "official_horizon_ends": "2026-09-28"
+        "official_horizon_ends": "2026-09-29"
       },
       "prognostic_caveats": {
         "available": true,
@@ -3716,7 +3716,7 @@
     "station_id": "USW00023272",
     "station_name": "SAN FRANCISCO DOWNTOWN, CA US",
     "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-    "retrieved_utc": "2026-09-22T12:41:11Z",
+    "retrieved_utc": "2026-09-23T12:50:29Z",
     "dates_parsed": 366,
     "columns": {
       "normal_high_f": "DLY-TMAX-NORMAL",

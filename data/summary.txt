@@ -1,5 +1,5 @@
 SFWeather - rainy season digest
-generated_utc: 2026-09-22T12:41:42Z
+generated_utc: 2026-09-23T12:51:12Z
 target: 94122  centroid 37.7605, -122.4839  (verified=True) source=U.S. Census Bureau Gazetteer file (internal point / centroid)
 
 STATIONS

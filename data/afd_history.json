@@ -704,5 +704,59 @@
         "sentences": []
       }
     ]
+  },
+  {
+    "issuance_time": "2026-09-23T12:11:00+00:00",
+    "product_id": "cea8fd2b-c9d9-4b73-9382-59383c33df11",
+    "source_url": "https://api.weather.gov/products/cea8fd2b-c9d9-4b73-9382-59383c33df11",
+    "text_sha256": "d7c1f1359c7360bf8d20baa226734b2e1455127d29d69a3417d9eefe4295cf99",
+    "text_chars": 5359,
+    "sentences_scanned": 21,
+    "categories": [
+      {
+        "id": "atmospheric_river",
+        "label": "Atmospheric river / subtropical moisture plume",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "prolonged_rain",
+        "label": "Prolonged / multi-day rain",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "heavy_rain",
+        "label": "Heavy rain / flooding",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "strong_wind",
+        "label": "Strong wind / wind hazard",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "quoted_rainfall_amount",
+        "label": "An explicit rainfall amount in NWS's own text",
+        "sentence_count": 0,
+        "sentences": []
+      },
+      {
+        "id": "wind_and_rain_together",
+        "label": "Wind and rain in the same sentence",
+        "sentence_count": 1,
+        "sentences": [
+          {
+            "sentence": "Early look at next week shows no signal for precip or abnormally hot weather and no fall offshore wind events.",
+            "section": "LONG TERM",
+            "matched_patterns": [
+              "wind term and rain term in the same sentence"
+            ]
+          }
+        ]
+      }
+    ]
   }
 ]
