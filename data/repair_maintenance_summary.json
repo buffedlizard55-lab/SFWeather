@@ -1,6 +1,6 @@
 {
   "schema_version": "3",
-  "generated_utc": "2026-09-23T12:51:12Z",
+  "generated_utc": "2026-09-24T12:49:02Z",
   "built_from": {
     "datasets": [
       "landlord.json",
@@ -14,33 +14,33 @@
   },
   "sources_read": {
     "landlord.json": {
-      "build_stamp": "2026-09-23T12:51:12Z",
+      "build_stamp": "2026-09-24T12:49:02Z",
       "build_stamp_kind": "pipeline build stamp",
-      "content_as_of_utc": "2026-09-23T12:50:29Z",
+      "content_as_of_utc": "2026-09-24T12:48:25Z",
       "content_as_of_kind": "newest per-fetch retrieved_utc recorded in this file"
     },
     "calendar.json": {
-      "build_stamp": "2026-09-23T12:51:12Z",
+      "build_stamp": "2026-09-24T12:49:02Z",
       "build_stamp_kind": "pipeline build stamp",
-      "content_as_of_utc": "2026-09-23T12:50:40Z",
+      "content_as_of_utc": "2026-09-24T12:48:36Z",
       "content_as_of_kind": "newest per-fetch retrieved_utc recorded in this file"
     },
     "run.json": {
-      "build_stamp": "2026-09-23T12:51:12Z",
+      "build_stamp": "2026-09-24T12:49:02Z",
       "build_stamp_kind": "pipeline build stamp",
-      "content_as_of_utc": "2026-09-23T12:46:56Z",
+      "content_as_of_utc": "2026-09-24T12:45:05Z",
       "content_as_of_kind": "newest per-fetch retrieved_utc recorded in this file"
     },
     "cpc.json": {
       "build_stamp": null,
       "build_stamp_kind": "not carried by this file",
-      "content_as_of_utc": "2026-09-23T12:48:59Z",
+      "content_as_of_utc": "2026-09-24T12:47:05Z",
       "content_as_of_kind": "newest per-fetch retrieved_utc recorded in this file"
     },
     "enso.json": {
       "build_stamp": null,
       "build_stamp_kind": "not carried by this file",
-      "content_as_of_utc": "2026-09-23T12:49:05Z",
+      "content_as_of_utc": "2026-09-24T12:47:09Z",
       "content_as_of_kind": "newest per-fetch retrieved_utc recorded in this file"
     },
     "nws.json": {
@@ -51,20 +51,20 @@
     }
   },
   "currency": {
-    "artifact_generated_utc": "2026-09-23T12:51:12Z",
-    "oldest_source_utc": "2026-09-23T12:51:12Z",
-    "newest_source_utc": "2026-09-23T12:51:12Z",
+    "artifact_generated_utc": "2026-09-24T12:49:02Z",
+    "oldest_source_utc": "2026-09-24T12:49:02Z",
+    "newest_source_utc": "2026-09-24T12:49:02Z",
     "sources_disagreeing": [],
     "sources_without_a_build_stamp": [
       "cpc.json",
       "enso.json",
       "nws.json"
     ],
-    "newest_fetched_content_utc": "2026-09-23T12:50:40Z",
+    "newest_fetched_content_utc": "2026-09-24T12:48:36Z",
     "content_newer_than_the_artifact": [],
     "sources_agree": true,
     "is_current": true,
-    "note": "Every dataset that carries a build stamp carries the same one (2026-09-23T12:51:12Z); the newest content fetched into this tier's inputs is 2026-09-23T12:50:40Z. 3 input(s) carry no build stamp of their own (cpc.json, enso.json, nws.json) and record the retrieval time of each fetch instead, so they are listed rather than assumed. The claim ledger re-derives this and blocks publication when the summary is older than the data it summarises."
+    "note": "Every dataset that carries a build stamp carries the same one (2026-09-24T12:49:02Z); the newest content fetched into this tier's inputs is 2026-09-24T12:48:36Z. 3 input(s) carry no build stamp of their own (cpc.json, enso.json, nws.json) and record the retrieval time of each fetch instead, so they are listed rather than assumed. The claim ledger re-derives this and blocks publication when the summary is older than the data it summarises."
   },
   "location": "San Francisco, CA 94122 (Inner Sunset / Outer Sunset) - 37.7605N, -122.4839W",
   "season_window": "October 1, 2026 - January 31, 2027 (123 days)",
@@ -79,7 +79,7 @@
     "days_total": 123,
     "days_with_all_seven_fields": 123,
     "days_with_a_real_official_forecast_now": 0,
-    "official_horizon_ends": "2026-09-29",
+    "official_horizon_ends": "2026-09-30",
     "days_by_tier": {
       "climatology": 123
     },
@@ -97,12 +97,12 @@
   },
   "near_term_forecast": {
     "status": "published",
-    "first_day": "2026-09-23",
-    "last_day": "2026-09-29",
+    "first_day": "2026-09-24",
+    "last_day": "2026-09-30",
     "horizon_days": 7,
-    "forecast_updated": "2026-09-23T09:32:02+00:00",
+    "forecast_updated": "2026-09-24T09:16:52+00:00",
     "inside_season_window": false,
-    "season_sentence": "0 of the 123 season days (October 1, 2026 - January 31, 2027 (123 days)) carry a real official forecast right now; the official horizon ends 2026-09-29. Every other day shows the 1991-2020 observed record for that calendar date - that is the limit of what an official product can say for a named day.",
+    "season_sentence": "0 of the 123 season days (October 1, 2026 - January 31, 2027 (123 days)) carry a real official forecast right now; the official horizon ends 2026-09-30. Every other day shows the 1991-2020 observed record for that calendar date - that is the limit of what an official product can say for a named day.",
     "rules_text": "Plain analysis thresholds used only inside this block - not an NWS product, not a hazard rating: a day 'carries rain' when its published daily rain amount is >= 0.1 in; a day 'carries strong wind' when its published daily peak gust is >= 30 mph; 'wind and rain together' requires both on the same day. The per-day values are the NWS gridded forecast for this ZIP's grid cell, copied verbatim from the verified calendar dataset with each field's own basis string.",
     "partial_day_note": "The first and last local days of a window are partial: the hourly grid starts and ends mid-day, so each row publishes the number of grid hours that day actually covers, and the window totals sum only those covered hours. As the horizon moves, the window shifts a few hours each issuance.",
     "source_url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
@@ -122,36 +122,18 @@
     ],
     "days": [
       {
-        "date": "2026-09-23",
-        "weekday": "Wednesday",
-        "hours_covered": 19,
-        "high_f": 69,
-        "low_f": 56,
-        "humidity_pct": 85.5,
-        "rain_chance_pct": 0,
-        "rain_amount_in": 0.0,
-        "wind_max_mph": 10.0,
-        "gust_max_mph": 15.0,
-        "temp_basis": "NWS hourly gridded forecast temperature: highest and lowest of the 19 grid hour(s) falling in this local day",
-        "humidity_basis": "NWS hourly gridded forecast relative humidity: mean over the 19 grid hour(s) falling in this local day",
-        "rain_chance_basis": "NWS hourly gridded probability of precipitation: highest of the hours falling in this local day",
-        "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
-        "wind_basis": "NWS hourly gridded forecast wind speed, taking the upper end of each hour's published range: highest of the hours falling in this local day",
-        "gust_basis": "NWS gridpoint windGust series (max over the local day)"
-      },
-      {
         "date": "2026-09-24",
         "weekday": "Thursday",
-        "hours_covered": 24,
-        "high_f": 67,
+        "hours_covered": 19,
+        "high_f": 66,
         "low_f": 58,
-        "humidity_pct": 83.1,
+        "humidity_pct": 83.3,
         "rain_chance_pct": 0,
         "rain_amount_in": 0.0,
         "wind_max_mph": 13.0,
-        "gust_max_mph": 18.4,
-        "temp_basis": "NWS hourly gridded forecast temperature: highest and lowest of the 24 grid hour(s) falling in this local day",
-        "humidity_basis": "NWS hourly gridded forecast relative humidity: mean over the 24 grid hour(s) falling in this local day",
+        "gust_max_mph": 17.3,
+        "temp_basis": "NWS hourly gridded forecast temperature: highest and lowest of the 19 grid hour(s) falling in this local day",
+        "humidity_basis": "NWS hourly gridded forecast relative humidity: mean over the 19 grid hour(s) falling in this local day",
         "rain_chance_basis": "NWS hourly gridded probability of precipitation: highest of the hours falling in this local day",
         "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
         "wind_basis": "NWS hourly gridded forecast wind speed, taking the upper end of each hour's published range: highest of the hours falling in this local day",
@@ -161,9 +143,9 @@
         "date": "2026-09-25",
         "weekday": "Friday",
         "hours_covered": 24,
-        "high_f": 64,
+        "high_f": 65,
         "low_f": 58,
-        "humidity_pct": 85.7,
+        "humidity_pct": 84.3,
         "rain_chance_pct": 0,
         "rain_amount_in": 0.0,
         "wind_max_mph": 16.0,
@@ -179,9 +161,9 @@
         "date": "2026-09-26",
         "weekday": "Saturday",
         "hours_covered": 24,
-        "high_f": 62,
+        "high_f": 60,
         "low_f": 56,
-        "humidity_pct": 88.7,
+        "humidity_pct": 89.8,
         "rain_chance_pct": 0,
         "rain_amount_in": 0.0,
         "wind_max_mph": 12.0,
@@ -197,13 +179,13 @@
         "date": "2026-09-27",
         "weekday": "Sunday",
         "hours_covered": 24,
-        "high_f": 61,
+        "high_f": 59,
         "low_f": 56,
-        "humidity_pct": 87.7,
-        "rain_chance_pct": 1,
+        "humidity_pct": 90.7,
+        "rain_chance_pct": 0,
         "rain_amount_in": 0.0,
         "wind_max_mph": 15.0,
-        "gust_max_mph": 19.6,
+        "gust_max_mph": 20.7,
         "temp_basis": "NWS hourly gridded forecast temperature: highest and lowest of the 24 grid hour(s) falling in this local day",
         "humidity_basis": "NWS hourly gridded forecast relative humidity: mean over the 24 grid hour(s) falling in this local day",
         "rain_chance_basis": "NWS hourly gridded probability of precipitation: highest of the hours falling in this local day",
@@ -215,10 +197,10 @@
         "date": "2026-09-28",
         "weekday": "Monday",
         "hours_covered": 24,
-        "high_f": 65,
-        "low_f": 56,
-        "humidity_pct": 82.9,
-        "rain_chance_pct": 1,
+        "high_f": 64,
+        "low_f": 54,
+        "humidity_pct": 85.2,
+        "rain_chance_pct": 0,
         "rain_amount_in": 0.0,
         "wind_max_mph": 13.0,
         "gust_max_mph": 17.3,
@@ -232,14 +214,32 @@
       {
         "date": "2026-09-29",
         "weekday": "Tuesday",
-        "hours_covered": 17,
-        "high_f": 67,
+        "hours_covered": 24,
+        "high_f": 68,
         "low_f": 57,
-        "humidity_pct": 81.4,
+        "humidity_pct": 77.7,
+        "rain_chance_pct": 1,
+        "rain_amount_in": 0.0,
+        "wind_max_mph": 12.0,
+        "gust_max_mph": 16.1,
+        "temp_basis": "NWS hourly gridded forecast temperature: highest and lowest of the 24 grid hour(s) falling in this local day",
+        "humidity_basis": "NWS hourly gridded forecast relative humidity: mean over the 24 grid hour(s) falling in this local day",
+        "rain_chance_basis": "NWS hourly gridded probability of precipitation: highest of the hours falling in this local day",
+        "rain_amount_basis": "NWS gridpoint quantitativePrecipitation (interval accumulations allocated to local days by hour)",
+        "wind_basis": "NWS hourly gridded forecast wind speed, taking the upper end of each hour's published range: highest of the hours falling in this local day",
+        "gust_basis": "NWS gridpoint windGust series (max over the local day)"
+      },
+      {
+        "date": "2026-09-30",
+        "weekday": "Wednesday",
+        "hours_covered": 17,
+        "high_f": 69,
+        "low_f": 58,
+        "humidity_pct": 77.3,
         "rain_chance_pct": 0,
         "rain_amount_in": 0.0,
-        "wind_max_mph": 10.0,
-        "gust_max_mph": 18.4,
+        "wind_max_mph": 8.0,
+        "gust_max_mph": 15.0,
         "temp_basis": "NWS hourly gridded forecast temperature: highest and lowest of the 17 grid hour(s) falling in this local day",
         "humidity_basis": "NWS hourly gridded forecast relative humidity: mean over the 17 grid hour(s) falling in this local day",
         "rain_chance_basis": "NWS hourly gridded probability of precipitation: highest of the hours falling in this local day",
@@ -263,7 +263,7 @@
         "gust_max_mph": 21.9
       }
     },
-    "summary_sentence": "The current NWS window covers 2026-09-23 through 2026-09-29 (7 local days; 156 grid hours published for this ZIP's cell). No day in this window carries rain >= 0.1 in, so the official forecast does not currently flag rain-driven repair work. 0 day(s) carry a peak gust >= 30 mph (peak 21.9 mph on 2026-09-25). No day has rain and strong wind on the same day. ",
+    "summary_sentence": "The current NWS window covers 2026-09-24 through 2026-09-30 (7 local days; 156 grid hours published for this ZIP's cell). No day in this window carries rain >= 0.1 in, so the official forecast does not currently flag rain-driven repair work. 0 day(s) carry a peak gust >= 30 mph (peak 21.9 mph on 2026-09-25). No day has rain and strong wind on the same day. ",
     "unavailable_note": null,
     "available": true
   },
@@ -466,7 +466,7 @@
     "nov_mean_in": 2.6,
     "dec_mean_in": 4.78,
     "jan_mean_in": 4.47,
-    "basis": "1991-2020 observed record, GHCN-Daily USW00023272 (rain, daily high/low); newest row fetched 2026-09-20",
+    "basis": "1991-2020 observed record, GHCN-Daily USW00023272 (rain, daily high/low); newest row fetched 2026-09-21",
     "definition_wet_day": "calendar day with >= 0.01 in of liquid precipitation",
     "definition_wet_streak": "consecutive wet days within Oct 1 - Jan 31",
     "source_url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
@@ -496,7 +496,7 @@
       "longest_max_days": 17.0,
       "caveat": "Observed frequency in the seasons on record whose ONI placed them in this phase - a small sample, printed with its denominator. Not a forecast for 2026-27."
     },
-    "basis": "1991-2020 observed record (GHCN-Daily USW00023272 (rain, daily high/low); newest row fetched 2026-09-20)",
+    "basis": "1991-2020 observed record (GHCN-Daily USW00023272 (rain, daily high/low); newest row fetched 2026-09-21)",
     "definition": "calendar day with >= 0.01 in of liquid precipitation consecutive wet days within Oct 1 - Jan 31",
     "source_url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
     "source_key": "ghcn_daily"
@@ -1199,7 +1199,7 @@
     }
   ],
   "record_coverage": {
-    "as_of": "2026-09-23",
+    "as_of": "2026-09-24",
     "normals_period": [
       1991,
       2020
@@ -1208,7 +1208,7 @@
       {
         "area": "rain_temp",
         "label": "GHCN-Daily USW00023272 (rain, daily high/low)",
-        "last_date": "2026-09-20",
+        "last_date": "2026-09-21",
         "age_days": 3,
         "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
         "note": "Daily summaries, so this is the most current of the three archives."
@@ -1217,7 +1217,7 @@
         "area": "wind",
         "label": "GSOD 72494023234 (daily wind and gusts, 00-24Z)",
         "last_date": "2025-08-27",
-        "age_days": 392,
+        "age_days": 393,
         "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
         "note": "RETIRED 2025-08-29 (NCEI); successor is SSODv2. Annual files; GSOD cannot be more current than the ISD hourly file it is derived from."
       },
@@ -1225,7 +1225,7 @@
         "area": "isd_hourly",
         "label": "ISD hourly 72494023234 (hour-by-hour wind and precipitation)",
         "last_date": "2025-08-27",
-        "age_days": 392,
+        "age_days": 393,
         "url": "https://www.ncei.noaa.gov/data/global-hourly/access/",
         "note": "RETIRED 2025-08-29 (NCEI); successor is GHCNh. Annual files of hourly observations."
       }

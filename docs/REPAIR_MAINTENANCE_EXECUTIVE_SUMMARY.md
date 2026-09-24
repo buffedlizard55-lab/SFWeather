@@ -1,6 +1,6 @@
 # Repair & Maintenance Cost Impact — Executive Summary, ZIP 94122
 
-**Location:** San Francisco, CA 94122 (Inner Sunset / Outer Sunset) - 37.7605N, -122.4839W · **Season:** October 1, 2026 - January 31, 2027 (123 days) · **Built from datasets stamped:** 2026-09-23T12:51:12Z
+**Location:** San Francisco, CA 94122 (Inner Sunset / Outer Sunset) - 37.7605N, -122.4839W · **Season:** October 1, 2026 - January 31, 2027 (123 days) · **Built from datasets stamped:** 2026-09-24T12:49:02Z
 
 > Independent project. Not affiliated with NOAA / NWS / NCEI / CPC. For life-safety decisions use weather.gov and weather.gov/mtr directly. No daily forecast exists beyond about 7 days; the 1991-2020 figures here are an observed record, not a forecast.
 
@@ -46,29 +46,29 @@ On the station record, the season averages 3.2 days a season at ≥ 1.00 in of r
 
 ## The next few days - the only official day-by-day forecast (NWS grid)
 
-- **Window:** 2026-09-23 through 2026-09-29 (7 local days; 156 grid hours) - NWS grid updated 2026-09-23T09:32:02+00:00. This is the only official day-by-day forecast that exists for this ZIP; nothing further out is forecast by any official product.
+- **Window:** 2026-09-24 through 2026-09-30 (7 local days; 156 grid hours) - NWS grid updated 2026-09-24T09:16:52+00:00. This is the only official day-by-day forecast that exists for this ZIP; nothing further out is forecast by any official product.
 
 | Day | High (F) | Low (F) | Humidity (%) | Rain chance (%) | Rain (in) | Wind (mph) | Gust (mph) | Grid hours |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Wednesday 2026-09-23 (partial) | 69 | 56 | 85.5 | 0 | 0.0 | 10.0 | 15.0 | 19 |
-| Thursday 2026-09-24 | 67 | 58 | 83.1 | 0 | 0.0 | 13.0 | 18.4 | 24 |
-| Friday 2026-09-25 | 64 | 58 | 85.7 | 0 | 0.0 | 16.0 | 21.9 | 24 |
-| Saturday 2026-09-26 | 62 | 56 | 88.7 | 0 | 0.0 | 12.0 | 16.1 | 24 |
-| Sunday 2026-09-27 | 61 | 56 | 87.7 | 1 | 0.0 | 15.0 | 19.6 | 24 |
-| Monday 2026-09-28 | 65 | 56 | 82.9 | 1 | 0.0 | 13.0 | 17.3 | 24 |
-| Tuesday 2026-09-29 (partial) | 67 | 57 | 81.4 | 0 | 0.0 | 10.0 | 18.4 | 17 |
+| Thursday 2026-09-24 (partial) | 66 | 58 | 83.3 | 0 | 0.0 | 13.0 | 17.3 | 19 |
+| Friday 2026-09-25 | 65 | 58 | 84.3 | 0 | 0.0 | 16.0 | 21.9 | 24 |
+| Saturday 2026-09-26 | 60 | 56 | 89.8 | 0 | 0.0 | 12.0 | 16.1 | 24 |
+| Sunday 2026-09-27 | 59 | 56 | 90.7 | 0 | 0.0 | 15.0 | 20.7 | 24 |
+| Monday 2026-09-28 | 64 | 54 | 85.2 | 0 | 0.0 | 13.0 | 17.3 | 24 |
+| Tuesday 2026-09-29 | 68 | 57 | 77.7 | 1 | 0.0 | 12.0 | 16.1 | 24 |
+| Wednesday 2026-09-30 (partial) | 69 | 58 | 77.3 | 0 | 0.0 | 8.0 | 15.0 | 17 |
 
-- **Window counts (plain thresholds, not an NWS product):** The current NWS window covers 2026-09-23 through 2026-09-29 (7 local days; 156 grid hours published for this ZIP's cell). No day in this window carries rain >= 0.1 in, so the official forecast does not currently flag rain-driven repair work. 0 day(s) carry a peak gust >= 30 mph (peak 21.9 mph on 2026-09-25). No day has rain and strong wind on the same day. 
+- **Window counts (plain thresholds, not an NWS product):** The current NWS window covers 2026-09-24 through 2026-09-30 (7 local days; 156 grid hours published for this ZIP's cell). No day in this window carries rain >= 0.1 in, so the official forecast does not currently flag rain-driven repair work. 0 day(s) carry a peak gust >= 30 mph (peak 21.9 mph on 2026-09-25). No day has rain and strong wind on the same day. 
 - **Rule:** Plain analysis thresholds used only inside this block - not an NWS product, not a hazard rating: a day 'carries rain' when its published daily rain amount is >= 0.1 in; a day 'carries strong wind' when its published daily peak gust is >= 30 mph; 'wind and rain together' requires both on the same day. The per-day values are the NWS gridded forecast for this ZIP's grid cell, copied verbatim from the verified calendar dataset with each field's own basis string.
 - **Partial-day rule:** The first and last local days of a window are partial: the hourly grid starts and ends mid-day, so each row publishes the number of grid hours that day actually covers, and the window totals sum only those covered hours. As the horizon moves, the window shifts a few hours each issuance.
-- **Scoreboard context:** 0 of the 123 season days (October 1, 2026 - January 31, 2027 (123 days)) carry a real official forecast right now; the official horizon ends 2026-09-29. Every other day shows the 1991-2020 observed record for that calendar date - that is the limit of what an official product can say for a named day.
+- **Scoreboard context:** 0 of the 123 season days (October 1, 2026 - January 31, 2027 (123 days)) carry a real official forecast right now; the official horizon ends 2026-09-30. Every other day shows the 1991-2020 observed record for that calendar date - that is the limit of what an official product can say for a named day.
 - **Verify:** [NWS hourly gridded forecast (api.weather.gov)](https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly) · [NWS gridpoint data - windGust and QPF series (api.weather.gov)](https://api.weather.gov/gridpoints/MTR/82,105) · [NWS 7-day forecast for this point (weather.gov)](https://forecast.weather.gov/MapClick.php?lat=37.760459&lon=-122.483894&unit=0&lg=english&FcstType=text&TextType=1)
 
 ## Where the numbers come from, and how current they are
 
-- **Datasets read:** landlord.json, calendar.json, run.json, cpc.json, enso.json, nws.json, with the newest content fetched into them at 2026-09-23T12:50:40Z; build-stamped inputs: landlord.json 2026-09-23T12:51:12Z; calendar.json 2026-09-23T12:51:12Z; run.json 2026-09-23T12:51:12Z; no build stamp of their own (per-fetch retrieval times are recorded in the file): cpc.json, enso.json, nws.json.
-- **Scoreboard:** 123 days, 123 of them carrying all seven requested fields (high, low, humidity, wind, gusts, rain chance, rain amount). 0 day(s) of this window lie inside the official NWS forecast horizon today (the horizon currently ends 2026-09-29). Every other day shows the 1991-2020 observed record for that calendar date.
-- **Currency rule:** Every dataset that carries a build stamp carries the same one (2026-09-23T12:51:12Z); the newest content fetched into this tier's inputs is 2026-09-23T12:50:40Z. 3 input(s) carry no build stamp of their own (cpc.json, enso.json, nws.json) and record the retrieval time of each fetch instead, so they are listed rather than assumed. The claim ledger re-derives this and blocks publication when the summary is older than the data it summarises. Oldest source stamp: 2026-09-23T12:51:12Z; newest: 2026-09-23T12:51:12Z.
+- **Datasets read:** landlord.json, calendar.json, run.json, cpc.json, enso.json, nws.json, with the newest content fetched into them at 2026-09-24T12:48:36Z; build-stamped inputs: landlord.json 2026-09-24T12:49:02Z; calendar.json 2026-09-24T12:49:02Z; run.json 2026-09-24T12:49:02Z; no build stamp of their own (per-fetch retrieval times are recorded in the file): cpc.json, enso.json, nws.json.
+- **Scoreboard:** 123 days, 123 of them carrying all seven requested fields (high, low, humidity, wind, gusts, rain chance, rain amount). 0 day(s) of this window lie inside the official NWS forecast horizon today (the horizon currently ends 2026-09-30). Every other day shows the 1991-2020 observed record for that calendar date.
+- **Currency rule:** Every dataset that carries a build stamp carries the same one (2026-09-24T12:49:02Z); the newest content fetched into this tier's inputs is 2026-09-24T12:48:36Z. 3 input(s) carry no build stamp of their own (cpc.json, enso.json, nws.json) and record the retrieval time of each fetch instead, so they are listed rather than assumed. The claim ledger re-derives this and blocks publication when the summary is older than the data it summarises. Oldest source stamp: 2026-09-24T12:49:02Z; newest: 2026-09-24T12:49:02Z.
 
 ## What could change this outlook, and when (NOAA's own sentences)
 
@@ -100,7 +100,7 @@ On the station record, the season averages 3.2 days a season at ≥ 1.00 in of r
 
 - **Season total, Oct 1 – Jan 31:** mean 12.79 in · median 13.26 in · p10–p90 6.38–18.59 in · range 1.71–22.82 in over 30 seasons
 - **By month (means):** Oct 0.94 in · Nov 2.6 in · Dec 4.78 in · Jan 4.47 in
-- **Basis:** 1991-2020 observed record, GHCN-Daily USW00023272 (rain, daily high/low); newest row fetched 2026-09-20
+- **Basis:** 1991-2020 observed record, GHCN-Daily USW00023272 (rain, daily high/low); newest row fetched 2026-09-21
 - **Verify:** [https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv)
 
 ## Long-Duration Rain Events (the repair bottleneck)
@@ -108,7 +108,7 @@ On the station record, the season averages 3.2 days a season at ≥ 1.00 in of r
 - **Share of the 30 seasons on record with a run of:** 3+ wet days 96.7% (29 of 30) · 5+ days 80.0% (24) · 7+ days 53.3% (16) · 10+ days 23.3% (7)
 - **Longest run in a season:** mean 7.3 days · median 7.0 · max 17.0 days
 - **Conditioned on this season's phase (El Niño, n = 11 seasons):** 7+ day runs in 81.8% of them (9 of 11); 10+ day runs in 36.4%; longest run averaged 9.1 days (max 17.0). Observed frequency in the seasons on record whose ONI placed them in this phase - a small sample, printed with its denominator. Not a forecast for 2026-27.
-- **Basis:** 1991-2020 observed record (GHCN-Daily USW00023272 (rain, daily high/low); newest row fetched 2026-09-20) · [source](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv)
+- **Basis:** 1991-2020 observed record (GHCN-Daily USW00023272 (rain, daily high/low); newest row fetched 2026-09-21) · [source](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv)
 
 ## Wind + Rain Together (wind-driven intrusion)
 
@@ -241,13 +241,13 @@ _Severity is derived from the driver's rank in the verified landlord dataset and
 
 ## How current each archive is
 
-As of 2026-09-23 (published by the run, not typed here):
+As of 2026-09-24 (published by the run, not typed here):
 
 | Archive | Newest row fetched | Age (days) | Source |
 | --- | --- | --- | --- |
-| GHCN-Daily USW00023272 (rain, daily high/low) | 2026-09-20 | 3 | [link](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv) |
-| GSOD 72494023234 (daily wind and gusts, 00-24Z) | 2025-08-27 | 392 | [link](https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/) |
-| ISD hourly 72494023234 (hour-by-hour wind and precipitation) | 2025-08-27 | 392 | [link](https://www.ncei.noaa.gov/data/global-hourly/access/) |
+| GHCN-Daily USW00023272 (rain, daily high/low) | 2026-09-21 | 3 | [link](https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv) |
+| GSOD 72494023234 (daily wind and gusts, 00-24Z) | 2025-08-27 | 393 | [link](https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/) |
+| ISD hourly 72494023234 (hour-by-hour wind and precipitation) | 2025-08-27 | 393 | [link](https://www.ncei.noaa.gov/data/global-hourly/access/) |
 
 ## Verification — official sources only
 
@@ -264,7 +264,7 @@ As of 2026-09-23 (published by the run, not typed here):
 - **U.S. Census Bureau Gazetteer (ZIP centroid)** — https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip
 
 - **Built from:** landlord.json, calendar.json, run.json, cpc.json, enso.json, nws.json.
-  - Input stamps: landlord.json 2026-09-23T12:51:12Z · calendar.json 2026-09-23T12:51:12Z · run.json 2026-09-23T12:51:12Z · cpc.json no build stamp (per-fetch retrieval times) · enso.json no build stamp (per-fetch retrieval times) · nws.json no build stamp (per-fetch retrieval times)
+  - Input stamps: landlord.json 2026-09-24T12:49:02Z · calendar.json 2026-09-24T12:49:02Z · run.json 2026-09-24T12:49:02Z · cpc.json no build stamp (per-fetch retrieval times) · enso.json no build stamp (per-fetch retrieval times) · nws.json no build stamp (per-fetch retrieval times)
 - **Claim ledger:** `data/verify_report.txt` and `data/verify.json` re-derive every number above from its source file on every pipeline run.
 
 _Every number above is re-derived from its source dataset and checked line by line before this page is published; every quoted sentence is re-checked as a verbatim substring of the fetched file. Sources are official NOAA / NWS / NCEI / CPC / U.S. Census hosts only - no commercial provider is used, because a number that cannot be checked against a public file is not published here._

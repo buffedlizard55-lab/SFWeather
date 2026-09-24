@@ -4,13 +4,13 @@
       "sid": "USW00023272",
       "ok": true,
       "status": 200,
-      "bytes": 7489436,
+      "bytes": 7489640,
       "format": "wide",
-      "n_lines": 38578,
-      "n_parsed_days": 38577,
+      "n_lines": 38579,
+      "n_parsed_days": 38578,
       "date_range": [
         "1921-01-01",
-        "2026-09-20"
+        "2026-09-21"
       ],
       "first_lines_raw": [
         "\"STATION\",\"DATE\",\"LATITUDE\",\"LONGITUDE\",\"ELEVATION\",\"NAME\",\"PRCP\",\"PRCP_ATTRIBUTES\",\"SNOW\",\"SNOW_ATTRIBUTES\",\"SNWD\",\"SNWD_ATTRIBUTES\",\"TMAX\",\"TMAX_ATTRIBUTES\",\"",
@@ -18,10 +18,10 @@
         "\"USW00023272\",\"1921-01-02\",\"37.7705\",\"-122.4269\",\"45.7\",\"SAN FRANCISCO DOWNTOWN, CA US\",\"    0\",\",,X,2400\",\"    0\",\",,X\",,,\"  122\",\",,X\",\"   78\",\",,X\",,,,,,,,,,"
       ],
       "sample_parsed": {
-        "1973-10-23": {
+        "1973-10-24": {
           "PRCP": 0.0,
-          "TMAX": 167.0,
-          "TMIN": 122.0,
+          "TMAX": 178.0,
+          "TMIN": 111.0,
           "SNOW": null,
           "SNWD": null
         }
