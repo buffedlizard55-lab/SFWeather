@@ -1,7 +1,7 @@
-runner: Linux runnervmlun5p 6.17.0-1022-azure #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+runner: Linux runnervmtr4k5 6.17.0-1022-azure #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
 python: Python 3.11.16
-date:   Thu Sep 24 12:45:03 UTC 2026
-sha:    80784ccb38d3e502edb3237d9cea5c1727d59211
+date:   Fri Sep 25 12:48:06 UTC 2026
+sha:    01a597af11436837eb0f6e4f60520a6085495893
 ref:    refs/heads/main
 PIPELINE_EXIT=0
 CALENDAR_EXIT=0
@@ -14,5 +14,4 @@ DIGEST_EXIT=0
 MODEL_GUIDANCE_EXIT=0
 FEED_EXIT=0
 VERIFY_EXIT=0
-CLAIMS_EXIT=0
-GENERATOR_OUTPUTS_EXIT=0
+CLAIMS_EXIT=1
