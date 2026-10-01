@@ -1,4 +1,4 @@
-SFWeather pipeline - 2026-09-30
+SFWeather pipeline - 2026-10-01
 [1/7] ZIP centroid (U.S. Census Bureau)
       94122 centroid: 37.7605, -122.4839 (verified)
       Census geographies at that point: Sunset CCD / tract Census Tract 326.01 / San Francisco city, San Francisco County
@@ -6,14 +6,14 @@ SFWeather pipeline - 2026-09-30
 [3/7] CPC outlooks
 [4/7] ENSO / ONI
 [5/7] NCEI climatology archives
-      GHCN USW00023272: 38579 station-days parsed; range 1921-01-01 .. 2026-09-22
-      sample record: 1973-10-24 -> {'PRCP': 0.0, 'TMAX': 178.0, 'TMIN': 111.0, 'SNOW': None, 'SNWD': None}
+      GHCN USW00023272: 38585 station-days parsed; range 1921-01-01 .. 2026-09-28
+      sample record: 1973-10-27 -> {'PRCP': 0.0, 'TMAX': 233.0, 'TMIN': 128.0, 'SNOW': None, 'SNWD': None}
 [6/7] computing rainy-season climatology
 [7/7] Storm Events + writing outputs
-      record coverage: STALE archive(s) -> wind=2025-08-27 (399 d), isd_hourly=2025-08-27 (399 d)
+      record coverage: STALE archive(s) -> wind=2025-08-27 (400 d), isd_hourly=2025-08-27 (400 d)
 
 === summary ===
-  fetches: 141 ok / 0 failed / 4 absent by design
+  fetches: 139 ok / 2 failed / 4 absent by design
   irregularities: 5
     [info] nws: Some hourly forecast fields are null in the NWS gridded forecast for this grid cell.
     [warning] nws: No HWO products returned for office MTR.
