@@ -1,4 +1,4 @@
-SFWeather pipeline - 2026-10-07
+SFWeather pipeline - 2026-10-08
 [1/7] ZIP centroid (U.S. Census Bureau)
       94122 centroid: 37.7605, -122.4839 (verified)
       Census geographies at that point: Sunset CCD / tract Census Tract 326.01 / San Francisco city, San Francisco County
@@ -6,11 +6,11 @@ SFWeather pipeline - 2026-10-07
 [3/7] CPC outlooks
 [4/7] ENSO / ONI
 [5/7] NCEI climatology archives
-      GHCN USW00023272: 38586 station-days parsed; range 1921-01-01 .. 2026-09-29
-      sample record: 1973-10-28 -> {'PRCP': 0.0, 'TMAX': 222.0, 'TMIN': 144.0, 'SNOW': None, 'SNWD': None}
+      GHCN USW00023272: 38590 station-days parsed; range 1921-01-01 .. 2026-10-03
+      sample record: 1973-10-30 -> {'PRCP': 0.0, 'TMAX': 267.0, 'TMIN': 167.0, 'SNOW': None, 'SNWD': None}
 [6/7] computing rainy-season climatology
 [7/7] Storm Events + writing outputs
-      record coverage: STALE archive(s) -> wind=2025-08-27 (406 d), isd_hourly=2025-08-27 (406 d)
+      record coverage: STALE archive(s) -> wind=2025-08-27 (407 d), isd_hourly=2025-08-27 (407 d)
 
 === summary ===
   fetches: 139 ok / 2 failed / 4 absent by design

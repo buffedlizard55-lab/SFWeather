@@ -1,5 +1,5 @@
 SFWeather verification ledger
-generated_utc: 2026-10-07T14:44:34Z
+generated_utc: 2026-10-08T14:46:49Z
 
 checks: 89 passed, 1 failed, 2 warning(s)  (of 92)
 
@@ -22,7 +22,7 @@ checks: 89 passed, 1 failed, 2 warning(s)  (of 92)
 [PASS] oni-official-present: The official NOAA ONI product was retrieved and read this run
         latest official ONI: JAS 2026 2.16 C
 [PASS] nws-daily-aggregation: The published daily high and max wind are the max of the NWS hourly grid
-        2026-10-07: high 72 vs hourly max 72; wind 9.0 vs hourly max 9.0
+        2026-10-08: high 67 vs hourly max 67; wind 9.0 vs hourly max 9.0
 [PASS] forecast-aggregation-contract: The forecast dataset records the timezone and the exact aggregation method for each requested field
         timezone=America/Los_Angeles; required methods present=['humidity', 'rain_amount', 'rain_chance', 'temperature', 'timezone', 'wind']
 [PASS] tier-honesty: No day is labelled an NWS forecast outside the official horizon
@@ -50,7 +50,7 @@ checks: 89 passed, 1 failed, 2 warning(s)  (of 92)
 [PASS] cost-driver-expected-days-arithmetic: The published expected heavy-rain day counts equal the sum of the per-date 1991-2020 probabilities in the committed climatology table
         ge_025in_days: published 14.97 vs recomputed 14.97 over 123 season dates; ge_100in_days: published 3.19 vs recomputed 3.19 over 123 season dates
 [PASS] raw-phase-tokens-dataset: No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)
-        0 raw tokens across 21362 scanned string(s)
+        0 raw tokens across 21369 scanned string(s)
 [PASS] phase-label-present: Every ENSO phase value a renderer can reach ships with a reader-facing label (no underscore token, correct capitalisation)
         3 label(s) published
 [PASS] raw-phase-tokens: No raw ENSO data token (el_nino / la_nina) appears in any reader-facing executive-summary string
@@ -70,7 +70,7 @@ checks: 89 passed, 1 failed, 2 warning(s)  (of 92)
 [PASS] cpc-seasonal-present: The CPC outlooks that reach into Oct 2026 - Jan 2027 were sampled
         10 seasonal/monthly records: Oct 2026=Below median 33.0%, OND 2026=Equal chances 33.0%, NDJ 2026-2027=Above median 33.0%, DJF 2026-2027=Above median 40.0%, JFM 2027=Above median 50.0%, Oct 2026=Above normal 50.0%, OND 2026=Above normal 33.0%, NDJ 2026-2027=Above normal 33.0%, DJF 2026-2027=Above normal 33.0%, JFM 2027=Equal chances 33.0%
 [PASS] alert-test-filter: NOAA test messages are counted separately from real alerts
-        real alerts=1, tests=0, total=1
+        real alerts=2, tests=0, total=2
 [FAIL] source-traceability: Every source URL printed on the site is either fetched (with a hash) or an official landing page with fetched files beneath it
         18 URL(s) traced, 2 landing page(s), 1 untraceable
 [PASS] quotes-plain-text: Every quoted official sentence is decoded plain text, exactly as a browser shows it (no HTML entities)
@@ -100,17 +100,17 @@ checks: 89 passed, 1 failed, 2 warning(s)  (of 92)
 [PASS] census-geographies-traceable: The named geography of the forecast point came from the Census geocoder, is traceable to a recorded fetch, and its GEOIDs nest
         named by the Census: Sunset CCD, San Francisco County, Census Tract 326.01; nesting issues: none
 [PASS] afd-language-verbatim: Every quoted AFD sentence is verbatim in the fetched product text, the counts are not smaller than the published lists, and the scan state agrees with the fetched text
-        0 quoted sentence(s) all found verbatim in 6048 fetched characters
+        1 quoted sentence(s) all found verbatim in 7184 fetched characters
 [PASS] afd-language-quotations-only: The AFD scan publishes quotations only: no date, no amount and no probability is attached to any quoted sentence
-        sentence keys []; forbidden keys found: none
+        sentence keys ['matched_patterns', 'section', 'sentence']; forbidden keys found: none
 [PASS] day-field-basis-complete: Every published value on every day names the basis it was computed from (temperature, humidity, rain chance, rain amount, wind, gusts)
         all values on 123 scoreboard day(s) and 7 current-forecast day(s) carry a basis
 [PASS] readme-figures-traceable: Every figure in the README's rainy-season table is a number the dataset actually publishes (at the precision written)
         all README table figures matched a published value
 [WARN] docs-current-dates-traceable: Any date in the documentation that could be read as the current NWS forecast horizon is a date this run actually published
-        17 documentation date(s) near this run match no published forecast-window date: [{'file': 'NEXT_SESSION.md', 'date': '2026-09-21'}, {'file': 'NEXT_SESSION.md', 'date': '2026-09-28'}, {'file': 'NEXT_SESSION.md', 'date': '2026-09-25'}, {'file': 'NEXT_SESSION.md', 'date': '2026-09-29'}, {'file': 'REPAIR_MAINTENANCE_EXECUTIVE_SUMMARY.md', 'date': '2026-09-29'}, {'file': 'REPAIR_MAINTENANCE_EXECUTIVE_SUMMARY.md', 'date': '2026-09-29'}]
+        17 documentation date(s) near this run match no published forecast-window date: [{'file': 'NEXT_SESSION.md', 'date': '2026-09-21'}, {'file': 'NEXT_SESSION.md', 'date': '2026-09-28'}, {'file': 'NEXT_SESSION.md', 'date': '2026-09-25'}, {'file': 'NEXT_SESSION.md', 'date': '2026-09-29'}, {'file': 'REPAIR_MAINTENANCE_EXECUTIVE_SUMMARY.md', 'date': '2026-10-03'}, {'file': 'REPAIR_MAINTENANCE_EXECUTIVE_SUMMARY.md', 'date': '2026-10-03'}]
 [PASS] executive-summary-traceable: The printable executive summary is machine-generated from the datasets and carries no invented figures or links
-        stamp 2026-10-07T14:38:07Z present, all 6 driver titles and all 20 links trace to the datasets
+        stamp 2026-10-08T14:40:46Z present, all 6 driver titles and all 20 links trace to the datasets
 [PASS] wind-rain-hourly-arithmetic: The hour-by-hour wind+rain figures equal the arithmetic over the per-season values, over exactly the seasons published as used
         30 season(s) used, 5 excluded and named; mean days with a simultaneous hour 7.9
 [PASS] wind-rain-hourly-traceable: The hourly wind+rain statistic names the station and the fetched ISD archive it was computed from
@@ -126,9 +126,9 @@ checks: 89 passed, 1 failed, 2 warning(s)  (of 92)
 [PASS] prognostic-caveats-verbatim: CPC prognostic-discussion caveats are present, verbatim, and source-traced
         3 quoted sentence(s) all verbatim in the archived 90-day discussion (16595 collapsed characters)
 [PASS] enso-strength-verbatim: CPC ENSO strength outlook is present, verbatim, current, and source-traced
-        2 quoted sentence(s) all verbatim in the archived ENSO discussion (3393 collapsed characters)
+        0 quoted sentence(s) all verbatim in the archived ENSO discussion (3375 collapsed characters)
 [PASS] digest-rss-traceable: Alert digest items trace to the verified NWS alert and forecast blocks
-        1 alert(s), 0 high-POP day(s)
+        2 alert(s), 0 high-POP day(s)
 [PASS] model-guidance-separated: No model guidance (CFSv2/NMME) is merged into the scoreboard tiers
         all scoreboard days are nws/climatology with no model keys
 [PASS] successor-probe-present: The GSOD/ISD retirement is investigated (history + successor probe)
@@ -164,9 +164,9 @@ checks: 89 passed, 1 failed, 2 warning(s)  (of 92)
 [PASS] ocean-wind-landlord-consistency: Every ocean-side figure in the landlord executive summary is the buoy dataset's own figure, and its marine caveat is that dataset's sentence character for character
         the summary carries the buoy block with its verbatim caveat and six re-derived counters
 [PASS] feed-traceable: The official-product feed is internally consistent, sorted, dated only where the publisher gave a date, links only vetted hosts, and never marks model guidance as official
-        268 entries (+14 undated) across 17 dates; 249 verified against a recorded fetch
+        269 entries (+15 undated) across 17 dates; 250 verified against a recorded fetch
 [PASS] feed-provenance: Every feed entry whose content comes from a fetch points at a URL that was fetched successfully; entries that do not are labelled, not trusted
-        249 of 268 entries trace to a recorded fetch; 10 labelled as pointers only
+        250 of 269 entries trace to a recorded fetch; 10 labelled as pointers only
 [PASS] repair-numbers-traceable: Every number in the repair executive summary is re-derived from the dataset it claims to come from (no value appears in the summary that is not in its source)
         6 drivers and the rain, duration, wind+rain, gust, ocean and outlook blocks all match their source datasets
 [PASS] repair-near-term-traceable: The near-term block is the verified NWS window verbatim, plus counts under its published rule - never a forecast beyond the horizon
@@ -174,13 +174,13 @@ checks: 89 passed, 1 failed, 2 warning(s)  (of 92)
 [PASS] repair-severity-and-rank-rule: Repair-cost drivers are ranked 1..N exactly once each and carry the published, rank-derived severity rule - not an undocumented guess
         6 drivers; severity is a pure function of rank (1-3 high, 4-5 medium, 6+ low)
 [PASS] repair-quotes-verbatim: Every sentence the repair summary attributes to NOAA is a whitespace-collapsed substring of the file it names, and a sentence CPC rewrote is reported as not found rather than paraphrased
-        3 scheduled-issuance sentence(s), 3 caveat(s), 2 strength sentence(s) verified verbatim; not found: none
+        3 scheduled-issuance sentence(s), 3 caveat(s), 0 strength sentence(s) verified verbatim; not found: none
 [PASS] repair-currency-honest: The repair summary is stamped with its source dataset's stamp (never a wall clock), names the inputs that carry no build stamp, and is refused when it is older than the data it summarises
-        stamp 2026-10-07T14:38:07Z; build-stamped inputs all agree; ['cpc.json', 'enso.json', 'nws.json'] input(s) listed as stamp-less
+        stamp 2026-10-08T14:40:46Z; build-stamped inputs all agree; ['cpc.json', 'enso.json', 'nws.json'] input(s) listed as stamp-less
 [PASS] repair-render-contract: Every field the repair renderer reads exists in the published payload, and every container it writes exists in the page
         renderer and payload agree field by field
 [PASS] repair-printable-page-generated: The printable repair summary and its docs copy are generated from the payload: same stamp, same driver titles, and no number or URL that is not in a dataset
-        270 lines, every figure and link traced to the payload
+        268 lines, every figure and link traced to the payload
 [PASS] repair-links-official: Every link the repair summary publishes points at a vetted official host (no commercial provider, no unvetted domain)
         20 URL(s) across the summary and its source ledger, all official
 [PASS] repair-absence-labelled: A tier missing from this snapshot is published as absent with a note, so an empty card can never read as 'no risk'
@@ -193,19 +193,19 @@ claims recorded: 21
 - zip-centroid: ZIP 94122 centroid used for every sample point
     value: {"lat": 37.760459, "lon": -122.483894, "land_area_sqmi": 3.257} degrees / sq mi
     source: U.S. Census Bureau 2024 Gazetteer, ZCTA5 internal point <https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip>
-            http 200, 1013803 bytes, sha256 7b85c04a131672f5..., retrieved 2026-10-07T14:33:35Z
+            http 200, 1013803 bytes, sha256 7b85c04a131672f5..., retrieved 2026-10-08T14:37:17Z
     method: GEOID 94122 row of 2024_Gaz_zcta_national.txt (INTPTLAT / INTPTLONG)
     cross-check: {"name": "U.S. Census geocoder reverse lookup of the same point", "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-122.483894&y=37.760459&benchmark=Public_AR_Current&vintage=Current_Current&format=json", "result": "point falls in San Francisco County (06075) and in 2020 Census Block 060750326013006, whose own internal point is 37.7604592, -122.4838940"}
 - oni-latest: Current ENSO state is NOAA's published ONI
     value: {"season": "JAS 2026", "oni_c": 2.16, "phase": "el_nino", "strength": "very_strong"} deg C
     source: NOAA CPC official ONI product (season-labelled) <https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt>
-            http 200, 23025 bytes, sha256 5d6fa3a2f857d916..., retrieved 2026-10-07T14:35:39Z
+            http 200, 23025 bytes, sha256 5d6fa3a2f857d916..., retrieved 2026-10-08T14:38:53Z
     method: last row of the official oni.ascii.txt product, read directly (not re-derived)
     cross-check: {"checked": true, "months": "2026-04 .. 2026-06", "season_label": "AMJ 2026", "derived_oni_c": 0.98, "official_oni_c": 0.95, "difference_c": 0.03}
 - nws-current-horizon: Length of the official NWS daily horizon today
-    value: {"first_day": "2026-10-07", "last_day": "2026-10-13", "days": 7} days
+    value: {"first_day": "2026-10-08", "last_day": "2026-10-14", "days": 7} days
     source: NWS hourly gridded forecast <https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly>
-            http 200, 162551 bytes, sha256 d6d046d078207bfa..., retrieved 2026-10-07T14:33:37Z
+            http 200, 162561 bytes, sha256 199e76e3ad104e68..., retrieved 2026-10-08T14:37:19Z
     method: distinct local calendar days in forecast_hourly.periods
 - tier-counts: Days carrying a real official forecast vs climatology
     value: {"nws_forecast_days": 7, "climatology_days": 116} days
@@ -213,87 +213,87 @@ claims recorded: 21
 - humidity-normals: Source of the humidity values on climatology days
     value: {"1": 77.9, "2": 75.9, "3": 73.5, "4": 70.3, "5": 70.6, "6": 70.0, "7": 73.9, "8": 74.5, "9": 71.9, "10": 68.3, "11": 73.1, "12": 75.4} % relative humidity
     source: NCEI 1991-2020 hourly normals <https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023234.csv>
-            http 200, 6423708 bytes, sha256 e3279c3241c6e14e..., retrieved 2026-10-07T14:37:33Z
+            http 200, 6423708 bytes, sha256 e3279c3241c6e14e..., retrieved 2026-10-08T14:40:21Z
     method: mean of hourly relative humidity computed from the official hourly temperature and dew-point normals with the Magnus formula
 - streak-duration: Chance of at least one 7-day run of wet days in a season
     value: 53.3 %
     source: NCEI GHCN-Daily daily precipitation <https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv>
-            http 200, 7491272 bytes, sha256 2f09f7b710ac573b..., retrieved 2026-10-07T14:38:09Z
+            http 200, 7492088 bytes, sha256 d920076323e3663a..., retrieved 2026-10-08T14:40:48Z
     method: share of the 30 seasons from 1991-2020 with at least one run of >=7 consecutive days with >=0.01 in of precipitation, Oct 1 - Jan 31
     cross-check: {"note": "Computed inside the pipeline from the raw GHCN-Daily file; recomputable from the same URL by anyone."}
 - normals-month-10: October-January monthly rainfall: project mean vs NOAA normal (10)
     value: {"month": 10, "project_mean_in": 0.94, "noaa_normal_in": 0.94, "difference_in": 0.0} inches
     source: NOAA NCEI 1991-2020 monthly climate normals <https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv>
-            http 200, 31536 bytes, sha256 12a09e7aec3b15a1..., retrieved 2026-10-07T14:37:22Z
+            http 200, 31536 bytes, sha256 12a09e7aec3b15a1..., retrieved 2026-10-08T14:40:11Z
     method: project mean from GHCN-Daily vs NOAA's published monthly normal
     cross-check: {"difference_in": 0.0}
 - normals-month-11: October-January monthly rainfall: project mean vs NOAA normal (11)
     value: {"month": 11, "project_mean_in": 2.6, "noaa_normal_in": 2.6, "difference_in": 0.0} inches
     source: NOAA NCEI 1991-2020 monthly climate normals <https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv>
-            http 200, 31536 bytes, sha256 12a09e7aec3b15a1..., retrieved 2026-10-07T14:37:22Z
+            http 200, 31536 bytes, sha256 12a09e7aec3b15a1..., retrieved 2026-10-08T14:40:11Z
     method: project mean from GHCN-Daily vs NOAA's published monthly normal
     cross-check: {"difference_in": 0.0}
 - normals-month-12: October-January monthly rainfall: project mean vs NOAA normal (12)
     value: {"month": 12, "project_mean_in": 4.78, "noaa_normal_in": 4.76, "difference_in": 0.02} inches
     source: NOAA NCEI 1991-2020 monthly climate normals <https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv>
-            http 200, 31536 bytes, sha256 12a09e7aec3b15a1..., retrieved 2026-10-07T14:37:22Z
+            http 200, 31536 bytes, sha256 12a09e7aec3b15a1..., retrieved 2026-10-08T14:40:11Z
     method: project mean from GHCN-Daily vs NOAA's published monthly normal
     cross-check: {"difference_in": 0.02}
 - normals-month-01: October-January monthly rainfall: project mean vs NOAA normal (01)
     value: {"month": 1, "project_mean_in": 4.47, "noaa_normal_in": 4.4, "difference_in": 0.07} inches
     source: NOAA NCEI 1991-2020 monthly climate normals <https://www.ncei.noaa.gov/data/normals-monthly/1991-2020/access/USW00023272.csv>
-            http 200, 31536 bytes, sha256 12a09e7aec3b15a1..., retrieved 2026-10-07T14:37:22Z
+            http 200, 31536 bytes, sha256 12a09e7aec3b15a1..., retrieved 2026-10-08T14:40:11Z
     method: project mean from GHCN-Daily vs NOAA's published monthly normal
     cross-check: {"difference_in": 0.07}
 - official-daily-normals-expected-days: Expected heavy-rain days per season, computed from NOAA's own published per-date probabilities
     value: {"ge_001in_days": 34.01, "ge_010in_days": 22.73, "ge_025in_days": 14.9, "ge_050in_days": 8.39, "ge_100in_days": 3.26, "ge_200in_days": 0.51, "ge_400in_days": 0.02, "ge_600in_days": 0.0, "dates_compared": 123, "method": "Sum of NOAA's own published per-date probabilities (DLY-PRCP-PCTALL-GE***HI) over the 123 dates of the window - the same linearity-of-expectation arithmetic as expected_days, but using the official published probabilities instead of this project's own count."} days per season
     source: NOAA NCEI 1991-2020 daily climate normals (DLY-PRCP-PCTALL-GE***HI) <https://www.ncei.noaa.gov/data/normals-daily/1991-2020/access/USW00023272.csv>
-            http 200, 462174 bytes, sha256 687a062dde097c2d..., retrieved 2026-10-07T14:37:22Z
+            http 200, 462174 bytes, sha256 687a062dde097c2d..., retrieved 2026-10-08T14:40:10Z
     method: sum of the published per-date probabilities DLY-PRCP-PCTALL-GE025HI / GE100HI over the 123 dates of Oct 1 2026 - Jan 31 2027 (linearity of expectation)
     cross-check: {"derived_expected_days": {"ge_025in_days": 14.97, "ge_100in_days": 3.19, "method": "Sum of each calendar date's 1991-2020 observed probability over the 123-day window (linearity of expectation): the expected number of days per season meeting the test, not a prediction for 2026-27."}}
 - cpc-Oct 2026-prcp: CPC official outlook for Oct 2026 (prcp) sampled at the 94122 point
     value: {"category": "Below median", "probability_pct": 33.0, "issued": "2026-09-30"} %
     source: Latest Monthly Update - Precipitation <https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/monthlyupdate/monthupd_prcp_latest.zip>
-            http 200, 3633181 bytes, sha256 93e6025c1768768c..., retrieved 2026-10-07T14:35:28Z
+            http 200, 3633181 bytes, sha256 93e6025c1768768c..., retrieved 2026-10-08T14:38:45Z
     method: point-in-polygon sample of the official CPC GIS shapefile at 37.760459, -122.483894 (attributes read from the DBF)
     cross-check: {"used_nearest_polygon": false, "containing_polygon_index": 8, "containing_polygon_bbox_lon_lat": [-124.5661, 35.4277, -86.8391, 49.0015], "raw_dbf_attributes": {"Fcst_Date": "20260930", "Valid_Seas": "Oct 2026", "Prob": 33.0, "Cat": "Below"}, "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the bounding 
 - cpc-OND 2026-prcp: CPC official outlook for OND 2026 (prcp) sampled at the 94122 point
     value: {"category": "Equal chances", "probability_pct": 33.0, "issued": "2026-09-17"} %
     source: Monthly & Seasonal Precipitation Outlook (issued 202609) <https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip>
-            http 200, 50749068 bytes, sha256 6e9b18a5eb0db89d..., retrieved 2026-10-07T14:34:57Z
+            http 200, 50749068 bytes, sha256 6e9b18a5eb0db89d..., retrieved 2026-10-08T14:38:19Z
     method: point-in-polygon sample of the official CPC GIS shapefile at 37.760459, -122.483894 (attributes read from the DBF)
     cross-check: {"used_nearest_polygon": false, "containing_polygon_index": 1, "containing_polygon_bbox_lon_lat": [-124.7628, 36.2261, -66.949, 49.3813], "raw_dbf_attributes": {"Fcst_Date": "20260917", "Valid_Seas": "OND 2026", "Prob": 33.0, "Cat": "EC"}, "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the bounding box 
 - cpc-NDJ 2026-2027-prcp: CPC official outlook for NDJ 2026-2027 (prcp) sampled at the 94122 point
     value: {"category": "Above median", "probability_pct": 33.0, "issued": "2026-09-17"} %
     source: Monthly & Seasonal Precipitation Outlook (issued 202609) <https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip>
-            http 200, 50749068 bytes, sha256 6e9b18a5eb0db89d..., retrieved 2026-10-07T14:34:57Z
+            http 200, 50749068 bytes, sha256 6e9b18a5eb0db89d..., retrieved 2026-10-08T14:38:19Z
     method: point-in-polygon sample of the official CPC GIS shapefile at 37.760459, -122.483894 (attributes read from the DBF)
     cross-check: {"used_nearest_polygon": false, "containing_polygon_index": 10, "containing_polygon_bbox_lon_lat": [-123.1279, 33.1325, -69.9275, 44.3003], "raw_dbf_attributes": {"Fcst_Date": "20260917", "Valid_Seas": "NDJ 2026-2027", "Prob": 33.0, "Cat": "Above"}, "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the bou
 - cpc-DJF 2026-2027-prcp: CPC official outlook for DJF 2026-2027 (prcp) sampled at the 94122 point
     value: {"category": "Above median", "probability_pct": 40.0, "issued": "2026-09-17"} %
     source: Monthly & Seasonal Precipitation Outlook (issued 202609) <https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip>
-            http 200, 50749068 bytes, sha256 6e9b18a5eb0db89d..., retrieved 2026-10-07T14:34:57Z
+            http 200, 50749068 bytes, sha256 6e9b18a5eb0db89d..., retrieved 2026-10-08T14:38:19Z
     method: point-in-polygon sample of the official CPC GIS shapefile at 37.760459, -122.483894 (attributes read from the DBF)
     cross-check: {"used_nearest_polygon": false, "containing_polygon_index": 14, "containing_polygon_bbox_lon_lat": [-123.711, 25.8381, -70.4479, 42.0683], "raw_dbf_attributes": {"Fcst_Date": "20260917", "Valid_Seas": "DJF 2026-2027", "Prob": 40.0, "Cat": "Above"}, "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the boun
 - cpc-JFM 2027-prcp: CPC official outlook for JFM 2027 (prcp) sampled at the 94122 point
     value: {"category": "Above median", "probability_pct": 50.0, "issued": "2026-09-17"} %
     source: Monthly & Seasonal Precipitation Outlook (issued 202609) <https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_202609.zip>
-            http 200, 50749068 bytes, sha256 6e9b18a5eb0db89d..., retrieved 2026-10-07T14:34:57Z
+            http 200, 50749068 bytes, sha256 6e9b18a5eb0db89d..., retrieved 2026-10-08T14:38:19Z
     method: point-in-polygon sample of the official CPC GIS shapefile at 37.760459, -122.483894 (attributes read from the DBF)
     cross-check: {"used_nearest_polygon": false, "containing_polygon_index": 15, "containing_polygon_bbox_lon_lat": [-123.5326, 31.3292, -110.0694, 38.9849], "raw_dbf_attributes": {"Fcst_Date": "20260917", "Valid_Seas": "JFM 2027", "Prob": 50.0, "Cat": "Above"}, "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the boundin
 - cpc-Oct 2026-temp: CPC official outlook for Oct 2026 (temp) sampled at the 94122 point
     value: {"category": "Above normal", "probability_pct": 50.0, "issued": "2026-09-30"} %
     source: Latest Monthly Update - Temperature <https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/monthlyupdate/monthupd_temp_latest.zip>
-            http 200, 3614815 bytes, sha256 54ad90b21dcd2f6e..., retrieved 2026-10-07T14:35:31Z
+            http 200, 3614815 bytes, sha256 54ad90b21dcd2f6e..., retrieved 2026-10-08T14:38:47Z
     method: point-in-polygon sample of the official CPC GIS shapefile at 37.760459, -122.483894 (attributes read from the DBF)
     cross-check: {"used_nearest_polygon": false, "containing_polygon_index": 11, "containing_polygon_bbox_lon_lat": [-124.5661, 32.8011, -115.4085, 43.6495], "raw_dbf_attributes": {"Fcst_Date": "20260930", "Valid_Seas": "Oct 2026", "Prob": 50.0, "Cat": "Above"}, "note": "Category and probability are read straight from the official shapefile's DBF row for the polygon that contains 37.760459,-122.483894; the boundin
 - sources-listed: Source URLs referenced by the scoreboard
     value: {"count": 19, "all_traced": false, "landing_pages": 2} URLs
     method: union of every source URL attached to a day or a CPC record
 - archive-recency: Newest observation available in each NCEI archive this project reads
-    value: {"rain_temp": "2026-09-29", "wind": "2025-08-27", "isd_hourly": "2025-08-27"}
+    value: {"rain_temp": "2026-10-03", "wind": "2025-08-27", "isd_hourly": "2025-08-27"}
     source: NCEI ISD hourly 2025 (72494023234) <https://www.ncei.noaa.gov/data/global-hourly/access/2025/72494023234.csv>
-            http 200, 4903856 bytes, sha256 1221e6eb7256be93..., retrieved 2026-10-07T14:37:08Z
+            http 200, 4903856 bytes, sha256 1221e6eb7256be93..., retrieved 2026-10-08T14:39:58Z
     method: Newest date present in the fetched annual files; every published statistic is a 1991-2020 statistic and does not depend on it.
 - repair-season-total-mean: The expected rain total the repair summary leads with is the observed 1991-2020 mean for the SF downtown gauge, not a forecast for 2026-27
     value: 12.79 in
