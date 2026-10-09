@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-10-08T14:46:49Z",
+  "generated_utc": "2026-10-09T14:34:32Z",
   "title": "Verification ledger - every headline number and where it comes from",
   "how_to_read": [
     "Each row is one claim made on this site.",
@@ -10,11 +10,12 @@
   ],
   "summary": {
     "total": 92,
-    "passed": 89,
-    "failed": 1,
+    "passed": 88,
+    "failed": 2,
     "warnings": 2,
     "failed_checks": [
-      "source-traceability"
+      "source-traceability",
+      "record-coverage-published"
     ],
     "warning_checks": [
       "fetch-failures-flagged",
@@ -46,19 +47,19 @@
       "id": "fetch-counts-recompute",
       "title": "The published fetch counts (ok / failed / absent by design) match the manifest entry by entry",
       "status": "pass",
-      "detail": "run.json says 149 ok / 2 failed / 38 absent by design; the manifest recounts 149 / 2 / 38",
+      "detail": "run.json says 150 ok / 2 failed / 37 absent by design; the manifest recounts 150 / 2 / 37",
       "evidence": {
-        "manifest_ok": 149,
+        "manifest_ok": 150,
         "manifest_failed": 2,
-        "manifest_expected_absences": 38,
-        "run_expected_absences": 38,
+        "manifest_expected_absences": 37,
+        "run_expected_absences": 37,
         "expected_absent_urls": [
           "https://api.weather.gov/stations/OAMC1/observations/latest",
           "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/2026/72494023234.csv",
-          "https://www.ncei.noaa.gov/data/global-hourly/access/2026/72494023234.csv",
           "https://www.ncei.noaa.gov/data/normals-hourly/1991-2020/access/USW00023272.csv",
           "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_199508.zip",
-          "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_199508.zip"
+          "https://www.cpc.ncep.noaa.gov/products/GIS/GIS_DATA/us_tempprcpfcst/seasprcp_199508.zip",
+          "https://ftp.cpc.ncep.noaa.gov/GIS/us_tempprcpfcst/seasprcp_199608.zip"
         ]
       }
     },
@@ -66,7 +67,7 @@
       "id": "expected-absences-justified",
       "title": "Every fetch classified as an expected absence carries a reason the ledger can check against its own URL",
       "status": "pass",
-      "detail": "38 expected absence(s), all justified by URL",
+      "detail": "37 expected absence(s), all justified by URL",
       "evidence": {
         "run_year": "2026",
         "unjustified": []
@@ -133,14 +134,14 @@
         "http_status": 200,
         "bytes": 23025,
         "sha256": "5d6fa3a2f857d916550d39c2c686e94cb942430195c82518e6a5d0f5ffbd0665",
-        "retrieved_utc": "2026-10-08T14:38:53Z"
+        "retrieved_utc": "2026-10-09T14:26:12Z"
       }
     },
     {
       "id": "nws-daily-aggregation",
       "title": "The published daily high and max wind are the max of the NWS hourly grid",
       "status": "pass",
-      "detail": "2026-10-08: high 67 vs hourly max 67; wind 9.0 vs hourly max 9.0",
+      "detail": "2026-10-09: high 62 vs hourly max 62; wind 16.0 vs hourly max 16.0",
       "evidence": null
     },
     {
@@ -261,7 +262,7 @@
       "id": "raw-phase-tokens-dataset",
       "title": "No reader-facing string anywhere in the rendered datasets carries a raw ENSO data token (el_nino / la_nina)",
       "status": "pass",
-      "detail": "0 raw tokens across 21369 scanned string(s)",
+      "detail": "0 raw tokens across 21379 scanned string(s)",
       "evidence": []
     },
     {
@@ -553,14 +554,14 @@
       "detail": "real alerts=2, tests=0, total=2",
       "evidence": [
         {
-          "event": "Dense Fog Advisory",
+          "event": "Beach Hazards Statement",
           "is_test": false,
-          "headline": "Dense Fog Advisory issued October 8 at 4:54AM PDT until October 8 at 9:00AM PDT by NWS San"
+          "headline": "Beach Hazards Statement issued October 8 at 9:45PM PDT until October 12 at 2:00PM PDT by N"
         },
         {
           "event": "Coastal Flood Advisory",
           "is_test": false,
-          "headline": "Coastal Flood Advisory issued October 7 at 12:33PM PDT until October 13 at 3:00PM PDT by N"
+          "headline": "Coastal Flood Advisory issued October 8 at 9:45PM PDT until October 13 at 3:00PM PDT by NW"
         }
       ]
     },
@@ -710,12 +711,12 @@
       "id": "afd-language-verbatim",
       "title": "Every quoted AFD sentence is verbatim in the fetched product text, the counts are not smaller than the published lists, and the scan state agrees with the fetched text",
       "status": "pass",
-      "detail": "1 quoted sentence(s) all found verbatim in 7184 fetched characters",
+      "detail": "4 quoted sentence(s) all found verbatim in 7884 fetched characters",
       "evidence": {
         "offenders": [],
         "count_problems": [],
         "scanned": true,
-        "afd_text_chars": 7184,
+        "afd_text_chars": 7884,
         "excluded_within_declared": true,
         "source_traced": true
       }
@@ -757,7 +758,7 @@
       "evidence": {
         "unmatched": [],
         "block_found": true,
-        "published_number_count": 453,
+        "published_number_count": 452,
         "allowlist": [
           0.01,
           0.1,
@@ -826,7 +827,6 @@
           "2026-09-17",
           "2026-09-30",
           "2026-10-02",
-          "2026-10-07",
           "2026-10-08",
           "2026-10-09",
           "2026-10-10",
@@ -835,8 +835,10 @@
           "2026-10-13",
           "2026-10-14",
           "2026-10-15",
+          "2026-10-16",
           "2026-10-17",
-          "2026-10-21",
+          "2026-10-18",
+          "2026-10-22",
           "2026-10-30"
         ]
       }
@@ -845,9 +847,9 @@
       "id": "executive-summary-traceable",
       "title": "The printable executive summary is machine-generated from the datasets and carries no invented figures or links",
       "status": "pass",
-      "detail": "stamp 2026-10-08T14:40:46Z present, all 6 driver titles and all 20 links trace to the datasets",
+      "detail": "stamp 2026-10-09T14:27:55Z present, all 6 driver titles and all 20 links trace to the datasets",
       "evidence": {
-        "stamp": "2026-10-08T14:40:46Z",
+        "stamp": "2026-10-09T14:27:55Z",
         "missing_titles": [],
         "invented_urls": [],
         "url_count": 20
@@ -937,16 +939,20 @@
     {
       "id": "record-coverage-published",
       "title": "The published archive dates and ages are re-derived from the datasets, and a stale archive is flagged rather than presented as current",
-      "status": "pass",
-      "detail": "3 archive(s); stale: ['wind', 'isd_hourly']",
+      "status": "fail",
+      "detail": "isd_hourly: no last_date published; stale_archives ['wind', 'isd_hourly'] does not match the archives older than 180 days ['wind']; isd_hourly last_date None does not match the parsed rows 2025-08-27",
       "evidence": {
-        "problems": [],
+        "problems": [
+          "isd_hourly: no last_date published",
+          "stale_archives ['wind', 'isd_hourly'] does not match the archives older than 180 days ['wind']",
+          "isd_hourly last_date None does not match the parsed rows 2025-08-27"
+        ],
         "archives": [
           {
             "area": "rain_temp",
             "label": "GHCN-Daily USW00023272 (rain, daily high/low)",
             "last_date": "2026-10-03",
-            "age_days": 5,
+            "age_days": 6,
             "url": "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/USW00023272.csv",
             "note": "Daily summaries, so this is the most current of the three archives."
           },
@@ -954,15 +960,15 @@
             "area": "wind",
             "label": "GSOD 72494023234 (daily wind and gusts, 00-24Z)",
             "last_date": "2025-08-27",
-            "age_days": 407,
+            "age_days": 408,
             "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/",
             "note": "RETIRED 2025-08-29 (NCEI); successor is SSODv2. Annual files; GSOD cannot be more current than the ISD hourly file it is derived from."
           },
           {
             "area": "isd_hourly",
             "label": "ISD hourly 72494023234 (hour-by-hour wind and precipitation)",
-            "last_date": "2025-08-27",
-            "age_days": 407,
+            "last_date": null,
+            "age_days": null,
             "url": "https://www.ncei.noaa.gov/data/global-hourly/access/",
             "note": "RETIRED 2025-08-29 (NCEI); successor is GHCNh. Annual files of hourly observations."
           }
@@ -1235,15 +1241,15 @@
       "id": "feed-traceable",
       "title": "The official-product feed is internally consistent, sorted, dated only where the publisher gave a date, links only vetted hosts, and never marks model guidance as official",
       "status": "pass",
-      "detail": "269 entries (+15 undated) across 17 dates; 250 verified against a recorded fetch",
+      "detail": "273 entries (+15 undated) across 17 dates; 254 verified against a recorded fetch",
       "evidence": {
         "problems": [],
         "counts": {
-          "entries": 269,
+          "entries": 273,
           "undated_entries": 15,
           "kinds": {
             "afd": 1,
-            "afd-quote": 10,
+            "afd-quote": 13,
             "cpc-backtest": 1,
             "cpc-discussion": 4,
             "cpc-map": 8,
@@ -1256,15 +1262,15 @@
             "nws-forecast": 2,
             "nws-hourly": 1,
             "nws-period": 14,
-            "official-fetch": 204
+            "official-fetch": 205
           },
-          "official": 268,
+          "official": 272,
           "not_official": 1,
-          "provenance_verified": 250,
+          "provenance_verified": 254,
           "provenance_unverified": 10,
           "links_that_are_convenience_pages": 16,
           "distinct_dates": 17,
-          "entries_inside_season_window": 242
+          "entries_inside_season_window": 246
         }
       }
     },
@@ -1272,7 +1278,7 @@
       "id": "feed-provenance",
       "title": "Every feed entry whose content comes from a fetch points at a URL that was fetched successfully; entries that do not are labelled, not trusted",
       "status": "pass",
-      "detail": "250 of 269 entries trace to a recorded fetch; 10 labelled as pointers only",
+      "detail": "254 of 273 entries trace to a recorded fetch; 10 labelled as pointers only",
       "evidence": {
         "unverified": [
           {
@@ -1350,11 +1356,11 @@
       "id": "repair-currency-honest",
       "title": "The repair summary is stamped with its source dataset's stamp (never a wall clock), names the inputs that carry no build stamp, and is refused when it is older than the data it summarises",
       "status": "pass",
-      "detail": "stamp 2026-10-08T14:40:46Z; build-stamped inputs all agree; ['cpc.json', 'enso.json', 'nws.json'] input(s) listed as stamp-less",
+      "detail": "stamp 2026-10-09T14:27:55Z; build-stamped inputs all agree; ['cpc.json', 'enso.json', 'nws.json'] input(s) listed as stamp-less",
       "evidence": {
         "problems": [],
         "build_stamps": [
-          "2026-10-08T14:40:46Z"
+          "2026-10-09T14:27:55Z"
         ],
         "unstamped": [
           "cpc.json",
@@ -1449,7 +1455,7 @@
         "http_status": 200,
         "bytes": 1013803,
         "sha256": "7b85c04a131672f58b38a950eb82855d5fd4054f0bd9bc3f69aa28897a714e3d",
-        "retrieved_utc": "2026-10-08T14:37:17Z",
+        "retrieved_utc": "2026-10-09T14:24:11Z",
         "host": "www2.census.gov"
       },
       "verified": true,
@@ -1476,7 +1482,7 @@
         "http_status": 200,
         "bytes": 23025,
         "sha256": "5d6fa3a2f857d916550d39c2c686e94cb942430195c82518e6a5d0f5ffbd0665",
-        "retrieved_utc": "2026-10-08T14:38:53Z",
+        "retrieved_utc": "2026-10-09T14:26:12Z",
         "host": "www.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1493,8 +1499,8 @@
       "id": "nws-current-horizon",
       "statement": "Length of the official NWS daily horizon today",
       "value": {
-        "first_day": "2026-10-08",
-        "last_day": "2026-10-14",
+        "first_day": "2026-10-09",
+        "last_day": "2026-10-15",
         "days": 7
       },
       "unit": "days",
@@ -1503,9 +1509,9 @@
         "label": "NWS hourly gridded forecast",
         "url": "https://api.weather.gov/gridpoints/MTR/82,105/forecast/hourly",
         "http_status": 200,
-        "bytes": 162561,
-        "sha256": "199e76e3ad104e6800a6a3662bdee745819dc7699015dc4485433ace4e795446",
-        "retrieved_utc": "2026-10-08T14:37:19Z",
+        "bytes": 162463,
+        "sha256": "65c361b146f3b24c4255b3ea1c8c558fa66b7e91ae271900fe0bd587312d355d",
+        "retrieved_utc": "2026-10-09T14:24:12Z",
         "host": "api.weather.gov"
       },
       "verified": true
@@ -1547,7 +1553,7 @@
         "http_status": 200,
         "bytes": 6423708,
         "sha256": "e3279c3241c6e14e0b1e011d48fbd35349e98f84f6f020555be13b6e9477f39b",
-        "retrieved_utc": "2026-10-08T14:40:21Z",
+        "retrieved_utc": "2026-10-09T14:27:21Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true
@@ -1564,7 +1570,7 @@
         "http_status": 200,
         "bytes": 7492088,
         "sha256": "d920076323e3663a70a2527e78c298b09f42c5ed6c69754c35ce7388b589912d",
-        "retrieved_utc": "2026-10-08T14:40:48Z",
+        "retrieved_utc": "2026-10-09T14:27:57Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1589,7 +1595,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-10-08T14:40:11Z",
+        "retrieved_utc": "2026-10-09T14:27:10Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1614,7 +1620,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-10-08T14:40:11Z",
+        "retrieved_utc": "2026-10-09T14:27:10Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1639,7 +1645,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-10-08T14:40:11Z",
+        "retrieved_utc": "2026-10-09T14:27:10Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1664,7 +1670,7 @@
         "http_status": 200,
         "bytes": 31536,
         "sha256": "12a09e7aec3b15a1bffbc81a82fe9dfaefee1f38c8ddcd76dc311dc3c293ead5",
-        "retrieved_utc": "2026-10-08T14:40:11Z",
+        "retrieved_utc": "2026-10-09T14:27:10Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1695,7 +1701,7 @@
         "http_status": 200,
         "bytes": 462174,
         "sha256": "687a062dde097c2d1610245e1fd6b057eb68b58e8855ae5077dad35e67025775",
-        "retrieved_utc": "2026-10-08T14:40:10Z",
+        "retrieved_utc": "2026-10-09T14:27:09Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true,
@@ -1723,7 +1729,7 @@
         "http_status": 200,
         "bytes": 3633181,
         "sha256": "93e6025c1768768c8a274b103c05dd2e4d637c64d79e3198af10f4c33ce0f5ef",
-        "retrieved_utc": "2026-10-08T14:38:45Z",
+        "retrieved_utc": "2026-10-09T14:26:00Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1761,7 +1767,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-10-08T14:38:19Z",
+        "retrieved_utc": "2026-10-09T14:25:26Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1799,7 +1805,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-10-08T14:38:19Z",
+        "retrieved_utc": "2026-10-09T14:25:26Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1837,7 +1843,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-10-08T14:38:19Z",
+        "retrieved_utc": "2026-10-09T14:25:26Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1875,7 +1881,7 @@
         "http_status": 200,
         "bytes": 50749068,
         "sha256": "6e9b18a5eb0db89de9ef48d9d578c2df75bebbb73d8bfbfa4f5bb2c4e855c271",
-        "retrieved_utc": "2026-10-08T14:38:19Z",
+        "retrieved_utc": "2026-10-09T14:25:26Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1913,7 +1919,7 @@
         "http_status": 200,
         "bytes": 3614815,
         "sha256": "54ad90b21dcd2f6e698e6b871cf4780627549def116ce224078f35e52662c20a",
-        "retrieved_utc": "2026-10-08T14:38:47Z",
+        "retrieved_utc": "2026-10-09T14:26:03Z",
         "host": "ftp.cpc.ncep.noaa.gov"
       },
       "verified": true,
@@ -1954,7 +1960,7 @@
       "value": {
         "rain_temp": "2026-10-03",
         "wind": "2025-08-27",
-        "isd_hourly": "2025-08-27"
+        "isd_hourly": null
       },
       "unit": null,
       "method": "Newest date present in the fetched annual files; every published statistic is a 1991-2020 statistic and does not depend on it.",
@@ -1962,9 +1968,9 @@
         "label": "NCEI ISD hourly 2025 (72494023234)",
         "url": "https://www.ncei.noaa.gov/data/global-hourly/access/2025/72494023234.csv",
         "http_status": 200,
-        "bytes": 4903856,
-        "sha256": "1221e6eb7256be93b1a3f82d1a0695e5d85c5398bbe87cfd9664855936278c54",
-        "retrieved_utc": "2026-10-08T14:39:58Z",
+        "bytes": 36822,
+        "sha256": "48661c476a2bde160781f149d112592fa9ef719376f181049b351a585491d9a2",
+        "retrieved_utc": "2026-10-09T14:27:05Z",
         "host": "www.ncei.noaa.gov"
       },
       "verified": true
@@ -2025,6 +2031,14 @@
       }
     },
     {
+      "severity": "warning",
+      "area": "isd",
+      "message": "No ISD hourly records retrieved for station 72494023234; falling back to GSOD daily wind+rain approximation.",
+      "evidence": {
+        "station_id": "72494023234"
+      }
+    },
+    {
       "severity": "info",
       "area": "isd",
       "message": "ISD history shows 72494023234 ending 20250827 with no same-name successor row: the 2025-08-27 stop is the retired-dataset end, not an identifier change. Successors are GHCNh (hourly) and SSODv2 (daily); see data/ghcnh_probe.json.",
@@ -2081,13 +2095,13 @@
           {
             "area": "wind",
             "last_date": "2025-08-27",
-            "age_days": 407,
+            "age_days": 408,
             "url": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
           },
           {
             "area": "isd_hourly",
-            "last_date": "2025-08-27",
-            "age_days": 407,
+            "last_date": null,
+            "age_days": null,
             "url": "https://www.ncei.noaa.gov/data/global-hourly/access/"
           }
         ]

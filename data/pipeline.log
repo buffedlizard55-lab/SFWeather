@@ -1,4 +1,4 @@
-SFWeather pipeline - 2026-10-08
+SFWeather pipeline - 2026-10-09
 [1/7] ZIP centroid (U.S. Census Bureau)
       94122 centroid: 37.7605, -122.4839 (verified)
       Census geographies at that point: Sunset CCD / tract Census Tract 326.01 / San Francisco city, San Francisco County
@@ -10,13 +10,14 @@ SFWeather pipeline - 2026-10-08
       sample record: 1973-10-30 -> {'PRCP': 0.0, 'TMAX': 267.0, 'TMIN': 167.0, 'SNOW': None, 'SNWD': None}
 [6/7] computing rainy-season climatology
 [7/7] Storm Events + writing outputs
-      record coverage: STALE archive(s) -> wind=2025-08-27 (407 d), isd_hourly=2025-08-27 (407 d)
+      record coverage: STALE archive(s) -> wind=2025-08-27 (408 d), isd_hourly=None (None d)
 
 === summary ===
-  fetches: 139 ok / 2 failed / 4 absent by design
-  irregularities: 5
+  fetches: 140 ok / 2 failed / 3 absent by design
+  irregularities: 6
     [info] nws: Some hourly forecast fields are null in the NWS gridded forecast for this grid cell.
     [warning] nws: No HWO products returned for office MTR.
+    [warning] isd: No ISD hourly records retrieved for station 72494023234; falling back to GSOD daily wind+rain approximation.
     [info] isd: ISD history shows 72494023234 ending 20250827 with no same-name successor row: the 2025-08-27 stop is the retired-dataset end, not an identifier change. Successors are GHCNh (hourly) and SSODv2 (daily
     [info] storm_events: NCEI's Storm Events file lost 12 character(s) before this project fetched it (U+FFFD is already present in the published file). Those characters were removed from the narrative text and are not guesse
     [warning] coverage: At least one NCEI archive this project reads is more than 180 days behind the run date (GSOD/ISD were retired by NCEI on 2025-08-29; successors are SSODv2/GHCNh — see data/ghcnh_probe.json and data/is
